@@ -1,0 +1,12 @@
+.pytest_cache/
+__pycache__/
+*.pyc
+.DS_Store
+config.local.json
+data/raw/
+data/processed/
+data/wiki/
+data/signals/
+data/state/
+client_secret.json
+gmail-token.json

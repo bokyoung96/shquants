@@ -1,0 +1,55 @@
+<section class="section" id="positions-{{ run.run_id }}">
+  <header class="section-header">
+    <p class="eyebrow">Positions</p>
+    <h2>Positions Section - {{ run.run_id }}</h2>
+    <p class="subtitle">{{ run.strategy }}</p>
+  </header>
+
+  {% if run.latest_weights.columns %}
+    <h3>Latest Weights</h3>
+    <div class="table-wrap">
+      <table class="metric-table">
+        <thead>
+          <tr>
+            {% for column in run.latest_weights.columns %}
+              <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in run.latest_weights.rows %}
+            <tr>
+              {% for column in run.latest_weights.columns %}
+                <td>{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if run.latest_qty.columns %}
+    <h3>Latest Quantity</h3>
+    <div class="table-wrap">
+      <table class="metric-table">
+        <thead>
+          <tr>
+            {% for column in run.latest_qty.columns %}
+              <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in run.latest_qty.rows %}
+            <tr>
+              {% for column in run.latest_qty.columns %}
+                <td>{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>

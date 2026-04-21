@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ bundle.spec.title or bundle.spec.name }}</title>
+    <link rel="stylesheet" href="{{ stylesheet }}">
+  </head>
+  <body>
+    <main class="page">
+      <section class="cover">
+        <p class="eyebrow">Backtest Report</p>
+        <h1>{{ bundle.spec.title or bundle.spec.name }}</h1>
+        <p class="subtitle">Report bundle: {{ bundle.spec.name }}</p>
+        <p class="subtitle">Runs included: {{ bundle.runs | length }}</p>
+      </section>
+
+      {% include "partials/summary.html.j2" %}
+
+      <section class="section" id="performance">
+        <header class="section-header">
+          <p class="eyebrow">Performance</p>
+          <h2>Performance Section</h2>
+        </header>
+        <div class="plot-grid">
+          {% for plot in plots %}
+            <figure class="plot-card">
+              <figcaption>{{ plot.title }}</figcaption>
+              {% if plot.kind == "html" %}
+                <iframe class="plot-frame" src="{{ plot.path }}" title="{{ plot.title }}"></iframe>
+                <p class="plot-link"><a href="{{ plot.path }}">Open interactive chart</a></p>
+              {% else %}
+                <img class="plot" src="{{ plot.path }}" alt="{{ plot.title }}">
+              {% endif %}
+            </figure>
+          {% endfor %}
+        </div>
+      </section>
+
+      {% for run in runs %}
+        {% include "partials/section.html.j2" %}
+      {% endfor %}
+
+      <section class="section" id="appendix">
+        <header class="section-header">
+          <p class="eyebrow">Appendix</p>
+          <h2>Appendix Section</h2>
+        </header>
+        <div class="table-wrap">
+          <table class="metric-table">
+            <thead>
+              <tr>
+                {% for column in appendix.columns %}
+                  <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in appendix.rows %}
+                <tr>
+                  {% for column in appendix.columns %}
+                    <td>{{ row[column] }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if notes %}
+          <ul class="notes">
+            {% for note in notes %}
+              <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>

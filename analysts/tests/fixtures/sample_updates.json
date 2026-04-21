@@ -1,0 +1,50 @@
+[
+  {
+    "update_id": 100,
+    "channel_post": {
+      "message_id": 501,
+      "date": 1713081000,
+      "chat": {
+        "id": -1001234567890,
+        "title": "DOC_POOL"
+      },
+      "caption": "TSMC capacity update",
+      "document": {
+        "file_id": "file-001",
+        "file_unique_id": "uniq-001",
+        "file_name": "tsmc-capacity.pdf",
+        "mime_type": "application/pdf"
+      }
+    }
+  },
+  {
+    "update_id": 101,
+    "channel_post": {
+      "message_id": 502,
+      "date": 1713081300,
+      "chat": {
+        "id": -1001234567890,
+        "title": "DOC_POOL"
+      },
+      "text": "not a pdf update"
+    }
+  },
+  {
+    "update_id": 102,
+    "channel_post": {
+      "message_id": 503,
+      "date": 1713081600,
+      "chat": {
+        "id": -1001234567890,
+        "title": "DOC_POOL"
+      },
+      "caption": "TSMC capacity repost",
+      "document": {
+        "file_id": "file-002",
+        "file_unique_id": "uniq-001",
+        "file_name": "tsmc-capacity-repost.pdf",
+        "mime_type": "application/pdf"
+      }
+    }
+  }
+]

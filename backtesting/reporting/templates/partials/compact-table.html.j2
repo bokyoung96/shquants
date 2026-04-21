@@ -1,0 +1,26 @@
+<section class="compact-table-block">
+  <header class="section-header">
+    <p class="eyebrow">Table</p>
+    <h2>{{ table.title }}</h2>
+  </header>
+  <div class="table-wrap">
+    <table class="metric-table">
+      <thead>
+        <tr>
+          {% for column in table.columns %}
+            <th>{{ column.replace("_", " ").title() }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table.rows %}
+          <tr>
+            {% for column in table.columns %}
+              <td>{{ row[column] }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

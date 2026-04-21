@@ -1,0 +1,26 @@
+<section class="section" id="executive-summary">
+  <header class="section-header">
+    <p class="eyebrow">Executive Summary</p>
+    <h2>Executive Summary Table</h2>
+  </header>
+  <div class="table-wrap">
+    <table class="metric-table">
+      <thead>
+        <tr>
+          {% for column in summary.columns %}
+            <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary.rows %}
+          <tr>
+            {% for column in summary.columns %}
+              <td>{{ row[column] }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

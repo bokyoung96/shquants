@@ -1,0 +1,131 @@
+digraph ReportPipeline {
+  graph [
+    rankdir=LR,
+    pad=0.35,
+    nodesep=0.55,
+    ranksep=0.9,
+    bgcolor="#F7F8FC",
+    fontname="Inter"
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    fontname="Inter",
+    fontsize=13,
+    margin="0.22,0.16",
+    color="#D8DDED",
+    penwidth=1.2,
+    fillcolor="#FFFFFF",
+    fontcolor="#14213D"
+  ];
+
+  edge [
+    color="#6C7A99",
+    penwidth=1.6,
+    arrowsize=0.8
+  ];
+
+  telegram [
+    label=<
+      <B>Telegram DOC_POOL</B><BR/>
+      <FONT POINT-SIZE="11">incoming messages</FONT>
+    >,
+    fillcolor="#EAF2FF",
+    color="#B7CCFF"
+  ];
+
+  watch [
+    label=<
+      <B>Catch-up + Live Watch</B><BR/>
+      <FONT POINT-SIZE="11">backlog first, then realtime</FONT>
+    >,
+    fillcolor="#EEF7FF",
+    color="#B9D8F7"
+  ];
+
+  filter [
+    label=<
+      <B>PDF-only Filter</B><BR/>
+      <FONT POINT-SIZE="11">real PDF reports only</FONT>
+    >,
+    fillcolor="#FFF7E8",
+    color="#F2D49A"
+  ];
+
+  raw [
+    label=<
+      <B>Raw PDF Store</B><BR/>
+      <FONT POINT-SIZE="11">analysts/data/raw</FONT>
+    >,
+    fillcolor="#FFFDF4",
+    color="#E8DDA6"
+  ];
+
+  parse [
+    label=<
+      <B>Parse + Route</B><BR/>
+      <FONT POINT-SIZE="11">text parse and route hints</FONT>
+    >,
+    fillcolor="#F7F2FF",
+    color="#D7C3F2"
+  ];
+
+  ingest [
+    label=<
+      <B>PDF Ingest</B><BR/>
+      <FONT POINT-SIZE="11">fulltext · chunks · pages</FONT>
+    >,
+    fillcolor="#F4FBF6",
+    color="#BFE0C8"
+  ];
+
+  summaries [
+    label=<
+      <B>Sector / Macro Summaries</B><BR/>
+      <FONT POINT-SIZE="11">LLM analyst lanes</FONT>
+    >,
+    fillcolor="#F0FAF7",
+    color="#B8E2D6"
+  ];
+
+  outputs [
+    label=<
+      <B>Summary JSON / Markdown</B><BR/>
+      <FONT POINT-SIZE="11">analysts/data/processed</FONT>
+    >,
+    fillcolor="#F2FBFF",
+    color="#B9DFF0"
+  ];
+
+  graphify [
+    label=<
+      <B>Optional Graphify Update</B><BR/>
+      <FONT POINT-SIZE="11">corpus refresh from summaries</FONT>
+    >,
+    fillcolor="#F8F9FD",
+    color="#D5D9E6"
+  ];
+
+  note [
+    shape=note,
+    style="filled",
+    fillcolor="#FFFFFF",
+    color="#D8DDED",
+    fontname="Inter",
+    fontsize=11,
+    fontcolor="#45506B",
+    label="Watcher behavior\n• catch-up before live watch\n• saves only true PDF reports\n• ignores generic message attachments"
+  ];
+
+  telegram -> watch;
+  watch -> filter;
+  filter -> raw [label="save"];
+  raw -> parse;
+  parse -> ingest;
+  ingest -> summaries;
+  summaries -> outputs;
+  outputs -> graphify [style=dashed, color="#94A0BF"];
+
+  note -> watch [style=dotted, arrowhead=none, color="#A3AEC8"];
+}

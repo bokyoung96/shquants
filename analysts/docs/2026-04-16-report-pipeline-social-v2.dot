@@ -1,0 +1,64 @@
+digraph ReportPipelineSocialV2 {
+  graph [
+    rankdir=TB,
+    splines=ortho,
+    pad=0.42,
+    nodesep=0.48,
+    ranksep=0.58,
+    bgcolor="#F7F8FC",
+    fontname="Helvetica",
+    labelloc=t,
+    label=<
+      <B><FONT POINT-SIZE="24">Research Report AI Pipeline</FONT></B><BR/>
+      <FONT POINT-SIZE="13">Collect → Extract → Analyze → Deliver</FONT>
+    >
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    fontname="Helvetica",
+    fontsize=14,
+    margin="0.22,0.18",
+    penwidth=1.4,
+    color="#D6DCEB",
+    fillcolor="#FFFFFF",
+    fontcolor="#1E2A44"
+  ];
+
+  edge [
+    color="#7A88A8",
+    penwidth=1.8,
+    arrowsize=0.8
+  ];
+
+  chat [label=<<B>Chat Reports</B><BR/><FONT POINT-SIZE="11">incoming research notes</FONT>>, fillcolor="#EAF2FF", color="#B7CCFF"];
+  email [label=<<B>Email Reports</B><BR/><FONT POINT-SIZE="11">attachments and digests</FONT>>, fillcolor="#EFF6FF", color="#C2D8F8"];
+  collection [label=<<B>Report Collection</B><BR/><FONT POINT-SIZE="11">capture new files and metadata</FONT>>, fillcolor="#EEF7FF", color="#B9D8F7"];
+  raw [label=<<B>Raw Reports / PDFs</B><BR/><FONT POINT-SIZE="11">source-of-truth storage</FONT>>, fillcolor="#FFF9EA", color="#F1D48F"];
+  parse [label=<<B>Parsing &amp; Extraction</B><BR/><FONT POINT-SIZE="11">text, structure, and route hints</FONT>>, fillcolor="#F7F2FF", color="#D7C3F2"];
+  select [label=<<B>Chunking &amp; Key Page Selection</B><BR/><FONT POINT-SIZE="11">focus the most useful evidence</FONT>>, fillcolor="#F4FBF6", color="#BFE0C8"];
+  sector [label=<<B>Sector Agent</B><BR/><FONT POINT-SIZE="11">industry-specific analysis</FONT>>, fillcolor="#F0FAF7", color="#B8E2D6"];
+  macro [label=<<B>Macro Agent</B><BR/><FONT POINT-SIZE="11">market and macro context</FONT>>, fillcolor="#EEF9FB", color="#B6DEE8"];
+  summaries [label=<<B>Summaries</B><BR/><FONT POINT-SIZE="11">clear takeaways and key numbers</FONT>>, fillcolor="#EEF7FF", color="#B9DFF0"];
+  insights [label=<<B>Insights / Signals</B><BR/><FONT POINT-SIZE="11">decision-ready outputs</FONT>>, fillcolor="#F8FAFD", color="#D5D9E6"];
+  note [shape=note, style="filled", fillcolor="#FFFFFF", color="#D8DDED", fontname="Helvetica", fontsize=11, fontcolor="#4A5672", label="Simple end-to-end view\nfor social sharing"];
+
+  { rank=same; chat; email; note; }
+  { rank=same; raw; parse; select; }
+  { rank=same; sector; macro; }
+  { rank=same; summaries; insights; }
+
+  chat -> collection;
+  email -> collection;
+  collection -> raw;
+  raw -> parse;
+  parse -> select;
+  select -> sector;
+  select -> macro;
+  sector -> summaries;
+  macro -> summaries;
+  summaries -> insights;
+
+  note -> collection [style=dotted, arrowhead=none, color="#A3AEC8"];
+}

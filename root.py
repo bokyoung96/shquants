@@ -13,10 +13,6 @@ class RootPaths:
         return self.root / "config" / "config.json"
 
     @property
-    def kis_path(self) -> Path:
-        return self.root / "kis"
-
-    @property
     def raw_path(self) -> Path:
         return self.root / "raw"
 

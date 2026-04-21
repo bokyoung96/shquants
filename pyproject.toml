@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shquants"
+version = "0.1.0"
+description = "Unified shquants workspace for backtesting, dashboard, and analysts tooling."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.12",
+  "httpx>=0.28,<1",
+  "jinja2>=3.1,<4",
+  "matplotlib>=3.8,<4",
+  "numpy>=1.26,<3",
+  "pandas>=2.2,<3",
+  "plotly>=6,<7",
+  "playwright>=1.54,<2",
+  "pyarrow>=15,<21",
+  "pydantic==2.11.3",
+  "pymupdf>=1.24,<2",
+  "pytest>=8.3,<9",
+  "telethon>=1.36,<2",
+  "tqdm>=4.66,<5",
+  "uvicorn==0.34.0",
+]
+
+[tool.setuptools]
+include-package-data = true
+py-modules = ["report", "root", "run"]
+
+[tool.setuptools.packages.find]
+where = [".", "analysts/src"]
+include = ["analysts*", "backtesting*", "dashboard*"]
+exclude = ["analysts.tests*", "tests*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+backtesting = [
+  "reporting/styles.css",
+  "reporting/templates/*.j2",
+  "reporting/templates/partials/*.j2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "analysts/tests"]
+addopts = "--import-mode=importlib -q"

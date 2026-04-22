@@ -59,7 +59,10 @@ def _sample_snapshot(run_id: str, scale: float = 1.0) -> PerformanceSnapshot:
             tracking_error=0.09,
             information_ratio=0.5,
         ),
-        rolling=RollingMetrics(series={"rolling_sharpe": rolling_sharpe, "rolling_beta": rolling_beta}),
+        rolling=RollingMetrics(
+            window=252,
+            series={"rolling_sharpe": rolling_sharpe, "rolling_beta": rolling_beta},
+        ),
         drawdowns=DrawdownStats(
             underwater=underwater,
             episodes=pd.DataFrame(

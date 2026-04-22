@@ -23,7 +23,16 @@ def find_raw_path(raw_dir: Path, stem: str) -> Path:
 
 def read_raw_frame(path: Path) -> pd.DataFrame:
     if path.suffix == ".csv":
-        return pd.read_csv(path)
+        encodings = ("utf-8", "utf-8-sig", "cp949")
+        last_error: UnicodeDecodeError | None = None
+        for encoding in encodings:
+            try:
+                return pd.read_csv(path, encoding=encoding, low_memory=False)
+            except UnicodeDecodeError as exc:
+                last_error = exc
+        if last_error is not None:
+            raise last_error
+        raise UnicodeDecodeError("utf-8", b"", 0, 1, f"unable to decode csv file: {path}")
     if path.suffix == ".xlsx":
         return pd.read_excel(path)
     raise ValueError(f"unsupported raw dataset format: {path.suffix}")

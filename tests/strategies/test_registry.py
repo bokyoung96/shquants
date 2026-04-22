@@ -13,6 +13,7 @@ def test_registry_lists_default_strategies() -> None:
     assert set(list_strategies()) == {
         "momentum",
         "op_fwd_yield",
+        "breakout_52w_nearness",
         "breakout_52w_simple",
         "breakout_52w_staged",
     }
@@ -74,6 +75,24 @@ def test_op_fwd_yield_strategy_builds_plan() -> None:
 
     assert_frame_equal(plan.target_weights, strategy.build_weights(market))
     assert plan.bucket_ledger["bucket_id"].eq("base").all()
+
+
+def test_breakout_52w_nearness_ranks_names_by_closeness_to_prior_52_week_high() -> None:
+    strategy = build_strategy("breakout_52w_nearness", top_n=1)
+    index = pd.date_range("2024-01-01", periods=253, freq="B")
+    close = pd.DataFrame(
+        {
+            "A": [*([100.0] * 252), 100.0],
+            "B": [*([100.0] * 252), 99.0],
+        },
+        index=index,
+    )
+    market = MarketData(frames={"close": close}, universe=None, benchmark=None)
+
+    plan = strategy.build_plan(market)
+
+    assert plan.target_weights.iloc[-1]["A"] == 1.0
+    assert plan.target_weights.iloc[-1]["B"] == 0.0
 
 
 def test_breakout_52w_simple_enters_on_prior_252_day_high_break_and_exits_on_20_day_low_break() -> None:

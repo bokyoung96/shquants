@@ -6,6 +6,7 @@ from typing import Callable
 from .base import RegisteredStrategy
 from .breakout_staged import Breakout52WeekStaged
 from .breakout_simple import Breakout52WeekSimple
+from .breakout_52w_nearness import Breakout52WeekNearnessTopN
 from .momentum import MomentumTopN
 from .op_fwd import OpFwdYieldTopN
 
@@ -40,3 +41,4 @@ register_strategy("momentum", MomentumTopN)
 register_strategy("op_fwd_yield", OpFwdYieldTopN)
 register_strategy("breakout_52w_simple", Breakout52WeekSimple)
 register_strategy("breakout_52w_staged", Breakout52WeekStaged)
+register_strategy("breakout_52w_nearness", Breakout52WeekNearnessTopN)

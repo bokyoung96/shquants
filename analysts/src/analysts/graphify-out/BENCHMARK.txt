@@ -1,0 +1,12 @@
+
+graphify token reduction benchmark
+──────────────────────────────────────────────────
+  Corpus:          11,571 words → ~15,428 tokens (naive)
+  Graph:           340 nodes, 906 edges
+  Avg query cost:  ~9,418 tokens
+  Reduction:       1.6x fewer tokens per query
+
+  Per question:
+    [1.5x] what is the main entry point
+    [1.7x] what connects the data layer to the api
+

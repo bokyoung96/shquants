@@ -1,0 +1,12 @@
+{
+  "0": "Gmail Pipeline",
+  "1": "Telegram Fetching",
+  "2": "PDF Ingestion",
+  "3": "Core Summaries",
+  "4": "Telethon Client",
+  "5": "CLI Wiring",
+  "6": "Watch Runner",
+  "7": "Gmail OAuth",
+  "8": "Runtime Config",
+  "9": "Raw Report Catalog"
+}

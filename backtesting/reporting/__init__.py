@@ -14,7 +14,6 @@ from .models import (
     SavedRun,
     TearsheetBundle,
 )
-from .pdf import PdfRenderer
 from .reader import RunReader
 from .tables_comparison import ComparisonTableBuilder
 from .tables_single import TearsheetTableBuilder
@@ -26,7 +25,6 @@ __all__ = (
     "ComparisonBundle",
     "ComparisonTableBuilder",
     "HtmlRenderer",
-    "PdfRenderer",
     "ReportBuilder",
     "ReportBundle",
     "ReportCli",

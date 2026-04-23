@@ -9,7 +9,6 @@ from root import ROOT
 from .builder import ReportBuilder
 from .html import HtmlRenderer
 from .models import BenchmarkConfig, ReportKind, ReportProfile, ReportSpec
-from .pdf import PdfRenderer
 from .reader import RunReader
 
 __all__ = ("ReportCli", "main")
@@ -29,7 +28,6 @@ class ReportCli:
         self.reader = RunReader()
         self.builder = ReportBuilder(self.reports_root)
         self.html = HtmlRenderer()
-        self.pdf = PdfRenderer()
 
     def parser(self) -> argparse.ArgumentParser:
         parser = ReportArgumentParser(description="Build backtest reports from saved runs.")
@@ -57,7 +55,6 @@ class ReportCli:
         )
         bundle = self.builder.build(spec, runs)
         html_path = self.html.render(bundle)
-        pdf_path, pdf_status = self.pdf.render_with_status(html_path)
 
         payload: dict[str, object] = {
             "report_name": spec.name,
@@ -68,9 +65,7 @@ class ReportCli:
             "benchmark_name": None if spec.benchmark is None else spec.benchmark.name,
             "output_dir": str(bundle.out_dir),
             "html_path": str(html_path),
-            "pdf_path": None if pdf_path is None else str(pdf_path),
         }
-        payload.update(pdf_status)
         bundle.out_dir.mkdir(parents=True, exist_ok=True)
         report_json = bundle.out_dir / "report.json"
         report_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

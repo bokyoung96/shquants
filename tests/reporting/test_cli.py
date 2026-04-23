@@ -49,7 +49,6 @@ def test_cli_builds_report_spec_with_auto_kind_and_benchmark(tmp_path: Path, mon
 
     monkeypatch.setattr(cli.builder, "build", _build)
     monkeypatch.setattr(cli.html, "render", lambda bundle: bundle.out_dir / "report.html")
-    monkeypatch.setattr(cli.pdf, "render_with_status", lambda html_path: (html_path.with_suffix(".pdf"), {"pdf_ok": True}))
 
     payload = cli.run(
         [
@@ -75,6 +74,8 @@ def test_cli_builds_report_spec_with_auto_kind_and_benchmark(tmp_path: Path, mon
     assert payload["profile"] is None
     assert payload["benchmark_code"] == "IKS200"
     assert payload["benchmark_name"] == "KOSPI200"
+    assert "pdf_path" not in payload
+    assert "pdf_ok" not in payload
     report_json = json.loads((tmp_path / "reports" / "compare" / "report.json").read_text(encoding="utf-8"))
     assert report_json["kind"] == "comparison"
     assert report_json["profile"] is None
@@ -95,7 +96,6 @@ def test_cli_supports_profile_override_and_no_benchmark(tmp_path: Path, monkeypa
 
     monkeypatch.setattr(cli.builder, "build", _build)
     monkeypatch.setattr(cli.html, "render", lambda bundle: bundle.out_dir / "report.html")
-    monkeypatch.setattr(cli.pdf, "render_with_status", lambda html_path: (None, {"pdf_ok": False}))
 
     payload = cli.run(
         [
@@ -115,6 +115,8 @@ def test_cli_supports_profile_override_and_no_benchmark(tmp_path: Path, monkeypa
     assert payload["profile"] == "absolute"
     assert payload["benchmark_code"] is None
     assert payload["benchmark_name"] is None
+    assert "pdf_path" not in payload
+    assert "pdf_ok" not in payload
 
 
 def test_cli_rejects_invalid_kind_and_run_count_combination(tmp_path: Path) -> None:

@@ -37,9 +37,9 @@ beforeEach(() => {
       summary: { finalEquity: 100, avgTurnover: 0.1 },
     },
     {
-      run_id: "value_run",
-      label: "OP Fwd Yield",
-      strategy: "op_fwd_yield",
+      run_id: "momentum_variant_run",
+      label: "Momentum Variant",
+      strategy: "momentum",
       summary: { finalEquity: 105, avgTurnover: 0.2 },
     },
   ]);
@@ -54,9 +54,9 @@ beforeEach(() => {
         summary: { finalEquity: 100, avgTurnover: 0.1 },
       },
       {
-        run_id: "value_run",
-        label: "OP Fwd Yield",
-        strategy: "op_fwd_yield",
+        run_id: "momentum_variant_run",
+        label: "Momentum Variant",
+        strategy: "momentum",
         summary: { finalEquity: 105, avgTurnover: 0.2 },
       },
     ],
@@ -173,8 +173,8 @@ describe("Run selection", () => {
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getAllByRole("button", { name: /Momentum/i })).toHaveLength(1);
-    expect(selector.getAllByRole("button", { name: /OP Fwd Yield/i })).toHaveLength(1);
+    expect(selector.getAllByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveLength(1);
+    expect(selector.getAllByRole("button", { name: /Momentum Variant/i })).toHaveLength(1);
     await waitFor(() => expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]));
   });
 
@@ -185,20 +185,20 @@ describe("Run selection", () => {
 
     expect(await screen.findAllByText("1 selected")).toHaveLength(1);
     let selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /OP Fwd Yield/i }));
+    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
 
     expect(screen.getAllByText("2 selected")).toHaveLength(1);
     expect(fetchDashboard).toHaveBeenNthCalledWith(1, ["momentum_run"]);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["momentum_run", "value_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["momentum_run", "momentum_variant_run"]);
 
     selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /Momentum/i }));
+    await user.click(selector.getByRole("button", { name: /^Momentum\s+momentum$/i }));
 
     expect(screen.getAllByText("1 selected")).toHaveLength(1);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(3, ["value_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(3, ["momentum_variant_run"]);
 
     selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /OP Fwd Yield/i }));
+    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
 
     expect(screen.getAllByText("0 selected")).toHaveLength(1);
     expect(fetchDashboard).toHaveBeenCalledTimes(3);

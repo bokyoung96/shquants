@@ -13,7 +13,7 @@ from dashboard.strategies import DEFAULT_LAUNCH_CONFIG
 EXPECTED_NPM_COMMAND = "npm.cmd" if sys.platform.startswith("win") else "npm"
 
 
-def test_launch_dashboard_reuses_matching_runs_and_executes_missing_presets(tmp_path: Path, monkeypatch) -> None:
+def test_launch_dashboard_executes_missing_momentum_preset(tmp_path: Path, monkeypatch) -> None:
     observed_configs = []
     captured_defaults = {}
 
@@ -37,26 +37,26 @@ def test_launch_dashboard_reuses_matching_runs_and_executes_missing_presets(tmp_
             "Plan",
             (),
             {
-                "resolved_runs": (type("ResolvedRun", (), {"run_id": "momentum_20260405_100000", "strategy_name": "momentum"})(),),
-                "missing_presets": (config.strategies[1],),
-                "selected_run_ids": ["momentum_20260405_100000"],
+                "resolved_runs": (),
+                "missing_presets": (config.strategies[0],),
+                "selected_run_ids": [],
             },
         )(),
     )
 
     launch_dashboard(runs_root=tmp_path, host="127.0.0.1", port=8000)
 
-    assert [config.strategy for config in observed_configs] == ["op_fwd_yield"]
-    assert observed_configs[0].benchmark_code == DEFAULT_LAUNCH_CONFIG.strategies[1].benchmark.code
-    assert observed_configs[0].benchmark_name == DEFAULT_LAUNCH_CONFIG.strategies[1].benchmark.name
-    assert observed_configs[0].warmup_days == DEFAULT_LAUNCH_CONFIG.strategies[1].warmup.extra_days
-    assert captured_defaults["run_ids"] == ["momentum_20260405_100000", "op_fwd_yield_20260405_120000"]
+    assert [config.strategy for config in observed_configs] == ["momentum"]
+    assert observed_configs[0].benchmark_code == DEFAULT_LAUNCH_CONFIG.strategies[0].benchmark.code
+    assert observed_configs[0].benchmark_name == DEFAULT_LAUNCH_CONFIG.strategies[0].benchmark.name
+    assert observed_configs[0].warmup_days == DEFAULT_LAUNCH_CONFIG.strategies[0].warmup.extra_days
+    assert captured_defaults["run_ids"] == ["momentum_20260405_120000"]
 
 
 def test_launch_dashboard_passes_universe_id_to_backtest_runner(tmp_path: Path, monkeypatch) -> None:
     observed_configs = []
-    kosdaq_preset = replace(DEFAULT_LAUNCH_CONFIG.strategies[1], universe_id="kosdaq150")
-    launch_config = replace(DEFAULT_LAUNCH_CONFIG, strategies=(DEFAULT_LAUNCH_CONFIG.strategies[0], kosdaq_preset))
+    kosdaq_preset = replace(DEFAULT_LAUNCH_CONFIG.strategies[0], universe_id="kosdaq150")
+    launch_config = replace(DEFAULT_LAUNCH_CONFIG, strategies=(kosdaq_preset,))
 
     class FakeRunner:
         def run(self, config):
@@ -78,7 +78,7 @@ def test_launch_dashboard_passes_universe_id_to_backtest_runner(tmp_path: Path, 
             (),
             {
                 "resolved_runs": (type("ResolvedRun", (), {"run_id": "momentum_20260405_100000", "strategy_name": "momentum"})(),),
-                "missing_presets": (config.strategies[1],),
+                "missing_presets": (config.strategies[0],),
                 "selected_run_ids": ["momentum_20260405_100000"],
             },
         )(),

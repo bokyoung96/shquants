@@ -60,15 +60,15 @@ def _write_run(
 
 def test_list_runs_returns_newest_first(tmp_path: Path) -> None:
     _write_run(tmp_path, "zeta_20240405_090000", name="Momentum", strategy="momentum", final_equity=130_000_000.0)
-    _write_run(tmp_path, "alpha_20260405_100000", name="OP Fwd Yield", strategy="op_fwd_yield", final_equity=125_000_000.0)
+    _write_run(tmp_path, "alpha_20260405_100000", name="Momentum Variant", strategy="momentum", final_equity=125_000_000.0, top_n=25)
 
     service = RunIndexService(tmp_path)
 
     runs = service.list_runs()
 
     assert [run.run_id for run in runs] == ["alpha_20260405_100000", "zeta_20240405_090000"]
-    assert runs[0].label == "OP Fwd Yield"
-    assert runs[0].strategy == "op_fwd_yield"
+    assert runs[0].label == "Momentum Variant"
+    assert runs[0].strategy == "momentum"
     assert runs[0].summary.final_equity == 125_000_000.0
 
 
@@ -106,17 +106,17 @@ def test_list_runs_keeps_older_valid_run_when_newer_duplicate_is_incomplete(tmp_
 def test_list_runs_dedupes_legacy_and_new_schema_copies_of_same_config(tmp_path: Path) -> None:
     _write_run(
         tmp_path,
-        "op_fwd_yield_20260405_090000",
-        name="OP Fwd Yield",
-        strategy="op_fwd_yield",
+        "momentum_variant_20260405_090000",
+        name="Momentum Variant",
+        strategy="momentum",
         final_equity=121_000_000.0,
     )
-    legacy_dir = tmp_path / "op_fwd_yield_20260405_080000"
+    legacy_dir = tmp_path / "momentum_variant_20260405_080000"
     _write_run(
         tmp_path,
         legacy_dir.name,
-        name="OP Fwd Yield legacy",
-        strategy="op_fwd_yield",
+        name="Momentum Variant legacy",
+        strategy="momentum",
         final_equity=120_000_000.0,
     )
     config_path = legacy_dir / "config.json"
@@ -131,7 +131,7 @@ def test_list_runs_dedupes_legacy_and_new_schema_copies_of_same_config(tmp_path:
 
     runs = service.list_runs()
 
-    assert [run.run_id for run in runs] == ["op_fwd_yield_20260405_090000"]
+    assert [run.run_id for run in runs] == ["momentum_variant_20260405_090000"]
 
 
 def test_list_runs_treats_universe_id_as_part_of_signature(tmp_path: Path) -> None:

@@ -56,7 +56,6 @@ DEFAULT_LAUNCH_CONFIG = DashboardLaunchConfig(
             {"top_n": 20, "lookback": 20},
             warmup=WarmupConfig(extra_days=20),
         ),
-        StrategyPreset(True, "op_fwd_yield", "OP Fwd Yield", {"top_n": 20}),
     ),
 )
 

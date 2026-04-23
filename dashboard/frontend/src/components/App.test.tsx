@@ -36,8 +36,8 @@ const RUNS = [
   },
   {
     run_id: "value_run",
-    label: "OP Fwd Yield",
-    strategy: "op_fwd_yield",
+    label: "Momentum Variant",
+    strategy: "momentum",
     summary: { finalEquity: 105000000, avgTurnover: 0.2 },
   },
 ];
@@ -66,8 +66,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
             benchmark: { code: "KOSPI200", name: "KOSPI200 benchmark" },
           },
           {
-            strategy: "op_fwd_yield",
-            label: "OP Fwd Yield",
+            strategy: "momentum",
+            label: "Momentum Variant",
             benchmark: { code: "SPX", name: "S&P 500 benchmark" },
           },
         ],
@@ -95,7 +95,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
               informationRatio: 0.31,
             }
           : {
-              label: "OP Fwd Yield",
+              label: "Momentum Variant",
               cumulativeReturn: 0.1,
               cagr: 0.09,
               annualVolatility: 0.12,
@@ -122,8 +122,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         asOfDate: "2025-12-31",
       },
       value_run: {
-        label: "OP Fwd Yield",
-        strategy: "op_fwd_yield",
+        label: "Momentum Variant",
+        strategy: "momentum",
         benchmark: { code: "SPX", name: "S&P 500 benchmark" },
         startDate: "2025-01-01",
         endDate: "2025-12-31",
@@ -143,7 +143,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield",
+          label: "Momentum Variant",
           points: [
             { date: "2025-01-01", value: 100000000 },
             { date: "2025-02-01", value: 101000000 },
@@ -191,7 +191,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield drawdown",
+          label: "Momentum Variant drawdown",
           points: [
             { date: "2025-01-01", value: 0 },
             { date: "2025-02-01", value: -0.02 },
@@ -213,7 +213,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield",
+          label: "Momentum Variant",
           points: [
             { date: "2025-01-01", value: 0.52 },
             { date: "2025-02-01", value: 0.74 },
@@ -233,7 +233,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield",
+          label: "Momentum Variant",
           points: [
             { date: "2025-01-01", value: 0.61 },
             { date: "2025-02-01", value: 0.69 },
@@ -255,7 +255,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield",
+          label: "Momentum Variant",
           benchmark: { code: "SPX", name: "S&P 500 benchmark" },
           window: 252,
           points: [
@@ -278,7 +278,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "OP Fwd Yield",
+          label: "Momentum Variant",
           points: [
             { date: "2025-01-01", value: 24 },
             { date: "2025-03-01", value: 19 },
@@ -554,7 +554,7 @@ function findRollingSharpeOption() {
     const xAxis = (option as { xAxis?: { type?: string } }).xAxis;
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
     const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "OP Fwd Yield");
+    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
     return (
       xAxis?.type === "time" &&
       series.every((entry) => entry.type === "line") &&
@@ -570,7 +570,7 @@ function findRollingCorrelationOption() {
   return chartOptions.find((option) => {
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
     const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "OP Fwd Yield");
+    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
     return (
       series.length === 2 &&
       series.every((entry) => entry.type === "line") &&
@@ -584,7 +584,7 @@ function findRollingBetaOption() {
   return chartOptions.find((option) => {
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
     const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "OP Fwd Yield");
+    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
     return (
       series.length === 2 &&
       series.every((entry) => entry.type === "line") &&
@@ -698,7 +698,7 @@ describe("App", () => {
     expect(await screen.findByText("Live Performance")).toBeInTheDocument();
     expect(await screen.findByText("Select saved runs")).toBeInTheDocument();
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /Momentum/i })).toBeInTheDocument();
+    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toBeInTheDocument();
   });
 
   it("renders the research workspace and updates focus from strategy and sector clicks", async () => {
@@ -777,7 +777,7 @@ describe("App", () => {
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.72])]),
         }),
         expect.objectContaining({
-          name: "OP Fwd Yield",
+          name: "Momentum Variant",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.58])]),
         }),
@@ -791,7 +791,7 @@ describe("App", () => {
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.88])]),
         }),
         expect.objectContaining({
-          name: "OP Fwd Yield",
+          name: "Momentum Variant",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.61])]),
         }),
@@ -814,7 +814,7 @@ describe("App", () => {
           data: expect.arrayContaining([expect.any(Number)]),
         }),
         expect.objectContaining({
-          name: "OP Fwd Yield",
+          name: "Momentum Variant",
           type: "bar",
         }),
       ],
@@ -827,7 +827,7 @@ describe("App", () => {
           data: expect.arrayContaining([expect.any(Number)]),
         }),
         expect.objectContaining({
-          name: "OP Fwd Yield",
+          name: "Momentum Variant",
           type: "bar",
         }),
       ],
@@ -866,7 +866,7 @@ describe("App", () => {
       xAxis: expect.objectContaining({ type: "category" }),
       series: [
         expect.objectContaining({ name: "Momentum", type: "bar" }),
-        expect.objectContaining({ name: "OP Fwd Yield", type: "bar" }),
+        expect.objectContaining({ name: "Momentum Variant", type: "bar" }),
       ],
     });
   });
@@ -1040,12 +1040,12 @@ describe("App", () => {
     await screen.findByRole("heading", { name: "Research charts" });
 
     expect(
-      findChartOption(["Momentum", "KOSPI200 benchmark", "OP Fwd Yield", "S&P 500 benchmark"]),
+      findChartOption(["Momentum", "KOSPI200 benchmark", "Momentum Variant", "S&P 500 benchmark"]),
     ).toMatchObject({
       series: [
         expect.objectContaining({ name: "Momentum" }),
         expect.objectContaining({ name: "KOSPI200 benchmark" }),
-        expect.objectContaining({ name: "OP Fwd Yield" }),
+        expect.objectContaining({ name: "Momentum Variant" }),
         expect.objectContaining({ name: "S&P 500 benchmark" }),
       ],
     });
@@ -1061,8 +1061,8 @@ describe("App", () => {
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /Momentum/i })).toHaveAttribute("aria-pressed", "true");
-    expect(selector.getByRole("button", { name: /OP Fwd Yield/i })).toHaveAttribute("aria-pressed", "true");
+    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
+    expect(selector.getByRole("button", { name: /Momentum Variant/i })).toHaveAttribute("aria-pressed", "true");
     expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run", "value_run"]);
   });
 
@@ -1093,7 +1093,7 @@ describe("App", () => {
     expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
 
     const selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /Momentum/i }));
+    await user.click(selector.getByRole("button", { name: /^Momentum\s+momentum$/i }));
 
     expect(screen.queryByRole("heading", { name: "Dashboard unavailable" })).not.toBeInTheDocument();
     expect(screen.getByText("0 selected")).toBeInTheDocument();
@@ -1111,7 +1111,7 @@ describe("App", () => {
     expect(await screen.findByText("Single strategy view")).toBeInTheDocument();
 
     const selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /OP Fwd Yield/i }));
+    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
 
     expect(await screen.findByText("Failed to load dashboard.")).toBeInTheDocument();
     expect(screen.queryByText("Single strategy view")).not.toBeInTheDocument();
@@ -1127,7 +1127,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Failed to load dashboard.")).toBeInTheDocument();
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /Momentum/i })).toBeInTheDocument();
+    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
@@ -1139,7 +1139,7 @@ describe("App", () => {
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /Momentum/i })).toHaveAttribute("aria-pressed", "true");
+    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
     expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
   });
 
@@ -1151,7 +1151,7 @@ describe("App", () => {
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /Momentum/i })).toHaveAttribute("aria-pressed", "true");
+    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
     expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
   });
 

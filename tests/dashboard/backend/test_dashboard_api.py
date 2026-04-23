@@ -153,11 +153,6 @@ def test_dashboard_payload_includes_launch_metadata(tmp_path: Path) -> None:
                     "label": "Momentum",
                     "benchmark": {"code": "IKS200", "name": "KOSPI200"},
                 },
-                {
-                    "strategy": "op_fwd_yield",
-                    "label": "OP Fwd Yield",
-                    "benchmark": {"code": "IKS200", "name": "KOSPI200"},
-                },
             ],
         },
         "asOfDate": "2024-01-03",
@@ -170,7 +165,7 @@ def test_dashboard_payload_launch_benchmark_uses_shared_dashboard_default(tmp_pa
         "macro_20260405_120000",
         name="Macro Strategy",
         strategy="macro",
-        final_equity=101.0,
+        final_equity=102.0,
         avg_turnover=0.02,
         weights=[[0.6, 0.4, 0.0], [0.6, 0.4, 0.0]],
         benchmark={"code": "SPX", "name": "S&P 500"},
@@ -191,11 +186,6 @@ def test_dashboard_payload_launch_benchmark_uses_shared_dashboard_default(tmp_pa
             {
                 "strategy": "momentum",
                 "label": "Momentum",
-                "benchmark": {"code": "IKS200", "name": "KOSPI200"},
-            },
-            {
-                "strategy": "op_fwd_yield",
-                "label": "OP Fwd Yield",
                 "benchmark": {"code": "IKS200", "name": "KOSPI200"},
             },
         ],
@@ -502,10 +492,11 @@ def test_dashboard_returns_single_mode_payload(tmp_path: Path) -> None:
         tmp_path,
         "omega_20260405_110000",
         name="Omega Strategy",
-        strategy="op_fwd_yield",
+        strategy="momentum",
         final_equity=120.0,
         avg_turnover=0.04,
         weights=[[0.3, 0.4, 0.3], [0.2, 0.5, 0.3]],
+        top_n=25,
     )
 
     client = TestClient(app)
@@ -990,6 +981,7 @@ def _write_saved_run(
     benchmark: dict[str, object] | None = None,
     latest_weights_rows: list[dict[str, object]] | None = None,
     latest_holdings_return_rows: list[dict[str, object]] | None = None,
+    top_n: int | None = None,
 ) -> None:
     run_dir = root / run_id
     series_dir = run_dir / "series"
@@ -1005,6 +997,8 @@ def _write_saved_run(
     }
     if benchmark is not None:
         config["benchmark"] = benchmark
+    if top_n is not None:
+        config["top_n"] = top_n
     (run_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
     (run_dir / "summary.json").write_text(
         json.dumps({"final_equity": final_equity, "avg_turnover": avg_turnover}),

@@ -7,12 +7,12 @@ from backtesting.reporting.builder import ReportBuilder
 from backtesting.reporting.models import ComparisonBundle, ReportBundle, ReportKind, ReportProfile, ReportSpec, SavedRun, TearsheetBundle
 
 
-def _sample_run(tmp_path: Path, run_id: str, strategy: str = "momentum") -> SavedRun:
+def _sample_run(tmp_path: Path, run_id: str, strategy: str = "momentum", name: str | None = None) -> SavedRun:
     index = pd.to_datetime(["2024-01-02", "2024-01-03"])
     return SavedRun(
         run_id=run_id,
         path=tmp_path / run_id,
-        config={"strategy": strategy, "name": strategy.title()},
+        config={"strategy": strategy, "name": name or strategy.title()},
         summary={"cagr": 0.1, "mdd": -0.2, "sharpe": 1.0, "final_equity": 110.0, "avg_turnover": 0.05},
         equity=pd.Series([100.0, 110.0], index=index),
         returns=pd.Series([0.0, 0.1], index=index),
@@ -103,7 +103,7 @@ def test_report_builder_uses_universe_specific_repositories(tmp_path: Path, monk
 
 
 def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Path, monkeypatch) -> None:
-    runs = [_sample_run(tmp_path, "run-a", "momentum"), _sample_run(tmp_path, "run-b", "op_fwd_yield")]
+    runs = [_sample_run(tmp_path, "run-a", "momentum"), _sample_run(tmp_path, "run-b", "momentum", name="Momentum Variant")]
 
     class _FakeFactory:
         def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
@@ -133,7 +133,7 @@ def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Pa
 
     assert isinstance(bundle, ComparisonBundle)
     assert bundle.spec.kind is ReportKind.COMPARISON
-    assert bundle.display_names == ("Momentum", "Op_Fwd_Yield")
+    assert bundle.display_names == ("Momentum", "Momentum Variant")
     assert set(bundle.pages) == {"performance"}
     assert set(bundle.tables) == {"ranked_summary"}
     assert (bundle.out_dir / "tables" / "ranked_summary.csv").exists()

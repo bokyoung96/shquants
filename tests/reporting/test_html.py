@@ -110,7 +110,7 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "compare-report",
-        display_names=("Momentum", "OP Fwd Yield"),
+        display_names=("Momentum", "Momentum Variant"),
         pages={
             "executive": _write_asset(tmp_path / "compare-report" / "pages" / "executive.png"),
             "performance": _write_asset(tmp_path / "compare-report" / "pages" / "performance.html"),
@@ -119,7 +119,7 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
             "ranked_summary": pd.DataFrame(
                 [
                     {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "OP Fwd Yield", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
             "benchmark_relative": pd.DataFrame([{"display_name": "Momentum", "alpha": "3.2%"}]),
@@ -143,7 +143,7 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
     assert "compare-report" in html
     assert "Cross-strategy comparison optimized for PDF review" in html
     assert "Momentum" in html
-    assert "OP Fwd Yield" in html
+    assert "Momentum Variant" in html
     assert "pages/performance.html" in html
     assert '<iframe class="plot-frame"' in html
     assert "Ranked Summary" in html
@@ -155,7 +155,7 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
     assert "Top CAGR" in html
     assert "Momentum · 17.2%" in html
     assert "Top Sharpe" in html
-    assert "OP Fwd Yield · 1.35" in html
+    assert "Momentum Variant · 1.35" in html
     assert "missing_split:run-b" in html
 
 
@@ -169,7 +169,7 @@ def test_html_renderer_keeps_composed_report_asset_paths_relative(tmp_path: Path
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=out_dir,
-        display_names=("Momentum", "OP Fwd Yield"),
+        display_names=("Momentum", "Momentum Variant"),
         pages={
             "executive": _write_asset(out_dir / "pages" / "executive.png"),
             "performance": _write_asset(out_dir / "pages" / "performance.html"),
@@ -178,7 +178,7 @@ def test_html_renderer_keeps_composed_report_asset_paths_relative(tmp_path: Path
             "ranked_summary": pd.DataFrame(
                 [
                     {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "OP Fwd Yield", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
             "benchmark_relative": pd.DataFrame(),
@@ -259,7 +259,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "compare-report",
-        display_names=("Momentum", "OP Fwd Yield"),
+        display_names=("Momentum", "Momentum Variant"),
         pages={
             "executive": _write_asset(tmp_path / "compare-report" / "pages" / "executive.png"),
             "performance": _write_asset(tmp_path / "compare-report" / "pages" / "performance.png"),
@@ -270,7 +270,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
             "ranked_summary": pd.DataFrame(
                 [
                     {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "OP Fwd Yield", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
             "benchmark_relative": pd.DataFrame([{"display_name": "Momentum", "alpha": 0.032, "beta": 0.88}]),
@@ -289,7 +289,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     assert report.cover.descriptor
     assert [item.label for item in report.executive_metrics] == ["Top CAGR", "Top Sharpe"]
     assert report.executive_metrics[0].value == "Momentum · 17.2%"
-    assert report.executive_metrics[1].value == "OP Fwd Yield · 1.35"
+    assert report.executive_metrics[1].value == "Momentum Variant · 1.35"
     assert tuple(page.key for page in report.executive_pages) == ("executive", "performance")
     assert tuple(table.key for table in report.executive_tables) == ("ranked_summary", "benchmark_relative")
     assert tuple(section.title for section in report.sections) == (
@@ -301,7 +301,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     assert tuple(page.key for page in report.sections[1].pages) == ("exposure",)
     assert tuple(table.key for table in report.sections[1].tables) == ("exposure_summary", "sector_summary")
     assert report.notes == ("missing_split:run-b",)
-    assert report.participants == ("Momentum", "OP Fwd Yield")
+    assert report.participants == ("Momentum", "Momentum Variant")
 
 
 def test_html_renderer_keeps_legacy_reportbundle_path_styled(tmp_path: Path) -> None:

@@ -26,6 +26,7 @@ dependencies = [
   "telethon>=1.36,<2",
   "tqdm>=4.66,<5",
   "uvicorn==0.34.0",
+  "weasyprint>=61,<67",
 ]
 
 [tool.setuptools]

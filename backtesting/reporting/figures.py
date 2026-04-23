@@ -20,12 +20,12 @@ from .snapshots import PerformanceSnapshot
 
 __all__ = ("TearsheetFigureBuilder", "write_figure_asset")
 
-_BG = "#f5f1ea"
-_PANEL = "#fffdf9"
-_PANEL_ALT = "#f0ebe4"
+_BG = "#ffffff"
+_PANEL = "#ffffff"
+_PANEL_ALT = "#f7f7f7"
 _TEXT = "#181512"
 _MUTED = "#7f766c"
-_GRID = "#d8d0c6"
+_GRID = "#dedede"
 _STRATEGY = "#cf2636"
 _BENCHMARK = "#111111"
 _POSITIVE = "#cf2636"
@@ -187,7 +187,7 @@ class TearsheetFigureBuilder:
             metrics.extend(
                 [
                     ("Beta", f"{snapshot.metrics.beta:.2f}"),
-                    ("Info Ratio", f"{(snapshot.metrics.information_ratio or 0.0):.2f}"),
+                    ("Information Ratio", f"{(snapshot.metrics.information_ratio or 0.0):.2f}"),
                 ]
             )
         else:
@@ -200,14 +200,24 @@ class TearsheetFigureBuilder:
 
         ax.text(0.05, 0.96, "Performance Snapshot", fontsize=13, fontweight="bold", color=_TEXT, va="top", transform=ax.transAxes)
         ax.text(0.05, 0.905, f"Profile · {snapshot.profile.value.title()}", fontsize=9, color=_MUTED, va="top", transform=ax.transAxes)
+        ax.text(
+            0.05,
+            0.855,
+            _annualized_metric_note(snapshot),
+            fontsize=8,
+            color=_MUTED,
+            va="top",
+            transform=ax.transAxes,
+            clip_on=True,
+        )
         rows = 4
         cols = 2
         left = 0.05
-        top = 0.83
+        top = 0.795
         gap_x = 0.045
-        gap_y = 0.035
+        gap_y = 0.03
         card_width = (0.90 - gap_x) / cols
-        card_height = 0.155
+        card_height = 0.145
         for idx, (label, value) in enumerate(metrics[: rows * cols]):
             row = idx // cols
             column = idx % cols
@@ -506,6 +516,12 @@ def _subtitle(snapshot: PerformanceSnapshot) -> str:
     else:
         window = "No date range"
     return f"{window}   ·   Benchmark: {benchmark}   ·   Profile: {snapshot.profile.value.title()}"
+
+
+def _annualized_metric_note(snapshot: PerformanceSnapshot) -> str:
+    if snapshot.has_benchmark:
+        return "Annualized: CAGR, Sharpe, Information Ratio"
+    return "Annualized: CAGR, Sharpe, Sortino"
 
 
 def _monthly_returns(returns: pd.Series) -> pd.Series:

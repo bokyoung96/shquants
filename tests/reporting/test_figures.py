@@ -201,6 +201,26 @@ def test_tearsheet_dashboard_overlays_benchmark_panels_and_maps_sector_names(tmp
         plt.close(fig)
 
 
+def test_tearsheet_metric_cards_show_benchmark_information_ratio_and_annualized_note(tmp_path: Path) -> None:
+    import matplotlib.pyplot as plt
+
+    builder = TearsheetFigureBuilder(tmp_path)
+    snapshot = _sample_snapshot("alpha")
+
+    fig, ax = plt.subplots()
+    try:
+        builder._plot_metric_cards(ax, snapshot)
+
+        labels = {text.get_text() for text in ax.texts}
+        assert "Information Ratio" in labels
+        assert "0.50" in labels
+        assert "Annualized: CAGR, Sharpe, Information Ratio" in labels
+        assert fig.get_facecolor() == (1.0, 1.0, 1.0, 1.0)
+        assert ax.get_facecolor() == (1.0, 1.0, 1.0, 1.0)
+    finally:
+        plt.close(fig)
+
+
 def test_tearsheet_dashboard_supports_no_benchmark_panels(tmp_path: Path) -> None:
     import matplotlib.pyplot as plt
 

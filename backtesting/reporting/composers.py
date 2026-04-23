@@ -36,7 +36,7 @@ _PAGE_TITLES = {
     "rolling": "Rolling Diagnostics",
     "calendar": "Return Shape",
     "exposure": "Holdings And Sectors",
-    "performance": "Performance Comparison",
+    "performance": "Performance Dashboard",
 }
 _PERCENT_COLUMNS = {
     "cagr",
@@ -147,12 +147,13 @@ class TearsheetComposer:
         tables = _table_contexts(bundle.tables)
         executive_pages, executive_tables, sections = _split_tearsheet_sections(pages, tables)
         executive_metrics = _metric_strip(bundle.tables.get("performance_summary", pd.DataFrame()))
+        benchmark_name = _benchmark_label(bundle.spec)
         return TearsheetRenderContext(
             cover=CoverContext(
                 report_type="Single-Run Tearsheet",
                 title=bundle.spec.title or bundle.display_name,
                 subtitle=bundle.display_name,
-                benchmark_name=bundle.spec.benchmark.name,
+                benchmark_name=benchmark_name,
                 report_name=bundle.spec.name,
                 descriptor="PDF-first single-run performance summary",
             ),
@@ -167,7 +168,7 @@ class TearsheetComposer:
             title=bundle.spec.title or bundle.display_name,
             report_name=bundle.spec.name,
             display_name=bundle.display_name,
-            benchmark_name=bundle.spec.benchmark.name,
+            benchmark_name=benchmark_name,
         )
 
 
@@ -178,12 +179,13 @@ class ComparisonComposer:
         executive_pages, executive_tables, sections = _split_comparison_sections(pages, tables)
         ranked = bundle.tables.get("ranked_summary", pd.DataFrame())
         executive_metrics = _comparison_metric_strip(ranked)
+        benchmark_name = _benchmark_label(bundle.spec)
         return ComparisonRenderContext(
             cover=CoverContext(
                 report_type="Comparison Report",
                 title=bundle.spec.title or bundle.spec.name,
                 subtitle=", ".join(bundle.display_names),
-                benchmark_name=bundle.spec.benchmark.name,
+                benchmark_name=benchmark_name,
                 report_name=bundle.spec.name,
                 descriptor="Cross-strategy comparison optimized for PDF review",
             ),
@@ -197,7 +199,7 @@ class ComparisonComposer:
             tables=tables,
             title=bundle.spec.title or bundle.spec.name,
             report_name=bundle.spec.name,
-            benchmark_name=bundle.spec.benchmark.name,
+            benchmark_name=benchmark_name,
             participants=bundle.display_names,
         )
 
@@ -246,22 +248,12 @@ def _split_tearsheet_sections(
     pages: tuple[PageContext, ...],
     tables: tuple[TableContext, ...],
 ) -> tuple[tuple[PageContext, ...], tuple[TableContext, ...], tuple[SectionContext, ...]]:
-    executive_pages = tuple(page for page in pages if page.key == "executive")
+    executive_pages = tuple(page for page in pages if page.key == "performance")
     executive_tables = tuple(table for table in tables if table.key in {"performance_summary", "drawdown_episodes"})
     sections = (
         SectionContext(
-            title="Rolling Diagnostics",
-            pages=tuple(page for page in pages if page.key == "rolling"),
-            tables=(),
-        ),
-        SectionContext(
-            title="Return Shape",
-            pages=tuple(page for page in pages if page.key == "calendar"),
-            tables=(),
-        ),
-        SectionContext(
             title="Holdings And Sectors",
-            pages=tuple(page for page in pages if page.key == "exposure"),
+            pages=(),
             tables=tuple(table for table in tables if table.key in {"top_holdings", "sector_weights"}),
         ),
         SectionContext(
@@ -306,6 +298,13 @@ def _page_contexts(pages: dict[str, Path], out_dir: Path) -> tuple[PageContext, 
             )
         )
     return tuple(items)
+
+
+def _benchmark_label(spec) -> str:
+    benchmark = spec.benchmark
+    if benchmark is None:
+        return "Strategy Only"
+    return benchmark.name
 
 
 def _table_contexts(tables: dict[str, pd.DataFrame]) -> tuple[TableContext, ...]:

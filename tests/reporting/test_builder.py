@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pandas as pd
 
 from backtesting.reporting.builder import ReportBuilder
-from backtesting.reporting.models import ComparisonBundle, ReportBundle, ReportKind, ReportSpec, SavedRun, TearsheetBundle
+from backtesting.reporting.models import ComparisonBundle, ReportBundle, ReportKind, ReportProfile, ReportSpec, SavedRun, TearsheetBundle
 
 
 def _sample_run(tmp_path: Path, run_id: str, strategy: str = "momentum") -> SavedRun:
@@ -26,7 +26,7 @@ def test_report_builder_creates_tearsheet_bundle_and_persists_tables(tmp_path: P
     run = _sample_run(tmp_path, "sample")
 
     class _FakeFactory:
-        def build(self, run_obj, benchmark):  # type: ignore[no-untyped-def]
+        def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
             return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
 
     class _FakeTearsheetFigureBuilder:
@@ -34,10 +34,10 @@ def test_report_builder_creates_tearsheet_bundle_and_persists_tables(tmp_path: P
             self.out_dir = out_dir
 
         def build(self, snapshot, *, require_png=False):  # type: ignore[no-untyped-def]
-            path = self.out_dir / "executive.png"
+            path = self.out_dir / "performance.png"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"png")
-            return {"executive": path}
+            return {"performance": path}
 
     class _FakeTearsheetTableBuilder:
         def build(self, snapshot, *, notes=()):  # type: ignore[no-untyped-def]
@@ -55,7 +55,7 @@ def test_report_builder_creates_tearsheet_bundle_and_persists_tables(tmp_path: P
     assert bundle.spec.kind is ReportKind.TEARSHEET
     assert bundle.run_id == "sample"
     assert bundle.display_name == "Momentum"
-    assert set(bundle.pages) == {"executive"}
+    assert set(bundle.pages) == {"performance"}
     assert set(bundle.tables) == {"performance_summary"}
     assert (bundle.out_dir / "tables" / "performance_summary.csv").exists()
 
@@ -86,27 +86,27 @@ def test_report_builder_uses_universe_specific_repositories(tmp_path: Path, monk
         def __init__(self, *, benchmark_repo, sector_repo):  # type: ignore[no-untyped-def]
             observed.append((benchmark_repo, sector_repo, "init"))
 
-        def build(self, run_obj, benchmark):  # type: ignore[no-untyped-def]
-            observed.append((run_obj.config["universe_id"], benchmark.code, benchmark.name))
+        def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
+            observed.append((run_obj.config["universe_id"], benchmark.code, benchmark.name, profile))
             return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
 
     monkeypatch.setattr("backtesting.reporting.builder.default_repositories_for_universe", _fake_resolver, raising=False)
     monkeypatch.setattr("backtesting.reporting.builder.PerformanceSnapshotFactory", _FakeFactory)
-    monkeypatch.setattr("backtesting.reporting.builder.TearsheetFigureBuilder", lambda out_dir: SimpleNamespace(build=lambda snapshot, require_png=False: {"executive": out_dir / "executive.png"}))
+    monkeypatch.setattr("backtesting.reporting.builder.TearsheetFigureBuilder", lambda out_dir: SimpleNamespace(build=lambda snapshot, require_png=False: {"performance": out_dir / "performance.png"}))
     monkeypatch.setattr("backtesting.reporting.builder.TearsheetTableBuilder", lambda: SimpleNamespace(build=lambda snapshot, notes=(): {"performance_summary": pd.DataFrame([{"metric_key": "cagr", "metric": "CAGR", "value": 0.1}])}))
 
     bundle = ReportBuilder(tmp_path).build(ReportSpec(name="sample-report", run_ids=("sample",)), [run])
 
     assert isinstance(bundle, TearsheetBundle)
     assert observed[0][:2] == (benchmark_repo, sector_repo)
-    assert observed[1] == ("kosdaq150", "IKS200", "KOSPI200")
+    assert observed[1] == ("kosdaq150", "IKS200", "KOSPI200", None)
 
 
 def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Path, monkeypatch) -> None:
     runs = [_sample_run(tmp_path, "run-a", "momentum"), _sample_run(tmp_path, "run-b", "op_fwd_yield")]
 
     class _FakeFactory:
-        def build(self, run_obj, benchmark):  # type: ignore[no-untyped-def]
+        def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
             return SimpleNamespace(run_id=run_obj.run_id, display_name=str(run_obj.config["name"]))
 
     class _FakeComparisonFigureBuilder:
@@ -137,6 +137,50 @@ def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Pa
     assert set(bundle.pages) == {"performance"}
     assert set(bundle.tables) == {"ranked_summary"}
     assert (bundle.out_dir / "tables" / "ranked_summary.csv").exists()
+
+
+def test_report_builder_passes_profile_to_snapshot_factory(tmp_path: Path, monkeypatch) -> None:
+    run = _sample_run(tmp_path, "sample")
+    observed: list[object] = []
+
+    class _FakeFactory:
+        def __init__(self, *, benchmark_repo, sector_repo):  # type: ignore[no-untyped-def]
+            pass
+
+        def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
+            observed.append(profile)
+            return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
+
+    monkeypatch.setattr("backtesting.reporting.builder.PerformanceSnapshotFactory", _FakeFactory)
+    monkeypatch.setattr("backtesting.reporting.builder.default_repositories_for_universe", lambda universe_id: (object(), object()), raising=False)
+    monkeypatch.setattr("backtesting.reporting.builder.TearsheetFigureBuilder", lambda out_dir: SimpleNamespace(build=lambda snapshot, require_png=False: {"performance": out_dir / "performance.png"}))
+    monkeypatch.setattr("backtesting.reporting.builder.TearsheetTableBuilder", lambda: SimpleNamespace(build=lambda snapshot, notes=(): {"performance_summary": pd.DataFrame([{"metric_key": "cagr", "metric": "CAGR", "value": 0.1}])}))
+
+    bundle = ReportBuilder(tmp_path).build(
+        ReportSpec(name="sample-report", run_ids=("sample",), profile=ReportProfile.INDEX),
+        [run],
+    )
+
+    assert isinstance(bundle, TearsheetBundle)
+    assert observed == [ReportProfile.INDEX]
+
+
+def test_report_builder_falls_back_when_default_repositories_are_unavailable(tmp_path: Path, monkeypatch) -> None:
+    run = _sample_run(tmp_path, "sample")
+
+    monkeypatch.setattr(
+        "backtesting.reporting.builder.default_repositories_for_universe",
+        lambda universe_id: (_ for _ in ()).throw(FileNotFoundError("missing raw dataset")),
+        raising=False,
+    )
+
+    bundle = ReportBuilder(tmp_path).build(
+        ReportSpec(name="sample-report", run_ids=("sample",), benchmark=None, profile=ReportProfile.ABSOLUTE),
+        [run],
+    )
+
+    assert isinstance(bundle, TearsheetBundle)
+    assert bundle.pages["performance"].exists()
 
 
 def test_report_builder_legacy_path_remains_available(tmp_path: Path, monkeypatch) -> None:

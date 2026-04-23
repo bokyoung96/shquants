@@ -93,6 +93,46 @@ uv run python -m pytest \
   tests/test_smoke.py
 ```
 
+### 4) Build a static backtest dashboard report
+
+The reporting flow now produces **static report pictures/pages** after a backtest. It is intentionally **not** a web UI. Single-run tearsheets export dashboard-style images such as:
+
+- cumulative return vs benchmark when available
+- underwater / drawdown
+- rolling diagnostics
+- monthly heatmap and return distributions
+- holdings / sector / turnover views
+
+Useful report options:
+
+```bash
+# Single-run dashboard with automatic profile detection
+uv run python -m backtesting.reporting.cli \
+  --runs run-a \
+  --name run-a-report
+
+# Force absolute/strategy-only mode and skip benchmark loading
+uv run python -m backtesting.reporting.cli \
+  --runs run-a \
+  --name run-a-absolute \
+  --profile absolute \
+  --no-benchmark
+
+# Comparison report with an explicit profile override
+uv run python -m backtesting.reporting.cli \
+  --runs run-a run-b \
+  --name compare-ab \
+  --kind comparison \
+  --profile index
+```
+
+Profile options:
+
+- `alpha` — benchmark-relative strategy evaluation
+- `index` — tracking/index-like strategy evaluation
+- `absolute` — strategy-only report without benchmark dependence
+- `auto` — infer the profile from the run config and benchmark availability
+
 ---
 
 ## Analysts workflow notes

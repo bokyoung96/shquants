@@ -116,8 +116,18 @@ def test_comparison_table_builder_builds_ranked_comparison_tables() -> None:
         "exposure_summary",
         "sector_summary",
     }
-    assert list(tables["ranked_summary"].columns) == ["display_name", "cagr", "sharpe", "max_drawdown", "final_equity"]
+    assert list(tables["ranked_summary"].columns) == [
+        "display_name",
+        "profile",
+        "cagr",
+        "sharpe",
+        "sortino",
+        "max_drawdown",
+        "win_rate",
+        "final_equity",
+    ]
     assert tables["ranked_summary"].iloc[0]["display_name"] == "Strategy beta"
+    assert "profile" in tables["benchmark_relative"].columns or "has_benchmark" in tables["benchmark_relative"].columns
     assert "information_ratio" in tables["benchmark_relative"].columns
     assert "holdings_count" in tables["exposure_summary"].columns
     assert "top_sector" in tables["sector_summary"].columns

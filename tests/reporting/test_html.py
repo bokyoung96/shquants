@@ -28,8 +28,7 @@ def test_html_renderer_uses_tearsheet_template(tmp_path: Path) -> None:
         run_id="run-a",
         display_name="Momentum",
         pages={
-            "executive": _write_asset(tmp_path / "single-report" / "pages" / "executive.png"),
-            "rolling": _write_asset(tmp_path / "single-report" / "pages" / "rolling.png"),
+            "performance": _write_asset(tmp_path / "single-report" / "pages" / "performance.png"),
         },
         tables={
             "performance_summary": pd.DataFrame(
@@ -65,7 +64,7 @@ def test_html_renderer_uses_tearsheet_template(tmp_path: Path) -> None:
     assert "KOSPI200" in html
     assert "Executive Summary" in html
     assert "Appendix" in html
-    assert "executive.png" in html
+    assert "performance.png" in html
     assert "Top Holdings" in html
     assert "17.2%" in html
     assert "1.10" in html
@@ -77,6 +76,29 @@ def test_html_renderer_uses_tearsheet_template(tmp_path: Path) -> None:
     assert "Open interactive chart" not in html
     assert "110.0%" not in html
     assert "101.0%" not in html
+
+
+def test_html_renderer_supports_strategy_only_reports(tmp_path: Path) -> None:
+    bundle = TearsheetBundle(
+        spec=ReportSpec(
+            name="single-report",
+            run_ids=("run-a",),
+            title="Absolute Tearsheet",
+            benchmark=None,
+            profile="absolute",
+        ),
+        out_dir=tmp_path / "single-report",
+        run_id="run-a",
+        display_name="Absolute",
+        pages={"performance": _write_asset(tmp_path / "single-report" / "pages" / "performance.png")},
+        tables={"performance_summary": pd.DataFrame([{"metric_key": "cagr", "metric": "CAGR", "value": 0.172}])},
+        notes=(),
+    )
+
+    path = HtmlRenderer().render(bundle)
+
+    html = path.read_text(encoding="utf-8")
+    assert "Strategy Only" in html
 
 
 def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
@@ -186,10 +208,7 @@ def test_tearsheet_composer_builds_pdf_first_context(tmp_path: Path) -> None:
         run_id="run-a",
         display_name="Momentum",
         pages={
-            "executive": _write_asset(tmp_path / "single-report" / "pages" / "executive.png"),
-            "rolling": _write_asset(tmp_path / "single-report" / "pages" / "rolling.png"),
-            "calendar": _write_asset(tmp_path / "single-report" / "pages" / "calendar.png"),
-            "exposure": _write_asset(tmp_path / "single-report" / "pages" / "exposure.png"),
+            "performance": _write_asset(tmp_path / "single-report" / "pages" / "performance.png"),
         },
         tables={
             "performance_summary": pd.DataFrame(
@@ -217,22 +236,16 @@ def test_tearsheet_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     assert report.cover.report_name == "single-report"
     assert report.cover.descriptor
     assert [(item.label, item.value) for item in report.executive_metrics][:1] == [("CAGR", "17.2%")]
-    assert tuple(page.key for page in report.executive_pages) == ("executive",)
+    assert tuple(page.key for page in report.executive_pages) == ("performance",)
     assert tuple(table.key for table in report.executive_tables) == ("performance_summary", "drawdown_episodes")
     assert tuple(section.title for section in report.sections) == (
-        "Rolling Diagnostics",
-        "Return Shape",
         "Holdings And Sectors",
         "Appendix",
     )
-    assert tuple(page.key for page in report.sections[0].pages) == ("rolling",)
-    assert tuple(table.key for table in report.sections[0].tables) == ()
-    assert tuple(page.key for page in report.sections[1].pages) == ("calendar",)
-    assert tuple(table.key for table in report.sections[1].tables) == ()
-    assert tuple(page.key for page in report.sections[2].pages) == ("exposure",)
-    assert tuple(table.key for table in report.sections[2].tables) == ("top_holdings", "sector_weights")
-    assert tuple(page.key for page in report.sections[3].pages) == ()
-    assert tuple(table.key for table in report.sections[3].tables) == ("validation_appendix",)
+    assert tuple(page.key for page in report.sections[0].pages) == ()
+    assert tuple(table.key for table in report.sections[0].tables) == ("top_holdings", "sector_weights")
+    assert tuple(page.key for page in report.sections[1].pages) == ()
+    assert tuple(table.key for table in report.sections[1].tables) == ("validation_appendix",)
     assert report.notes == ("missing_factor:run-a",)
     assert len(report.executive_metrics) == 5
 
@@ -339,7 +352,7 @@ def test_html_renderer_supports_html_page_asset_fallback_for_new_templates(tmp_p
         run_id="run-a",
         display_name="Momentum",
         pages={
-            "executive": _write_asset(tmp_path / "fallback-report" / "pages" / "executive.html"),
+            "performance": _write_asset(tmp_path / "fallback-report" / "pages" / "performance.html"),
         },
         tables={
             "performance_summary": pd.DataFrame([{"metric_key": "cagr", "metric": "CAGR", "value": 0.172}]),
@@ -355,4 +368,4 @@ def test_html_renderer_supports_html_page_asset_fallback_for_new_templates(tmp_p
 
     html = path.read_text(encoding="utf-8")
     assert '<iframe class="plot-frame"' in html
-    assert "pages/executive.html" in html
+    assert "pages/performance.html" in html

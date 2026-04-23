@@ -14,8 +14,18 @@ __all__ = (
     "build_sector_comparison_table",
 )
 
-_RANKED_COLUMNS = ("display_name", "cagr", "sharpe", "max_drawdown", "final_equity")
-_RELATIVE_COLUMNS = ("display_name", "alpha", "beta", "tracking_error", "information_ratio")
+_RANKED_COLUMNS = ("display_name", "profile", "cagr", "sharpe", "sortino", "max_drawdown", "win_rate", "final_equity")
+_RELATIVE_COLUMNS = (
+    "display_name",
+    "has_benchmark",
+    "alpha",
+    "beta",
+    "correlation",
+    "tracking_error",
+    "information_ratio",
+    "active_return",
+    "active_risk",
+)
 _HOLDING_TURNOVER_COLUMNS = ("display_name", "holdings_count", "avg_turnover")
 _SECTOR_COLUMNS = ("display_name", "top_sector", "top_sector_weight")
 
@@ -31,19 +41,26 @@ class ComparisonTableBuilder:
             ranked_rows.append(
                 {
                     "display_name": snapshot.display_name,
+                    "profile": snapshot.profile.value,
                     "cagr": snapshot.metrics.cagr,
                     "sharpe": snapshot.metrics.sharpe,
+                    "sortino": snapshot.metrics.sortino,
                     "max_drawdown": snapshot.metrics.max_drawdown,
+                    "win_rate": snapshot.metrics.win_rate,
                     "final_equity": snapshot.metrics.final_equity,
                 }
             )
             benchmark_rows.append(
                 {
                     "display_name": snapshot.display_name,
+                    "has_benchmark": snapshot.has_benchmark,
                     "alpha": snapshot.metrics.alpha,
                     "beta": snapshot.metrics.beta,
+                    "correlation": snapshot.metrics.correlation,
                     "tracking_error": snapshot.metrics.tracking_error,
                     "information_ratio": snapshot.metrics.information_ratio,
+                    "active_return": snapshot.metrics.active_return,
+                    "active_risk": snapshot.metrics.active_risk,
                 }
             )
             exposure_rows.append(

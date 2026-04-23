@@ -32,6 +32,20 @@ class ReportKind(str, Enum):
     COMPARISON = "comparison"
 
 
+class ReportProfile(str, Enum):
+    ALPHA = "alpha"
+    INDEX = "index"
+    ABSOLUTE = "absolute"
+
+    @classmethod
+    def normalize(cls, value: "ReportProfile | str | None") -> "ReportProfile | None":
+        if value is None:
+            return None
+        if isinstance(value, cls):
+            return value
+        return cls(str(value).strip().lower())
+
+
 @dataclass(frozen=True, slots=True)
 class BenchmarkConfig:
     code: str
@@ -53,7 +67,8 @@ class ReportSpec:
     include_is_oos: bool = True
     formats: tuple[str, ...] = ("html", "pdf")
     kind: ReportKind | None = None
-    benchmark: BenchmarkConfig = field(default_factory=BenchmarkConfig.default_kospi200)
+    benchmark: BenchmarkConfig | None = field(default_factory=BenchmarkConfig.default_kospi200)
+    profile: ReportProfile | None = None
 
     def __post_init__(self) -> None:
         if not self.run_ids:
@@ -68,6 +83,7 @@ class ReportSpec:
                 raise ValueError(f"invalid report kind: {kind!r}") from exc
 
         object.__setattr__(self, "kind", kind)
+        object.__setattr__(self, "profile", ReportProfile.normalize(self.profile))
 
         if kind is ReportKind.TEARSHEET and len(self.run_ids) != 1:
             raise ValueError("TEARSHEET reports require exactly one run_id")

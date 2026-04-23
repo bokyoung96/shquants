@@ -72,15 +72,30 @@ class ReportBuilder:
     def _build_snapshots(self, runs: list[SavedRun], spec: ReportSpec) -> list[object]:
         snapshots: list[object] = []
         for run in runs:
-            benchmark_repo, sector_repo = default_repositories_for_universe(
-                str(run.config.get("universe_id")) if run.config.get("universe_id") is not None else None
-            )
+            benchmark_repo, sector_repo = self._repositories_for_run(run)
             factory = PerformanceSnapshotFactory(
                 benchmark_repo=benchmark_repo,
                 sector_repo=sector_repo,
             )
-            snapshots.append(factory.build(run, spec.benchmark))
+            snapshots.append(factory.build(run, spec.benchmark, spec.profile))
         return snapshots
+
+    @staticmethod
+    def _repositories_for_run(run: SavedRun) -> tuple[BenchmarkRepository, SectorRepository]:
+        universe_id = str(run.config.get("universe_id")) if run.config.get("universe_id") is not None else None
+        try:
+            return default_repositories_for_universe(universe_id)
+        except (FileNotFoundError, KeyError, ValueError):
+            fallback_benchmark = BenchmarkRepository.from_frame(pd.DataFrame(index=run.returns.index))
+            fallback_sector_map = pd.DataFrame(
+                {
+                    column: pd.Series("Unclassified", index=run.weights.index)
+                    for column in run.weights.columns
+                },
+                index=run.weights.index,
+            )
+            fallback_sector = SectorRepository.from_frame(fallback_sector_map)
+            return fallback_benchmark, fallback_sector
 
     def _build_tearsheet_bundle(
         self,

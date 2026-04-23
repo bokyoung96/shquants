@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from backtesting.reporting.models import BenchmarkConfig, ComparisonBundle, ReportKind, ReportSpec, TearsheetBundle
+from backtesting.reporting.models import BenchmarkConfig, ComparisonBundle, ReportKind, ReportProfile, ReportSpec, TearsheetBundle
 
 
 def test_report_spec_defaults_to_tearsheet_for_single_run() -> None:
@@ -21,6 +21,12 @@ def test_report_spec_normalizes_string_kind_to_enum() -> None:
     spec = ReportSpec(name="single", run_ids=("run-a",), kind="tearsheet")
 
     assert spec.kind is ReportKind.TEARSHEET
+
+
+def test_report_spec_normalizes_profile_to_enum() -> None:
+    spec = ReportSpec(name="single", run_ids=("run-a",), profile="index")
+
+    assert spec.profile is ReportProfile.INDEX
 
 
 def test_report_spec_positional_arguments_remain_backward_compatible() -> None:

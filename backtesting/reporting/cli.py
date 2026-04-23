@@ -8,7 +8,7 @@ from root import ROOT
 
 from .builder import ReportBuilder
 from .html import HtmlRenderer
-from .models import BenchmarkConfig, ReportKind, ReportSpec
+from .models import BenchmarkConfig, ReportKind, ReportProfile, ReportSpec
 from .pdf import PdfRenderer
 from .reader import RunReader
 
@@ -37,19 +37,23 @@ class ReportCli:
         parser.add_argument("--name", required=True)
         parser.add_argument("--title")
         parser.add_argument("--kind", choices=("auto", "tearsheet", "comparison"), default="auto")
+        parser.add_argument("--profile", choices=("auto", "alpha", "index", "absolute"), default="auto")
         parser.add_argument("--benchmark-code", default="IKS200")
         parser.add_argument("--benchmark-name", default="KOSPI200")
+        parser.add_argument("--no-benchmark", action="store_true")
         return parser
 
     def run(self, argv: list[str] | None = None) -> dict[str, object]:
         args = self.parser().parse_args(argv)
         runs = [self.reader.read(self.runs_root / run_id) for run_id in args.runs]
+        benchmark = None if args.no_benchmark else BenchmarkConfig(code=args.benchmark_code, name=args.benchmark_name)
         spec = ReportSpec(
             name=args.name,
             run_ids=tuple(args.runs),
             title=args.title,
             kind=None if args.kind == "auto" else ReportKind(args.kind),
-            benchmark=BenchmarkConfig(code=args.benchmark_code, name=args.benchmark_name),
+            benchmark=benchmark,
+            profile=None if args.profile == "auto" else ReportProfile(args.profile),
         )
         bundle = self.builder.build(spec, runs)
         html_path = self.html.render(bundle)
@@ -59,8 +63,9 @@ class ReportCli:
             "report_name": spec.name,
             "run_ids": list(spec.run_ids),
             "kind": spec.kind.value,
-            "benchmark_code": spec.benchmark.code,
-            "benchmark_name": spec.benchmark.name,
+            "profile": None if spec.profile is None else spec.profile.value,
+            "benchmark_code": None if spec.benchmark is None else spec.benchmark.code,
+            "benchmark_name": None if spec.benchmark is None else spec.benchmark.name,
             "output_dir": str(bundle.out_dir),
             "html_path": str(html_path),
             "pdf_path": None if pdf_path is None else str(pdf_path),

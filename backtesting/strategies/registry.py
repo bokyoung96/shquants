@@ -4,6 +4,7 @@ import inspect
 from typing import Callable
 
 from .base import RegisteredStrategy
+from .flow_fundamental import FlowFundamentalTopN
 from .momentum import MomentumTopN
 
 
@@ -33,4 +34,5 @@ def list_strategies() -> tuple[str, ...]:
     return tuple(sorted(_REGISTRY))
 
 
+register_strategy("flow_fundamental", FlowFundamentalTopN)
 register_strategy("momentum", MomentumTopN)

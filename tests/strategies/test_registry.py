@@ -8,7 +8,7 @@ from backtesting.strategies import RegisteredStrategy, build_strategy, list_stra
 
 
 def test_registry_lists_default_strategies() -> None:
-    assert list_strategies() == ("flow_fundamental", "momentum")
+    assert list_strategies() == ("momentum",)
 
 
 def test_momentum_strategy_builds_weights() -> None:

@@ -5,7 +5,6 @@ from typing import Callable
 
 from .base import RegisteredStrategy
 from .flow_fundamental import FlowFundamentalTopN
-from .flow_ohlcv import FlowOhlcvTopN
 from .momentum import MomentumTopN
 
 
@@ -36,5 +35,4 @@ def list_strategies() -> tuple[str, ...]:
 
 
 register_strategy("flow_fundamental", FlowFundamentalTopN)
-register_strategy("flow_ohlcv", FlowOhlcvTopN)
 register_strategy("momentum", MomentumTopN)

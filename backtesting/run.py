@@ -13,10 +13,11 @@ from .analytics import summarize_perf
 from .catalog import DataCatalog, DatasetId
 from .data import DataLoader, LoadRequest, ParquetStore
 from .engine import BacktestEngine, BacktestResult
-from .execution import CostModel, DailySchedule, MonthlySchedule, WeeklySchedule
+from .execution import CostModel, CustomSchedule, DailySchedule, MonthlySchedule, WeeklySchedule
 from .ingest import IngestJob
 from .policy.base import PositionPlan
 from .reporting import RunWriter
+from .specs import ExecutionSpec, ScheduleSpec, get_hook, get_preset, load_execution_spec, resolve_execution_spec
 from .strategies import build_strategy, list_strategies
 from .universe import UniverseRegistry, UniverseSpec
 from .validation import validate_position_plan
@@ -31,6 +32,10 @@ class RunConfig:
     name: str | None = None
     top_n: int = 20
     lookback: int = 20
+    flow_lookback: int = 20
+    momentum_lookback: int = 60
+    liquidity_lookback: int = 20
+    momentum_weight: float = 0.5
     schedule: str = "monthly"
     fill_mode: str = "next_open"
     fee: float = 0.0
@@ -52,6 +57,8 @@ class RunReport:
     result: BacktestResult
     position_plan: PositionPlan | None = None
     output_dir: Path | None = None
+    resolved_spec: object | None = None
+    execution_resolution: dict[str, object] | None = None
 
 
 class BacktestRunner:
@@ -75,21 +82,49 @@ class BacktestRunner:
         self.writer = RunWriter(self.result_dir)
 
     def run(self, config: RunConfig) -> RunReport:
-        strategy = build_strategy(
-            config.strategy,
-            top_n=config.top_n,
-            lookback=config.lookback,
+        return self.run_spec(self.resolve_spec_from_config(config))
+
+    def run_resolved_cli(
+        self,
+        *,
+        preset_id: str | None = None,
+        spec_path: str | None = None,
+        config: RunConfig | None = None,
+    ) -> RunReport:
+        selected = sum(bool(item) for item in (preset_id, spec_path, config))
+        if selected != 1:
+            raise ValueError("choose exactly one of preset_id, spec_path, or config")
+        if preset_id is not None:
+            spec = get_preset(preset_id)
+        elif spec_path is not None:
+            spec = load_execution_spec(spec_path)
+        else:
+            assert config is not None
+            spec = self._execution_spec_from_config(config)
+        return self.run_spec(self.resolve_spec(spec))
+
+    def resolve_spec_from_config(self, config: RunConfig):
+        return self.resolve_spec(self._execution_spec_from_config(config))
+
+    def resolve_spec(self, spec: ExecutionSpec):
+        universe_spec = self._resolve_universe_spec_from_spec(spec)
+        return resolve_execution_spec(
+            spec,
+            catalog=self.catalog,
+            parquet_dir=self.parquet_dir,
+            raw_dir=self.raw_dir,
+            universe_spec=universe_spec,
         )
 
-        universe_spec = self._resolve_universe_spec(config)
-        effective_config = self._resolve_effective_config(config, universe_spec)
-        dataset_ids = self._resolve_dataset_ids(strategy.datasets, effective_config, universe_spec)
+    def run_spec(self, resolved_spec) -> RunReport:
+        spec = resolved_spec.execution
+        universe_spec = self._resolve_universe_spec_from_spec(spec)
+        effective_config = self._resolve_effective_config_from_spec(spec, universe_spec)
 
-        self._ensure_parquet(dataset_ids)
-
+        self._ensure_parquet(list(resolved_spec.dataset_ids))
         market = self.loader.load(
             LoadRequest(
-                datasets=dataset_ids,
+                datasets=list(resolved_spec.dataset_ids),
                 start=self._resolve_load_start(effective_config.start, effective_config.warmup_days),
                 end=effective_config.end,
                 universe_id=effective_config.universe_id,
@@ -97,13 +132,42 @@ class BacktestRunner:
         )
         market.universe = self._universe(market, universe_spec)
 
-        plan = strategy.build_plan(market)
+        if spec.weight_source.kind == "hook":
+            hook = get_hook(resolved_spec.hook_id or "")
+            hook_plan = hook.build_plan(market=market, resolved_spec=resolved_spec, universe_spec=universe_spec)
+            plan = hook_plan.position_plan
+            schedule_input = hook_plan.schedule
+            extra_tradable = hook_plan.tradable
+            resolution_meta = hook_plan.metadata
+            if hook_plan.schedule is not None:
+                rebalance_dates = tuple(ts.date().isoformat() for ts in hook_plan.schedule[hook_plan.schedule].index)
+                resolved_spec = replace(
+                    resolved_spec,
+                    schedule=ScheduleSpec(kind="custom_dates", dates=rebalance_dates),
+                )
+        else:
+            strategy = build_strategy(
+                spec.strategy,
+                top_n=spec.top_n,
+                lookback=spec.lookback,
+                flow_lookback=spec.flow_lookback,
+                momentum_lookback=spec.momentum_lookback,
+                liquidity_lookback=spec.liquidity_lookback,
+                momentum_weight=spec.momentum_weight,
+            )
+            plan = strategy.build_plan(market)
+            schedule_input = self._schedule_from_spec(resolved_spec)
+            extra_tradable = None
+            resolution_meta = {}
+
         validate_position_plan(plan)
         weights = plan.target_weights
         close = market.frames["close"]
         tradable = close.notna()
         if market.universe is not None:
             tradable = tradable & market.universe.reindex_like(close).fillna(False).astype(bool)
+        if extra_tradable is not None:
+            tradable = tradable & extra_tradable.reindex_like(close).fillna(False).astype(bool)
 
         engine = BacktestEngine(
             cost=CostModel(
@@ -118,7 +182,7 @@ class BacktestRunner:
             weights=weights,
             capital=effective_config.capital,
             tradable=tradable,
-            schedule=self._schedule(effective_config.schedule),
+            schedule=schedule_input,
             fill_mode=effective_config.fill_mode,
             allow_fractional=effective_config.allow_fractional,
         )
@@ -133,8 +197,45 @@ class BacktestRunner:
         summary["final_equity"] = float(result.equity.iloc[-1])
         summary["avg_turnover"] = float(result.turnover.mean())
         report = RunReport(config=effective_config, summary=summary, result=result, position_plan=plan)
+        report.resolved_spec = resolved_spec
+        report.execution_resolution = {
+            "spec_source": spec.spec_source,
+            "preset_id": spec.preset_id,
+            "hook_id": resolved_spec.hook_id,
+            "resolution_notes": list(resolved_spec.resolution_notes),
+            "fallbacks_applied": list(spec.data_policy.fallbacks_applied),
+            **resolution_meta,
+        }
         report.output_dir = self.writer.write(report)
         return report
+
+    def _execution_spec_from_config(self, config: RunConfig) -> ExecutionSpec:
+        return ExecutionSpec(
+            start=config.start,
+            end=config.end,
+            capital=config.capital,
+            strategy=config.strategy,
+            name=config.name,
+            top_n=config.top_n,
+            lookback=config.lookback,
+            flow_lookback=config.flow_lookback,
+            momentum_lookback=config.momentum_lookback,
+            liquidity_lookback=config.liquidity_lookback,
+            momentum_weight=config.momentum_weight,
+            schedule=ScheduleSpec(kind="named", name=config.schedule),
+            fill_mode=config.fill_mode,
+            fee=config.fee,
+            sell_tax=config.sell_tax,
+            slippage=config.slippage,
+            use_k200=config.use_k200,
+            allow_fractional=config.allow_fractional,
+            universe_id=config.universe_id,
+            benchmark_code=config.benchmark_code,
+            benchmark_name=config.benchmark_name,
+            benchmark_dataset=config.benchmark_dataset,
+            warmup_days=config.warmup_days,
+            spec_source="cli",
+        )
 
     def _ensure_parquet(self, dataset_ids: list[DatasetId]) -> None:
         for dataset_id in dataset_ids:
@@ -143,15 +244,40 @@ class BacktestRunner:
             if not path.exists():
                 self.ingest.run(dataset_id)
 
-    def _resolve_universe_spec(self, config: RunConfig) -> UniverseSpec | None:
-        if config.universe_id is not None:
-            return self.universe_registry.get(config.universe_id)
-        if config.use_k200:
+    def _resolve_universe_spec_from_spec(self, spec: ExecutionSpec) -> UniverseSpec | None:
+        if spec.universe_id is not None:
+            return self.universe_registry.get(spec.universe_id)
+        if spec.use_k200:
             return self.universe_registry.get("legacy_k200")
         return None
 
     @staticmethod
-    def _resolve_effective_config(config: RunConfig, universe_spec: UniverseSpec | None) -> RunConfig:
+    def _resolve_effective_config_from_spec(spec: ExecutionSpec, universe_spec: UniverseSpec | None) -> RunConfig:
+        config = RunConfig(
+            start=spec.start,
+            end=spec.end,
+            capital=spec.capital,
+            strategy=spec.strategy,
+            name=spec.name,
+            top_n=spec.top_n,
+            lookback=spec.lookback,
+            flow_lookback=spec.flow_lookback,
+            momentum_lookback=spec.momentum_lookback,
+            liquidity_lookback=spec.liquidity_lookback,
+            momentum_weight=spec.momentum_weight,
+            schedule=spec.schedule.name or "custom",
+            fill_mode=spec.fill_mode,
+            fee=spec.fee,
+            sell_tax=spec.sell_tax,
+            slippage=spec.slippage,
+            use_k200=spec.use_k200,
+            allow_fractional=spec.allow_fractional,
+            universe_id=spec.universe_id,
+            benchmark_code=spec.benchmark_code,
+            benchmark_name=spec.benchmark_name,
+            benchmark_dataset=spec.benchmark_dataset,
+            warmup_days=spec.warmup_days,
+        )
         if universe_spec is None:
             return replace(
                 config,
@@ -171,21 +297,6 @@ class BacktestRunner:
             benchmark_dataset=config.benchmark_dataset or universe_spec.default_benchmark_dataset,
         )
 
-    def _resolve_dataset_ids(
-        self,
-        strategy_datasets: tuple[DatasetId, ...],
-        config: RunConfig,
-        universe_spec: UniverseSpec | None,
-    ) -> list[DatasetId]:
-        dataset_ids = [DatasetId.QW_ADJ_C, *strategy_datasets]
-        if config.fill_mode == "next_open":
-            dataset_ids.append(DatasetId.QW_ADJ_O)
-        if universe_spec is not None and universe_spec.membership_dataset is not None:
-            dataset_ids.append(universe_spec.membership_dataset)
-        if universe_spec is not None:
-            dataset_ids = [universe_spec.resolve_dataset(dataset_id) for dataset_id in dataset_ids]
-        return list(dict.fromkeys(dataset_ids))
-
     @staticmethod
     def _universe(market, universe_spec: UniverseSpec | None) -> pd.DataFrame | None:
         if universe_spec is None:
@@ -197,14 +308,19 @@ class BacktestRunner:
         return membership.fillna(0).astype(bool)
 
     @staticmethod
-    def _schedule(name: str):
-        if name == "daily":
-            return DailySchedule()
-        if name == "weekly":
-            return WeeklySchedule()
-        if name == "monthly":
-            return MonthlySchedule()
-        raise ValueError(f"unsupported schedule: {name}")
+    def _schedule_from_spec(resolved_spec):
+        schedule = resolved_spec.schedule
+        if schedule.kind == "named":
+            if schedule.name == "daily":
+                return DailySchedule()
+            if schedule.name == "weekly":
+                return WeeklySchedule()
+            if schedule.name == "monthly":
+                return MonthlySchedule()
+            raise ValueError(f"unsupported schedule: {schedule.name}")
+        if schedule.kind == "custom_dates":
+            return CustomSchedule(pd.to_datetime(list(schedule.dates)))
+        raise ValueError(f"unsupported schedule kind: {schedule.kind}")
 
     @staticmethod
     def _resolve_load_start(start: str, warmup_days: int) -> str:
@@ -246,8 +362,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run registered backtests.")
     parser.add_argument("--strategy", choices=list_strategies(), default="momentum")
     parser.add_argument("--name")
-    parser.add_argument("--start", required=True)
-    parser.add_argument("--end", required=True)
+    parser.add_argument("--start")
+    parser.add_argument("--end")
     parser.add_argument("--capital", type=float, default=100_000_000.0)
     parser.add_argument("--top-n", type=int, default=20)
     parser.add_argument("--lookback", type=int, default=20)
@@ -256,34 +372,50 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fee", type=float, default=0.0)
     parser.add_argument("--sell-tax", type=float, default=0.0)
     parser.add_argument("--slippage", type=float, default=0.0)
+    parser.add_argument("--flow-lookback", type=int, default=20)
+    parser.add_argument("--momentum-lookback", type=int, default=60)
+    parser.add_argument("--liquidity-lookback", type=int, default=20)
+    parser.add_argument("--momentum-weight", type=float, default=0.5)
     parser.add_argument("--out-root")
     parser.add_argument("--universe", choices=("kosdaq150",), dest="universe_id")
     parser.add_argument("--no-k200", action="store_true")
     parser.add_argument("--no-fractional", action="store_true")
+    parser.add_argument("--preset")
+    parser.add_argument("--spec")
     return parser
 
 
 def main() -> None:
     args = _build_parser().parse_args()
-    config = RunConfig(
-        start=args.start,
-        end=args.end,
-        capital=args.capital,
-        strategy=args.strategy,
-        name=args.name,
-        top_n=args.top_n,
-        lookback=args.lookback,
-        schedule=args.schedule,
-        fill_mode=args.fill_mode,
-        fee=args.fee,
-        sell_tax=args.sell_tax,
-        slippage=args.slippage,
-        universe_id=args.universe_id,
-        use_k200=not args.no_k200,
-        allow_fractional=not args.no_fractional,
-    )
+    if args.preset and args.spec:
+        raise SystemExit("choose exactly one advanced execution source: --preset or --spec")
+    config = None
+    if args.preset is None and args.spec is None:
+        if not args.start or not args.end:
+            raise SystemExit("--start and --end are required unless --preset or --spec is provided")
+        config = RunConfig(
+            start=args.start,
+            end=args.end,
+            capital=args.capital,
+            strategy=args.strategy,
+            name=args.name,
+            top_n=args.top_n,
+            lookback=args.lookback,
+            flow_lookback=args.flow_lookback,
+            momentum_lookback=args.momentum_lookback,
+            liquidity_lookback=args.liquidity_lookback,
+            momentum_weight=args.momentum_weight,
+            schedule=args.schedule,
+            fill_mode=args.fill_mode,
+            fee=args.fee,
+            sell_tax=args.sell_tax,
+            slippage=args.slippage,
+            universe_id=args.universe_id,
+            use_k200=not args.no_k200,
+            allow_fractional=not args.no_fractional,
+        )
     runner = BacktestRunner(result_dir=Path(args.out_root) if args.out_root else None)
-    report = runner.run(config)
+    report = runner.run_resolved_cli(preset_id=args.preset, spec_path=args.spec, config=config)
     payload = {
         "config": asdict(report.config),
         "summary": report.summary,

@@ -37,6 +37,10 @@ class RunWriter:
         self._write_json(run_dir / "validation.json", getattr(report, "validation", None) or {"warnings": []})
         self._write_json(run_dir / "split.json", getattr(report, "split", None) or {"is": None, "oos": None})
         self._write_json(run_dir / "factor.json", getattr(report, "factor", None) or {"metrics": {}})
+        if getattr(report, "resolved_spec", None) is not None:
+            self._write_json(run_dir / "resolved_execution_spec.json", asdict(report.resolved_spec))
+        if getattr(report, "execution_resolution", None) is not None:
+            self._write_json(run_dir / "execution_resolution.json", report.execution_resolution)
 
         report.result.equity.rename("equity").to_csv(series_dir / "equity.csv", index_label="date")
         report.result.returns.rename("returns").to_csv(series_dir / "returns.csv", index_label="date")

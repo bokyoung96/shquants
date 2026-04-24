@@ -93,6 +93,31 @@ uv run python -m pytest \
   tests/test_smoke.py
 ```
 
+### 3.5) Advanced execution surfaces
+
+The basic CLI stays available for simple registered strategies:
+
+```bash
+uv run python -m backtesting.run \
+  --strategy momentum \
+  --start 2024-01-01 \
+  --end 2024-12-31
+```
+
+For officially supported advanced paths, use a preset:
+
+```bash
+uv run python -m backtesting.run --preset kospi200_semiannual_floatcap
+```
+
+Or use a JSON execution spec for explicit reproducibility:
+
+```bash
+uv run python -m backtesting.run --spec path/to/run_spec.json
+```
+
+Advanced runs emit `resolved_execution_spec.json` and `execution_resolution.json` next to the existing result artifacts so the execution surface stays auditable without changing portfolio math. YAML spec parsing is intentionally not enabled until a YAML parser dependency is explicitly approved for the repo.
+
 ### 4) Build a static backtest dashboard report
 
 The reporting flow now produces **static report pictures/pages** after a backtest. It is intentionally **not** a web UI. Single-run tearsheets export dashboard-style images such as:

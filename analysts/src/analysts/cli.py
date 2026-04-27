@@ -95,7 +95,7 @@ def build_watch_runner(*, base_dir: Path) -> WatchUntilRunner:
     client = telethon_module.TelethonChannelClient(base_dir=base_dir, config=config)
     pipeline = ArasPipeline(client=client, store=store, config=config)
     fetcher = TelegramFetcher(client=client, store=store, config=config)
-    return WatchUntilRunner(client=client, message_ingestor=fetcher, pipeline=pipeline)
+    return WatchUntilRunner(client=client, message_ingestor=fetcher, pipeline=pipeline, catch_up=fetcher.catch_up)
 
 
 def build_gmail_source_pipeline(*, base_dir: Path) -> GmailSourcePipeline:

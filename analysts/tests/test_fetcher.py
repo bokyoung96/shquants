@@ -45,6 +45,7 @@ class FakeTelethonClient:
         self._fail_file_ids = fail_file_ids or set()
         self.latest_channel_requests: list[str] = []
         self.channel_requests: list[tuple[str, int | None, int]] = []
+        self.recent_requests: list[tuple[str, int]] = []
         self.downloaded_file_ids: list[str] = []
 
     def get_latest_message_id(self, *, channel: str) -> int | None:
@@ -59,6 +60,11 @@ class FakeTelethonClient:
             for message in self._messages
             if message['chat']['title'] == channel and (after_message_id is None or message['message_id'] > after_message_id)
         ][:limit]
+
+    def recent_messages(self, *, channel: str, limit: int) -> list[dict]:
+        self.recent_requests.append((channel, limit))
+        messages = [message for message in self._messages if message['chat']['title'] == channel]
+        return sorted(messages, key=lambda item: item['message_id'], reverse=True)[:limit]
 
     def download_document(self, message: dict) -> bytes:
         file_id = message['document']['file_id']
@@ -498,3 +504,55 @@ def test_ingest_message_recovers_existing_report_when_summary_is_missing(tmp_pat
     assert recovered.report is not None
     assert recovered.report.message_id == 702
     assert client.downloaded_file_ids == ['file-702']
+
+
+def test_catch_up_downloads_missing_recent_pdfs_without_summarizing(tmp_path: Path) -> None:
+    messages = [
+        {
+            'message_id': 800,
+            'date': 1713083000,
+            'chat': {'title': 'DOC_POOL'},
+            'caption': 'Already saved',
+            'document': {
+                'file_id': 'file-800',
+                'file_unique_id': 'uniq-800',
+                'file_name': 'saved.pdf',
+                'mime_type': 'application/pdf',
+            },
+        },
+        {
+            'message_id': 801,
+            'date': 1713083060,
+            'chat': {'title': 'DOC_POOL'},
+            'caption': '',
+        },
+        {
+            'message_id': 802,
+            'date': 1713083120,
+            'chat': {'title': 'DOC_POOL'},
+            'caption': 'Missed PDF',
+            'document': {
+                'file_id': 'file-802',
+                'file_unique_id': 'uniq-802',
+                'file_name': 'missed.pdf',
+                'mime_type': 'application/pdf',
+            },
+        },
+    ]
+    client = FakeTelethonClient(messages)
+    config = build_config(tmp_path)
+    store = SqliteArasStore(config.paths.state_db)
+    fetcher = TelegramFetcher(client=client, store=store, config=config)
+
+    first = fetcher.ingest_message(channel='DOC_POOL', message=messages[0])
+    assert first.status == 'downloaded'
+
+    result = fetcher.catch_up(channel='DOC_POOL', limit=10)
+
+    assert client.recent_requests == [('DOC_POOL', 10)]
+    assert [report.message_id for report in result.downloaded] == [802]
+    assert [item['message_id'] for item in result.skipped_duplicates] == [800]
+    assert result.ignored_updates == [801]
+    assert result.next_offset == 802
+    assert store.get_last_seen_message_id('DOC_POOL') == 802
+    assert client.downloaded_file_ids == ['file-800', 'file-802']

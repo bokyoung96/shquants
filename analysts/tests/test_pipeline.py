@@ -241,7 +241,7 @@ def test_summarize_latest_falls_back_to_raw_reports_when_db_is_empty(tmp_path: P
 def test_show_config_prints_serialized_paths(tmp_path: Path, capsys) -> None:
     assert main(['show-config', '--base-dir', str(tmp_path)]) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload['paths']['base_dir'] == str(tmp_path)
+    assert payload['paths']['base_dir'] == tmp_path.as_posix()
 
 
 def test_canonical_document_supports_gmail_body_source(tmp_path: Path) -> None:

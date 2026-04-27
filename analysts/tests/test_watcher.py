@@ -58,6 +58,18 @@ class FakeMessageIngestor:
         return self.outcomes.pop(0)
 
 
+class FakeCatcher:
+    def __init__(self, results: list[AsyncWatchResult]) -> None:
+        self.results = results
+        self.calls: list[tuple[str, int]] = []
+
+    def catch_up(self, *, channel: str, limit: int) -> AsyncWatchResult:
+        self.calls.append((channel, limit))
+        if self.results:
+            return self.results.pop(0)
+        return AsyncWatchResult()
+
+
 class RaisingMessageIngestor:
     def ingest_message(self, *, channel: str, message: dict) -> WatchMessageResult:
         raise TypeError("bad payload")
@@ -368,6 +380,33 @@ def test_watch_until_emits_heartbeat_while_waiting(tmp_path: Path, caplog) -> No
         )
 
     assert 'watch_heartbeat channel=DOC_POOL' in caplog.text
+
+
+def test_watch_until_runs_catch_up_without_summarizing(tmp_path: Path) -> None:
+    pipeline = FakePipeline()
+    catcher = FakeCatcher([AsyncWatchResult(downloaded=2, ignored=1)])
+    runner = WatchUntilRunner(
+        client=FakeAsyncClient(messages=[], delay_seconds=0.03),
+        message_ingestor=FakeMessageIngestor([]),
+        pipeline=pipeline,
+        now_fn=lambda: datetime.fromisoformat('2026-04-15T13:00:00+09:00'),
+        catch_up=catcher.catch_up,
+        catch_up_interval_seconds=0.01,
+        catch_up_limit=25,
+        heartbeat_interval_seconds=60.0,
+    )
+
+    result = asyncio.run(
+        runner.watch_until(
+            channel='DOC_POOL',
+            until=datetime.fromisoformat('2026-04-15T17:30:00+09:00'),
+        )
+    )
+
+    assert catcher.calls
+    assert catcher.calls[0] == ('DOC_POOL', 25)
+    assert result == AsyncWatchResult(downloaded=2)
+    assert pipeline.calls == []
 
 
 def test_watch_until_many_processes_two_channels_in_one_runner(tmp_path: Path) -> None:

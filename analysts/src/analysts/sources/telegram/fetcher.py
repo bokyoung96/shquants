@@ -30,6 +30,8 @@ class TelethonChannelClient(Protocol):
         limit: int,
     ) -> list[dict[str, Any]]: ...
 
+    def recent_messages(self, *, channel: str, limit: int) -> list[dict[str, Any]]: ...
+
     def download_document(self, message: dict[str, Any]) -> bytes: ...
 
 
@@ -61,6 +63,37 @@ class TelegramFetcher:
         if hasattr(self.client, "get_updates"):
             return self._poll_bot_updates_once(channel=channel)
         return self._poll_telethon_once(channel=channel)
+
+    def catch_up(self, *, channel: str, limit: int = 300) -> FetchBatch:
+        if not hasattr(self.client, "recent_messages"):
+            return FetchBatch()
+        messages = self.client.recent_messages(channel=channel, limit=limit)
+        downloaded: list[ReportRecord] = []
+        skipped_duplicates: list[dict[str, Any]] = []
+        ignored_updates: list[int] = []
+        safe_last_seen = self.store.get_last_seen_message_id(channel)
+
+        for message in sorted(messages, key=lambda item: item["message_id"]):
+            parsed = self._extract_downloadable_message(message, expected_channel=channel)
+            if parsed is None:
+                ignored_updates.append(message["message_id"])
+                safe_last_seen = self._newer(safe_last_seen, message["message_id"])
+                continue
+
+            result = self._ingest_downloadable_message(channel=channel, parsed=parsed)
+            if result.status in {"duplicate", "existing_unsummarized"}:
+                skipped_duplicates.append(message)
+            elif result.report is not None:
+                downloaded.append(result.report)
+            safe_last_seen = self._newer(safe_last_seen, parsed.message_id)
+
+        self._checkpoint_last_seen(channel=channel, message_id=safe_last_seen)
+        return FetchBatch(
+            downloaded=downloaded,
+            skipped_duplicates=skipped_duplicates,
+            ignored_updates=ignored_updates,
+            next_offset=safe_last_seen,
+        )
 
     def ingest_message(self, *, channel: str, message: dict[str, Any]) -> WatchMessageResult:
         parsed = self._extract_downloadable_message(message, expected_channel=channel)
@@ -312,6 +345,10 @@ class TelegramFetcher:
         if message_id is None:
             return
         self.store.set_last_seen_message_id(channel, message_id)
+
+    @staticmethod
+    def _newer(current: int | None, candidate: int) -> int:
+        return candidate if current is None or candidate > current else current
 
     @staticmethod
     def _format_timestamp(timestamp: int | str | None) -> str | None:

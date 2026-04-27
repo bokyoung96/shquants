@@ -8,6 +8,10 @@ from typing import Any
 REDACTED = "<redacted>"
 
 
+def _display_path(path: Path) -> str:
+    return path.as_posix()
+
+
 @dataclass(frozen=True)
 class ArasPaths:
     base_dir: Path
@@ -91,9 +95,9 @@ class GmailConfig:
     def to_display_dict(self) -> dict[str, Any]:
         return {
             "account_name": self.account_name,
-            "client_secret_path": None if self.client_secret_path is None else str(self.client_secret_path),
+            "client_secret_path": None if self.client_secret_path is None else _display_path(self.client_secret_path),
             "client_secret_json": "<inline>" if self.client_secret_json is not None else None,
-            "token_path": str(self.token_path),
+            "token_path": _display_path(self.token_path),
             "query": self.query,
             "label_filters": list(self.label_filters),
             "body_candidate_rules": {
@@ -116,18 +120,18 @@ class ArasConfig:
     def to_display_dict(self) -> dict[str, Any]:
         return {
             "paths": {
-                "base_dir": str(self.paths.base_dir),
-                "data_dir": str(self.paths.data_dir),
-                "raw_dir": str(self.paths.raw_dir),
-                "telegram_raw_dir": str(self.paths.telegram_raw_dir),
-                "gmail_raw_dir": str(self.paths.gmail_raw_dir),
-                "processed_dir": str(self.paths.processed_dir),
-                "wiki_dir": str(self.paths.wiki_dir),
-                "signals_dir": str(self.paths.signals_dir),
-                "state_dir": str(self.paths.state_dir),
-                "state_db": str(self.paths.state_db),
-                "local_config_path": str(self.paths.local_config_path),
-                "telethon_session_path": str(self.paths.telethon_session_path),
+                "base_dir": _display_path(self.paths.base_dir),
+                "data_dir": _display_path(self.paths.data_dir),
+                "raw_dir": _display_path(self.paths.raw_dir),
+                "telegram_raw_dir": _display_path(self.paths.telegram_raw_dir),
+                "gmail_raw_dir": _display_path(self.paths.gmail_raw_dir),
+                "processed_dir": _display_path(self.paths.processed_dir),
+                "wiki_dir": _display_path(self.paths.wiki_dir),
+                "signals_dir": _display_path(self.paths.signals_dir),
+                "state_dir": _display_path(self.paths.state_dir),
+                "state_db": _display_path(self.paths.state_db),
+                "local_config_path": _display_path(self.paths.local_config_path),
+                "telethon_session_path": _display_path(self.paths.telethon_session_path),
             },
             "polling_limit": self.polling_limit,
             "telethon": None if self.telethon is None else self.telethon.to_display_dict(),

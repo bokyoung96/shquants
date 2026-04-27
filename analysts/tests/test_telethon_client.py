@@ -69,7 +69,7 @@ class FakeReadClient:
             return None
         return [FakeLatestMessage(message_id=message_id) for message_id in self.messages[:limit]]
 
-    def iter_messages(self, entity, limit, min_id, reverse):
+    def iter_messages(self, entity, limit, min_id=0, reverse=False):
         for message_id in self.messages:
             if message_id > min_id:
                 yield FakeIterMessage(message_id)
@@ -315,6 +315,43 @@ def test_iter_channel_messages_uses_isolated_session_copy(tmp_path: Path, monkey
     payloads = client.iter_channel_messages(channel='DOC_POOL', after_message_id=700, limit=10)
 
     assert [payload['message_id'] for payload in payloads] == [701, 702]
+    assert seen_session_paths
+    assert seen_session_paths[0] != config.paths.telethon_session_path
+
+
+def test_recent_messages_uses_isolated_session_copy(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / 'config.local.json').write_text(
+        json.dumps(
+            {
+                'telegram': {
+                    'mode': 'telethon',
+                    'api_id': 123456,
+                    'api_hash': 'super-secret-hash',
+                    'phone_number': '+821012345678',
+                    'channel': 'DOC_POOL',
+                    'session_name': 'doc-pool',
+                    'pdf_only': True,
+                }
+            }
+        )
+    )
+    config = build_config(tmp_path)
+    config.paths.telethon_session_path.write_bytes(b'session-bytes')
+    client = TelethonChannelClient(base_dir=tmp_path, config=config)
+    seen_session_paths: list[Path] = []
+
+    @contextmanager
+    def fake_sync_client_context(*, session_path: Path | None = None):
+        assert session_path is not None
+        seen_session_paths.append(session_path)
+        yield FakeReadClient(messages=[801, 802])
+
+    monkeypatch.setattr(client, "_sync_client_context", fake_sync_client_context)
+    monkeypatch.setattr(client, "_resolve_entity", lambda raw_client, channel: channel)
+
+    payloads = client.recent_messages(channel='DOC_POOL', limit=10)
+
+    assert [payload['message_id'] for payload in payloads] == [801, 802]
     assert seen_session_paths
     assert seen_session_paths[0] != config.paths.telethon_session_path
 

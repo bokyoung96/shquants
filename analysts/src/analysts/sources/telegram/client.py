@@ -82,6 +82,13 @@ class TelethonChannelClient:
 
         return self._read_channel(channel=channel, reader=read_messages)
 
+    def recent_messages(self, *, channel: str, limit: int) -> list[dict[str, Any]]:
+        def read_messages(client: Any, entity: Any) -> list[dict[str, Any]]:
+            messages = list(client.iter_messages(entity, limit=limit))
+            return [self._adapt_message(channel=channel, message=message).to_fetcher_payload() for message in messages]
+
+        return self._read_channel(channel=channel, reader=read_messages)
+
     def download_document(self, message: dict[str, Any]) -> bytes:
         telethon_message = message.get("_message")
         if telethon_message is None:

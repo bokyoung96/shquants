@@ -79,10 +79,9 @@ def _build_score_threshold(spec: SelectionSpec, feature_frames: Mapping[str, pd.
 
 def _build_event(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
     field = _require_field(spec)
-    if spec.hold_days < 0:
-        raise ValueError("event selection requires hold_days >= 0")
+    hold_days = _require_non_negative_int(spec.hold_days, "event", "hold_days")
     events = _frame_for_field(feature_frames, field).fillna(0).astype(bool)
-    held = events.astype(int).rolling(window=spec.hold_days + 1, min_periods=1).max().astype(bool)
+    held = events.astype(int).rolling(window=hold_days + 1, min_periods=1).max().astype(bool)
     return held.astype(bool)
 
 
@@ -224,17 +223,44 @@ def _require_field(spec: SelectionSpec) -> str:
 
 
 def _require_positive_n(spec: SelectionSpec) -> int:
-    if spec.n is None:
-        raise ValueError("selection kind 'rank_top_n' requires n")
-    if spec.n <= 0:
+    value = _require_non_negative_int(spec.n, "rank_top_n", "n")
+    if value <= 0:
         raise ValueError("selection kind 'rank_top_n' requires n > 0")
-    return spec.n
+    return value
 
 
 def _require_threshold(spec: SelectionSpec) -> float:
-    if spec.threshold is None:
-        raise ValueError("selection kind 'score_threshold' requires threshold")
-    return spec.threshold
+    return _require_float(spec.threshold, "score_threshold", "threshold")
+
+
+
+
+def _require_non_negative_int(value: object, kind: str, field_name: str) -> int:
+    if value is None:
+        raise ValueError(f"selection kind '{kind}' requires {field_name}")
+    if isinstance(value, bool):
+        raise ValueError(f"selection kind '{kind}' requires integer {field_name}")
+    try:
+        coerced = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"selection kind '{kind}' requires integer {field_name}") from exc
+    if coerced != value and not (isinstance(value, str) and str(coerced) == value.strip()):
+        if not isinstance(value, int):
+            raise ValueError(f"selection kind '{kind}' requires integer {field_name}")
+    if coerced < 0:
+        raise ValueError(f"selection kind '{kind}' requires {field_name} >= 0")
+    return coerced
+
+
+def _require_float(value: object, kind: str, field_name: str) -> float:
+    if value is None:
+        raise ValueError(f"selection kind '{kind}' requires {field_name}")
+    if isinstance(value, bool):
+        raise ValueError(f"selection kind '{kind}' requires numeric {field_name}")
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"selection kind '{kind}' requires numeric {field_name}") from exc
 
 
 def _require_path(spec: SelectionSpec) -> str:

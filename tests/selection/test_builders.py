@@ -101,6 +101,13 @@ def test_rank_top_n_rejects_non_positive_n(feature_frames: dict[str, pd.DataFram
         build_selection(spec, feature_frames)
 
 
+def test_rank_top_n_rejects_invalid_typed_n(feature_frames: dict[str, pd.DataFrame]) -> None:
+    spec = SelectionSpec(kind="rank_top_n", field="score", n="x")
+
+    with pytest.raises(ValueError, match="requires integer n"):
+        build_selection(spec, feature_frames)
+
+
 def test_score_threshold_selects_scores_meeting_threshold(feature_frames: dict[str, pd.DataFrame]) -> None:
     spec = SelectionSpec(kind="score_threshold", field="score", threshold=20.0)
 
@@ -108,6 +115,13 @@ def test_score_threshold_selects_scores_meeting_threshold(feature_frames: dict[s
 
     expected = feature_frames["score"].ge(20.0).astype(bool)
     assert_frame_equal(actual, expected)
+
+
+def test_score_threshold_rejects_invalid_typed_threshold(feature_frames: dict[str, pd.DataFrame]) -> None:
+    spec = SelectionSpec(kind="score_threshold", field="score", threshold="x")
+
+    with pytest.raises(ValueError, match="requires numeric threshold"):
+        build_selection(spec, feature_frames)
 
 
 def test_event_extends_flags_by_hold_days(feature_frames: dict[str, pd.DataFrame]) -> None:
@@ -125,6 +139,13 @@ def test_event_extends_flags_by_hold_days(feature_frames: dict[str, pd.DataFrame
         dtype=bool,
     )
     assert_frame_equal(actual, expected)
+
+
+def test_event_rejects_invalid_typed_hold_days(feature_frames: dict[str, pd.DataFrame]) -> None:
+    spec = SelectionSpec(kind="event", field="event_flag", hold_days="x")
+
+    with pytest.raises(ValueError, match="requires integer hold_days"):
+        build_selection(spec, feature_frames)
 
 
 def test_explicit_aligns_csv_to_feature_index_and_columns(

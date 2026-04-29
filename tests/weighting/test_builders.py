@@ -10,6 +10,7 @@ from backtesting.weighting import (
     register_weighting_hook,
     unregister_weighting_hook,
     weighting_fields,
+    weighting_warmup_days,
 )
 
 
@@ -224,6 +225,17 @@ def test_explicit_accepts_blank_cells_as_zero(selection: pd.DataFrame, tmp_path:
     assert_frame_equal(actual, expected.astype(float))
 
 
+def test_explicit_rejects_negative_numeric_cells(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_negative_cells.csv"
+    path.write_text(
+        ",A,B,C\n2024-01-02,0.5,-0.25,0\n2024-01-03,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"2024-01-02.*/B"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
 def test_hook_delegates_to_registered_weighting_hook(
     selection: pd.DataFrame, feature_frames: dict[str, pd.DataFrame]
 ) -> None:
@@ -271,6 +283,11 @@ def test_weighting_fields_reports_required_inputs() -> None:
     assert weighting_fields(WeightingSpec(kind="inverse_vol")) == ("close",)
     assert weighting_fields(WeightingSpec(kind="explicit")) == ()
     assert weighting_fields(WeightingSpec(kind="hook", hook_id="demo", params={"fields": ["x", "y"]})) == ("x", "y")
+
+
+def test_weighting_warmup_days_reports_required_lookbacks() -> None:
+    assert weighting_warmup_days(WeightingSpec(kind="equal_weight")) == 0
+    assert weighting_warmup_days(WeightingSpec(kind="inverse_vol")) == 20
 
 
 @pytest.mark.parametrize("fields", ["not-a-list", 123, ["ok", 5], ["ok", ""]])

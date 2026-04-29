@@ -8,7 +8,7 @@ from backtesting.features import feature_dataset_ids, feature_warmup_days
 from backtesting.ingest.io import find_raw_path
 from backtesting.selection import selection_fields
 from backtesting.strategies import build_strategy
-from backtesting.weighting import weighting_fields
+from backtesting.weighting import weighting_fields, weighting_warmup_days
 from backtesting.universe import UniverseSpec
 
 from .hooks import get_hook
@@ -67,15 +67,24 @@ def resolve_execution_spec(
         dataset_ids.append(universe_spec.membership_dataset)
 
     feature_fields = _spec_feature_fields(spec)
+    required_warmup = spec.warmup_days
     if feature_fields:
         dataset_ids.extend(
             _resolve_universe_dataset(universe_spec, dataset_id)
             for dataset_id in feature_dataset_ids(feature_fields)
         )
-        required_warmup = max(spec.warmup_days, feature_warmup_days(feature_fields))
-        if required_warmup > spec.warmup_days:
-            execution = replace(execution, warmup_days=required_warmup)
-            notes.append(f"warmup_days increased to {required_warmup} for feature lookbacks")
+        required_warmup = max(required_warmup, feature_warmup_days(feature_fields))
+
+    if spec.weighting is not None:
+        required_warmup = max(required_warmup, weighting_warmup_days(spec.weighting))
+
+    if required_warmup > spec.warmup_days:
+        execution = replace(execution, warmup_days=required_warmup)
+        notes.append(f"warmup_days increased to {required_warmup} for feature/weighting lookbacks")
+
+    if spec.weight_source.kind == "hook":
+        hook = get_hook(spec.weight_source.hook_id or "")
+        dataset_ids.extend(_resolve_universe_dataset(universe_spec, dataset_id) for dataset_id in hook.required_datasets)
 
     if not spec.uses_composable_plan:
         if spec.weight_source.kind == "strategy":
@@ -89,10 +98,7 @@ def resolve_execution_spec(
                 momentum_weight=spec.momentum_weight,
             )
             dataset_ids.extend(_resolve_universe_dataset(universe_spec, dataset_id) for dataset_id in strategy.datasets)
-        elif spec.weight_source.kind == "hook":
-            hook = get_hook(spec.weight_source.hook_id or "")
-            dataset_ids.extend(_resolve_universe_dataset(universe_spec, dataset_id) for dataset_id in hook.required_datasets)
-        else:
+        elif spec.weight_source.kind != "hook":
             raise ValueError(f"unsupported weight_source kind: {spec.weight_source.kind}")
 
     requested_basis = execution.data_policy.requested_weight_basis

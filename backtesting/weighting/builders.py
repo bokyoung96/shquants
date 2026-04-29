@@ -49,6 +49,12 @@ def weighting_fields(spec: WeightingSpec) -> tuple[str, ...]:
     raise ValueError(f"unknown weighting kind: {spec.kind}")
 
 
+def weighting_warmup_days(spec: WeightingSpec) -> int:
+    if spec.kind == "inverse_vol":
+        return 20
+    return 0
+
+
 
 def build_weights(spec: WeightingSpec, selection: pd.DataFrame, feature_frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
     if spec.kind == "equal_weight":
@@ -133,7 +139,8 @@ def _read_explicit_weights(path: Path) -> pd.DataFrame:
 def _validate_explicit_values(raw: pd.DataFrame, numeric: pd.DataFrame) -> None:
     non_empty = raw.map(lambda value: not _is_blank_cell(value))
     finite = numeric.map(lambda value: pd.notna(value) and value not in {float("inf"), float("-inf")})
-    invalid = non_empty & ~finite
+    negative = numeric.map(lambda value: pd.notna(value) and value < 0.0)
+    invalid = non_empty & (~finite | negative)
     if not invalid.to_numpy().any():
         return
     locations = [f"{row_label}/{column_label}" for row_label, column_label in invalid.stack()[lambda mask: mask].index]

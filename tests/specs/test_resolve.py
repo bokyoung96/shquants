@@ -1,8 +1,10 @@
+import uuid
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+import backtesting.specs.hooks as hooks_module
 import backtesting.specs.resolve as resolve_module
 
 from backtesting.catalog import DataCatalog, DatasetId
@@ -10,10 +12,12 @@ from backtesting.specs import (
     ConditionSpec,
     DataPolicySpec,
     ExecutionSpec,
+    HookRegistration,
     ScheduleSpec,
     SelectionSpec,
     WeightSourceSpec,
     WeightingSpec,
+    register_hook,
     resolve_execution_spec,
 )
 from backtesting.universe import UniverseRegistry
@@ -194,7 +198,86 @@ def test_resolve_spec_increases_warmup_for_feature_lookbacks(tmp_path: Path) -> 
     assert resolved.execution.capital == spec.capital
     assert resolved.execution.selection == spec.selection
     assert resolved.execution.schedule == spec.schedule
-    assert "warmup_days increased to 60 for feature lookbacks" in resolved.resolution_notes
+    assert "warmup_days increased to 60 for feature/weighting lookbacks" in resolved.resolution_notes
+
+
+def test_resolve_spec_merges_hook_datasets_for_composable_plan(tmp_path: Path) -> None:
+    hook_id = f"resolve_test_hook_{uuid.uuid4().hex}"
+    register_hook(
+        HookRegistration(
+            hook_id=hook_id,
+            required_datasets=(DatasetId.QW_MKTCAP,),
+            build_plan=lambda **_: None,
+        )
+    )
+    try:
+        spec = ExecutionSpec(
+            start="2024-01-01",
+            end="2024-12-31",
+            schedule=ScheduleSpec(kind="named", name="monthly"),
+            weight_source=WeightSourceSpec(kind="hook", hook_id=hook_id),
+            selection=SelectionSpec(
+                kind="filter",
+                conditions=(ConditionSpec(field="momentum_60d", op=">", value=0.0),),
+            ),
+            weighting=WeightingSpec(kind="float_market_cap"),
+        )
+
+        resolved = resolve_execution_spec(
+            spec,
+            catalog=DataCatalog.default(),
+            parquet_dir=tmp_path,
+            raw_dir=None,
+            universe_spec=None,
+        )
+    finally:
+        hooks_module._HOOKS.pop(hook_id, None)
+
+    assert DatasetId.QW_MKTCAP in resolved.dataset_ids
+    assert DatasetId.QW_MKTCAP_FLT in resolved.dataset_ids
+
+
+def test_resolve_spec_increases_warmup_for_inverse_vol_weighting(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        warmup_days=5,
+        weighting=WeightingSpec(kind="inverse_vol"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert spec.warmup_days == 5
+    assert resolved.execution.warmup_days == 20
+    assert "warmup_days increased to 20 for feature/weighting lookbacks" in resolved.resolution_notes
+
+
+def test_resolve_spec_preserves_higher_existing_warmup_for_inverse_vol_weighting(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        warmup_days=30,
+        weighting=WeightingSpec(kind="inverse_vol"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert resolved.execution.warmup_days == 30
+    assert resolved.resolution_notes == ()
 
 
 def test_resolve_spec_rejects_unknown_feature_fields(tmp_path: Path) -> None:

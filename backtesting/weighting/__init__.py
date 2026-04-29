@@ -4,6 +4,7 @@ from .builders import (
     register_weighting_hook,
     unregister_weighting_hook,
     weighting_fields,
+    weighting_warmup_days,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "register_weighting_hook",
     "unregister_weighting_hook",
     "weighting_fields",
+    "weighting_warmup_days",
 ]

@@ -116,7 +116,9 @@ def _read_explicit_selection(path: Path) -> pd.DataFrame:
 
 def _validate_explicit_values(raw: pd.DataFrame, numeric: pd.DataFrame) -> None:
     non_empty = raw.map(lambda value: not _is_blank_cell(value))
-    invalid = non_empty & numeric.isna()
+    invalid_numeric = non_empty & numeric.isna()
+    invalid_binary = non_empty & numeric.notna() & ~numeric.isin((0.0, 1.0))
+    invalid = invalid_numeric | invalid_binary
     if not invalid.to_numpy().any():
         return
     locations = [f"{row_label}/{column_label}" for row_label, column_label in invalid.stack()[lambda mask: mask].index]

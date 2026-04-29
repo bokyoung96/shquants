@@ -19,8 +19,9 @@ def build_position_plan_from_execution_spec(spec: ExecutionSpec, market: MarketD
     selection = build_selection(spec.selection, features)
 
     if market.universe is not None:
-        universe = market.universe.reindex(index=selection.index, columns=selection.columns, fill_value=False).astype(bool)
-        selection = selection & universe
+        universe = market.universe.reindex(index=selection.index, columns=selection.columns)
+        universe = universe.where(universe.notna(), False).astype(bool)
+        selection = selection.where(selection.notna(), False).astype(bool) & universe
 
     base_weights = build_weights(weighting, selection, features)
     return build_position_plan_from_spec(

@@ -13,10 +13,16 @@ from backtesting.specs.models import (
     PositionPolicySpec,
     PositionRuleSpec,
     SelectionSpec,
+    WeightingSpec,
 )
 
 
-def _market(*, close: pd.DataFrame | None = None, market_cap: pd.DataFrame | None = None, universe: pd.DataFrame | None = None) -> MarketData:
+def _market(
+    *,
+    close: pd.DataFrame | None = None,
+    market_cap: pd.DataFrame | None = None,
+    universe: pd.DataFrame | None = None,
+) -> MarketData:
     anchor = close if close is not None else market_cap
     if anchor is None:
         raise ValueError("market helper requires at least one frame")
@@ -101,16 +107,64 @@ def test_market_universe_masks_out_names_before_weighting() -> None:
     assert_frame_equal(plan.target_weights, expected.astype(float))
 
 
-def test_staged_position_policy_is_applied_after_base_weights_are_built() -> None:
+def test_market_universe_treats_nullable_entries_as_false() -> None:
     index = pd.to_datetime(["2024-01-02", "2024-01-03"])
-    close = pd.DataFrame({"A": [10.0, 10.0]}, index=index)
+    market_cap = pd.DataFrame(
+        {
+            "A": [100.0, 100.0],
+            "B": [100.0, 100.0],
+            "C": [100.0, 100.0],
+        },
+        index=index,
+    )
+    universe = pd.DataFrame(
+        {
+            "A": [True, pd.NA],
+            "B": [pd.NA, True],
+            "C": [True, None],
+        },
+        index=index,
+        dtype="object",
+    )
     spec = ExecutionSpec(
         start="2024-01-02",
         end="2024-01-03",
         selection=SelectionSpec(
             kind="filter",
-            conditions=(ConditionSpec(field="close", op=">=", value=10.0),),
+            conditions=(ConditionSpec(field="market_cap", op=">=", value=1.0),),
         ),
+    )
+
+    plan = build_position_plan_from_execution_spec(spec, _market(market_cap=market_cap, universe=universe))
+
+    expected = pd.DataFrame(
+        {
+            "A": [0.5, 0.0],
+            "B": [0.0, 1.0],
+            "C": [0.5, 0.0],
+        },
+        index=index,
+    )
+    assert_frame_equal(plan.target_weights, expected.astype(float))
+
+
+def test_staged_position_policy_is_applied_after_base_weights_are_built() -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    market_cap = pd.DataFrame(
+        {
+            "A": [100.0, 100.0],
+            "B": [300.0, 300.0],
+        },
+        index=index,
+    )
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-03",
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(ConditionSpec(field="market_cap", op=">=", value=1.0),),
+        ),
+        weighting=WeightingSpec(kind="market_cap"),
         position_policy=PositionPolicySpec(
             kind="staged",
             buckets=(PositionBucketSpec("b0", 0.25), PositionBucketSpec("b1", 0.75)),
@@ -118,9 +172,15 @@ def test_staged_position_policy_is_applied_after_base_weights_are_built() -> Non
         ),
     )
 
-    plan = build_position_plan_from_execution_spec(spec, _market(close=close))
+    plan = build_position_plan_from_execution_spec(spec, _market(market_cap=market_cap))
 
-    expected = pd.DataFrame({"A": [0.25, 1.0]}, index=index)
+    expected = pd.DataFrame(
+        {
+            "A": [0.0625, 0.25],
+            "B": [0.1875, 0.75],
+        },
+        index=index,
+    )
     assert_frame_equal(plan.target_weights, expected.astype(float))
 
 

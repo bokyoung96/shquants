@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import backtesting.specs.resolve as resolve_module
+
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.specs import (
     ConditionSpec,
@@ -121,7 +123,16 @@ def test_resolve_spec_prefers_float_market_cap_when_raw_source_exists(tmp_path: 
     assert DatasetId.QW_MKTCAP not in resolved.dataset_ids
 
 
-def test_resolve_spec_adds_feature_datasets_for_composable_plan(tmp_path: Path) -> None:
+def test_resolve_spec_adds_feature_datasets_for_composable_plan(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def _unexpected_strategy(*args: object, **kwargs: object) -> object:
+        raise AssertionError("legacy strategy resolution should be skipped for composable specs")
+
+    def _unexpected_hook(*args: object, **kwargs: object) -> object:
+        raise AssertionError("legacy hook resolution should be skipped for composable specs")
+
+    monkeypatch.setattr(resolve_module, "build_strategy", _unexpected_strategy)
+    monkeypatch.setattr(resolve_module, "get_hook", _unexpected_hook)
+
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
@@ -144,15 +155,21 @@ def test_resolve_spec_adds_feature_datasets_for_composable_plan(tmp_path: Path) 
         universe_spec=None,
     )
 
-    assert DatasetId.QW_ADJ_C in resolved.dataset_ids
-    assert DatasetId.QW_MKTCAP in resolved.dataset_ids
-    assert DatasetId.QW_MKTCAP_FLT in resolved.dataset_ids
+    assert resolved.dataset_ids == (
+        DatasetId.QW_ADJ_C,
+        DatasetId.QW_ADJ_O,
+        DatasetId.QW_MKTCAP,
+        DatasetId.QW_MKTCAP_FLT,
+    )
+    assert len(resolved.dataset_ids) == 4
 
 
 def test_resolve_spec_increases_warmup_for_feature_lookbacks(tmp_path: Path) -> None:
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
+        name="momentum filter",
+        capital=123_456_789.0,
         schedule=ScheduleSpec(kind="named", name="monthly"),
         warmup_days=5,
         selection=SelectionSpec(
@@ -169,7 +186,14 @@ def test_resolve_spec_increases_warmup_for_feature_lookbacks(tmp_path: Path) -> 
         universe_spec=None,
     )
 
-    assert resolved.execution.warmup_days >= 60
+    assert spec.warmup_days == 5
+    assert resolved.execution.warmup_days == 60
+    assert resolved.execution.start == spec.start
+    assert resolved.execution.end == spec.end
+    assert resolved.execution.name == spec.name
+    assert resolved.execution.capital == spec.capital
+    assert resolved.execution.selection == spec.selection
+    assert resolved.execution.schedule == spec.schedule
     assert "warmup_days increased to 60 for feature lookbacks" in resolved.resolution_notes
 
 
@@ -192,3 +216,35 @@ def test_resolve_spec_rejects_unknown_feature_fields(tmp_path: Path) -> None:
             raw_dir=None,
             universe_spec=None,
         )
+
+
+def test_resolve_spec_maps_feature_datasets_through_universe(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(
+                ConditionSpec(field="momentum_60d", op=">", value=0.0),
+                ConditionSpec(field="market_cap", op=">", value=0.0),
+            ),
+        ),
+        weighting=WeightingSpec(kind="float_market_cap"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=UniverseRegistry.default().get("kosdaq150"),
+    )
+
+    assert resolved.dataset_ids == (
+        DatasetId.QW_KSDQ_ADJ_C,
+        DatasetId.QW_KSDQ_ADJ_O,
+        DatasetId.QW_KSDQ150_YN,
+        DatasetId.QW_KSDQ_MKTCAP,
+        DatasetId.QW_KSDQ_MKTCAP_FLT,
+    )

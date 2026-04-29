@@ -31,12 +31,14 @@ def build_position_plan_from_spec(
     )
 
     if spec.kind == "pass_through":
+        _validate_supported_spec_fields(spec, "pass_through")
         return PassThroughPolicy().apply(
             construction,
             market,
             SignalBundle(alpha=aligned_base, context={}),
         )
     if spec.kind == "staged":
+        _validate_supported_spec_fields(spec, "staged")
         return _build_staged(spec, construction=construction, market=market)
     if spec.kind == "hook":
         raise ValueError(
@@ -107,13 +109,25 @@ def _rule_context(
     key = _rule_key(stage, rule)
 
     if rule.kind == "selection_passes":
+        if rule.count != 0:
+            raise ValueError("selection_passes rule count must be 0")
         return key, aligned_selection
     if rule.kind == "selection_fails":
+        if rule.count != 0:
+            raise ValueError("selection_fails rule count must be 0")
         return key, ~aligned_selection
     if rule.kind == "still_passes_after_rebalances":
-        if rule.count < 0:
-            raise ValueError("still_passes_after_rebalances count must be non-negative")
+        if rule.count <= 0:
+            raise ValueError("still_passes_after_rebalances count must be greater than 0")
         shifted = aligned_selection.shift(rule.count, fill_value=False).astype(bool)
         return key, aligned_selection & shifted
 
     raise ValueError(f"unsupported position rule kind: {rule.kind}")
+
+
+
+def _validate_supported_spec_fields(spec: PositionPolicySpec, kind: str) -> None:
+    if spec.hook_id is not None:
+        raise ValueError(f"{kind} position policy does not support hook_id")
+    if spec.params:
+        raise ValueError(f"{kind} position policy does not support params")

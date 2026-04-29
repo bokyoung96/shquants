@@ -105,7 +105,7 @@ def _read_selection(payload: dict[str, object]) -> SelectionSpec | None:
 
     return SelectionSpec(
         kind=_read_required_string(raw, "kind", "selection.kind"),
-        field=_read_optional_string(raw, "field", "selection.field"),
+        field=_read_optional_string(raw, "field", "weighting.field"),
         conditions=_read_conditions(raw.get("conditions")),
         n=int(raw["n"]) if raw.get("n") is not None else None,
         ascending=_read_optional_bool(raw, "ascending", False, "selection.ascending"),
@@ -124,20 +124,20 @@ def _read_weighting(payload: dict[str, object], selection: SelectionSpec | None)
 
     return WeightingSpec(
         kind=_read_required_string(raw, "kind", "weighting.kind") if "kind" in raw else "equal_weight",
-        field=_read_optional_string(raw, "field", "selection.field"),
+        field=_read_optional_string(raw, "field", "weighting.field"),
         path=_read_optional_string(raw, "path", "weighting.path"),
         hook_id=_read_optional_string(raw, "hook_id", "weighting.hook_id"),
         params=_read_params(raw, "params", "weighting.params"),
     )
 
 
-def _read_position_rule(raw: object, default_kind: str) -> PositionRuleSpec:
+def _read_position_rule(raw: object, default_kind: str, error_key: str) -> PositionRuleSpec:
     if raw is None:
         return PositionRuleSpec(kind=default_kind)
     if not isinstance(raw, dict):
         raise ValueError("position_policy rules must be objects")
     return PositionRuleSpec(
-        kind=_read_required_string(raw, "kind", "position_policy.rules.kind") if "kind" in raw else default_kind,
+        kind=_read_required_string(raw, "kind", error_key) if "kind" in raw else default_kind,
         count=int(raw.get("count", 0)),
     )
 
@@ -183,15 +183,15 @@ def _read_position_policy(payload: dict[str, object], selection: SelectionSpec |
         for raw_add in raw_adds:
             if not isinstance(raw_add, dict):
                 raise ValueError("position_policy.rules.adds entries must be objects")
-            parsed_adds.append(_read_position_rule(raw_add, "still_passes_after_rebalances"))
+            parsed_adds.append(_read_position_rule(raw_add, "still_passes_after_rebalances", "position_policy.rules.adds.kind"))
         adds = tuple(parsed_adds)
 
     return PositionPolicySpec(
         kind=_read_required_string(raw, "kind", "position_policy.kind") if "kind" in raw else "pass_through",
         buckets=buckets,
-        entry=_read_position_rule(rules.get("entry"), "selection_passes"),
+        entry=_read_position_rule(rules.get("entry"), "selection_passes", "position_policy.rules.entry.kind"),
         adds=adds,
-        exit=_read_position_rule(rules.get("exit"), "selection_fails"),
+        exit=_read_position_rule(rules.get("exit"), "selection_fails", "position_policy.rules.exit.kind"),
         hook_id=_read_optional_string(raw, "hook_id", "position_policy.hook_id"),
         params=_read_params(raw, "params", "position_policy.params"),
     )

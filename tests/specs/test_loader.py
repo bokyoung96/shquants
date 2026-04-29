@@ -244,3 +244,78 @@ def test_load_execution_spec_rejects_non_object_selection_params(tmp_path: Path)
     with pytest.raises(ValueError, match="selection.params must be an object"):
         load_execution_spec(path)
 
+
+def test_load_execution_spec_rejects_null_position_policy_kind(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+                "position_policy": {"kind": None},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="position_policy.kind must be a string"):
+        load_execution_spec(path)
+
+
+
+def test_load_execution_spec_rejects_non_object_position_policy_params(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+                "position_policy": {"params": [["x", 1]]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="position_policy.params must be an object"):
+        load_execution_spec(path)
+
+
+
+def test_load_execution_spec_rejects_null_position_policy_entry_kind(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+                "position_policy": {"rules": {"entry": {"kind": None}}},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="position_policy.rules.entry.kind must be a string"):
+        load_execution_spec(path)
+
+
+
+def test_load_execution_spec_rejects_invalid_weighting_field_label(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+                "weighting": {"field": 123},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="weighting.field must be a string"):
+        load_execution_spec(path)
+

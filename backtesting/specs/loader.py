@@ -24,6 +24,16 @@ def _read_bool(payload: dict[str, object], key: str, default: bool) -> bool:
     raise ValueError(f"{key} must be a boolean")
 
 
+def _read_optional_bool(payload: dict[str, object], key: str, default: bool, error_key: str | None = None) -> bool:
+    if key not in payload:
+        return default
+    value = payload[key]
+    if isinstance(value, bool):
+        return value
+    label = error_key or key
+    raise ValueError(f"{label} must be a boolean")
+
+
 def _read_object(payload: dict[str, object], key: str) -> dict[str, object] | None:
     if key not in payload:
         return None
@@ -31,6 +41,36 @@ def _read_object(payload: dict[str, object], key: str) -> dict[str, object] | No
     if isinstance(value, dict):
         return value
     raise ValueError(f"{key} must be an object")
+
+
+def _read_required_string(payload: dict[str, object], key: str, error_key: str | None = None) -> str:
+    value = payload.get(key)
+    if isinstance(value, str):
+        return value
+    label = error_key or key
+    raise ValueError(f"{label} must be a string")
+
+
+def _read_optional_string(payload: dict[str, object], key: str, error_key: str | None = None) -> str | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value
+    label = error_key or key
+    raise ValueError(f"{label} must be a string")
+
+
+def _read_params(payload: dict[str, object], key: str, error_key: str | None = None) -> dict[str, object]:
+    if key not in payload:
+        return {}
+    value = payload[key]
+    if isinstance(value, dict):
+        return value
+    label = error_key or key
+    raise ValueError(f"{label} must be an object")
 
 
 def _read_conditions(raw_conditions: object) -> tuple[ConditionSpec, ...]:
@@ -63,20 +103,16 @@ def _read_selection(payload: dict[str, object]) -> SelectionSpec | None:
     if raw is None:
         return None
 
-    kind = raw.get("kind")
-    if kind is None:
-        raise ValueError("selection.kind is required")
-
     return SelectionSpec(
-        kind=str(kind),
-        field=str(raw["field"]) if raw.get("field") is not None else None,
+        kind=_read_required_string(raw, "kind", "selection.kind"),
+        field=_read_optional_string(raw, "field", "selection.field"),
         conditions=_read_conditions(raw.get("conditions")),
         n=int(raw["n"]) if raw.get("n") is not None else None,
-        ascending=bool(raw.get("ascending", False)),
+        ascending=_read_optional_bool(raw, "ascending", False, "selection.ascending"),
         threshold=float(raw["threshold"]) if raw.get("threshold") is not None else None,
-        path=str(raw["path"]) if raw.get("path") is not None else None,
-        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
-        params=dict(raw.get("params", {})),
+        path=_read_optional_string(raw, "path", "selection.path"),
+        hook_id=_read_optional_string(raw, "hook_id", "selection.hook_id"),
+        params=_read_params(raw, "params", "selection.params"),
         hold_days=int(raw.get("hold_days", 0)),
     )
 
@@ -87,11 +123,11 @@ def _read_weighting(payload: dict[str, object], selection: SelectionSpec | None)
         return WeightingSpec(kind="equal_weight") if selection is not None else None
 
     return WeightingSpec(
-        kind=str(raw.get("kind", "equal_weight")),
-        field=str(raw["field"]) if raw.get("field") is not None else None,
-        path=str(raw["path"]) if raw.get("path") is not None else None,
-        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
-        params=dict(raw.get("params", {})),
+        kind=_read_required_string(raw, "kind", "weighting.kind") if "kind" in raw else "equal_weight",
+        field=_read_optional_string(raw, "field", "selection.field"),
+        path=_read_optional_string(raw, "path", "weighting.path"),
+        hook_id=_read_optional_string(raw, "hook_id", "weighting.hook_id"),
+        params=_read_params(raw, "params", "weighting.params"),
     )
 
 
@@ -101,7 +137,7 @@ def _read_position_rule(raw: object, default_kind: str) -> PositionRuleSpec:
     if not isinstance(raw, dict):
         raise ValueError("position_policy rules must be objects")
     return PositionRuleSpec(
-        kind=str(raw.get("kind", default_kind)),
+        kind=_read_required_string(raw, "kind", "position_policy.rules.kind") if "kind" in raw else default_kind,
         count=int(raw.get("count", 0)),
     )
 
@@ -151,13 +187,13 @@ def _read_position_policy(payload: dict[str, object], selection: SelectionSpec |
         adds = tuple(parsed_adds)
 
     return PositionPolicySpec(
-        kind=str(raw.get("kind", "pass_through")),
+        kind=_read_required_string(raw, "kind", "position_policy.kind") if "kind" in raw else "pass_through",
         buckets=buckets,
         entry=_read_position_rule(rules.get("entry"), "selection_passes"),
         adds=adds,
         exit=_read_position_rule(rules.get("exit"), "selection_fails"),
-        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
-        params=dict(raw.get("params", {})),
+        hook_id=_read_optional_string(raw, "hook_id", "position_policy.hook_id"),
+        params=_read_params(raw, "params", "position_policy.params"),
     )
 
 

@@ -183,3 +183,64 @@ def test_load_execution_spec_rejects_non_object_position_policy(tmp_path: Path) 
     with pytest.raises(ValueError, match="position_policy must be an object"):
         load_execution_spec(path)
 
+def test_load_execution_spec_rejects_non_boolean_selection_ascending(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {
+                    "kind": "rank_top_n",
+                    "field": "momentum_20d",
+                    "n": 2,
+                    "ascending": "false",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="selection.ascending must be a boolean"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_null_weighting_kind(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+                "weighting": {"kind": None},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="weighting.kind must be a string"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_non_object_selection_params(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {
+                    "kind": "rank_top_n",
+                    "field": "momentum_20d",
+                    "n": 2,
+                    "params": [["window", 20]],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="selection.params must be an object"):
+        load_execution_spec(path)
+

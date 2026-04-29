@@ -3,7 +3,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .models import DataPolicySpec, ExecutionSpec, ScheduleSpec, WeightSourceSpec
+from .models import (
+    ConditionSpec,
+    DataPolicySpec,
+    ExecutionSpec,
+    PositionBucketSpec,
+    PositionPolicySpec,
+    PositionRuleSpec,
+    ScheduleSpec,
+    SelectionSpec,
+    WeightingSpec,
+    WeightSourceSpec,
+)
 
 
 def _read_bool(payload: dict[str, object], key: str, default: bool) -> bool:
@@ -11,6 +22,143 @@ def _read_bool(payload: dict[str, object], key: str, default: bool) -> bool:
     if isinstance(value, bool):
         return value
     raise ValueError(f"{key} must be a boolean")
+
+
+def _read_object(payload: dict[str, object], key: str) -> dict[str, object] | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if isinstance(value, dict):
+        return value
+    raise ValueError(f"{key} must be an object")
+
+
+def _read_conditions(raw_conditions: object) -> tuple[ConditionSpec, ...]:
+    if raw_conditions is None:
+        return ()
+    if not isinstance(raw_conditions, list):
+        raise ValueError("selection.conditions must be a list")
+
+    conditions: list[ConditionSpec] = []
+    for raw_condition in raw_conditions:
+        if not isinstance(raw_condition, dict):
+            raise ValueError("selection.conditions entries must be objects")
+        conditions.append(
+            ConditionSpec(
+                field=str(raw_condition["field"]),
+                op=str(raw_condition["op"]),
+                value=raw_condition.get("value"),
+                other_field=(
+                    str(raw_condition["other_field"])
+                    if raw_condition.get("other_field") is not None
+                    else None
+                ),
+            )
+        )
+    return tuple(conditions)
+
+
+def _read_selection(payload: dict[str, object]) -> SelectionSpec | None:
+    raw = _read_object(payload, "selection")
+    if raw is None:
+        return None
+
+    kind = raw.get("kind")
+    if kind is None:
+        raise ValueError("selection.kind is required")
+
+    return SelectionSpec(
+        kind=str(kind),
+        field=str(raw["field"]) if raw.get("field") is not None else None,
+        conditions=_read_conditions(raw.get("conditions")),
+        n=int(raw["n"]) if raw.get("n") is not None else None,
+        ascending=bool(raw.get("ascending", False)),
+        threshold=float(raw["threshold"]) if raw.get("threshold") is not None else None,
+        path=str(raw["path"]) if raw.get("path") is not None else None,
+        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
+        params=dict(raw.get("params", {})),
+        hold_days=int(raw.get("hold_days", 0)),
+    )
+
+
+def _read_weighting(payload: dict[str, object], selection: SelectionSpec | None) -> WeightingSpec | None:
+    raw = _read_object(payload, "weighting")
+    if raw is None:
+        return WeightingSpec(kind="equal_weight") if selection is not None else None
+
+    return WeightingSpec(
+        kind=str(raw.get("kind", "equal_weight")),
+        field=str(raw["field"]) if raw.get("field") is not None else None,
+        path=str(raw["path"]) if raw.get("path") is not None else None,
+        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
+        params=dict(raw.get("params", {})),
+    )
+
+
+def _read_position_rule(raw: object, default_kind: str) -> PositionRuleSpec:
+    if raw is None:
+        return PositionRuleSpec(kind=default_kind)
+    if not isinstance(raw, dict):
+        raise ValueError("position_policy rules must be objects")
+    return PositionRuleSpec(
+        kind=str(raw.get("kind", default_kind)),
+        count=int(raw.get("count", 0)),
+    )
+
+
+def _read_position_policy(payload: dict[str, object], selection: SelectionSpec | None) -> PositionPolicySpec | None:
+    raw = _read_object(payload, "position_policy")
+    if raw is None:
+        return PositionPolicySpec(kind="pass_through") if selection is not None else None
+
+    raw_buckets = raw.get("buckets")
+    if raw_buckets is None:
+        buckets: tuple[PositionBucketSpec, ...] = ()
+    else:
+        if not isinstance(raw_buckets, list):
+            raise ValueError("position_policy.buckets must be a list")
+        parsed_buckets: list[PositionBucketSpec] = []
+        for raw_bucket in raw_buckets:
+            if not isinstance(raw_bucket, dict):
+                raise ValueError("position_policy.buckets entries must be objects")
+            parsed_buckets.append(
+                PositionBucketSpec(
+                    id=str(raw_bucket["id"]),
+                    fraction=float(raw_bucket["fraction"]),
+                )
+            )
+        buckets = tuple(parsed_buckets)
+
+    raw_rules = raw.get("rules")
+    if raw_rules is None:
+        rules: dict[str, object] = {}
+    else:
+        if not isinstance(raw_rules, dict):
+            raise ValueError("position_policy.rules must be an object")
+        rules = raw_rules
+
+    raw_adds = rules.get("adds")
+    if raw_adds is None:
+        adds: tuple[PositionRuleSpec, ...] = ()
+    else:
+        if not isinstance(raw_adds, list):
+            raise ValueError("position_policy.rules.adds must be a list")
+        parsed_adds: list[PositionRuleSpec] = []
+        for raw_add in raw_adds:
+            if not isinstance(raw_add, dict):
+                raise ValueError("position_policy.rules.adds entries must be objects")
+            parsed_adds.append(_read_position_rule(raw_add, "still_passes_after_rebalances"))
+        adds = tuple(parsed_adds)
+
+    return PositionPolicySpec(
+        kind=str(raw.get("kind", "pass_through")),
+        buckets=buckets,
+        entry=_read_position_rule(rules.get("entry"), "selection_passes"),
+        adds=adds,
+        exit=_read_position_rule(rules.get("exit"), "selection_fails"),
+        hook_id=str(raw["hook_id"]) if raw.get("hook_id") is not None else None,
+        params=dict(raw.get("params", {})),
+    )
 
 
 def load_execution_spec(path: str | Path) -> ExecutionSpec:
@@ -24,6 +172,8 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         raise ValueError("YAML spec loading is not available without an approved YAML dependency")
     else:
         raise ValueError(f"unsupported spec format: {suffix or '<none>'}")
+
+    selection = _read_selection(payload)
 
     return ExecutionSpec(
         start=str(payload["start"]),
@@ -52,6 +202,9 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         warmup_days=int(payload.get("warmup_days", 0)),
         weight_source=WeightSourceSpec(**payload.get("weight_source", {"kind": "strategy"})),
         data_policy=DataPolicySpec(**payload.get("data_policy", {})),
+        selection=selection,
+        weighting=_read_weighting(payload, selection),
+        position_policy=_read_position_policy(payload, selection),
         spec_source="spec_file",
         preset_id=payload.get("preset_id"),
         notes=tuple(payload.get("notes", ())),

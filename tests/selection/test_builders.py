@@ -165,6 +165,18 @@ def test_explicit_rejects_duplicate_dates(feature_frames: dict[str, pd.DataFrame
         build_selection(spec, feature_frames)
 
 
+def test_explicit_rejects_blank_dates(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_blank_dates.csv"
+    path.write_text(""",A,B,C
+,1,0,0
+2024-01-03,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="valid unique dates"):
+        build_selection(spec, feature_frames)
+
+
 def test_explicit_rejects_duplicate_columns(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
     path = tmp_path / "explicit_duplicate_columns.csv"
     path.write_text(""",A,A,C

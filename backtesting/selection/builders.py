@@ -130,6 +130,8 @@ def _normalize_explicit_index(index: pd.Index) -> pd.DatetimeIndex:
         normalized = pd.to_datetime(index, errors="raise")
     except (TypeError, ValueError) as exc:
         raise ValueError("explicit selection index must contain valid unique dates") from exc
+    if normalized.isna().any():
+        raise ValueError("explicit selection index must contain valid unique dates")
     if normalized.has_duplicates:
         raise ValueError("explicit selection index must contain unique dates")
     return pd.DatetimeIndex(normalized)

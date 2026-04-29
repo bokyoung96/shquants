@@ -86,6 +86,13 @@ def test_rank_top_n_selects_exact_count_per_date(feature_frames: dict[str, pd.Da
     assert_frame_equal(actual, expected)
 
 
+def test_rank_top_n_rejects_non_positive_n(feature_frames: dict[str, pd.DataFrame]) -> None:
+    spec = SelectionSpec(kind="rank_top_n", field="score", n=0)
+
+    with pytest.raises(ValueError, match="requires n > 0"):
+        build_selection(spec, feature_frames)
+
+
 def test_score_threshold_selects_scores_meeting_threshold(feature_frames: dict[str, pd.DataFrame]) -> None:
     spec = SelectionSpec(kind="score_threshold", field="score", threshold=20.0)
 
@@ -222,6 +229,11 @@ def test_unregister_selection_hook_removes_registration(feature_frames: dict[str
 
     with pytest.raises(KeyError, match="unknown selection hook_id"):
         build_selection(SelectionSpec(kind="hook", hook_id=hook_id), feature_frames)
+
+
+def test_hook_requires_hook_id(feature_frames: dict[str, pd.DataFrame]) -> None:
+    with pytest.raises(ValueError, match="requires hook_id"):
+        build_selection(SelectionSpec(kind="hook"), feature_frames)
 
 
 def test_invalid_condition_operator_raises_value_error(feature_frames: dict[str, pd.DataFrame]) -> None:

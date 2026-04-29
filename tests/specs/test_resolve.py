@@ -4,7 +4,16 @@ import pandas as pd
 import pytest
 
 from backtesting.catalog import DataCatalog, DatasetId
-from backtesting.specs import ExecutionSpec, ScheduleSpec, WeightSourceSpec, DataPolicySpec, resolve_execution_spec
+from backtesting.specs import (
+    ConditionSpec,
+    DataPolicySpec,
+    ExecutionSpec,
+    ScheduleSpec,
+    SelectionSpec,
+    WeightSourceSpec,
+    WeightingSpec,
+    resolve_execution_spec,
+)
 from backtesting.universe import UniverseRegistry
 
 
@@ -110,3 +119,76 @@ def test_resolve_spec_prefers_float_market_cap_when_raw_source_exists(tmp_path: 
     assert resolved.execution.data_policy.fallbacks_applied == ()
     assert DatasetId.QW_MKTCAP_FLT in resolved.dataset_ids
     assert DatasetId.QW_MKTCAP not in resolved.dataset_ids
+
+
+def test_resolve_spec_adds_feature_datasets_for_composable_plan(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(
+                ConditionSpec(field="momentum_60d", op=">", value=0.0),
+                ConditionSpec(field="market_cap", op=">", value=0.0),
+            ),
+        ),
+        weighting=WeightingSpec(kind="float_market_cap"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert DatasetId.QW_ADJ_C in resolved.dataset_ids
+    assert DatasetId.QW_MKTCAP in resolved.dataset_ids
+    assert DatasetId.QW_MKTCAP_FLT in resolved.dataset_ids
+
+
+def test_resolve_spec_increases_warmup_for_feature_lookbacks(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        warmup_days=5,
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(ConditionSpec(field="momentum_60d", op=">", value=0.0),),
+        ),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert resolved.execution.warmup_days >= 60
+    assert "warmup_days increased to 60 for feature lookbacks" in resolved.resolution_notes
+
+
+def test_resolve_spec_rejects_unknown_feature_fields(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(ConditionSpec(field="unknown_feature", op=">", value=0.0),),
+        ),
+    )
+
+    with pytest.raises(KeyError, match="unknown feature field"):
+        resolve_execution_spec(
+            spec,
+            catalog=DataCatalog.default(),
+            parquet_dir=tmp_path,
+            raw_dir=None,
+            universe_spec=None,
+        )

@@ -132,7 +132,8 @@ def _read_explicit_weights(path: Path) -> pd.DataFrame:
 
 def _validate_explicit_values(raw: pd.DataFrame, numeric: pd.DataFrame) -> None:
     non_empty = raw.map(lambda value: not _is_blank_cell(value))
-    invalid = non_empty & numeric.isna()
+    finite = numeric.map(lambda value: pd.notna(value) and value not in {float("inf"), float("-inf")})
+    invalid = non_empty & ~finite
     if not invalid.to_numpy().any():
         return
     locations = [f"{row_label}/{column_label}" for row_label, column_label in invalid.stack()[lambda mask: mask].index]

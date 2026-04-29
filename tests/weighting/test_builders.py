@@ -196,6 +196,20 @@ def test_explicit_rejects_invalid_non_empty_numeric_cells(selection: pd.DataFram
         build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
 
 
+@pytest.mark.parametrize("value", ["inf", "-inf"])
+def test_explicit_rejects_non_finite_numeric_cells(
+    value: str, selection: pd.DataFrame, tmp_path: pytest.TempPathFactory
+) -> None:
+    path = tmp_path / "weights_non_finite.csv"
+    path.write_text(
+        f",A,B,C\n2024-01-02,0.5,{value},0\n2024-01-03,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"2024-01-02.*/B"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
 def test_explicit_accepts_blank_cells_as_zero(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
     path = tmp_path / "weights_blank_cells.csv"
     path.write_text(

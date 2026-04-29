@@ -11,7 +11,19 @@ from backtesting.engine import BacktestResult
 from backtesting.policy.base import BUCKET_LEDGER_COLUMNS, PositionPlan
 from backtesting.reporting.writer import RunWriter, _EMPTY_PNG
 from backtesting.run import BacktestRunner, RunConfig, RunReport, main as backtesting_main
-from backtesting.specs import DataPolicySpec, ExecutionSpec, ResolvedExecutionSpec, ScheduleSpec, WeightSourceSpec
+from backtesting.specs import (
+    ConditionSpec,
+    DataPolicySpec,
+    ExecutionSpec,
+    PositionBucketSpec,
+    PositionPolicySpec,
+    PositionRuleSpec,
+    ResolvedExecutionSpec,
+    ScheduleSpec,
+    SelectionSpec,
+    WeightSourceSpec,
+    WeightingSpec,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -498,6 +510,77 @@ def test_runner_uses_kosdaq_default_next_open_path(tmp_path: Path) -> None:
     assert report.config.use_k200 is False
     assert report.config.benchmark_name == "KOSDAQ150"
     assert report.result.equity.index[-1].isoformat() == "2024-01-04T00:00:00"
+
+
+def test_runner_executes_filter_equal_weight_spec_without_using_top_n(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 10.0], "B": [11.0, 11.0], "C": [9.0, 9.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1], "B": [1, 1], "C": [1, 1]}, index=index))
+
+    runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-03",
+        top_n=1,
+        schedule=ScheduleSpec(kind="named", name="daily"),
+        fill_mode="close",
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(ConditionSpec(field="close", op=">=", value=10.0),),
+        ),
+        weighting=WeightingSpec(kind="equal_weight"),
+    )
+
+    report = runner.run_spec(runner.resolve_spec(spec))
+
+    expected = pd.DataFrame({"A": [0.5, 0.5], "B": [0.5, 0.5], "C": [0.0, 0.0]}, index=index)
+    assert_frame_equal(report.result.weights, expected)
+
+
+def test_runner_executes_staged_spec_with_bucket_ledger(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 10.0], "B": [20.0, 20.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1], "B": [1, 1]}, index=index))
+
+    runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-03",
+        schedule=ScheduleSpec(kind="named", name="daily"),
+        fill_mode="close",
+        selection=SelectionSpec(
+            kind="filter",
+            conditions=(ConditionSpec(field="close", op=">=", value=1.0),),
+        ),
+        weighting=WeightingSpec(kind="equal_weight"),
+        position_policy=PositionPolicySpec(
+            kind="staged",
+            buckets=(PositionBucketSpec("b0", 0.25), PositionBucketSpec("b1", 0.75)),
+            adds=(PositionRuleSpec("still_passes_after_rebalances", count=1),),
+        ),
+    )
+
+    report = runner.run_spec(runner.resolve_spec(spec))
+
+    expected = pd.DataFrame({"A": [0.125, 0.5], "B": [0.125, 0.5]}, index=index)
+    assert report.position_plan is not None
+    assert_frame_equal(report.position_plan.target_weights, expected)
+    assert not report.position_plan.bucket_ledger.empty
+    assert report.output_dir is not None
+    bucket_ledger = pd.read_parquet(report.output_dir / "positions" / "bucket_ledger.parquet")
+    assert not bucket_ledger.empty
 
 
 def test_runner_run_and_run_spec_produce_identical_results_for_legacy_inputs(tmp_path: Path) -> None:

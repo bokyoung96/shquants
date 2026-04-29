@@ -17,7 +17,15 @@ from .execution import CostModel, CustomSchedule, DailySchedule, MonthlySchedule
 from .ingest import IngestJob
 from .policy.base import PositionPlan
 from .reporting import RunWriter
-from .specs import ExecutionSpec, ScheduleSpec, get_hook, get_preset, load_execution_spec, resolve_execution_spec
+from .specs import (
+    ExecutionSpec,
+    ScheduleSpec,
+    build_position_plan_from_execution_spec,
+    get_hook,
+    get_preset,
+    load_execution_spec,
+    resolve_execution_spec,
+)
 from .strategies import build_strategy, list_strategies
 from .universe import UniverseRegistry, UniverseSpec
 from .validation import validate_position_plan
@@ -145,6 +153,11 @@ class BacktestRunner:
                     resolved_spec,
                     schedule=ScheduleSpec(kind="custom_dates", dates=rebalance_dates),
                 )
+        elif spec.uses_composable_plan:
+            plan = build_position_plan_from_execution_spec(spec, market)
+            schedule_input = self._schedule_from_spec(resolved_spec)
+            extra_tradable = None
+            resolution_meta = {"plan_source": "selection_weighting_position_policy"}
         else:
             strategy = build_strategy(
                 spec.strategy,

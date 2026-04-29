@@ -336,3 +336,12 @@ def test_load_execution_spec_rejects_invalid_selection_field_label(tmp_path: Pat
     with pytest.raises(ValueError, match="selection.field must be a string"):
         load_execution_spec(path)
 
+
+def test_example_specs_parse() -> None:
+    examples = [
+        Path("docs/superpowers/specs/examples/filter-equal-weight.json"),
+        Path("docs/superpowers/specs/examples/filter-staged.json"),
+    ]
+    for path in examples:
+        spec = load_execution_spec(path)
+        assert spec.uses_composable_plan

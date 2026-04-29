@@ -1,0 +1,17 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "strategy": "momentum",
+  "schedule": {"kind": "named", "name": "monthly"},
+  "weight_source": {"kind": "strategy"},
+  "selection": {
+    "kind": "filter",
+    "conditions": [
+      {"field": "momentum_60d", "op": ">", "value": 0},
+      {"field": "market_cap", "op": ">=", "value": 100000000000},
+      {"field": "avg_trading_value_20d", "op": ">=", "value": 1000000000}
+    ]
+  },
+  "weighting": {"kind": "equal_weight"},
+  "position_policy": {"kind": "pass_through"}
+}

@@ -1,0 +1,31 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "strategy": "momentum",
+  "schedule": {"kind": "named", "name": "monthly"},
+  "weight_source": {"kind": "strategy"},
+  "selection": {
+    "kind": "filter",
+    "conditions": [
+      {"field": "momentum_60d", "op": ">", "value": 0},
+      {"field": "market_cap", "op": ">=", "value": 100000000000}
+    ]
+  },
+  "weighting": {"kind": "equal_weight"},
+  "position_policy": {
+    "kind": "staged",
+    "buckets": [
+      {"id": "entry", "fraction": 0.34},
+      {"id": "add_1", "fraction": 0.33},
+      {"id": "add_2", "fraction": 0.33}
+    ],
+    "rules": {
+      "entry": {"kind": "selection_passes"},
+      "adds": [
+        {"kind": "still_passes_after_rebalances", "count": 1},
+        {"kind": "still_passes_after_rebalances", "count": 2}
+      ],
+      "exit": {"kind": "selection_fails"}
+    }
+  }
+}

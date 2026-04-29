@@ -141,6 +141,75 @@ def test_explicit_reads_csv_and_aligns_to_selection(selection: pd.DataFrame, tmp
     assert_frame_equal(actual, expected.astype(float))
 
 
+def test_explicit_rejects_non_iso_dates(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_non_iso.csv"
+    path.write_text(
+        ",A,B,C\n01/02/2024,0.5,0.5,0\n2024-01-03,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="ISO format"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
+def test_explicit_rejects_duplicate_dates(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_duplicate_dates.csv"
+    path.write_text(
+        ",A,B,C\n2024-01-02,0.5,0.5,0\n2024-01-02,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="unique dates"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
+def test_explicit_rejects_duplicate_labels(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_duplicate_labels.csv"
+    path.write_text(
+        ",A,A,C\n2024-01-02,0.5,0.5,0\n2024-01-03,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="unique labels"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
+def test_explicit_rejects_blank_labels(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_blank_labels.csv"
+    path.write_text(
+        ",A,,C\n2024-01-02,0.5,0.5,0\n2024-01-03,0,1,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="blank labels"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
+def test_explicit_rejects_invalid_non_empty_numeric_cells(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_invalid_cells.csv"
+    path.write_text(
+        ",A,B,C\n2024-01-02,0.5,abc,0\n2024-01-03,0,1,nope\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"2024-01-02.*/B"):
+        build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+
+def test_explicit_accepts_blank_cells_as_zero(selection: pd.DataFrame, tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "weights_blank_cells.csv"
+    path.write_text(
+        ",A,B,C\n2024-01-02,1,,0\n2024-01-03,,1,\n",
+        encoding="utf-8",
+    )
+
+    actual = build_weights(WeightingSpec(kind="explicit", path=str(path)), selection, {})
+
+    expected = pd.DataFrame(0.0, index=selection.index, columns=selection.columns)
+    expected.loc[pd.Timestamp("2024-01-02"), "A"] = 1.0
+    assert_frame_equal(actual, expected.astype(float))
+
+
 def test_hook_delegates_to_registered_weighting_hook(
     selection: pd.DataFrame, feature_frames: dict[str, pd.DataFrame]
 ) -> None:
@@ -163,6 +232,12 @@ def test_weighting_fields_reports_required_inputs() -> None:
     assert weighting_fields(WeightingSpec(kind="inverse_vol")) == ("close",)
     assert weighting_fields(WeightingSpec(kind="explicit")) == ()
     assert weighting_fields(WeightingSpec(kind="hook", hook_id="demo", params={"fields": ["x", "y"]})) == ("x", "y")
+
+
+@pytest.mark.parametrize("fields", ["not-a-list", 123, ["ok", 5], ["ok", ""]])
+def test_weighting_fields_rejects_invalid_hook_fields_param(fields: object) -> None:
+    with pytest.raises(ValueError, match="params.fields"):
+        weighting_fields(WeightingSpec(kind="hook", hook_id="demo", params={"fields": fields}))
 
 
 @pytest.mark.parametrize(

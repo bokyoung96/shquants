@@ -1,9 +1,16 @@
+import uuid
+
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
 from backtesting.specs.models import ConditionSpec, SelectionSpec
-from backtesting.selection import build_selection, register_selection_hook, selection_fields
+from backtesting.selection import (
+    build_selection,
+    register_selection_hook,
+    selection_fields,
+    unregister_selection_hook,
+)
 
 
 @pytest.fixture
@@ -134,16 +141,63 @@ def test_explicit_aligns_csv_to_feature_index_and_columns(
     assert_frame_equal(actual, expected)
 
 
+def test_explicit_rejects_malformed_dates(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_bad_dates.csv"
+    path.write_text(""",A,B,C
+not-a-date,1,0,0
+2024-01-03,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="valid unique dates"):
+        build_selection(spec, feature_frames)
+
+
+def test_explicit_rejects_duplicate_dates(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_duplicate_dates.csv"
+    path.write_text(""",A,B,C
+2024-01-02,1,0,0
+2024-01-02,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="unique dates"):
+        build_selection(spec, feature_frames)
+
+
+def test_explicit_rejects_duplicate_columns(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_duplicate_columns.csv"
+    path.write_text(""",A,A,C
+2024-01-02,1,0,0
+2024-01-03,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="unique labels"):
+        build_selection(spec, feature_frames)
+
+
 def test_hook_delegates_to_registered_selection_hook(feature_frames: dict[str, pd.DataFrame]) -> None:
-    hook_id = "test_hook"
-
+    hook_id = f"test_hook_{uuid.uuid4().hex}"
     register_selection_hook(hook_id, lambda spec, frames: frames["quality"].ge(spec.params["minimum"]))
-    spec = SelectionSpec(kind="hook", hook_id=hook_id, params={"minimum": 3.0})
+    try:
+        spec = SelectionSpec(kind="hook", hook_id=hook_id, params={"minimum": 3.0})
 
-    actual = build_selection(spec, feature_frames)
+        actual = build_selection(spec, feature_frames)
 
-    expected = feature_frames["quality"].ge(3.0).astype(bool)
-    assert_frame_equal(actual, expected)
+        expected = feature_frames["quality"].ge(3.0).astype(bool)
+        assert_frame_equal(actual, expected)
+    finally:
+        unregister_selection_hook(hook_id)
+
+
+def test_unregister_selection_hook_removes_registration(feature_frames: dict[str, pd.DataFrame]) -> None:
+    hook_id = f"test_hook_{uuid.uuid4().hex}"
+    register_selection_hook(hook_id, lambda spec, frames: frames["score"].ge(20.0))
+    unregister_selection_hook(hook_id)
+
+    with pytest.raises(KeyError, match="unknown selection hook_id"):
+        build_selection(SelectionSpec(kind="hook", hook_id=hook_id), feature_frames)
 
 
 def test_invalid_condition_operator_raises_value_error(feature_frames: dict[str, pd.DataFrame]) -> None:

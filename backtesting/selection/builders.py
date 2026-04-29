@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import TypeAlias
@@ -18,6 +19,13 @@ def register_selection_hook(hook_id: str, hook: SelectionHook) -> None:
     if hook_id in _SELECTION_HOOKS:
         raise ValueError(f"selection hook already registered: {hook_id}")
     _SELECTION_HOOKS[hook_id] = hook
+
+
+def unregister_selection_hook(hook_id: str) -> None:
+    try:
+        del _SELECTION_HOOKS[hook_id]
+    except KeyError as exc:
+        raise KeyError(f"unknown selection hook_id: {hook_id}") from exc
 
 
 def selection_fields(spec: SelectionSpec) -> tuple[str, ...]:
@@ -80,7 +88,7 @@ def _build_event(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame]
 
 def _build_explicit(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
     path = _require_path(spec)
-    explicit = pd.read_csv(Path(path), index_col=0, parse_dates=True).apply(pd.to_numeric, errors="coerce")
+    explicit = _read_explicit_selection(Path(path))
     anchor = _selection_anchor(spec, feature_frames, fallback=explicit)
     aligned = explicit.reindex(index=anchor.index, columns=anchor.columns, fill_value=0.0)
     return aligned.fillna(0.0).astype(bool)
@@ -95,6 +103,45 @@ def _build_hook(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame])
     selection = hook(spec, feature_frames)
     anchor = _selection_anchor(spec, feature_frames, fallback=selection)
     return selection.reindex(index=anchor.index, columns=anchor.columns, fill_value=False).fillna(False).astype(bool)
+
+
+def _read_explicit_selection(path: Path) -> pd.DataFrame:
+    _validate_explicit_header(path)
+    explicit = pd.read_csv(path, index_col=0)
+    explicit.index = _normalize_explicit_index(explicit.index)
+    explicit.columns = _normalize_explicit_columns(explicit.columns)
+    return explicit.apply(pd.to_numeric, errors="coerce")
+
+
+def _validate_explicit_header(path: Path) -> None:
+    with path.open(newline="") as handle:
+        reader = csv.reader(handle)
+        try:
+            header = next(reader)
+        except StopIteration as exc:
+            raise ValueError("explicit selection file must include a header row") from exc
+    if len(header) < 2:
+        raise ValueError("explicit selection file must include at least one symbol column")
+    _normalize_explicit_columns(pd.Index(header[1:]))
+
+
+def _normalize_explicit_index(index: pd.Index) -> pd.DatetimeIndex:
+    try:
+        normalized = pd.to_datetime(index, errors="raise")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("explicit selection index must contain valid unique dates") from exc
+    if normalized.has_duplicates:
+        raise ValueError("explicit selection index must contain unique dates")
+    return pd.DatetimeIndex(normalized)
+
+
+def _normalize_explicit_columns(columns: pd.Index) -> pd.Index:
+    normalized = pd.Index(columns)
+    if normalized.hasnans:
+        raise ValueError("explicit selection columns must not contain missing labels")
+    if normalized.has_duplicates:
+        raise ValueError("explicit selection columns must contain unique labels")
+    return normalized
 
 
 def _selection_anchor(

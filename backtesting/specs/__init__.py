@@ -13,6 +13,7 @@ from .models import (
     WeightingSpec,
     WeightSourceSpec,
 )
+from .plan_builder import build_position_plan_from_execution_spec
 from .presets import get_preset, register_preset
 from .resolve import resolve_execution_spec
 
@@ -30,6 +31,7 @@ __all__ = (
     "SelectionSpec",
     "WeightingSpec",
     "WeightSourceSpec",
+    "build_position_plan_from_execution_spec",
     "get_hook",
     "get_preset",
     "load_execution_spec",

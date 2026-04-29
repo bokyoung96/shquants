@@ -15,17 +15,19 @@ _WEIGHTING_HOOKS: dict[str, WeightingHook] = {}
 
 
 def register_weighting_hook(hook_id: str, hook: WeightingHook) -> None:
-    if hook_id in _WEIGHTING_HOOKS:
-        raise ValueError(f"weighting hook already registered: {hook_id}")
-    _WEIGHTING_HOOKS[hook_id] = hook
+    normalized_hook_id = _normalize_hook_id(hook_id)
+    if normalized_hook_id in _WEIGHTING_HOOKS:
+        raise ValueError(f"weighting hook already registered: {normalized_hook_id}")
+    _WEIGHTING_HOOKS[normalized_hook_id] = hook
 
 
 
 def unregister_weighting_hook(hook_id: str) -> None:
+    normalized_hook_id = _normalize_hook_id(hook_id)
     try:
-        del _WEIGHTING_HOOKS[hook_id]
+        del _WEIGHTING_HOOKS[normalized_hook_id]
     except KeyError as exc:
-        raise KeyError(f"unknown weighting hook_id: {hook_id}") from exc
+        raise KeyError(f"unknown weighting hook_id: {normalized_hook_id}") from exc
 
 
 
@@ -223,6 +225,11 @@ def _require_path(spec: WeightingSpec) -> str:
 
 
 def _require_hook_id(spec: WeightingSpec) -> str:
-    if spec.hook_id is None or not isinstance(spec.hook_id, str) or not spec.hook_id.strip():
+    return _normalize_hook_id(spec.hook_id)
+
+
+
+def _normalize_hook_id(hook_id: object) -> str:
+    if hook_id is None or not isinstance(hook_id, str) or not hook_id.strip():
         raise ValueError("weighting kind 'hook' requires hook_id")
-    return spec.hook_id.strip()
+    return hook_id.strip()

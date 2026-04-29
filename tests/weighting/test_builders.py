@@ -224,6 +224,31 @@ def test_hook_delegates_to_registered_weighting_hook(
     assert_frame_equal(actual, expected)
 
 
+def test_hook_normalizes_whitespace_padded_ids(
+    selection: pd.DataFrame, feature_frames: dict[str, pd.DataFrame]
+) -> None:
+    hook_id = f" weight_hook_{uuid.uuid4().hex} "
+    register_weighting_hook(hook_id, lambda spec, selected, frames: frames["market_cap"] * selected.astype(float))
+    try:
+        actual = build_weights(WeightingSpec(kind="hook", hook_id=hook_id), selection, feature_frames)
+        with pytest.raises(ValueError, match="already registered"):
+            register_weighting_hook(hook_id.strip(), lambda spec, selected, frames: frames["close"] * selected.astype(float))
+    finally:
+        unregister_weighting_hook(hook_id.strip())
+
+    expected = build_weights(WeightingSpec(kind="market_cap"), selection, feature_frames)
+    assert_frame_equal(actual, expected)
+
+
+@pytest.mark.parametrize("hook_id", ["", "   "])
+def test_hook_registration_rejects_blank_ids(hook_id: str) -> None:
+    with pytest.raises(ValueError, match="requires hook_id"):
+        register_weighting_hook(hook_id, lambda spec, selected, frames: selected.astype(float))
+
+    with pytest.raises(ValueError, match="requires hook_id"):
+        unregister_weighting_hook(hook_id)
+
+
 def test_weighting_fields_reports_required_inputs() -> None:
     assert weighting_fields(WeightingSpec(kind="equal_weight")) == ()
     assert weighting_fields(WeightingSpec(kind="market_cap")) == ("market_cap",)

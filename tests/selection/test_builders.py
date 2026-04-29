@@ -208,6 +208,18 @@ def test_explicit_rejects_blank_columns(feature_frames: dict[str, pd.DataFrame],
         build_selection(spec, feature_frames)
 
 
+def test_explicit_rejects_invalid_cell_contents(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_invalid_values.csv"
+    path.write_text(""",A,B,C
+2024-01-02,1,yes,
+2024-01-03,0,1,no
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match=r"2024-01-02.*/B"):
+        build_selection(spec, feature_frames)
+
+
 def test_hook_delegates_to_registered_selection_hook(feature_frames: dict[str, pd.DataFrame]) -> None:
     hook_id = f"test_hook_{uuid.uuid4().hex}"
     register_selection_hook(hook_id, lambda spec, frames: frames["quality"].ge(spec.params["minimum"]))

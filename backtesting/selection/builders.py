@@ -107,10 +107,25 @@ def _build_hook(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame])
 
 def _read_explicit_selection(path: Path) -> pd.DataFrame:
     _validate_explicit_header(path)
-    explicit = pd.read_csv(path, index_col=0)
+    explicit = pd.read_csv(path, index_col=0, keep_default_na=False)
     explicit.index = _normalize_explicit_index(explicit.index)
     explicit.columns = _normalize_explicit_columns(explicit.columns)
-    return explicit.apply(pd.to_numeric, errors="coerce")
+    numeric = explicit.apply(pd.to_numeric, errors="coerce")
+    _validate_explicit_values(explicit, numeric)
+    return numeric
+
+
+def _validate_explicit_values(raw: pd.DataFrame, numeric: pd.DataFrame) -> None:
+    non_empty = raw.map(lambda value: not _is_blank_cell(value))
+    invalid = non_empty & numeric.isna()
+    if not invalid.to_numpy().any():
+        return
+    locations = [f"{row_label}/{column_label}" for row_label, column_label in invalid.stack()[lambda mask: mask].index]
+    raise ValueError(f"explicit selection contains invalid values at: {', '.join(locations)}")
+
+
+def _is_blank_cell(value: object) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
 
 
 def _validate_explicit_header(path: Path) -> None:

@@ -101,8 +101,9 @@ def test_rank_top_n_rejects_non_positive_n(feature_frames: dict[str, pd.DataFram
         build_selection(spec, feature_frames)
 
 
-def test_rank_top_n_rejects_invalid_typed_n(feature_frames: dict[str, pd.DataFrame]) -> None:
-    spec = SelectionSpec(kind="rank_top_n", field="score", n="x")
+@pytest.mark.parametrize("invalid_n", ["x", "1", 1.0, True])
+def test_rank_top_n_rejects_invalid_typed_n(feature_frames: dict[str, pd.DataFrame], invalid_n: object) -> None:
+    spec = SelectionSpec(kind="rank_top_n", field="score", n=invalid_n)
 
     with pytest.raises(ValueError, match="requires integer n"):
         build_selection(spec, feature_frames)
@@ -141,8 +142,9 @@ def test_event_extends_flags_by_hold_days(feature_frames: dict[str, pd.DataFrame
     assert_frame_equal(actual, expected)
 
 
-def test_event_rejects_invalid_typed_hold_days(feature_frames: dict[str, pd.DataFrame]) -> None:
-    spec = SelectionSpec(kind="event", field="event_flag", hold_days="x")
+@pytest.mark.parametrize("invalid_hold_days", ["x", "1", 1.0, True])
+def test_event_rejects_invalid_typed_hold_days(feature_frames: dict[str, pd.DataFrame], invalid_hold_days: object) -> None:
+    spec = SelectionSpec(kind="event", field="event_flag", hold_days=invalid_hold_days)
 
     with pytest.raises(ValueError, match="requires integer hold_days"):
         build_selection(spec, feature_frames)
@@ -186,6 +188,18 @@ not-a-date,1,0,0
     spec = SelectionSpec(kind="explicit", path=str(path))
 
     with pytest.raises(ValueError, match="valid unique dates"):
+        build_selection(spec, feature_frames)
+
+
+def test_explicit_rejects_non_iso_dates(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_non_iso_dates.csv"
+    path.write_text(""",A,B,C
+01/02/2024,1,0,0
+2024-01-03,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="ISO format"):
         build_selection(spec, feature_frames)
 
 

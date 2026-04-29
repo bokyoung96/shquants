@@ -140,12 +140,20 @@ def _validate_explicit_header(path: Path) -> None:
 
 
 def _normalize_explicit_index(index: pd.Index) -> pd.DatetimeIndex:
-    try:
-        normalized = pd.to_datetime(index, errors="raise")
-    except (TypeError, ValueError) as exc:
-        raise ValueError("explicit selection index must contain valid unique dates") from exc
+    raw_index = pd.Index(index)
+    if raw_index.hasnans:
+        raise ValueError("explicit selection index must contain valid unique dates in ISO format (YYYY-MM-DD)")
+    normalized_labels: list[str] = []
+    for value in raw_index:
+        if not isinstance(value, str):
+            raise ValueError("explicit selection index must contain valid unique dates in ISO format (YYYY-MM-DD)")
+        stripped = value.strip()
+        if len(stripped) != 10 or stripped[4] != "-" or stripped[7] != "-":
+            raise ValueError("explicit selection index must contain valid unique dates in ISO format (YYYY-MM-DD)")
+        normalized_labels.append(stripped)
+    normalized = pd.to_datetime(pd.Index(normalized_labels), format="%Y-%m-%d", errors="coerce")
     if normalized.isna().any():
-        raise ValueError("explicit selection index must contain valid unique dates")
+        raise ValueError("explicit selection index must contain valid unique dates in ISO format (YYYY-MM-DD)")
     if normalized.has_duplicates:
         raise ValueError("explicit selection index must contain unique dates")
     return pd.DatetimeIndex(normalized)
@@ -238,18 +246,11 @@ def _require_threshold(spec: SelectionSpec) -> float:
 def _require_non_negative_int(value: object, kind: str, field_name: str) -> int:
     if value is None:
         raise ValueError(f"selection kind '{kind}' requires {field_name}")
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"selection kind '{kind}' requires integer {field_name}")
-    try:
-        coerced = int(value)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"selection kind '{kind}' requires integer {field_name}") from exc
-    if coerced != value and not (isinstance(value, str) and str(coerced) == value.strip()):
-        if not isinstance(value, int):
-            raise ValueError(f"selection kind '{kind}' requires integer {field_name}")
-    if coerced < 0:
+    if value < 0:
         raise ValueError(f"selection kind '{kind}' requires {field_name} >= 0")
-    return coerced
+    return value
 
 
 def _require_float(value: object, kind: str, field_name: str) -> float:

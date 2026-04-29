@@ -139,6 +139,10 @@ def _normalize_explicit_columns(columns: pd.Index) -> pd.Index:
     normalized = pd.Index(columns)
     if normalized.hasnans:
         raise ValueError("explicit selection columns must not contain missing labels")
+    stripped = normalized.map(lambda label: label.strip() if isinstance(label, str) else label)
+    if any(isinstance(label, str) and not label for label in stripped):
+        raise ValueError("explicit selection columns must not contain blank labels")
+    normalized = pd.Index(stripped)
     if normalized.has_duplicates:
         raise ValueError("explicit selection columns must contain unique labels")
     return normalized

@@ -177,6 +177,18 @@ def test_explicit_rejects_duplicate_columns(feature_frames: dict[str, pd.DataFra
         build_selection(spec, feature_frames)
 
 
+def test_explicit_rejects_blank_columns(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_blank_columns.csv"
+    path.write_text(""",A,,C
+2024-01-02,1,0,0
+2024-01-03,0,1,0
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    with pytest.raises(ValueError, match="blank labels"):
+        build_selection(spec, feature_frames)
+
+
 def test_hook_delegates_to_registered_selection_hook(feature_frames: dict[str, pd.DataFrame]) -> None:
     hook_id = f"test_hook_{uuid.uuid4().hex}"
     register_selection_hook(hook_id, lambda spec, frames: frames["quality"].ge(spec.params["minimum"]))

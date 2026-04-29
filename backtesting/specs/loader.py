@@ -105,7 +105,7 @@ def _read_selection(payload: dict[str, object]) -> SelectionSpec | None:
 
     return SelectionSpec(
         kind=_read_required_string(raw, "kind", "selection.kind"),
-        field=_read_optional_string(raw, "field", "weighting.field"),
+        field=_read_optional_string(raw, "field", "selection.field"),
         conditions=_read_conditions(raw.get("conditions")),
         n=int(raw["n"]) if raw.get("n") is not None else None,
         ascending=_read_optional_bool(raw, "ascending", False, "selection.ascending"),

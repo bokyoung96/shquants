@@ -319,3 +319,20 @@ def test_load_execution_spec_rejects_invalid_weighting_field_label(tmp_path: Pat
     with pytest.raises(ValueError, match="weighting.field must be a string"):
         load_execution_spec(path)
 
+
+def test_load_execution_spec_rejects_invalid_selection_field_label(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {"kind": "rank_top_n", "field": 123, "n": 2},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="selection.field must be a string"):
+        load_execution_spec(path)
+

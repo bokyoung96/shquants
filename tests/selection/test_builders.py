@@ -41,6 +41,14 @@ def feature_frames() -> dict[str, pd.DataFrame]:
             },
             index=index,
         ),
+        "nullable": pd.DataFrame(
+            {
+                "A": [1.0, None, 3.0],
+                "B": [None, 2.0, None],
+                "C": [0.0, None, 5.0],
+            },
+            index=index,
+        ),
     }
 
 
@@ -220,6 +228,28 @@ def test_explicit_rejects_invalid_cell_contents(feature_frames: dict[str, pd.Dat
         build_selection(spec, feature_frames)
 
 
+def test_explicit_accepts_blank_cells_as_false(feature_frames: dict[str, pd.DataFrame], tmp_path: pytest.TempPathFactory) -> None:
+    path = tmp_path / "explicit_blank_values.csv"
+    path.write_text(""",A,B,C
+2024-01-02,1,,0
+2024-01-03,,1,
+""")
+    spec = SelectionSpec(kind="explicit", path=str(path))
+
+    actual = build_selection(spec, feature_frames)
+
+    expected = pd.DataFrame(
+        {
+            "A": [True, False, False],
+            "B": [False, True, False],
+            "C": [False, False, False],
+        },
+        index=feature_frames["score"].index,
+        dtype=bool,
+    )
+    assert_frame_equal(actual, expected)
+
+
 def test_hook_delegates_to_registered_selection_hook(feature_frames: dict[str, pd.DataFrame]) -> None:
     hook_id = f"test_hook_{uuid.uuid4().hex}"
     register_selection_hook(hook_id, lambda spec, frames: frames["quality"].ge(spec.params["minimum"]))
@@ -263,3 +293,101 @@ def test_selection_fields_include_condition_and_primary_fields() -> None:
     )
 
     assert selection_fields(spec) == ("score", "quality")
+
+@pytest.mark.parametrize(
+    ("condition", "expected"),
+    [
+        (
+            ConditionSpec(field="score", op=">", value=20.0),
+            pd.DataFrame(
+                {
+                    "A": [False, True, False],
+                    "B": [False, False, True],
+                    "C": [True, False, False],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="score", op="<", value=20.0),
+            pd.DataFrame(
+                {
+                    "A": [True, False, False],
+                    "B": [False, True, False],
+                    "C": [False, False, True],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="score", op="<=", value=20.0),
+            pd.DataFrame(
+                {
+                    "A": [True, False, True],
+                    "B": [True, True, False],
+                    "C": [False, True, True],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="score", op="==", value=20.0),
+            pd.DataFrame(
+                {
+                    "A": [False, False, True],
+                    "B": [True, False, False],
+                    "C": [False, True, False],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="score", op="!=", value=20.0),
+            pd.DataFrame(
+                {
+                    "A": [True, True, False],
+                    "B": [False, True, True],
+                    "C": [True, False, True],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="nullable", op="notna"),
+            pd.DataFrame(
+                {
+                    "A": [True, False, True],
+                    "B": [False, True, False],
+                    "C": [True, False, True],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+        (
+            ConditionSpec(field="nullable", op="isna"),
+            pd.DataFrame(
+                {
+                    "A": [False, True, False],
+                    "B": [True, False, True],
+                    "C": [False, True, False],
+                },
+                index=pd.date_range("2024-01-02", periods=3, freq="D"),
+                dtype=bool,
+            ),
+        ),
+    ],
+)
+def test_filter_supports_condition_operators(
+    feature_frames: dict[str, pd.DataFrame], condition: ConditionSpec, expected: pd.DataFrame
+) -> None:
+    spec = SelectionSpec(kind="filter", conditions=(condition,))
+
+    actual = build_selection(spec, feature_frames)
+
+    assert_frame_equal(actual, expected)

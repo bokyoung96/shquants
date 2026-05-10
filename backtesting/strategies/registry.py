@@ -5,6 +5,7 @@ from typing import Callable
 
 from .base import RegisteredStrategy
 from .momentum import MomentumTopN
+from .revision_minparam_v02 import RevisionMinParamV02
 
 
 StrategyFactory = Callable[..., RegisteredStrategy]
@@ -34,3 +35,4 @@ def list_strategies() -> tuple[str, ...]:
 
 
 register_strategy("momentum", MomentumTopN)
+register_strategy("revision_minparam_v02", RevisionMinParamV02)

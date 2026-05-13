@@ -5,11 +5,104 @@ from dataclasses import dataclass
 import pandas as pd
 
 from backtesting.catalog import DatasetId
+from backtesting.construction.base import ConstructionResult
 from backtesting.data import MarketData
 from backtesting.signals.base import SignalBundle
 
 from .composable import ComposableStrategy
-from .revision_asymmetric_relay_hedge_ls import AsymmetricRelayHedgeLongShort
+
+
+@dataclass(slots=True)
+class AsymmetricRelayHedgeLongShort:
+    default_long_gross: float = 0.8
+    default_short_gross: float = 0.2
+
+    def build(self, bundle: SignalBundle) -> ConstructionResult:
+        alpha = bundle.alpha.fillna(0.0)
+        sector = bundle.context.get("sector")
+        long_mask = bundle.context.get("long_mask")
+        short_mask = bundle.context.get("short_mask")
+        gross_long = bundle.context.get("gross_long")
+        gross_short = bundle.context.get("gross_short")
+        if not isinstance(sector, pd.DataFrame) or not isinstance(long_mask, pd.DataFrame) or not isinstance(short_mask, pd.DataFrame):
+            raise ValueError("asymmetric relay hedge construction requires sector, long_mask, short_mask context")
+
+        sector = sector.reindex(index=alpha.index, columns=alpha.columns)
+        long_mask = long_mask.reindex(index=alpha.index, columns=alpha.columns).fillna(False).astype(bool)
+        short_mask = short_mask.reindex(index=alpha.index, columns=alpha.columns).fillna(False).astype(bool)
+        if isinstance(gross_long, pd.Series):
+            gross_long = gross_long.reindex(alpha.index).fillna(self.default_long_gross)
+        else:
+            gross_long = pd.Series(self.default_long_gross, index=alpha.index, dtype=float)
+        if isinstance(gross_short, pd.Series):
+            gross_short = gross_short.reindex(alpha.index).fillna(self.default_short_gross)
+        else:
+            gross_short = pd.Series(self.default_short_gross, index=alpha.index, dtype=float)
+
+        weights_by_date = {}
+        selected_by_date = {}
+        selected_long_by_date = {}
+        selected_short_by_date = {}
+
+        for timestamp in alpha.index:
+            weights = pd.Series(0.0, index=alpha.columns, dtype=float)
+            selected = pd.Series(False, index=alpha.columns, dtype=bool)
+            selected_long = pd.Series(False, index=alpha.columns, dtype=bool)
+            selected_short = pd.Series(False, index=alpha.columns, dtype=bool)
+
+            sector_row = sector.loc[timestamp].dropna().astype(str)
+            long_groups = []
+            short_groups = []
+            for _, members in sector_row.groupby(sector_row, sort=False):
+                member_index = members.index
+                longs = member_index[long_mask.loc[timestamp].reindex(member_index).fillna(False).to_numpy()]
+                shorts = member_index[short_mask.loc[timestamp].reindex(member_index).fillna(False).to_numpy()]
+                if len(longs) > 0:
+                    long_groups.append(longs)
+                if len(shorts) > 0:
+                    short_groups.append(shorts)
+
+            if long_groups:
+                per_sector_long = float(gross_long.loc[timestamp]) / len(long_groups)
+                for longs in long_groups:
+                    weights.loc[longs] += per_sector_long / len(longs)
+                    selected.loc[longs] = True
+                    selected_long.loc[longs] = True
+
+            if short_groups:
+                per_sector_short = float(gross_short.loc[timestamp]) / len(short_groups)
+                for shorts in short_groups:
+                    weights.loc[shorts] -= per_sector_short / len(shorts)
+                    selected.loc[shorts] = True
+                    selected_short.loc[shorts] = True
+
+            weights_by_date[timestamp] = weights
+            selected_by_date[timestamp] = selected
+            selected_long_by_date[timestamp] = selected_long
+            selected_short_by_date[timestamp] = selected_short
+
+        return ConstructionResult(
+            base_target_weights=pd.DataFrame.from_dict(weights_by_date, orient="index")
+            .reindex(index=alpha.index, columns=alpha.columns)
+            .fillna(0.0)
+            .astype(float),
+            selection_mask=pd.DataFrame.from_dict(selected_by_date, orient="index")
+            .reindex(index=alpha.index, columns=alpha.columns)
+            .fillna(False)
+            .astype(bool),
+            group_long_budget=None,
+            group_short_budget=None,
+            meta={
+                "selected_long": pd.DataFrame.from_dict(selected_long_by_date, orient="index")
+                .reindex(index=alpha.index, columns=alpha.columns)
+                .fillna(False)
+                .astype(bool),
+                "selected_short": pd.DataFrame.from_dict(selected_short_by_date, orient="index")
+                .reindex(index=alpha.index, columns=alpha.columns)
+                .fillna(False)
+                .astype(bool),
+            },
+        )
 
 
 @dataclass(slots=True)

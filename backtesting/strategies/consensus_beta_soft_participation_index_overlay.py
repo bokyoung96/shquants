@@ -61,26 +61,37 @@ class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
             DatasetId.QW_EPS_NFQ1,
             DatasetId.QW_OP_NFQ1,
             DatasetId.QW_WICS_SEC_BIG,
-            DatasetId.QW_MKTCAP_FLT,
+            DatasetId.QW_MKTCAP,
             DatasetId.QW_K200_YN,
         )
 
     def build(self, market: MarketData) -> SignalBundle:
         close = market.frames["close"]
+        k200 = market.frames["k200_yn"].reindex_like(close).fillna(0).astype(bool)
+        active_columns = k200.columns[k200.any(axis=0)]
+        if len(active_columns) > 0:
+            close = close.loc[:, active_columns]
+            k200 = k200.loc[:, active_columns]
         benchmark_frame = market.frames["benchmark"]
         eps = market.frames["eps_fwd_q1"].ffill()
         op = market.frames["op_fwd_q1"].ffill()
         sector = market.frames["sector_big"].ffill()
-        float_mcap = market.frames["float_market_cap"].reindex_like(close).ffill()
-        k200 = market.frames["k200_yn"].reindex_like(close).fillna(0).astype(bool)
+        market_cap = market.frames["market_cap"].reindex_like(close).ffill()
 
         benchmark = benchmark_frame["IKS200"] if "IKS200" in benchmark_frame.columns else benchmark_frame.iloc[:, 0]
         benchmark = benchmark.reindex(close.index).ffill()
         bench_ret = benchmark.pct_change(fill_method=None)
         stock_ret = close.pct_change(fill_method=None)
 
-        beta = stock_ret.rolling(self.beta_lookback, min_periods=max(40, self.beta_lookback // 3)).cov(bench_ret)
-        beta = beta.divide(bench_ret.rolling(self.beta_lookback, min_periods=max(40, self.beta_lookback // 3)).var(), axis=0)
+        min_periods = max(40, self.beta_lookback // 3)
+        beta_cov = self._rolling_covariance(
+            stock_ret=stock_ret,
+            bench_ret=bench_ret,
+            window=self.beta_lookback,
+            min_periods=min_periods,
+        )
+        beta_var = bench_ret.rolling(self.beta_lookback, min_periods=min_periods).var(ddof=0)
+        beta = beta_cov.divide(beta_var.replace(0.0, pd.NA), axis=0)
 
         eps_trend = eps.divide(eps.rolling(self.lookback, min_periods=max(20, self.lookback // 3)).mean()) - 1.0
         op_trend = op.divide(op.rolling(self.lookback, min_periods=max(20, self.lookback // 3)).mean()) - 1.0
@@ -94,7 +105,7 @@ class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
         breadth_mean = market_breadth.rolling(self.lookback, min_periods=max(20, self.lookback // 3)).mean().fillna(0.0)
         breadth_delta = market_breadth.diff(self.flow_lookback).fillna(0.0)
 
-        denom = float_mcap.where(k200)
+        denom = market_cap.where(k200)
         benchmark_weights = denom.div(denom.sum(axis=1).replace(0.0, pd.NA), axis=0).fillna(0.0)
 
         alpha = pd.DataFrame(0.0, index=close.index, columns=close.columns)
@@ -150,6 +161,19 @@ class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
             },
             meta={},
         )
+
+    @staticmethod
+    def _rolling_covariance(
+        *,
+        stock_ret: pd.DataFrame,
+        bench_ret: pd.Series,
+        window: int,
+        min_periods: int,
+    ) -> pd.DataFrame:
+        stock_mean = stock_ret.rolling(window, min_periods=min_periods).mean()
+        bench_mean = bench_ret.rolling(window, min_periods=min_periods).mean()
+        cross_mean = stock_ret.mul(bench_ret, axis=0).rolling(window, min_periods=min_periods).mean()
+        return cross_mean - stock_mean.mul(bench_mean, axis=0)
 
 
 @dataclass(slots=True)

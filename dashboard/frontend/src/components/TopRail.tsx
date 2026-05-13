@@ -6,7 +6,7 @@ export function TopRail({ selectionCount }: TopRailProps) {
   return (
     <header className="top-rail">
       <div className="brand-lockup">
-        <span className="brand-mark">1W1A</span>
+        <span className="brand-mark">Dashboard</span>
         <span className="brand-subtitle">Live Performance</span>
       </div>
       <div className="top-rail-meta">

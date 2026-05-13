@@ -55,10 +55,10 @@ class DashboardPayloadService:
         self.run_reader = run_reader or RunReader()
         self.snapshot_factory = snapshot_factory
         self.benchmark = BenchmarkConfig.default_kospi200()
+        self._snapshot_cache: dict[str, PerformanceSnapshot] = {}
 
     def build(self, run_ids: list[str]) -> DashboardPayloadModel:
-        selected_runs = [self._read_run(run_id) for run_id in run_ids]
-        snapshots = [self._snapshot_factory_for_run(run).build(run, self._resolve_benchmark(run)) for run in selected_runs]
+        snapshots = [self._snapshot_for_run_id(run_id) for run_id in run_ids]
 
         return DashboardPayloadModel(
             mode="single" if len(run_ids) == 1 else "multi",
@@ -155,6 +155,16 @@ class DashboardPayloadService:
             return self.run_reader.read(run_dir)
         except OSError as exc:
             raise HTTPException(status_code=404, detail=f"unable to read run_id: {run_id}") from exc
+
+    def _snapshot_for_run_id(self, run_id: str) -> PerformanceSnapshot:
+        cached = self._snapshot_cache.get(run_id)
+        if cached is not None:
+            return cached
+
+        run = self._read_run(run_id)
+        snapshot = self._snapshot_factory_for_run(run).build(run, self._resolve_benchmark(run))
+        self._snapshot_cache[run_id] = snapshot
+        return snapshot
 
     def _serialize_context(self, snapshot: PerformanceSnapshot) -> DashboardContextModel:
         return DashboardContextModel(

@@ -29,7 +29,7 @@ def _semiannual_floatcap_preset() -> ExecutionSpec:
     return ExecutionSpec(
         start="2019-01-01",
         end=pd.Timestamp.today().date().isoformat(),
-        strategy="momentum",
+        strategy="trend_rank",
         name="kospi200_semiannual_floatcap_close_v1",
         schedule=ScheduleSpec(kind="custom_dates"),
         fill_mode="close",

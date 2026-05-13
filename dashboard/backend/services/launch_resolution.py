@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from backtesting.reporting.models import BenchmarkConfig
+from backtesting.saved_runs import config_signature, is_usable_run_dir, normalize_universe_id, normalize_value
 from dashboard.backend.schemas import RunOptionModel
 from dashboard.backend.services.run_index import RunIndexService
 from dashboard.strategies import DashboardLaunchConfig, StrategyPreset, enabled_strategy_presets
@@ -76,7 +77,7 @@ class LaunchResolutionService:
                 active_runs.append(run)
                 continue
 
-            signature = self._saved_signature_key(config)
+            signature = config_signature(config)
             if signature is None or signature not in seen_signatures:
                 if signature is not None:
                     seen_signatures.add(signature)
@@ -119,7 +120,11 @@ class LaunchResolutionService:
     def _build_signature(config: DashboardLaunchConfig, preset: StrategyPreset) -> dict[str, Any]:
         signature = asdict(config.global_config)
         signature["strategy"] = preset.strategy_name
-        signature["universe_id"] = LaunchResolutionService._normalize_universe_id(preset.universe_id)
+        if preset.schedule is not None:
+            signature["schedule"] = preset.schedule
+        if preset.fill_mode is not None:
+            signature["fill_mode"] = preset.fill_mode
+        signature["universe_id"] = normalize_universe_id(preset.universe_id)
         signature["use_k200"] = LaunchResolutionService._normalize_use_k200(
             signature["use_k200"],
             preset.universe_id,
@@ -129,7 +134,7 @@ class LaunchResolutionService:
         signature["benchmark_name"] = preset.benchmark.name
         signature["benchmark_dataset"] = preset.benchmark.dataset
         signature["warmup_days"] = preset.warmup.extra_days
-        return LaunchResolutionService._normalize_value(signature)
+        return normalize_value(signature)
 
     @staticmethod
     def _build_saved_signature(saved_config: dict[str, Any], desired_signature: dict[str, Any]) -> dict[str, Any]:
@@ -141,38 +146,14 @@ class LaunchResolutionService:
             "warmup_days": 0,
             "universe_id": None,
         }
-        return LaunchResolutionService._normalize_value(
+        return normalize_value(
             {
-                key: LaunchResolutionService._normalize_universe_id(
+                key: normalize_universe_id(
                     saved_config.get(key, compat_defaults.get(key))
                 )
                 for key in desired_signature
             }
         )
-
-    def _saved_signature_key(self, saved_config: dict[str, Any]) -> str | None:
-        benchmark = BenchmarkConfig.default_kospi200()
-        relevant_config = {
-            key: value
-            for key, value in {
-                **saved_config,
-                "benchmark_code": saved_config.get("benchmark_code", benchmark.code),
-                "benchmark_name": saved_config.get("benchmark_name", benchmark.name),
-                "benchmark_dataset": saved_config.get("benchmark_dataset", benchmark.dataset),
-                "warmup_days": saved_config.get("warmup_days", 0),
-                "universe_id": LaunchResolutionService._normalize_universe_id(saved_config.get("universe_id")),
-            }.items()
-            if key not in {"name"}
-        }
-        if not relevant_config:
-            return None
-        return json.dumps(self._normalize_value(relevant_config), sort_keys=True, separators=(",", ":"))
-
-    @staticmethod
-    def _normalize_universe_id(value: Any) -> Any:
-        if value in (None, "legacy_k200"):
-            return None
-        return value
 
     @staticmethod
     def _normalize_use_k200(use_k200: Any, universe_id: Any) -> Any:
@@ -197,17 +178,7 @@ class LaunchResolutionService:
 
     @staticmethod
     def _is_usable_saved_run(runs_root: Path, run_id: str) -> bool:
-        run_dir = runs_root / run_id
-        required_paths = (
-            run_dir / "config.json",
-            run_dir / "summary.json",
-            run_dir / "series" / "equity.csv",
-            run_dir / "series" / "returns.csv",
-            run_dir / "series" / "turnover.csv",
-            run_dir / "positions" / "weights.parquet",
-            run_dir / "positions" / "qty.parquet",
-        )
-        return all(path.is_file() for path in required_paths)
+        return is_usable_run_dir(runs_root / run_id)
 
     @staticmethod
     def _run_sort_key(run: RunOptionModel) -> tuple[datetime, str]:
@@ -226,12 +197,3 @@ class LaunchResolutionService:
         except ValueError:
             return datetime.min
 
-    @staticmethod
-    def _normalize_value(value: Any) -> Any:
-        if isinstance(value, dict):
-            return {key: LaunchResolutionService._normalize_value(value[key]) for key in sorted(value)}
-        if isinstance(value, list):
-            return [LaunchResolutionService._normalize_value(item) for item in value]
-        if isinstance(value, tuple):
-            return tuple(LaunchResolutionService._normalize_value(item) for item in value)
-        return value

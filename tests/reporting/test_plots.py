@@ -13,7 +13,7 @@ def _sample_run(tmp_path: Path) -> SavedRun:
     return SavedRun(
         run_id="sample",
         path=tmp_path,
-        config={"strategy": "momentum"},
+        config={"strategy": "trend_rank"},
         summary={"cagr": 0.1, "mdd": -0.2, "sharpe": 1.0, "final_equity": 110.0, "avg_turnover": 0.05},
         equity=pd.Series([100.0, 110.0], index=index),
         returns=pd.Series([0.0, 0.1], index=index),

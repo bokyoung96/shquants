@@ -215,7 +215,7 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         start=str(payload["start"]),
         end=str(payload["end"]),
         capital=float(payload.get("capital", 100_000_000.0)),
-        strategy=str(payload.get("strategy", "momentum")),
+        strategy=str(payload.get("strategy", "trend_rank")),
         name=payload.get("name"),
         description=payload.get("description"),
         top_n=int(payload.get("top_n", 20)),

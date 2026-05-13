@@ -22,6 +22,7 @@ _EMPTY_PNG = base64.b64decode(
 @dataclass(slots=True)
 class RunWriter:
     root_dir: Path
+    write_report_assets: bool = True
 
     def write(self, report: "RunReport") -> Path:
         run_dir = self._run_dir(report)
@@ -29,7 +30,10 @@ class RunWriter:
         positions_dir = run_dir / "positions"
         plots_dir = run_dir / "plots"
 
-        for path in (run_dir, series_dir, positions_dir, plots_dir):
+        output_dirs = (run_dir, series_dir, positions_dir)
+        if self.write_report_assets:
+            output_dirs = (*output_dirs, plots_dir)
+        for path in output_dirs:
             path.mkdir(parents=True, exist_ok=True)
 
         self._write_json(run_dir / "config.json", asdict(report.config))
@@ -41,6 +45,8 @@ class RunWriter:
             self._write_json(run_dir / "resolved_execution_spec.json", asdict(report.resolved_spec))
         if getattr(report, "execution_resolution", None) is not None:
             self._write_json(run_dir / "execution_resolution.json", report.execution_resolution)
+        if getattr(report, "timing", None) is not None:
+            self.write_timing(run_dir, report.timing)
 
         report.result.equity.rename("equity").to_csv(series_dir / "equity.csv", index_label="date")
         report.result.returns.rename("returns").to_csv(series_dir / "returns.csv", index_label="date")
@@ -57,20 +63,24 @@ class RunWriter:
         self._latest_qty(report).to_csv(positions_dir / "latest_qty.csv", index=False)
         self._latest_weights(report).to_csv(positions_dir / "latest_weights.csv", index=False)
 
-        self._plot_series(
-            path=plots_dir / "equity.png",
-            series=report.result.equity,
-            title="Equity Curve",
-            ylabel="Equity",
-        )
-        self._plot_series(
-            path=plots_dir / "drawdown.png",
-            series=self._drawdown(report.result.equity),
-            title="Drawdown",
-            ylabel="Drawdown",
-        )
-        self._write_performance_page(report, run_dir)
+        if self.write_report_assets:
+            self._plot_series(
+                path=plots_dir / "equity.png",
+                series=report.result.equity,
+                title="Equity Curve",
+                ylabel="Equity",
+            )
+            self._plot_series(
+                path=plots_dir / "drawdown.png",
+                series=self._drawdown(report.result.equity),
+                title="Drawdown",
+                ylabel="Drawdown",
+            )
+            self._write_performance_page(report, run_dir)
         return run_dir
+
+    def write_timing(self, run_dir: Path, timing: dict[str, float]) -> None:
+        self._write_json(run_dir / "timing.json", timing)
 
     def _run_dir(self, report: "RunReport") -> Path:
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")

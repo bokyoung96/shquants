@@ -44,7 +44,7 @@ from .specs import (
     resolve_execution_spec,
 )
 from .strategies import (
-    MomentumTopN,
+    TrendRank,
     RegisteredStrategy,
     build_strategy,
     list_strategies,
@@ -57,7 +57,7 @@ __all__ = (
     "BacktestEngine",
     "BacktestResult",
     "BaseStrategy",
-    "MomentumTopN",
+    "TrendRank",
     "CostModel",
     "CrossSectionalStrategy",
     "CustomSchedule",

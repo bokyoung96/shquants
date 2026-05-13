@@ -28,6 +28,7 @@ class RunReader:
             validation=self._read_optional_json(run_dir / "validation.json"),
             split=self._read_optional_json(run_dir / "split.json"),
             factor=self._read_optional_json(run_dir / "factor.json"),
+            timing=self._read_optional_timing(run_dir / "timing.json"),
         )
 
     @staticmethod
@@ -57,3 +58,12 @@ class RunReader:
     @staticmethod
     def _read_optional_json(path: Path) -> dict[str, object] | None:
         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+    @staticmethod
+    def _read_optional_timing(path: Path) -> dict[str, float] | None:
+        if not path.exists():
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            return None
+        return {str(key): float(value) for key, value in payload.items()}

@@ -36,6 +36,7 @@ def test_run_reader_returns_none_for_missing_optional_artifacts(tmp_path: Path) 
     assert run.validation is None
     assert run.split is None
     assert run.factor is None
+    assert run.timing is None
 
 
 def test_run_reader_loads_optional_artifacts_when_present(tmp_path: Path) -> None:
@@ -66,6 +67,7 @@ def test_run_reader_loads_optional_artifacts_when_present(tmp_path: Path) -> Non
     validation = {"warnings": ["low_liquidity"], "status": "pass"}
     split = {"is": {"start": "2024-01-01", "end": "2024-01-15"}, "oos": None}
     factor = {"metrics": {"ic": 0.12}}
+    timing = {"data_load": 0.01, "plan_build": 0.02, "engine_run": 0.03, "write_artifacts": 0.04, "total": 0.10}
     (run_dir / "validation.json").write_text(
         '{"warnings":["low_liquidity"],"status":"pass"}',
         encoding="utf-8",
@@ -78,6 +80,10 @@ def test_run_reader_loads_optional_artifacts_when_present(tmp_path: Path) -> Non
         '{"metrics":{"ic":0.12}}',
         encoding="utf-8",
     )
+    (run_dir / "timing.json").write_text(
+        '{"data_load":0.01,"plan_build":0.02,"engine_run":0.03,"write_artifacts":0.04,"total":0.1}',
+        encoding="utf-8",
+    )
 
     run = RunReader().read(run_dir)
 
@@ -87,6 +93,7 @@ def test_run_reader_loads_optional_artifacts_when_present(tmp_path: Path) -> Non
     assert run.validation == validation
     assert run.split == split
     assert run.factor == factor
+    assert run.timing == timing
 
 
 def test_run_reader_round_trips_writer_bundle_layout(tmp_path: Path) -> None:
@@ -132,6 +139,7 @@ def test_run_reader_round_trips_writer_bundle_layout(tmp_path: Path) -> None:
     assert run.validation == {"warnings": []}
     assert run.split == {"is": None, "oos": None}
     assert run.factor == {"metrics": {}}
+    assert run.timing is None
 
 
 def _write_required_bundle(run_dir: Path) -> None:
@@ -142,7 +150,7 @@ def _write_required_bundle(run_dir: Path) -> None:
     positions_dir.mkdir()
 
     (run_dir / "config.json").write_text(
-        '{"strategy":"momentum","start":"2024-01-01","end":"2024-01-31"}',
+        '{"strategy":"trend_rank","start":"2024-01-01","end":"2024-01-31"}',
         encoding="utf-8",
     )
     (run_dir / "summary.json").write_text(
@@ -174,7 +182,7 @@ def _build_report() -> RunReport:
         qty=pd.DataFrame({"A": [0.0, 2.0], "B": [0.0, -5.0]}, index=index),
         turnover=pd.Series([0.0, 0.05], index=index, name="turnover"),
     )
-    config = RunConfig(start="2024-01-02", end="2024-01-03", strategy="momentum", name="writer-roundtrip")
+    config = RunConfig(start="2024-01-02", end="2024-01-03", strategy="trend_rank", name="writer-roundtrip")
     summary = {"cagr": 0.1, "mdd": -0.2, "sharpe": 1.2, "final_equity": 110.0, "avg_turnover": 0.05}
     position_plan = PositionPlan(
         target_weights=result.weights.copy(),

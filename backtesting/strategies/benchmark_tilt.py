@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -9,11 +9,11 @@ from backtesting.data import MarketData
 from backtesting.signals.base import SignalBundle
 
 from .composable import ComposableStrategy
-from .consensus_beta_soft_participation_index_overlay import _IndexOverlayConstruction
+from .benchmark_overlay import _BenchmarkOverlayConstruction
 
 
 @dataclass(slots=True)
-class IndexAlphaTiltConsensusRevisionOiBeta(ComposableStrategy):
+class BenchmarkTilt(ComposableStrategy):
     lookback: int = 20
     flow_lookback: int = 20
     momentum_lookback: int = 60
@@ -23,13 +23,13 @@ class IndexAlphaTiltConsensusRevisionOiBeta(ComposableStrategy):
     min_names: int = 35
 
     def __post_init__(self) -> None:
-        self.signal_producer = _IndexAlphaTiltSignalProducer(
+        self.signal_producer = _BenchmarkTiltSignal(
             lookback=self.lookback,
             flow_lookback=self.flow_lookback,
             beta_lookback=max(4, self.momentum_lookback * 3),
             momentum_lookback=self.momentum_lookback,
         )
-        self.construction_rule = _IndexOverlayConstruction(
+        self.construction_rule = _BenchmarkOverlayConstruction(
             active_share_target=self.active_share_target,
             max_stock_active=self.max_stock_active,
             max_sector_active=self.max_sector_active,
@@ -38,7 +38,7 @@ class IndexAlphaTiltConsensusRevisionOiBeta(ComposableStrategy):
 
 
 @dataclass(slots=True)
-class _IndexAlphaTiltSignalProducer:
+class _BenchmarkTiltSignal:
     lookback: int = 20
     flow_lookback: int = 20
     beta_lookback: int = 180
@@ -142,3 +142,5 @@ class _IndexAlphaTiltSignalProducer:
         member_count = membership.sum(axis=1).replace(0, pd.NA)
         breadth = positive_breadth.divide(member_count).fillna(0.0)
         return breadth.clip(lower=0.25, upper=1.0).astype(float)
+
+

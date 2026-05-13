@@ -52,6 +52,6 @@ def _build_report() -> RunReport:
         qty=pd.DataFrame({"A": [0.0, 2.0], "B": [0.0, -5.0]}, index=index),
         turnover=pd.Series([0.0, 0.05], index=index, name="turnover"),
     )
-    config = RunConfig(start="2024-01-02", end="2024-01-03", strategy="momentum", name="cli-roundtrip")
+    config = RunConfig(start="2024-01-02", end="2024-01-03", strategy="trend_rank", name="cli-roundtrip")
     summary = {"cagr": 0.1, "mdd": -0.2, "sharpe": 1.2, "final_equity": 110.0, "avg_turnover": 0.05}
     return RunReport(config=config, summary=summary, result=result)

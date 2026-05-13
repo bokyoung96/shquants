@@ -147,13 +147,7 @@ def test_dashboard_payload_includes_launch_metadata(tmp_path: Path) -> None:
         "benchmark": {
             "kind": "shared",
             "shared": {"code": "IKS200", "name": "KOSPI200"},
-            "strategies": [
-                {
-                    "strategy": "momentum",
-                    "label": "Momentum",
-                    "benchmark": {"code": "IKS200", "name": "KOSPI200"},
-                },
-            ],
+            "strategies": _expected_launch_strategies(),
         },
         "asOfDate": "2024-01-03",
     }
@@ -182,13 +176,7 @@ def test_dashboard_payload_launch_benchmark_uses_shared_dashboard_default(tmp_pa
     assert payload["launch"]["benchmark"] == {
         "kind": "shared",
         "shared": {"code": "IKS200", "name": "KOSPI200"},
-        "strategies": [
-            {
-                "strategy": "momentum",
-                "label": "Momentum",
-                "benchmark": {"code": "IKS200", "name": "KOSPI200"},
-            },
-        ],
+        "strategies": _expected_launch_strategies(),
     }
     assert payload["context"]["macro_20260405_120000"]["benchmark"] == {"code": "SPX", "name": "S&P 500"}
 
@@ -492,7 +480,7 @@ def test_dashboard_returns_single_mode_payload(tmp_path: Path) -> None:
         tmp_path,
         "omega_20260405_110000",
         name="Omega Strategy",
-        strategy="momentum",
+        strategy="trend_rank",
         final_equity=120.0,
         avg_turnover=0.04,
         weights=[[0.3, 0.4, 0.3], [0.2, 0.5, 0.3]],
@@ -534,7 +522,7 @@ def test_dashboard_returns_single_mode_payload(tmp_path: Path) -> None:
     assert payload["context"] == {
         "alpha_20260405_100000": {
             "label": "Alpha Strategy",
-            "strategy": "momentum",
+            "strategy": "trend_rank",
             "startDate": "2024-01-02",
             "endDate": "2024-01-03",
             "asOfDate": "2024-01-03",
@@ -873,8 +861,8 @@ def test_dashboard_payload_preserves_korean_sector_and_stock_names(tmp_path: Pat
             {"A": ["G45", "G45"], "B": ["G40", "G40"], "C": ["G10", "G10"]},
             index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
         ),
-        sector_name_map={"G45": "IT", "G40": "금융", "G10": "에너지"},
-        stock_name_map={"A005930": "삼성전자", "A000660": "SK하이닉스"},
+        sector_name_map={"G45": "IT", "G40": "Financials", "G10": "Energy"},
+        stock_name_map={"A005930": "Samsung Electronics", "A000660": "SK Hynix"},
     )
 
     response = client.get("/api/dashboard", params=[("run_ids", "alpha_20260405_100000")])
@@ -884,8 +872,8 @@ def test_dashboard_payload_preserves_korean_sector_and_stock_names(tmp_path: Pat
     payload = response.json()
     assert payload["exposure"]["latestHoldings"] == {
         "alpha_20260405_100000": [
-            {"symbol": "삼성전자 (005930)", "targetWeight": 0.55, "absWeight": 0.55},
-            {"symbol": "SK하이닉스 (000660)", "targetWeight": 0.45, "absWeight": 0.45},
+            {"symbol": "Samsung Electronics (005930)", "targetWeight": 0.55, "absWeight": 0.55},
+            {"symbol": "SK Hynix (000660)", "targetWeight": 0.45, "absWeight": 0.45},
         ]
     }
     assert payload["exposure"]["sectorWeights"]["alpha_20260405_100000"][0]["name"] == "IT"
@@ -952,9 +940,7 @@ def _build_payload_service(
         runs_root=runs_root,
         run_index_service=RunIndexService(runs_root),
         snapshot_factory=PerformanceSnapshotFactory(
-            benchmark_repo=BenchmarkRepository.from_frame(
-                benchmark_frame
-            ),
+            benchmark_repo=BenchmarkRepository.from_frame(benchmark_frame),
             sector_repo=SectorRepository.from_frame(
                 sector_frame,
                 prices=prices_frame,
@@ -965,12 +951,27 @@ def _build_payload_service(
     )
 
 
+def _expected_launch_strategies() -> list[dict[str, object]]:
+    return [
+        {
+            "strategy": preset.strategy_name,
+            "label": preset.display_label,
+            "benchmark": {"code": preset.benchmark.code, "name": preset.benchmark.name},
+        }
+        for preset in sorted(
+            DEFAULT_LAUNCH_CONFIG.strategies,
+            key=lambda item: (item.strategy_name, item.display_label),
+        )
+        if preset.enabled
+    ]
+
+
 def _write_saved_run(
     root: Path,
     run_id: str,
     *,
     name: str,
-    strategy: str = "momentum",
+    strategy: str = "trend_rank",
     final_equity: float,
     avg_turnover: float,
     weights: list[list[float]],
@@ -1055,7 +1056,7 @@ def _write_incomplete_run(root: Path, run_id: str) -> None:
         json.dumps(
             {
                 "name": "Broken Strategy",
-                "strategy": "momentum",
+                "strategy": "trend_rank",
                 "start": "2024-01-02",
                 "end": "2024-01-03",
             }

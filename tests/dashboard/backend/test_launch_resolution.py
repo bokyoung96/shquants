@@ -11,14 +11,18 @@ from dashboard.backend.services.launch_resolution import LaunchResolutionService
 from dashboard.strategies import DEFAULT_LAUNCH_CONFIG
 
 
+DEFAULT_STRATEGY_NAMES = [preset.strategy_name for preset in DEFAULT_LAUNCH_CONFIG.strategies]
+REMAINING_STRATEGY_NAMES = DEFAULT_STRATEGY_NAMES[1:]
+
+
 def test_resolution_reuses_newest_matching_run(tmp_path: Path) -> None:
-    _write_matching_run(tmp_path, "momentum_20260405_090000")
-    _write_matching_run(tmp_path, "momentum_20260405_100000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_090000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_100000")
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_100000"]
-    assert plan.missing_presets == ()
+    assert plan.selected_run_ids == ["trend_rank_20260405_100000"]
+    assert [item.strategy_name for item in plan.missing_presets] == REMAINING_STRATEGY_NAMES
 
 
 def test_resolution_marks_default_preset_missing_when_global_config_changes(tmp_path: Path) -> None:
@@ -31,14 +35,14 @@ def test_resolution_marks_default_preset_missing_when_global_config_changes(tmp_
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == DEFAULT_STRATEGY_NAMES
 
 
 def test_resolution_marks_default_preset_missing_when_no_matching_run_exists(tmp_path: Path) -> None:
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == DEFAULT_STRATEGY_NAMES
 
 
 def test_resolution_marks_strategy_missing_when_strategy_params_change(tmp_path: Path) -> None:
@@ -51,7 +55,7 @@ def test_resolution_marks_strategy_missing_when_strategy_params_change(tmp_path:
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == ["trend_rank"]
 
 
 def test_resolution_marks_strategy_missing_when_benchmark_metadata_changes(tmp_path: Path) -> None:
@@ -69,7 +73,7 @@ def test_resolution_marks_strategy_missing_when_benchmark_metadata_changes(tmp_p
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == ["trend_rank"]
 
 
 def test_resolution_marks_strategy_missing_when_warmup_changes(tmp_path: Path) -> None:
@@ -87,7 +91,7 @@ def test_resolution_marks_strategy_missing_when_warmup_changes(tmp_path: Path) -
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == ["trend_rank"]
 
 
 def test_resolution_marks_strategy_missing_when_universe_changes(tmp_path: Path) -> None:
@@ -100,25 +104,25 @@ def test_resolution_marks_strategy_missing_when_universe_changes(tmp_path: Path)
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == ["trend_rank"]
 
 
 def test_resolution_reuses_legacy_saved_run_when_universe_id_is_legacy_k200(tmp_path: Path) -> None:
     payload = _saved_config()
     payload["universe_id"] = "legacy_k200"
-    _write_saved_run(tmp_path, "momentum_20260405_100000", config=payload)
+    _write_saved_run(tmp_path, "trend_rank_20260405_100000", config=payload)
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_100000"]
-    assert plan.missing_presets == ()
+    assert plan.selected_run_ids == ["trend_rank_20260405_100000"]
+    assert [item.strategy_name for item in plan.missing_presets] == REMAINING_STRATEGY_NAMES
 
 
 def test_resolution_reuses_saved_kosdaq150_run_when_use_k200_is_normalized(tmp_path: Path) -> None:
     payload = _saved_config()
     payload["universe_id"] = "kosdaq150"
     payload["use_k200"] = False
-    _write_saved_run(tmp_path, "momentum_20260405_110000", config=payload)
+    _write_saved_run(tmp_path, "trend_rank_20260405_110000", config=payload)
     altered = replace(
         DEFAULT_LAUNCH_CONFIG,
         strategies=(replace(DEFAULT_LAUNCH_CONFIG.strategies[0], universe_id="kosdaq150"),),
@@ -126,77 +130,77 @@ def test_resolution_reuses_saved_kosdaq150_run_when_use_k200_is_normalized(tmp_p
 
     plan = LaunchResolutionService(tmp_path).resolve(altered)
 
-    assert plan.selected_run_ids == ["momentum_20260405_110000"]
+    assert plan.selected_run_ids == ["trend_rank_20260405_110000"]
     assert plan.missing_presets == ()
 
 
 def test_resolution_archives_older_duplicate_run(tmp_path: Path) -> None:
-    _write_matching_run(tmp_path, "momentum_20260405_090000")
-    _write_matching_run(tmp_path, "momentum_20260405_100000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_090000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_100000")
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_100000"]
-    assert plan.archived_run_ids == ("momentum_20260405_090000",)
-    assert not (tmp_path / "momentum_20260405_090000").exists()
-    assert (tmp_path / "_archived" / "momentum_20260405_090000").is_dir()
+    assert plan.selected_run_ids == ["trend_rank_20260405_100000"]
+    assert plan.archived_run_ids == ("trend_rank_20260405_090000",)
+    assert not (tmp_path / "trend_rank_20260405_090000").exists()
+    assert (tmp_path / "_archived" / "trend_rank_20260405_090000").is_dir()
 
 
 def test_resolution_keeps_older_valid_run_when_newer_duplicate_is_incomplete(tmp_path: Path) -> None:
-    _write_matching_run(tmp_path, "momentum_20260405_090000")
-    _write_saved_run(tmp_path, "momentum_20260405_100000", config=_saved_config(), artifacts=False)
+    _write_matching_run(tmp_path, "trend_rank_20260405_090000")
+    _write_saved_run(tmp_path, "trend_rank_20260405_100000", config=_saved_config(), artifacts=False)
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_090000"]
+    assert plan.selected_run_ids == ["trend_rank_20260405_090000"]
     assert plan.archived_run_ids == ()
-    assert (tmp_path / "momentum_20260405_090000").is_dir()
-    assert (tmp_path / "momentum_20260405_100000").is_dir()
+    assert (tmp_path / "trend_rank_20260405_090000").is_dir()
+    assert (tmp_path / "trend_rank_20260405_100000").is_dir()
 
 
 def test_resolution_does_not_match_archived_runs(tmp_path: Path) -> None:
     _write_saved_run(
         tmp_path / "_archived",
-        "momentum_20260405_100000",
+        "trend_rank_20260405_100000",
         config=_saved_config(),
     )
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
     assert plan.selected_run_ids == []
-    assert [item.strategy_name for item in plan.missing_presets] == ["momentum"]
+    assert [item.strategy_name for item in plan.missing_presets] == DEFAULT_STRATEGY_NAMES
 
 
 def test_resolution_ignores_malformed_saved_config(tmp_path: Path) -> None:
-    _write_matching_run(tmp_path, "momentum_20260405_100000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_100000")
     _write_saved_run(
         tmp_path,
-        "momentum_20260405_110000",
+        "trend_rank_20260405_110000",
         config_text="{not valid json",
     )
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_100000"]
-    assert plan.missing_presets == ()
+    assert plan.selected_run_ids == ["trend_rank_20260405_100000"]
+    assert [item.strategy_name for item in plan.missing_presets] == REMAINING_STRATEGY_NAMES
 
 
 def test_resolution_ignores_non_dict_saved_config(tmp_path: Path) -> None:
-    _write_matching_run(tmp_path, "momentum_20260405_100000")
+    _write_matching_run(tmp_path, "trend_rank_20260405_100000")
     _write_saved_run(
         tmp_path,
-        "momentum_20260405_110000",
+        "trend_rank_20260405_110000",
         config=[1, 2, 3],
     )
 
     plan = LaunchResolutionService(tmp_path).resolve(DEFAULT_LAUNCH_CONFIG)
 
-    assert plan.selected_run_ids == ["momentum_20260405_100000"]
-    assert plan.missing_presets == ()
+    assert plan.selected_run_ids == ["trend_rank_20260405_100000"]
+    assert [item.strategy_name for item in plan.missing_presets] == REMAINING_STRATEGY_NAMES
 
 
 def _write_matching_default_runs(root: Path) -> None:
-    _write_matching_run(root, "momentum_20260405_100000")
+    _write_matching_run(root, "trend_rank_20260405_100000")
 
 
 def _write_matching_run(root: Path, run_id: str) -> None:

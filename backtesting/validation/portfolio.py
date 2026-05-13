@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import pandas as pd
+import numpy as np
 
 from backtesting.policy.base import PositionPlan
 
 
 def validate_position_plan(plan: PositionPlan, tolerance: float = 1e-8) -> None:
-    target_weights = plan.target_weights.fillna(0.0).astype(float).copy()
-    target_weights.index = pd.to_datetime(target_weights.index)
-    target_values = target_weights.stack().astype(float)
-    target_values.index = target_values.index.set_names(["date", "symbol"])
+    target_values = _target_weight_values(plan.target_weights, tolerance=tolerance)
 
     if plan.bucket_ledger.empty:
         ledger_values = pd.Series(dtype=float, index=target_values.index)
@@ -44,3 +42,21 @@ def validate_position_plan(plan: PositionPlan, tolerance: float = 1e-8) -> None:
         for date, symbol in all_positions[mismatches]
     )
     raise ValueError(f"bucket target_weight values do not match plan target_weights: {details}")
+
+
+def _target_weight_values(target_weights: pd.DataFrame, tolerance: float) -> pd.Series:
+    frame = target_weights.fillna(0.0).astype(float)
+    dates = pd.to_datetime(frame.index)
+    columns = frame.columns
+    values = frame.to_numpy(dtype=float, copy=False)
+    row_index, col_index = np.nonzero(np.abs(values) > float(tolerance))
+    if len(row_index) == 0:
+        return pd.Series(
+            dtype=float,
+            index=pd.MultiIndex.from_arrays([[], []], names=["date", "symbol"]),
+        )
+    index = pd.MultiIndex.from_arrays(
+        [dates.take(row_index), columns.take(col_index)],
+        names=["date", "symbol"],
+    )
+    return pd.Series(values[row_index, col_index].astype(float, copy=False), index=index, dtype=float)

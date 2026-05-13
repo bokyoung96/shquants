@@ -31,71 +31,78 @@ class BacktestEngine:
         tradable = self._tradable(tradable=tradable, close=close)
         schedule = self._schedule(schedule=schedule, close=close)
 
-        equity = pd.Series(0.0, index=close.index, dtype=float)
-        qty = pd.DataFrame(0.0, index=close.index, columns=close.columns, dtype=float)
-        turnover = pd.Series(0.0, index=close.index, dtype=float)
-
         cash = float(capital)
-        current_qty = pd.Series(0.0, index=close.columns, dtype=float)
         dates = close.index
+        columns = close.columns
+        close_values = close.to_numpy(dtype=float, copy=False)
+        weight_values = weights.to_numpy(dtype=float, copy=False)
+        tradable_values = tradable.to_numpy(dtype=bool, copy=False)
+        schedule_values = schedule.to_numpy(dtype=bool, copy=False)
+
+        equity_values = np.zeros(len(dates), dtype=float)
+        qty_values = np.zeros(close_values.shape, dtype=float)
+        turnover_values = np.zeros(len(dates), dtype=float)
+        current_qty = np.zeros(len(columns), dtype=float)
 
         if fill_mode == "next_open":
             open_ = None if open is None else open.reindex_like(close).astype(float)
             exec_prices = fill_prices(close=close, open_=open_, fill_mode="next_open")
-            equity.iloc[0] = capital
-            qty.iloc[0] = current_qty
+            exec_values = exec_prices.reindex(index=dates[:-1], columns=columns).to_numpy(dtype=float, copy=False)
+            equity_values[0] = capital
+            qty_values[0] = current_qty
 
-            for ts in tqdm(dates[1:], desc="backtest", disable=not show_progress):
-                prev_ts = dates[dates.get_loc(ts) - 1]
-                if schedule.loc[prev_ts]:
-                    cash, current_qty, turn = self._rebalance(
+            for index in tqdm(range(1, len(dates)), desc="backtest", disable=not show_progress):
+                if schedule_values[index - 1]:
+                    cash, current_qty, turn = self._rebalance_values(
                         cash=cash,
                         current_qty=current_qty,
-                        fill_price=exec_prices.loc[prev_ts],
-                        target_weight=weights.loc[prev_ts],
-                        tradable=tradable.loc[ts],
+                        fill_price=exec_values[index - 1],
+                        target_weight=weight_values[index - 1],
+                        tradable=tradable_values[index],
                         allow_fractional=allow_fractional,
                     )
                 else:
                     turn = 0.0
-                equity.loc[ts] = cash + current_qty.mul(close.loc[ts]).sum()
-                qty.loc[ts] = current_qty
-                turnover.loc[ts] = turn
+                equity_values[index] = cash + np.nansum(current_qty * self._zero_nan(close_values[index]))
+                qty_values[index] = current_qty
+                turnover_values[index] = turn
         elif fill_mode == "close":
-            first_ts = dates[0]
-            if schedule.loc[first_ts]:
-                cash, current_qty, turn = self._rebalance(
+            if schedule_values[0]:
+                cash, current_qty, turn = self._rebalance_values(
                     cash=cash,
                     current_qty=current_qty,
-                    fill_price=close.loc[first_ts],
-                    target_weight=weights.loc[first_ts],
-                    tradable=tradable.loc[first_ts],
+                    fill_price=close_values[0],
+                    target_weight=weight_values[0],
+                    tradable=tradable_values[0],
                     allow_fractional=allow_fractional,
                 )
             else:
                 turn = 0.0
-            equity.loc[first_ts] = cash + current_qty.mul(close.loc[first_ts]).sum()
-            qty.loc[first_ts] = current_qty
-            turnover.loc[first_ts] = turn
+            equity_values[0] = cash + np.nansum(current_qty * self._zero_nan(close_values[0]))
+            qty_values[0] = current_qty
+            turnover_values[0] = turn
 
-            for ts in tqdm(dates[1:], desc="backtest", disable=not show_progress):
-                if schedule.loc[ts]:
-                    cash, current_qty, turn = self._rebalance(
+            for index in tqdm(range(1, len(dates)), desc="backtest", disable=not show_progress):
+                if schedule_values[index]:
+                    cash, current_qty, turn = self._rebalance_values(
                         cash=cash,
                         current_qty=current_qty,
-                        fill_price=close.loc[ts],
-                        target_weight=weights.loc[ts],
-                        tradable=tradable.loc[ts],
+                        fill_price=close_values[index],
+                        target_weight=weight_values[index],
+                        tradable=tradable_values[index],
                         allow_fractional=allow_fractional,
                     )
                 else:
                     turn = 0.0
-                equity.loc[ts] = cash + current_qty.mul(close.loc[ts]).sum()
-                qty.loc[ts] = current_qty
-                turnover.loc[ts] = turn
+                equity_values[index] = cash + np.nansum(current_qty * self._zero_nan(close_values[index]))
+                qty_values[index] = current_qty
+                turnover_values[index] = turn
         else:
             fill_prices(close=close, open_=open, fill_mode=fill_mode)
 
+        equity = pd.Series(equity_values, index=dates, dtype=float)
+        qty = pd.DataFrame(qty_values, index=dates, columns=columns, dtype=float)
+        turnover = pd.Series(turnover_values, index=dates, dtype=float)
         returns = equity.pct_change().fillna(0.0)
         return BacktestResult(
             equity=equity,
@@ -105,58 +112,47 @@ class BacktestEngine:
             turnover=turnover,
         )
 
-    def _rebalance(
+    def _rebalance_values(
         self,
         cash: float,
-        current_qty: pd.Series,
-        fill_price: pd.Series,
-        target_weight: pd.Series,
-        tradable: pd.Series,
+        current_qty: np.ndarray,
+        fill_price: np.ndarray,
+        target_weight: np.ndarray,
+        tradable: np.ndarray,
         allow_fractional: bool,
-    ) -> tuple[float, pd.Series, float]:
-        tradable = tradable.reindex(fill_price.index).fillna(False).astype(bool)
-        safe_price = fill_price.where(fill_price.ne(0.0))
-        can_trade = tradable & safe_price.notna()
-        nav = cash + current_qty.mul(fill_price.fillna(0.0)).sum()
+    ) -> tuple[float, np.ndarray, float]:
+        safe_price = np.where(fill_price != 0.0, fill_price, np.nan)
+        can_trade = tradable & ~np.isnan(safe_price)
+        nav = cash + float(np.nansum(current_qty * self._zero_nan(fill_price)))
 
-        target_qty = target_weight.mul(nav).div(safe_price).fillna(0.0)
-        target_qty = target_qty.where(can_trade, current_qty)
-        target_qty = self._normalize_quantity(target_qty=target_qty, allow_fractional=allow_fractional)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            target_qty = target_weight * nav / safe_price
+        target_qty = self._zero_nan(target_qty)
+        target_qty = np.where(can_trade, target_qty, current_qty)
+        target_qty = self._normalize_quantity_values(target_qty, allow_fractional=allow_fractional)
 
-        raw_delta = target_qty.sub(current_qty).fillna(0.0)
-        sell_delta = raw_delta.where(raw_delta.lt(0.0), 0.0)
-        buy_delta = raw_delta.where(raw_delta.gt(0.0), 0.0)
+        raw_delta = self._zero_nan(target_qty - current_qty)
+        sell_delta = np.where(raw_delta < 0.0, raw_delta, 0.0)
+        buy_delta = np.where(raw_delta > 0.0, raw_delta, 0.0)
 
-        next_cash = cash
-        for symbol, qty_delta in sell_delta.items():
-            if qty_delta == 0.0:
-                continue
+        price = self._zero_nan(fill_price)
+        sell_gross = np.abs(price * sell_delta)
+        next_cash = cash + float(sell_gross.sum() * (1.0 - self._cost_rate("sell")))
 
-            price = float(fill_price.loc[symbol])
-            gross = abs(price * float(qty_delta))
-            trade_cost = self.cost.calc(price=price, qty=float(qty_delta), side="sell")
-            next_cash += gross - trade_cost.total
-
-        buy_delta = self._cap_buy_delta(
+        buy_delta = self._cap_buy_values(
             buy_delta=buy_delta,
             fill_price=fill_price,
             cash=next_cash,
             allow_fractional=allow_fractional,
         )
-        delta = sell_delta.add(buy_delta, fill_value=0.0)
-        trade_value = delta.mul(fill_price.fillna(0.0)).abs()
+        delta = sell_delta + buy_delta
+        trade_value = np.abs(delta * price)
 
-        for symbol, qty_delta in buy_delta.items():
-            if qty_delta == 0.0:
-                continue
-
-            price = float(fill_price.loc[symbol])
-            gross = abs(price * float(qty_delta))
-            trade_cost = self.cost.calc(price=price, qty=float(qty_delta), side="buy")
-            next_cash -= gross + trade_cost.total
+        buy_gross = np.abs(price * buy_delta)
+        next_cash -= float(buy_gross.sum() * (1.0 + self._cost_rate("buy")))
 
         turn = 0.0 if nav == 0.0 else float(trade_value.sum() / nav)
-        next_qty = current_qty.add(delta, fill_value=0.0).astype(float)
+        next_qty = (current_qty + delta).astype(float, copy=False)
         return next_cash, next_qty, turn
 
     @staticmethod
@@ -177,76 +173,68 @@ class BacktestEngine:
         return schedule.reindex(close.index).fillna(False).astype(bool)
 
     @staticmethod
-    def _normalize_quantity(target_qty: pd.Series, allow_fractional: bool) -> pd.Series:
-        target_qty = target_qty.fillna(0.0).astype(float)
+    def _normalize_quantity_values(target_qty: np.ndarray, allow_fractional: bool) -> np.ndarray:
+        target_qty = BacktestEngine._zero_nan(target_qty).astype(float, copy=True)
         if allow_fractional:
             return target_qty
-        normalized = target_qty.copy()
-        normalized.loc[normalized >= 0.0] = np.floor(normalized.loc[normalized >= 0.0])
-        normalized.loc[normalized < 0.0] = np.ceil(normalized.loc[normalized < 0.0])
-        return normalized
+        target_qty[target_qty >= 0.0] = np.floor(target_qty[target_qty >= 0.0])
+        target_qty[target_qty < 0.0] = np.ceil(target_qty[target_qty < 0.0])
+        return target_qty
 
-    def _cap_buy_delta(
+    def _cap_buy_values(
         self,
-        buy_delta: pd.Series,
-        fill_price: pd.Series,
+        buy_delta: np.ndarray,
+        fill_price: np.ndarray,
         cash: float,
         allow_fractional: bool,
-    ) -> pd.Series:
-        buy_delta = buy_delta.fillna(0.0).astype(float)
-        if buy_delta.le(0.0).all() or cash <= 0.0:
-            return buy_delta.where(buy_delta.gt(0.0), 0.0)
+    ) -> np.ndarray:
+        buy_delta = self._zero_nan(buy_delta).astype(float, copy=True)
+        buy_delta = np.where(buy_delta > 0.0, buy_delta, 0.0)
+        if buy_delta.sum() <= 0.0 or cash <= 0.0:
+            return buy_delta
 
-        desired_spend = 0.0
-        for symbol, qty_delta in buy_delta.items():
-            if qty_delta <= 0.0:
-                continue
-            price = float(fill_price.loc[symbol])
-            gross = price * float(qty_delta)
-            trade_cost = self.cost.calc(price=price, qty=float(qty_delta), side="buy")
-            desired_spend += gross + trade_cost.total
-
+        price = self._zero_nan(fill_price)
+        rate = self._cost_rate("buy")
+        desired_spend = float((price * buy_delta * (1.0 + rate)).sum())
         if desired_spend <= cash:
-            return self._normalize_quantity(target_qty=buy_delta, allow_fractional=allow_fractional)
+            return self._normalize_quantity_values(buy_delta, allow_fractional=allow_fractional)
 
-        scale = cash / desired_spend
-        scaled_buy_delta = buy_delta.mul(scale)
-        scaled_buy_delta = self._normalize_quantity(
-            target_qty=scaled_buy_delta,
+        scaled_buy_delta = self._normalize_quantity_values(
+            buy_delta * (cash / desired_spend),
             allow_fractional=allow_fractional,
         )
-
-        spend = 0.0
-        for symbol, qty_delta in scaled_buy_delta.items():
-            if qty_delta <= 0.0:
-                continue
-            price = float(fill_price.loc[symbol])
-            gross = price * float(qty_delta)
-            trade_cost = self.cost.calc(price=price, qty=float(qty_delta), side="buy")
-            spend += gross + trade_cost.total
-
+        spend = float((price * scaled_buy_delta * (1.0 + rate)).sum())
         if spend <= cash:
             return scaled_buy_delta
 
         adjusted_buy_delta = scaled_buy_delta.copy()
-        for symbol in adjusted_buy_delta.sort_values(ascending=False).index:
-            qty_delta = float(adjusted_buy_delta.loc[symbol])
+        for index in np.argsort(-adjusted_buy_delta):
+            qty_delta = float(adjusted_buy_delta[index])
             if qty_delta <= 0.0:
                 continue
 
-            price = float(fill_price.loc[symbol])
-            step = 1.0 if allow_fractional else 1.0
+            step = 1.0
             while qty_delta > 0.0 and spend > cash:
                 next_qty = max(0.0, qty_delta - step)
                 removed_qty = qty_delta - next_qty
                 if removed_qty == 0.0:
                     break
-                gross = price * removed_qty
-                trade_cost = self.cost.calc(price=price, qty=removed_qty, side="buy")
-                spend -= gross + trade_cost.total
+                spend -= float(price[index] * removed_qty * (1.0 + rate))
                 qty_delta = next_qty
-            adjusted_buy_delta.loc[symbol] = qty_delta
+            adjusted_buy_delta[index] = qty_delta
             if spend <= cash:
                 break
 
-        return adjusted_buy_delta.astype(float)
+        return adjusted_buy_delta.astype(float, copy=False)
+
+    def _cost_rate(self, side: str) -> float:
+        if side == "buy":
+            return self.cost.fee + self.cost.slippage
+        if side == "sell":
+            return self.cost.fee + self.cost.sell_tax + self.cost.slippage
+        self.cost.calc(price=0.0, qty=0.0, side=side)
+        raise AssertionError("unreachable")
+
+    @staticmethod
+    def _zero_nan(values: np.ndarray) -> np.ndarray:
+        return np.where(np.isnan(values), 0.0, values)

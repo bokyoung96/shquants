@@ -19,26 +19,15 @@ class LongOnlyTopN:
         self.ranker = RankLongOnly(top_n=self.top_n)
 
     def build(self, bundle: SignalBundle) -> ConstructionResult:
-        rows: dict[pd.Timestamp, pd.Series] = {}
-        selected: dict[pd.Timestamp, pd.Series] = {}
+        alpha = bundle.alpha.astype(float)
+        valid_count = alpha.notna().sum(axis=1)
+        selected_count = valid_count.clip(upper=self.top_n)
+        ranks = alpha.rank(axis=1, ascending=False, method="first", na_option="bottom")
+        selection_mask = ranks.le(self.top_n) & alpha.notna()
 
-        for timestamp in bundle.alpha.index:
-            weights = self.ranker.target_weights(bundle.alpha.loc[timestamp])
-            rows[timestamp] = weights
-            selected[timestamp] = weights.ne(0.0)
-
-        base_target_weights = (
-            pd.DataFrame.from_dict(rows, orient="index")
-            .reindex(index=bundle.alpha.index, columns=bundle.alpha.columns)
-            .fillna(0.0)
-            .astype(float)
-        )
-        selection_mask = (
-            pd.DataFrame.from_dict(selected, orient="index")
-            .reindex(index=bundle.alpha.index, columns=bundle.alpha.columns)
-            .fillna(False)
-            .astype(bool)
-        )
+        denominator = selected_count.astype(float).where(selected_count.ne(0), float("nan"))
+        base_target_weights = selection_mask.astype(float).div(denominator, axis=0)
+        base_target_weights = base_target_weights.fillna(0.0).astype(float)
         return ConstructionResult(
             base_target_weights=base_target_weights,
             selection_mask=selection_mask,

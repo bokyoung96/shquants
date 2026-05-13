@@ -1,9 +1,44 @@
 import pandas as pd
 import pytest
 
+from backtesting.construction.long_only import LongOnlyTopN
 from backtesting.construction.long_short import LongShortTopBottom
 from backtesting.construction.sector_neutral import SectorNeutralTopBottom
 from backtesting.signals.base import SignalBundle
+from backtesting.strategy.cross import RankLongOnly
+
+
+def test_long_only_top_n_builds_weights_without_row_by_row_ranker(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    alpha = pd.DataFrame(
+        {
+            "A": [5.0, 1.0],
+            "B": [4.0, float("nan")],
+            "C": [1.0, 3.0],
+        },
+        index=index,
+    )
+    bundle = SignalBundle(alpha=alpha, context={"tradable": alpha.notna()})
+
+    def fail_row_ranker(self: RankLongOnly, signal: pd.Series) -> pd.Series:
+        raise AssertionError("LongOnlyTopN should vectorize across dates")
+
+    monkeypatch.setattr(RankLongOnly, "target_weights", fail_row_ranker)
+
+    result = LongOnlyTopN(top_n=2).build(bundle)
+
+    expected = pd.DataFrame(
+        {
+            "A": [0.5, 0.5],
+            "B": [0.5, 0.0],
+            "C": [0.0, 0.5],
+        },
+        index=index,
+    )
+    pd.testing.assert_frame_equal(result.base_target_weights, expected)
+    pd.testing.assert_frame_equal(result.selection_mask, expected.ne(0.0))
 
 
 def test_long_short_top_bottom_is_dollar_neutral() -> None:

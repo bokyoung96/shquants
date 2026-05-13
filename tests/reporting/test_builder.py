@@ -7,12 +7,12 @@ from backtesting.reporting.builder import ReportBuilder
 from backtesting.reporting.models import ComparisonBundle, ReportBundle, ReportKind, ReportProfile, ReportSpec, SavedRun, TearsheetBundle
 
 
-def _sample_run(tmp_path: Path, run_id: str, strategy: str = "momentum", name: str | None = None) -> SavedRun:
+def _sample_run(tmp_path: Path, run_id: str, strategy: str = "trend_rank", name: str | None = None) -> SavedRun:
     index = pd.to_datetime(["2024-01-02", "2024-01-03"])
     return SavedRun(
         run_id=run_id,
         path=tmp_path / run_id,
-        config={"strategy": strategy, "name": name or strategy.title()},
+        config={"strategy": strategy, "name": name or strategy.replace("_", " ").title()},
         summary={"cagr": 0.1, "mdd": -0.2, "sharpe": 1.0, "final_equity": 110.0, "avg_turnover": 0.05},
         equity=pd.Series([100.0, 110.0], index=index),
         returns=pd.Series([0.0, 0.1], index=index),
@@ -27,7 +27,7 @@ def test_report_builder_creates_tearsheet_bundle_and_persists_tables(tmp_path: P
 
     class _FakeFactory:
         def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
-            return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
+            return SimpleNamespace(run_id=run_obj.run_id, display_name="Trend Rank")
 
     class _FakeTearsheetFigureBuilder:
         def __init__(self, out_dir: Path) -> None:
@@ -54,7 +54,7 @@ def test_report_builder_creates_tearsheet_bundle_and_persists_tables(tmp_path: P
     assert isinstance(bundle, TearsheetBundle)
     assert bundle.spec.kind is ReportKind.TEARSHEET
     assert bundle.run_id == "sample"
-    assert bundle.display_name == "Momentum"
+    assert bundle.display_name == "Trend Rank"
     assert set(bundle.pages) == {"performance"}
     assert set(bundle.tables) == {"performance_summary"}
     assert (bundle.out_dir / "tables" / "performance_summary.csv").exists()
@@ -88,7 +88,7 @@ def test_report_builder_uses_universe_specific_repositories(tmp_path: Path, monk
 
         def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
             observed.append((run_obj.config["universe_id"], benchmark.code, benchmark.name, profile))
-            return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
+            return SimpleNamespace(run_id=run_obj.run_id, display_name="Trend Rank")
 
     monkeypatch.setattr("backtesting.reporting.builder.default_repositories_for_universe", _fake_resolver, raising=False)
     monkeypatch.setattr("backtesting.reporting.builder.PerformanceSnapshotFactory", _FakeFactory)
@@ -103,7 +103,7 @@ def test_report_builder_uses_universe_specific_repositories(tmp_path: Path, monk
 
 
 def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Path, monkeypatch) -> None:
-    runs = [_sample_run(tmp_path, "run-a", "momentum"), _sample_run(tmp_path, "run-b", "momentum", name="Momentum Variant")]
+    runs = [_sample_run(tmp_path, "run-a", "trend_rank"), _sample_run(tmp_path, "run-b", "trend_rank", name="Trend Rank Variant")]
 
     class _FakeFactory:
         def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
@@ -121,7 +121,7 @@ def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Pa
 
     class _FakeComparisonTableBuilder:
         def build(self, snapshots):  # type: ignore[no-untyped-def]
-            return {"ranked_summary": pd.DataFrame([{"display_name": "Momentum", "cagr": 0.1}])}
+            return {"ranked_summary": pd.DataFrame([{"display_name": "Trend Rank", "cagr": 0.1}])}
 
     monkeypatch.setattr("backtesting.reporting.builder.BenchmarkRepository.default", lambda: object())
     monkeypatch.setattr("backtesting.reporting.builder.SectorRepository.default", lambda: object())
@@ -133,7 +133,7 @@ def test_report_builder_creates_comparison_bundle_for_multiple_runs(tmp_path: Pa
 
     assert isinstance(bundle, ComparisonBundle)
     assert bundle.spec.kind is ReportKind.COMPARISON
-    assert bundle.display_names == ("Momentum", "Momentum Variant")
+    assert bundle.display_names == ("Trend Rank", "Trend Rank Variant")
     assert set(bundle.pages) == {"performance"}
     assert set(bundle.tables) == {"ranked_summary"}
     assert (bundle.out_dir / "tables" / "ranked_summary.csv").exists()
@@ -149,7 +149,7 @@ def test_report_builder_passes_profile_to_snapshot_factory(tmp_path: Path, monke
 
         def build(self, run_obj, benchmark, profile=None):  # type: ignore[no-untyped-def]
             observed.append(profile)
-            return SimpleNamespace(run_id=run_obj.run_id, display_name="Momentum")
+            return SimpleNamespace(run_id=run_obj.run_id, display_name="Trend Rank")
 
     monkeypatch.setattr("backtesting.reporting.builder.PerformanceSnapshotFactory", _FakeFactory)
     monkeypatch.setattr("backtesting.reporting.builder.default_repositories_for_universe", lambda universe_id: (object(), object()), raising=False)

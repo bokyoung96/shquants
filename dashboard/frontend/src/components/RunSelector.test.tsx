@@ -22,41 +22,41 @@ beforeEach(() => {
   fetchRuns.mockReset();
   fetchDashboard.mockReset();
   fetchSession.mockReset();
-  fetchSession.mockResolvedValue({ defaultSelectedRunIds: ["momentum_run", "momentum_run"] });
+  fetchSession.mockResolvedValue({ defaultSelectedRunIds: ["trend_run", "trend_run"] });
   fetchRuns.mockResolvedValue([
     {
-      run_id: "momentum_run",
-      label: "Momentum",
-      strategy: "momentum",
+      run_id: "trend_run",
+      label: "Trend Rank",
+      strategy: "trend_rank",
       summary: { finalEquity: 100, avgTurnover: 0.1 },
     },
     {
-      run_id: "momentum_run",
-      label: "Momentum",
-      strategy: "momentum",
+      run_id: "trend_run",
+      label: "Trend Rank",
+      strategy: "trend_rank",
       summary: { finalEquity: 100, avgTurnover: 0.1 },
     },
     {
-      run_id: "momentum_variant_run",
-      label: "Momentum Variant",
-      strategy: "momentum",
+      run_id: "trend_variant_run",
+      label: "Trend Rank Variant",
+      strategy: "trend_rank",
       summary: { finalEquity: 105, avgTurnover: 0.2 },
     },
   ]);
   fetchDashboard.mockResolvedValue({
     mode: "single",
-    selectedRunIds: ["momentum_run"],
+    selectedRunIds: ["trend_run"],
     availableRuns: [
       {
-        run_id: "momentum_run",
-        label: "Momentum",
-        strategy: "momentum",
+        run_id: "trend_run",
+        label: "Trend Rank",
+        strategy: "trend_rank",
         summary: { finalEquity: 100, avgTurnover: 0.1 },
       },
       {
-        run_id: "momentum_variant_run",
-        label: "Momentum Variant",
-        strategy: "momentum",
+        run_id: "trend_variant_run",
+        label: "Trend Rank Variant",
+        strategy: "trend_rank",
         summary: { finalEquity: 105, avgTurnover: 0.2 },
       },
     ],
@@ -77,8 +77,8 @@ beforeEach(() => {
       asOfDate: "2025-12-31",
     },
     metrics: {
-      momentum_run: {
-        label: "Momentum",
+      trend_run: {
+        label: "Trend Rank",
         cumulativeReturn: 0.12,
         cagr: 0.12,
         annualVolatility: 0.15,
@@ -95,9 +95,9 @@ beforeEach(() => {
       },
     },
     context: {
-      momentum_run: {
-        label: "Momentum",
-        strategy: "momentum",
+      trend_run: {
+        label: "Trend Rank",
+        strategy: "trend_rank",
         benchmark: { code: "KOSPI200", name: "KOSPI200 benchmark" },
         startDate: "2020-01-01",
         endDate: "2020-12-31",
@@ -107,8 +107,8 @@ beforeEach(() => {
     performance: {
       series: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           points: [
             { date: "2025-01-01", value: 100 },
             { date: "2025-01-02", value: 101 },
@@ -121,7 +121,7 @@ beforeEach(() => {
       ],
       benchmarks: [
         {
-          runId: "momentum_run",
+          runId: "trend_run",
           label: "KOSPI200 benchmark",
           points: [
             { date: "2025-01-01", value: 100 },
@@ -173,9 +173,9 @@ describe("Run selection", () => {
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getAllByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveLength(1);
-    expect(selector.getAllByRole("button", { name: /Momentum Variant/i })).toHaveLength(1);
-    await waitFor(() => expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]));
+    expect(selector.getAllByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toHaveLength(1);
+    expect(selector.getAllByRole("button", { name: /Trend Rank Variant/i })).toHaveLength(1);
+    await waitFor(() => expect(fetchDashboard).toHaveBeenCalledWith(["trend_run"]));
   });
 
   it("allows selecting and deselecting runs without introducing duplicate selected ids", async () => {
@@ -185,20 +185,20 @@ describe("Run selection", () => {
 
     expect(await screen.findAllByText("1 selected")).toHaveLength(1);
     let selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
+    await user.click(selector.getByRole("button", { name: /Trend Rank Variant/i }));
 
     expect(screen.getAllByText("2 selected")).toHaveLength(1);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(1, ["momentum_run"]);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["momentum_run", "momentum_variant_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(1, ["trend_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["trend_run", "trend_variant_run"]);
 
     selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /^Momentum\s+momentum$/i }));
+    await user.click(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i }));
 
     expect(screen.getAllByText("1 selected")).toHaveLength(1);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(3, ["momentum_variant_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(3, ["trend_variant_run"]);
 
     selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
+    await user.click(selector.getByRole("button", { name: /Trend Rank Variant/i }));
 
     expect(screen.getAllByText("0 selected")).toHaveLength(1);
     expect(fetchDashboard).toHaveBeenCalledTimes(3);

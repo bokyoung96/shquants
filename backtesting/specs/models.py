@@ -87,7 +87,7 @@ class ExecutionSpec:
     start: str
     end: str
     capital: float = 100_000_000.0
-    strategy: str = "momentum"
+    strategy: str = "trend_rank"
     name: str | None = None
     description: str | None = None
     top_n: int = 20

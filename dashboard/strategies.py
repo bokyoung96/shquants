@@ -10,13 +10,13 @@ from backtesting.reporting.models import BenchmarkConfig
 @dataclass(frozen=True, slots=True)
 class GlobalRunConfig:
     start: str = "2020-01-01"
-    end: str = "2025-12-31"
+    end: str = "2026-05-11"
     capital: float = 100_000_000.0
     schedule: str = "monthly"
     fill_mode: str = "next_open"
-    fee: float = 0.0
-    sell_tax: float = 0.0
-    slippage: float = 0.0
+    fee: float = 0.0002
+    sell_tax: float = 0.0015
+    slippage: float = 0.0005
     use_k200: bool = True
     allow_fractional: bool = True
 
@@ -35,6 +35,8 @@ class StrategyPreset:
     benchmark: BenchmarkConfig = field(default_factory=BenchmarkConfig.default_kospi200)
     warmup: WarmupConfig = field(default_factory=WarmupConfig)
     universe_id: str | None = None
+    schedule: str | None = None
+    fill_mode: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "params", MappingProxyType(dict(self.params)))
@@ -51,10 +53,35 @@ DEFAULT_LAUNCH_CONFIG = DashboardLaunchConfig(
     strategies=(
         StrategyPreset(
             True,
-            "momentum",
-            "Momentum",
+            "trend_rank",
+            "Trend Rank",
             {"top_n": 20, "lookback": 20},
             warmup=WarmupConfig(extra_days=20),
+        ),
+        StrategyPreset(
+            True,
+            "earnings_revision",
+            "Earnings Revision",
+            {"top_n": 20, "lookback": 20},
+            warmup=WarmupConfig(extra_days=20),
+            schedule="daily",
+            fill_mode="close",
+        ),
+        StrategyPreset(
+            True,
+            "benchmark_overlay",
+            "Benchmark Overlay",
+            {"lookback": 20, "flow_lookback": 20, "momentum_lookback": 60},
+            warmup=WarmupConfig(extra_days=80),
+            fill_mode="close",
+        ),
+        StrategyPreset(
+            True,
+            "benchmark_tilt",
+            "Benchmark Tilt",
+            {"lookback": 20, "flow_lookback": 20, "momentum_lookback": 60},
+            warmup=WarmupConfig(extra_days=80),
+            fill_mode="close",
         ),
     ),
 )

@@ -19,7 +19,7 @@ from root import ROOT
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Launch the 1W1A dashboard.")
+    parser = argparse.ArgumentParser(description="Launch the dashboard.")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--runs-root", type=Path, default=ROOT.results_path / "backtests")
@@ -46,7 +46,7 @@ def launch_dashboard(
     build_frontend(resolved_frontend_dir)
 
     plan = LaunchResolutionService(resolved_runs_root).resolve(DEFAULT_LAUNCH_CONFIG)
-    runner = BacktestRunner(result_dir=resolved_runs_root)
+    runner = BacktestRunner(result_dir=resolved_runs_root, write_report_assets=False, profile=True)
     selected_run_ids = list(plan.selected_run_ids)
 
     for preset in plan.missing_presets:
@@ -71,8 +71,8 @@ def _build_run_config(preset: StrategyPreset) -> RunConfig:
         capital=config.capital,
         strategy=preset.strategy_name,
         name=preset.display_label,
-        schedule=config.schedule,
-        fill_mode=config.fill_mode,
+        schedule=preset.schedule or config.schedule,
+        fill_mode=preset.fill_mode or config.fill_mode,
         fee=config.fee,
         sell_tax=config.sell_tax,
         slippage=config.slippage,

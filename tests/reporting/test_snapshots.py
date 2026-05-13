@@ -30,7 +30,7 @@ def test_performance_snapshot_factory_builds_analytics_snapshot() -> None:
     assert "rolling_beta" in snapshot.rolling.series
     assert_series_equal(snapshot.rolling.series["rolling_sharpe"].index.to_series(), run.returns.index.to_series())
     assert_series_equal(snapshot.rolling.series["rolling_beta"].index.to_series(), run.returns.index.to_series())
-    assert snapshot.strategy_name == "momentum"
+    assert snapshot.strategy_name == "trend_rank"
     assert snapshot.benchmark == BenchmarkConfig.default_kospi200()
     assert snapshot.exposure.holdings_count.iloc[-1] == 2
     assert len(snapshot.exposure.latest_holdings) == 2
@@ -82,8 +82,8 @@ def test_performance_snapshot_factory_applies_korean_sector_and_stock_display_na
         sector_repo=SectorRepository.from_frame(
             _sector_map().rename(columns={"A": "A000001", "B": "A000002", "C": "A000003"}),
             prices=_asset_prices(),
-            sector_name_map={"Tech": "기술", "Utilities": "유틸리티", "Health Care": "헬스케어"},
-            stock_name_map={"A000001": "에이", "A000002": "비", "A000003": "씨"},
+            sector_name_map={"Tech": "Technology", "Utilities": "Utilities KR", "Health Care": "Health Care KR"},
+            stock_name_map={"A000001": "Alpha", "A000002": "Beta", "A000003": "Charlie"},
         ),
     )
     mapped_run = SavedRun(
@@ -101,8 +101,8 @@ def test_performance_snapshot_factory_applies_korean_sector_and_stock_display_na
 
     snapshot = factory.build(mapped_run, BenchmarkConfig.default_kospi200())
 
-    assert snapshot.sectors.latest_weighted.to_dict() == {"기술": 0.6, "유틸리티": 0.4}
-    assert snapshot.exposure.latest_holdings["symbol"].tolist() == ["에이 (000001)", "비 (000002)"]
+    assert snapshot.sectors.latest_weighted.to_dict() == {"Technology": 0.6, "Utilities KR": 0.4}
+    assert snapshot.exposure.latest_holdings["symbol"].tolist() == ["Alpha (000001)", "Beta (000002)"]
 
 
 def test_performance_snapshot_factory_uses_fixed_252_day_rolling_window() -> None:
@@ -162,7 +162,7 @@ def _toy_run(latest_weights: pd.DataFrame | None | object = _DEFAULT) -> SavedRu
     return SavedRun(
         run_id="toy-run",
         path=Path("/tmp/toy-run"),
-        config={"name": "Toy Strategy", "strategy": "momentum"},
+        config={"name": "Toy Strategy", "strategy": "trend_rank"},
         summary={},
         equity=equity,
         returns=returns,
@@ -218,7 +218,7 @@ def _long_run() -> SavedRun:
     return SavedRun(
         run_id="long-run",
         path=Path("/tmp/long-run"),
-        config={"name": "Long Strategy", "strategy": "momentum"},
+        config={"name": "Long Strategy", "strategy": "trend_rank"},
         summary={},
         equity=equity,
         returns=returns,

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -55,7 +56,7 @@ def test_runner_executes_momentum_strategy(tmp_path: Path) -> None:
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-02",
             end="2024-01-04",
             top_n=1,
@@ -84,6 +85,89 @@ def test_runner_executes_momentum_strategy(tmp_path: Path) -> None:
     assert (report.output_dir / "factor.json").exists()
 
 
+def test_runner_can_skip_heavy_report_assets_for_dashboard_launch(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 11.0, 12.0], "B": [10.0, 10.0, 9.0]}, index=index))
+    store.write("qw_adj_o", pd.DataFrame({"A": [10.0, 11.0, 12.0], "B": [10.0, 10.0, 9.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1, 1], "B": [1, 1, 1]}, index=index))
+
+    runner = BacktestRunner(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+        result_dir=result_dir,
+        write_report_assets=False,
+    )
+    report = runner.run(
+        RunConfig(
+            strategy="trend_rank",
+            start="2024-01-02",
+            end="2024-01-04",
+            top_n=1,
+            lookback=1,
+            schedule="daily",
+            fill_mode="close",
+        )
+    )
+
+    assert report.output_dir is not None
+    assert (report.output_dir / "config.json").exists()
+    assert (report.output_dir / "summary.json").exists()
+    assert (report.output_dir / "series" / "equity.csv").exists()
+    assert (report.output_dir / "series" / "returns.csv").exists()
+    assert (report.output_dir / "series" / "turnover.csv").exists()
+    assert (report.output_dir / "positions" / "weights.parquet").exists()
+    assert (report.output_dir / "positions" / "qty.parquet").exists()
+    assert not (report.output_dir / "plots").exists()
+    assert not (report.output_dir / "pages").exists()
+
+
+def test_runner_profiles_and_persists_backtest_timing(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 11.0, 12.0], "B": [10.0, 10.0, 9.0]}, index=index))
+    store.write("qw_adj_o", pd.DataFrame({"A": [10.0, 11.0, 12.0], "B": [10.0, 10.0, 9.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1, 1], "B": [1, 1, 1]}, index=index))
+
+    runner = BacktestRunner(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+        result_dir=result_dir,
+        write_report_assets=False,
+        profile=True,
+    )
+    report = runner.run(
+        RunConfig(
+            strategy="trend_rank",
+            start="2024-01-02",
+            end="2024-01-04",
+            top_n=1,
+            lookback=1,
+            schedule="daily",
+            fill_mode="close",
+        )
+    )
+
+    assert report.output_dir is not None
+    assert report.timing is not None
+    assert set(report.timing) == {"data_load", "plan_build", "engine_run", "write_artifacts", "total"}
+    assert all(value >= 0.0 for value in report.timing.values())
+    assert report.timing["total"] >= report.timing["write_artifacts"]
+    assert json.loads((report.output_dir / "timing.json").read_text(encoding="utf-8")) == report.timing
+
+
 def test_runner_persists_implicit_legacy_universe_as_none(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     raw_dir = tmp_path / "raw"
@@ -104,7 +188,7 @@ def test_runner_persists_implicit_legacy_universe_as_none(tmp_path: Path) -> Non
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-02",
             end="2024-01-04",
             top_n=1,
@@ -179,7 +263,7 @@ def test_runner_uses_warmup_history_but_trims_persisted_outputs(
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-03",
             end="2024-01-04",
             schedule="daily",
@@ -316,7 +400,7 @@ def test_runner_executes_strategy_plan_and_stores_position_plan(
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-02",
             end="2024-01-03",
             schedule="daily",
@@ -393,7 +477,7 @@ def test_runner_rejects_invalid_position_plan_before_engine_execution(
     with pytest.raises(ValueError, match="bucket target_weight values do not match plan target_weights"):
         runner.run(
             RunConfig(
-                strategy="momentum",
+                strategy="trend_rank",
                 start="2024-01-02",
                 end="2024-01-02",
                 schedule="daily",
@@ -424,7 +508,7 @@ def test_runner_raises_clear_error_when_trimmed_display_range_is_empty(tmp_path:
     with pytest.raises(ValueError, match="no backtest rows remain after trimming to display range"):
         runner.run(
             RunConfig(
-                strategy="momentum",
+                strategy="trend_rank",
                 start="2024-01-05",
                 end="2024-01-06",
                 top_n=1,
@@ -461,7 +545,7 @@ def test_runner_uses_kosdaq_universe_specific_datasets(tmp_path: Path) -> None:
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-02",
             end="2024-01-04",
             lookback=1,
@@ -498,7 +582,7 @@ def test_runner_uses_kosdaq_default_next_open_path(tmp_path: Path) -> None:
     )
     report = runner.run(
         RunConfig(
-            strategy="momentum",
+            strategy="trend_rank",
             start="2024-01-02",
             end="2024-01-04",
             lookback=1,
@@ -686,7 +770,7 @@ def test_runner_legacy_inputs_do_not_invoke_composable_builder(
     monkeypatch.setattr("backtesting.run.build_position_plan_from_execution_spec", _fail_if_composable_builder_runs)
 
     runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
-    config = RunConfig(strategy="momentum", start="2024-01-02", end="2024-01-04", lookback=1, schedule="daily", fill_mode="close")
+    config = RunConfig(strategy="trend_rank", start="2024-01-02", end="2024-01-04", lookback=1, schedule="daily", fill_mode="close")
 
     report = runner.run(config)
 
@@ -708,7 +792,7 @@ def test_runner_run_and_run_spec_produce_identical_results_for_legacy_inputs(tmp
     store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1, 1]}, index=index))
 
     runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
-    config = RunConfig(strategy="momentum", start="2024-01-02", end="2024-01-04", lookback=1, schedule="daily", fill_mode="close")
+    config = RunConfig(strategy="trend_rank", start="2024-01-02", end="2024-01-04", lookback=1, schedule="daily", fill_mode="close")
 
     legacy = runner.run(config)
     resolved = runner.run_spec(runner.resolve_spec_from_config(config))
@@ -733,7 +817,7 @@ def test_run_spec_persists_resolution_artifacts(tmp_path: Path) -> None:
     store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1, 1]}, index=index))
 
     runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
-    spec = ExecutionSpec(start="2024-01-02", end="2024-01-04", strategy="momentum", lookback=1, schedule=ScheduleSpec(kind="named", name="daily"), fill_mode="close")
+    spec = ExecutionSpec(start="2024-01-02", end="2024-01-04", strategy="trend_rank", lookback=1, schedule=ScheduleSpec(kind="named", name="daily"), fill_mode="close")
 
     report = runner.run_spec(runner.resolve_spec(spec))
 
@@ -829,7 +913,7 @@ def test_run_parser_accepts_universe_argument(monkeypatch: pytest.MonkeyPatch) -
         [
             "run.py",
             "--strategy",
-            "momentum",
+            "trend_rank",
             "--start",
             "2024-01-02",
             "--end",

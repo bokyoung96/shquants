@@ -21,7 +21,7 @@ def test_load_execution_spec_from_json(tmp_path: Path) -> None:
             {
                 "start": "2024-01-01",
                 "end": "2024-12-31",
-                "strategy": "momentum",
+                "strategy": "trend_rank",
                 "schedule": {"kind": "named", "name": "monthly"},
                 "weight_source": {"kind": "strategy"},
             }
@@ -123,7 +123,7 @@ def test_load_execution_spec_keeps_legacy_strategy_specs_on_legacy_path(tmp_path
             {
                 "start": "2024-01-01",
                 "end": "2024-12-31",
-                "strategy": "momentum",
+                "strategy": "trend_rank",
                 "top_n": 3,
                 "lookback": 1,
             }
@@ -133,7 +133,7 @@ def test_load_execution_spec_keeps_legacy_strategy_specs_on_legacy_path(tmp_path
 
     spec = load_execution_spec(path)
 
-    assert spec.strategy == "momentum"
+    assert spec.strategy == "trend_rank"
     assert spec.top_n == 3
     assert spec.lookback == 1
     assert spec.selection is None

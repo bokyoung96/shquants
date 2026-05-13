@@ -3,6 +3,26 @@ import pytest
 
 from backtesting.policy.base import BUCKET_LEDGER_COLUMNS, PositionPlan
 from backtesting.validation import validate_position_plan
+from backtesting.validation.portfolio import _target_weight_values
+
+
+def test_target_weight_values_omits_zero_positions_but_keeps_material_weights() -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    weights = pd.DataFrame(
+        {
+            "A": [0.0, 0.5],
+            "B": [0.0, 0.0],
+            "C": [1e-10, -0.25],
+        },
+        index=index,
+    )
+
+    values = _target_weight_values(weights, tolerance=1e-8)
+
+    assert values.to_dict() == {
+        (pd.Timestamp("2024-01-03"), "A"): 0.5,
+        (pd.Timestamp("2024-01-03"), "C"): -0.25,
+    }
 
 
 def test_validate_position_plan_rejects_bucket_sum_mismatch() -> None:

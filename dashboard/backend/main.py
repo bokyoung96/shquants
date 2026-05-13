@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from dashboard.backend.api import router
+from dashboard.backend.api import get_dashboard_payload_service, router
+from dashboard.backend.services.dashboard_payload import DashboardPayloadService
 
 
 def get_frontend_dist_dir() -> Path:
@@ -18,9 +19,12 @@ def create_app(
     *,
     default_selected_run_ids: list[str] | None = None,
     frontend_dist: Path | None = None,
+    dashboard_payload_service: DashboardPayloadService | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="1W1A Dashboard")
+    app = FastAPI(title="Dashboard")
     app.state.default_selected_run_ids = list(default_selected_run_ids or [])
+    if dashboard_payload_service is not None:
+        app.dependency_overrides[get_dashboard_payload_service] = lambda: dashboard_payload_service
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],

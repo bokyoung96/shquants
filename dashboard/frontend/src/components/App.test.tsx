@@ -29,15 +29,15 @@ import { App } from "../app/App";
 
 const RUNS = [
   {
-    run_id: "momentum_run",
-    label: "Momentum",
-    strategy: "momentum",
+    run_id: "trend_run",
+    label: "Trend Rank",
+    strategy: "trend_rank",
     summary: { finalEquity: 100000000, avgTurnover: 0.12 },
   },
   {
     run_id: "value_run",
-    label: "Momentum Variant",
-    strategy: "momentum",
+    label: "Trend Rank Variant",
+    strategy: "trend_rank",
     summary: { finalEquity: 105000000, avgTurnover: 0.2 },
   },
 ];
@@ -61,13 +61,13 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         shared: { code: "KOSPI200", name: "KOSPI200 benchmark" },
         strategies: [
           {
-            strategy: "momentum",
-            label: "Momentum",
+            strategy: "trend_rank",
+            label: "Trend Rank",
             benchmark: { code: "KOSPI200", name: "KOSPI200 benchmark" },
           },
           {
-            strategy: "momentum",
-            label: "Momentum Variant",
+            strategy: "trend_rank",
+            label: "Trend Rank Variant",
             benchmark: { code: "SPX", name: "S&P 500 benchmark" },
           },
         ],
@@ -77,9 +77,9 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
     metrics: Object.fromEntries(
       selectedRunIds.map((runId) => [
         runId,
-        runId === "momentum_run"
+        runId === "trend_run"
           ? {
-              label: "Momentum",
+              label: "Trend Rank",
               cumulativeReturn: 0.16,
               cagr: 0.13,
               annualVolatility: 0.18,
@@ -95,7 +95,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
               informationRatio: 0.31,
             }
           : {
-              label: "Momentum Variant",
+              label: "Trend Rank Variant",
               cumulativeReturn: 0.1,
               cagr: 0.09,
               annualVolatility: 0.12,
@@ -113,17 +113,17 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
       ]),
     ),
     context: {
-      momentum_run: {
-        label: "Momentum",
-        strategy: "momentum",
+      trend_run: {
+        label: "Trend Rank",
+        strategy: "trend_rank",
         benchmark: { code: "KOSPI200", name: "KOSPI200 benchmark" },
         startDate: "2025-01-01",
         endDate: "2025-12-31",
         asOfDate: "2025-12-31",
       },
       value_run: {
-        label: "Momentum Variant",
-        strategy: "momentum",
+        label: "Trend Rank Variant",
+        strategy: "trend_rank",
         benchmark: { code: "SPX", name: "S&P 500 benchmark" },
         startDate: "2025-01-01",
         endDate: "2025-12-31",
@@ -133,8 +133,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
     performance: {
       series: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           points: [
             { date: "2025-01-01", value: 100000000 },
             { date: "2025-02-01", value: 103000000 },
@@ -143,7 +143,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant",
+          label: "Trend Rank Variant",
           points: [
             { date: "2025-01-01", value: 100000000 },
             { date: "2025-02-01", value: 101000000 },
@@ -161,7 +161,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
           : null,
       benchmarks: [
         {
-          runId: "momentum_run",
+          runId: "trend_run",
           label: "KOSPI200 benchmark",
           points: [
             { date: "2025-01-01", value: 100000000 },
@@ -181,8 +181,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
       ].filter((entry) => selectedRunIds.includes(entry.runId)),
       drawdowns: [
         {
-          runId: "momentum_run",
-          label: "Momentum drawdown",
+          runId: "trend_run",
+          label: "Trend Rank drawdown",
           points: [
             { date: "2025-01-01", value: 0 },
             { date: "2025-02-01", value: -0.05 },
@@ -191,7 +191,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant drawdown",
+          label: "Trend Rank Variant drawdown",
           points: [
             { date: "2025-01-01", value: 0 },
             { date: "2025-02-01", value: -0.02 },
@@ -203,8 +203,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
     rolling: {
       rollingSharpe: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           points: [
             { date: "2025-01-01", value: 0.8 },
             { date: "2025-02-01", value: 1.05 },
@@ -213,7 +213,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant",
+          label: "Trend Rank Variant",
           points: [
             { date: "2025-01-01", value: 0.52 },
             { date: "2025-02-01", value: 0.74 },
@@ -223,8 +223,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
       ].filter((entry) => selectedRunIds.includes(entry.runId)),
       rollingBeta: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           points: [
             { date: "2025-01-01", value: 0.88 },
             { date: "2025-02-01", value: 0.94 },
@@ -233,7 +233,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant",
+          label: "Trend Rank Variant",
           points: [
             { date: "2025-01-01", value: 0.61 },
             { date: "2025-02-01", value: 0.69 },
@@ -243,8 +243,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
       ].filter((entry) => selectedRunIds.includes(entry.runId)),
       rollingCorrelation: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           benchmark: { code: "KOSPI200", name: "KOSPI200 benchmark" },
           window: 252,
           points: [
@@ -255,7 +255,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant",
+          label: "Trend Rank Variant",
           benchmark: { code: "SPX", name: "S&P 500 benchmark" },
           window: 252,
           points: [
@@ -269,8 +269,8 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
     exposure: {
       holdingsCount: [
         {
-          runId: "momentum_run",
-          label: "Momentum",
+          runId: "trend_run",
+          label: "Trend Rank",
           points: [
             { date: "2025-01-01", value: 18 },
             { date: "2025-03-01", value: 22 },
@@ -278,7 +278,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
         {
           runId: "value_run",
-          label: "Momentum Variant",
+          label: "Trend Rank Variant",
           points: [
             { date: "2025-01-01", value: 24 },
             { date: "2025-03-01", value: 19 },
@@ -286,7 +286,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         },
       ].filter((entry) => selectedRunIds.includes(entry.runId)),
       latestHoldings: {
-        momentum_run: [
+        trend_run: [
           { symbol: "AAPL", targetWeight: 0.34, absWeight: 0.34 },
           { symbol: "MSFT", targetWeight: 0.21, absWeight: 0.21 },
           { symbol: "NVDA", targetWeight: 0.18, absWeight: 0.18 },
@@ -298,7 +298,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       latestHoldingsWinners: {
-        momentum_run: [
+        trend_run: [
           { symbol: "TSLA", targetWeight: 0.04, absWeight: 0.04, returnSinceLatestRebalance: 0.3 },
           { symbol: "GOOG", targetWeight: 0.06, absWeight: 0.06, returnSinceLatestRebalance: 0.15 },
           { symbol: "AMZN", targetWeight: 0.1, absWeight: 0.1, returnSinceLatestRebalance: 0.1 },
@@ -314,7 +314,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       latestHoldingsLosers: {
-        momentum_run: [
+        trend_run: [
           { symbol: "AAPL", targetWeight: 0.34, absWeight: 0.34, returnSinceLatestRebalance: -0.04 },
           { symbol: "MSFT", targetWeight: 0.21, absWeight: 0.21, returnSinceLatestRebalance: 0.01 },
           { symbol: "NVDA", targetWeight: 0.18, absWeight: 0.18, returnSinceLatestRebalance: 0.05 },
@@ -330,7 +330,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       sectorWeights: {
-        momentum_run: [
+        trend_run: [
           { name: "Tech", value: 0.62 },
           { name: "Financials", value: 0.2 },
           { name: "Industrials", value: 0.12 },
@@ -346,7 +346,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
       focus: { kind: "all-selected", label: "All Selected", value: null },
       sectorContributionMethod: "weighted-asset-return-attribution",
       monthlyHeatmap: {
-        momentum_run: [
+        trend_run: [
           { year: 2025, month: 1, value: 0.03 },
           { year: 2025, month: 2, value: -0.02 },
           { year: 2025, month: 3, value: 0.05 },
@@ -358,7 +358,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       returnDistribution: {
-        momentum_run: [
+        trend_run: [
           { start: -0.04, end: -0.02, count: 1, frequency: 0.2 },
           { start: -0.02, end: 0, count: 1, frequency: 0.2 },
           { start: 0, end: 0.02, count: 1, frequency: 0.2 },
@@ -371,7 +371,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       monthlyReturnDistribution: {
-        momentum_run: [
+        trend_run: [
           { start: -0.06, end: -0.03, count: 1, frequency: 0.17 },
           { start: -0.03, end: 0, count: 1, frequency: 0.17 },
           { start: 0, end: 0.03, count: 2, frequency: 0.33 },
@@ -385,11 +385,11 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       yearlyExcessReturns: {
-        momentum_run: [{ date: "2025-12-31", value: 0.04 }],
+        trend_run: [{ date: "2025-12-31", value: 0.04 }],
         value_run: [{ date: "2025-12-31", value: -0.01 }],
       },
       sectorContributionSeries: {
-        momentum_run: [
+        trend_run: [
           {
             name: "Tech",
             points: [
@@ -427,7 +427,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       sectorWeightSeries: {
-        momentum_run: [
+        trend_run: [
           {
             name: "Tech",
             points: [
@@ -465,7 +465,7 @@ function createDashboard(mode: "single" | "multi", selectedRunIds: string[]): Da
         ],
       },
       drawdownEpisodes: {
-        momentum_run: [
+        trend_run: [
           {
             peak: "2025-01-20",
             start: "2025-01-21",
@@ -521,7 +521,7 @@ function findDistributionChartOption() {
     const xAxis = (option as { xAxis?: { type?: string } }).xAxis;
     const series = (option as { series?: Array<{ name?: string; type?: string }> }).series ?? [];
     const seriesNames = series.map((entry) => entry.name);
-    return xAxis?.type === "category" && series.every((entry) => entry.type === "bar") && seriesNames.includes("Momentum");
+    return xAxis?.type === "category" && series.every((entry) => entry.type === "bar") && seriesNames.includes("Trend Rank");
   });
 }
 
@@ -553,8 +553,8 @@ function findRollingSharpeOption() {
   return chartOptions.find((option) => {
     const xAxis = (option as { xAxis?: { type?: string } }).xAxis;
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
-    const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
+    const momentumSeries = series.find((entry) => entry.name === "Trend Rank");
+    const valueSeries = series.find((entry) => entry.name === "Trend Rank Variant");
     return (
       xAxis?.type === "time" &&
       series.every((entry) => entry.type === "line") &&
@@ -569,8 +569,8 @@ function findRollingSharpeOption() {
 function findRollingCorrelationOption() {
   return chartOptions.find((option) => {
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
-    const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
+    const momentumSeries = series.find((entry) => entry.name === "Trend Rank");
+    const valueSeries = series.find((entry) => entry.name === "Trend Rank Variant");
     return (
       series.length === 2 &&
       series.every((entry) => entry.type === "line") &&
@@ -583,8 +583,8 @@ function findRollingCorrelationOption() {
 function findRollingBetaOption() {
   return chartOptions.find((option) => {
     const series = (option as { series?: ChartLineSeries[] }).series ?? [];
-    const momentumSeries = series.find((entry) => entry.name === "Momentum");
-    const valueSeries = series.find((entry) => entry.name === "Momentum Variant");
+    const momentumSeries = series.find((entry) => entry.name === "Trend Rank");
+    const valueSeries = series.find((entry) => entry.name === "Trend Rank Variant");
     return (
       series.length === 2 &&
       series.every((entry) => entry.type === "line") &&
@@ -599,13 +599,13 @@ function findDailyDistributionOption() {
     const xAxis = (option as { xAxis?: { type?: string; data?: string[] } }).xAxis;
     const series = (option as { series?: Array<{ name?: string; type?: string; data?: number[] }> }).series ?? [];
     const seriesNames = series.map((entry) => entry.name);
-    const momentumSeries = series.find((entry) => entry.name === "Momentum");
+    const momentumSeries = series.find((entry) => entry.name === "Trend Rank");
     return (
       xAxis?.type === "category" &&
       xAxis.data?.includes("-4.0% to -2.0%") &&
       xAxis.data?.includes("2.0% to 4.0%") &&
       series.every((entry) => entry.type === "bar") &&
-      seriesNames.includes("Momentum") &&
+      seriesNames.includes("Trend Rank") &&
       momentumSeries?.data?.includes(0.2) &&
       momentumSeries?.data?.includes(0.4)
     );
@@ -617,13 +617,13 @@ function findMonthlyDistributionOption() {
     const xAxis = (option as { xAxis?: { type?: string; data?: string[] } }).xAxis;
     const series = (option as { series?: Array<{ name?: string; type?: string; data?: number[] }> }).series ?? [];
     const seriesNames = series.map((entry) => entry.name);
-    const momentumSeries = series.find((entry) => entry.name === "Momentum");
+    const momentumSeries = series.find((entry) => entry.name === "Trend Rank");
     return (
       xAxis?.type === "category" &&
       xAxis.data?.includes("-6.0% to -3.0%") &&
       xAxis.data?.includes("3.0% to 6.0%") &&
       series.every((entry) => entry.type === "bar") &&
-      seriesNames.includes("Momentum") &&
+      seriesNames.includes("Trend Rank") &&
       momentumSeries?.data?.includes(0.17) &&
       momentumSeries?.data?.includes(0.33)
     );
@@ -690,21 +690,21 @@ describe("App", () => {
 
   it("renders the brand and selection heading", async () => {
     fetchRuns.mockResolvedValue([RUNS[0]]);
-    fetchDashboard.mockResolvedValue(createDashboard("single", ["momentum_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("single", ["trend_run"]));
 
     render(<App />);
 
-    expect(await screen.findByText("1W1A")).toBeInTheDocument();
+    expect(await screen.findByText("Dashboard")).toBeInTheDocument();
     expect(await screen.findByText("Live Performance")).toBeInTheDocument();
     expect(await screen.findByText("Select saved runs")).toBeInTheDocument();
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toBeInTheDocument();
+    expect(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toBeInTheDocument();
   });
 
   it("renders the research workspace and updates focus from strategy and sector clicks", async () => {
     const user = userEvent.setup();
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -713,9 +713,9 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Monthly heatmap" })).toBeInTheDocument();
     expect(screen.getByText("Focus: All selected")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Focus strategy Momentum" }));
+    await user.click(screen.getByRole("button", { name: "Focus strategy Trend Rank" }));
 
-    expect(screen.getByText((text) => text.startsWith("Focus: Strategy") && text.includes("Momentum"))).toBeInTheDocument();
+    expect(screen.getByText((text) => text.startsWith("Focus: Strategy") && text.includes("Trend Rank"))).toBeInTheDocument();
     expect(screen.getByText("Sharpe")).toBeInTheDocument();
 
     const exposureBand = screen.getByRole("region", { name: "Exposure band" });
@@ -728,8 +728,8 @@ describe("App", () => {
 
   it("shows a simple empty-state message when return distribution data is unavailable", async () => {
     fetchRuns.mockResolvedValue([RUNS[0]]);
-    const dashboard = createDashboard("single", ["momentum_run"]);
-    dashboard.research.returnDistribution.momentum_run = [];
+    const dashboard = createDashboard("single", ["trend_run"]);
+    dashboard.research.returnDistribution.trend_run = [];
     fetchDashboard.mockResolvedValue(dashboard);
 
     render(<App />);
@@ -741,7 +741,7 @@ describe("App", () => {
 
   it("renders launch metadata in the comparison plane", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -759,7 +759,7 @@ describe("App", () => {
 
   it("renders rolling risk diagnostics for Sharpe, correlation, and beta", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -767,17 +767,17 @@ describe("App", () => {
     const rollingSharpeOption = findRollingSharpeOption() as {
       series: Array<ChartLineSeries>;
     };
-    const momentumSharpeSeries = rollingSharpeOption.series.find((series) => series.name === "Momentum");
+    const momentumSharpeSeries = rollingSharpeOption.series.find((series) => series.name === "Trend Rank");
     expect(momentumSharpeSeries?.tooltip?.valueFormatter?.(1.14)).toBe("1.14");
     expect(findRollingCorrelationOption()).toMatchObject({
       series: [
         expect.objectContaining({
-          name: "Momentum",
+          name: "Trend Rank",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.72])]),
         }),
         expect.objectContaining({
-          name: "Momentum Variant",
+          name: "Trend Rank Variant",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.58])]),
         }),
@@ -786,12 +786,12 @@ describe("App", () => {
     expect(findRollingBetaOption()).toMatchObject({
       series: [
         expect.objectContaining({
-          name: "Momentum",
+          name: "Trend Rank",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.88])]),
         }),
         expect.objectContaining({
-          name: "Momentum Variant",
+          name: "Trend Rank Variant",
           type: "line",
           data: expect.arrayContaining([expect.arrayContaining([expect.any(String), 0.61])]),
         }),
@@ -801,7 +801,7 @@ describe("App", () => {
 
   it("shows daily and monthly return distributions separately", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -809,12 +809,12 @@ describe("App", () => {
     expect(findDailyDistributionOption()).toMatchObject({
       series: [
         expect.objectContaining({
-          name: "Momentum",
+          name: "Trend Rank",
           type: "bar",
           data: expect.arrayContaining([expect.any(Number)]),
         }),
         expect.objectContaining({
-          name: "Momentum Variant",
+          name: "Trend Rank Variant",
           type: "bar",
         }),
       ],
@@ -822,12 +822,12 @@ describe("App", () => {
     expect(findMonthlyDistributionOption()).toMatchObject({
       series: [
         expect.objectContaining({
-          name: "Momentum",
+          name: "Trend Rank",
           type: "bar",
           data: expect.arrayContaining([expect.any(Number)]),
         }),
         expect.objectContaining({
-          name: "Momentum Variant",
+          name: "Trend Rank Variant",
           type: "bar",
         }),
       ],
@@ -836,7 +836,7 @@ describe("App", () => {
 
   it("renders latest-holdings winners and losers panels", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -856,7 +856,7 @@ describe("App", () => {
 
   it("renders return distribution as a numeric distribution curve", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -865,15 +865,15 @@ describe("App", () => {
     expect(findDistributionChartOption()).toMatchObject({
       xAxis: expect.objectContaining({ type: "category" }),
       series: [
-        expect.objectContaining({ name: "Momentum", type: "bar" }),
-        expect.objectContaining({ name: "Momentum Variant", type: "bar" }),
+        expect.objectContaining({ name: "Trend Rank", type: "bar" }),
+        expect.objectContaining({ name: "Trend Rank Variant", type: "bar" }),
       ],
     });
   });
 
   it("formats return distribution tooltip values as percentages", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -883,7 +883,7 @@ describe("App", () => {
       tooltip?: { formatter?: (params: Array<{ axisValue: string; seriesName: string; data: number }>) => string };
     };
     const output = option.tooltip?.formatter?.([
-      { axisValue: "1.0% to 3.0%", seriesName: "Momentum", data: 0.4 },
+      { axisValue: "1.0% to 3.0%", seriesName: "Trend Rank", data: 0.4 },
     ]);
 
     expect(output).toContain("1.0% to 3.0%");
@@ -893,7 +893,7 @@ describe("App", () => {
   it("filters sector charts with explicit sector selection controls", async () => {
     const user = userEvent.setup();
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -921,7 +921,7 @@ describe("App", () => {
   it("lets sector drill-down override a previously selected manual sector filter", async () => {
     const user = userEvent.setup();
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -943,7 +943,7 @@ describe("App", () => {
 
   it("renders strategy sector weights as normalized trend lines", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -963,7 +963,7 @@ describe("App", () => {
 
   it("normalizes sector weights to percentages on the trend chart", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -980,7 +980,7 @@ describe("App", () => {
 
   it("formats research return and drawdown tooltips with money and percentages", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -989,8 +989,8 @@ describe("App", () => {
     const option = findResearchReturnDrawdownOption() as {
       series: Array<{ name: string; tooltip?: { valueFormatter?: (value: number) => string } }>;
     };
-    const momentumSeries = option.series.find((series) => series.name === "Momentum");
-    const drawdownSeries = option.series.find((series) => series.name === "Momentum drawdown");
+    const momentumSeries = option.series.find((series) => series.name === "Trend Rank");
+    const drawdownSeries = option.series.find((series) => series.name === "Trend Rank drawdown");
 
     expect(momentumSeries?.tooltip?.valueFormatter?.(108000000)).toBe("$108.0M");
     expect(drawdownSeries?.tooltip?.valueFormatter?.(-0.12)).toBe("-12.00%");
@@ -998,7 +998,7 @@ describe("App", () => {
 
   it("formats rolling and sector contribution line tooltips as short percentages", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -1017,7 +1017,7 @@ describe("App", () => {
 
   it("does not cumulatively sum sector contribution a second time in the strategy trend chart", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
@@ -1033,19 +1033,19 @@ describe("App", () => {
 
   it("plots each selected strategy beside its corresponding benchmark overlay", async () => {
     fetchRuns.mockResolvedValue(RUNS);
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
     await screen.findByRole("heading", { name: "Research charts" });
 
     expect(
-      findChartOption(["Momentum", "KOSPI200 benchmark", "Momentum Variant", "S&P 500 benchmark"]),
+      findChartOption(["Trend Rank", "KOSPI200 benchmark", "Trend Rank Variant", "S&P 500 benchmark"]),
     ).toMatchObject({
       series: [
-        expect.objectContaining({ name: "Momentum" }),
+        expect.objectContaining({ name: "Trend Rank" }),
         expect.objectContaining({ name: "KOSPI200 benchmark" }),
-        expect.objectContaining({ name: "Momentum Variant" }),
+        expect.objectContaining({ name: "Trend Rank Variant" }),
         expect.objectContaining({ name: "S&P 500 benchmark" }),
       ],
     });
@@ -1054,16 +1054,16 @@ describe("App", () => {
   it("deduplicates bootstrap-selected ids before requesting the dashboard", async () => {
     fetchRuns.mockResolvedValue(RUNS);
     fetchSession.mockResolvedValue({
-      defaultSelectedRunIds: ["value_run", "value_run", "momentum_run", "value_run"],
+      defaultSelectedRunIds: ["value_run", "value_run", "trend_run", "value_run"],
     });
-    fetchDashboard.mockResolvedValue(createDashboard("multi", ["momentum_run", "value_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("multi", ["trend_run", "value_run"]));
 
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
-    expect(selector.getByRole("button", { name: /Momentum Variant/i })).toHaveAttribute("aria-pressed", "true");
-    expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run", "value_run"]);
+    expect(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toHaveAttribute("aria-pressed", "true");
+    expect(selector.getByRole("button", { name: /Trend Rank Variant/i })).toHaveAttribute("aria-pressed", "true");
+    expect(fetchDashboard).toHaveBeenCalledWith(["trend_run", "value_run"]);
   });
 
   it("renders a failure message when saved runs fail to load", async () => {
@@ -1090,10 +1090,10 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Dashboard unavailable" })).toBeInTheDocument();
-    expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
+    expect(fetchDashboard).toHaveBeenCalledWith(["trend_run"]);
 
     const selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /^Momentum\s+momentum$/i }));
+    await user.click(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i }));
 
     expect(screen.queryByRole("heading", { name: "Dashboard unavailable" })).not.toBeInTheDocument();
     expect(screen.getByText("0 selected")).toBeInTheDocument();
@@ -1103,7 +1103,7 @@ describe("App", () => {
     const user = userEvent.setup();
     fetchRuns.mockResolvedValue(RUNS);
     fetchDashboard
-      .mockResolvedValueOnce(createDashboard("single", ["momentum_run"]))
+      .mockResolvedValueOnce(createDashboard("single", ["trend_run"]))
       .mockRejectedValueOnce(new Error("Failed to load dashboard."));
 
     render(<App />);
@@ -1111,12 +1111,12 @@ describe("App", () => {
     expect(await screen.findByText("Single strategy view")).toBeInTheDocument();
 
     const selector = await selectorScope();
-    await user.click(selector.getByRole("button", { name: /Momentum Variant/i }));
+    await user.click(selector.getByRole("button", { name: /Trend Rank Variant/i }));
 
     expect(await screen.findByText("Failed to load dashboard.")).toBeInTheDocument();
     expect(screen.queryByText("Single strategy view")).not.toBeInTheDocument();
-    expect(fetchDashboard).toHaveBeenNthCalledWith(1, ["momentum_run"]);
-    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["momentum_run", "value_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(1, ["trend_run"]);
+    expect(fetchDashboard).toHaveBeenNthCalledWith(2, ["trend_run", "value_run"]);
   });
 
   it("renders dashboard errors without clearing the saved-run selector", async () => {
@@ -1127,32 +1127,32 @@ describe("App", () => {
 
     expect(await screen.findByText("Failed to load dashboard.")).toBeInTheDocument();
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toBeInTheDocument();
+    expect(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
   it("falls back to the newest available run when bootstrap ids are stale", async () => {
     fetchRuns.mockResolvedValue(RUNS);
     fetchSession.mockResolvedValue({ defaultSelectedRunIds: ["missing_run"] });
-    fetchDashboard.mockResolvedValue(createDashboard("single", ["momentum_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("single", ["trend_run"]));
 
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
-    expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
+    expect(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toHaveAttribute("aria-pressed", "true");
+    expect(fetchDashboard).toHaveBeenCalledWith(["trend_run"]);
   });
 
   it("falls back to the newest available run when the session bootstrap request fails", async () => {
     fetchRuns.mockResolvedValue(RUNS);
     fetchSession.mockRejectedValue(new Error("session unavailable"));
-    fetchDashboard.mockResolvedValue(createDashboard("single", ["momentum_run"]));
+    fetchDashboard.mockResolvedValue(createDashboard("single", ["trend_run"]));
 
     render(<App />);
 
     const selector = await selectorScope();
-    expect(selector.getByRole("button", { name: /^Momentum\s+momentum$/i })).toHaveAttribute("aria-pressed", "true");
-    expect(fetchDashboard).toHaveBeenCalledWith(["momentum_run"]);
+    expect(selector.getByRole("button", { name: /^Trend Rank\s+trend_rank$/i })).toHaveAttribute("aria-pressed", "true");
+    expect(fetchDashboard).toHaveBeenCalledWith(["trend_run"]);
   });
 
   it("does not show the empty state after runs load until the request resolves with zero items", async () => {

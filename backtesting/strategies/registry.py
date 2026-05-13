@@ -4,16 +4,10 @@ import inspect
 from typing import Callable
 
 from .base import RegisteredStrategy
-from .momentum import MomentumTopN
-from .revision_sector_q1q5_oi_guard_ls import RevisionSectorQ1Q5OiConfidenceWeightedLs
-from .revision_oi_short_squeeze_beta_exclusion_ls import RevisionOiShortSqueezeBetaExclusionLs
-from .revision_oi_qualified_long_beta_boost_ls import RevisionOiQualifiedLongBetaBoostLs
-from .consensus_beta_regime_rotation_ls import ConsensusBetaRegimeRotationLs
-from .consensus_beta_sector_tilt_longonly import ConsensusBetaSectorTiltLongOnly
-from .consensus_beta_breadth_scaled_longonly import ConsensusBetaBreadthScaledLongOnly
-from .consensus_beta_soft_participation_longonly import ConsensusBetaSoftParticipationLongOnly
-from .consensus_beta_soft_participation_index_overlay import ConsensusBetaSoftParticipationIndexOverlay
-from .index_alpha_tilt_consensus_revision_oi_beta import IndexAlphaTiltConsensusRevisionOiBeta
+from .benchmark_overlay import BenchmarkOverlay
+from .benchmark_tilt import BenchmarkTilt
+from .earnings_revision import EarningsRevision
+from .trend_rank import TrendRank
 
 
 StrategyFactory = Callable[..., RegisteredStrategy]
@@ -42,13 +36,9 @@ def list_strategies() -> tuple[str, ...]:
     return tuple(sorted(_REGISTRY))
 
 
-register_strategy("momentum", MomentumTopN)
-register_strategy("revision_sector_q1q5_oi_confidence_weighted_ls", RevisionSectorQ1Q5OiConfidenceWeightedLs)
-register_strategy("revision_oi_short_squeeze_beta_exclusion_ls", RevisionOiShortSqueezeBetaExclusionLs)
-register_strategy("revision_oi_qualified_long_beta_boost_ls", RevisionOiQualifiedLongBetaBoostLs)
-register_strategy("consensus_beta_regime_rotation_ls", ConsensusBetaRegimeRotationLs)
-register_strategy("consensus_beta_sector_tilt_longonly", ConsensusBetaSectorTiltLongOnly)
-register_strategy("consensus_beta_breadth_scaled_longonly", ConsensusBetaBreadthScaledLongOnly)
-register_strategy("consensus_beta_soft_participation_longonly", ConsensusBetaSoftParticipationLongOnly)
-register_strategy("consensus_beta_soft_participation_index_overlay", ConsensusBetaSoftParticipationIndexOverlay)
-register_strategy("index_alpha_tilt_consensus_revision_oi_beta", IndexAlphaTiltConsensusRevisionOiBeta)
+register_strategy("trend_rank", TrendRank)
+register_strategy("earnings_revision", EarningsRevision)
+register_strategy("benchmark_overlay", BenchmarkOverlay)
+register_strategy("benchmark_tilt", BenchmarkTilt)
+
+

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
+from time import perf_counter
+from typing import Callable, Iterator
 
 import pandas as pd
 
@@ -36,7 +39,7 @@ class RunConfig:
     start: str
     end: str
     capital: float = 100_000_000.0
-    strategy: str = "momentum"
+    strategy: str = "trend_rank"
     name: str | None = None
     top_n: int = 20
     lookback: int = 20
@@ -67,6 +70,34 @@ class RunReport:
     output_dir: Path | None = None
     resolved_spec: object | None = None
     execution_resolution: dict[str, object] | None = None
+    timing: dict[str, float] | None = None
+
+
+class _BacktestTimer:
+    _STAGES = ("data_load", "plan_build", "engine_run", "write_artifacts")
+
+    def __init__(self, enabled: bool) -> None:
+        self.enabled = enabled
+        self.started_at = perf_counter()
+        self.stages: dict[str, float] = {}
+
+    @contextmanager
+    def stage(self, name: str) -> Iterator[None]:
+        if not self.enabled:
+            yield
+            return
+        started_at = perf_counter()
+        try:
+            yield
+        finally:
+            self.stages[name] = self.stages.get(name, 0.0) + (perf_counter() - started_at)
+
+    def snapshot(self) -> dict[str, float] | None:
+        if not self.enabled:
+            return None
+        timing = {stage: float(self.stages.get(stage, 0.0)) for stage in self._STAGES}
+        timing["total"] = float(perf_counter() - self.started_at)
+        return timing
 
 
 class BacktestRunner:
@@ -78,6 +109,9 @@ class BacktestRunner:
         parquet_dir: Path | None = None,
         result_dir: Path | None = None,
         universe_registry: UniverseRegistry | None = None,
+        write_report_assets: bool = True,
+        profile: bool = False,
+        timing_sink: Callable[[dict[str, float]], None] | None = None,
     ) -> None:
         self.catalog = catalog or DataCatalog.default()
         self.universe_registry = universe_registry or UniverseRegistry.default()
@@ -87,7 +121,9 @@ class BacktestRunner:
         self.store = ParquetStore(self.parquet_dir)
         self.loader = DataLoader(self.catalog, self.store)
         self.ingest = IngestJob(self.catalog, self.raw_dir, self.parquet_dir)
-        self.writer = RunWriter(self.result_dir)
+        self.writer = RunWriter(self.result_dir, write_report_assets=write_report_assets)
+        self.profile = profile
+        self.timing_sink = timing_sink
 
     def run(self, config: RunConfig) -> RunReport:
         return self.run_spec(self.resolve_spec_from_config(config))
@@ -125,90 +161,95 @@ class BacktestRunner:
         )
 
     def run_spec(self, resolved_spec) -> RunReport:
+        timer = _BacktestTimer(self.profile or self.timing_sink is not None)
         spec = resolved_spec.execution
         universe_spec = self._resolve_universe_spec_from_spec(spec)
         effective_config = self._resolve_effective_config_from_spec(spec, universe_spec)
 
-        self._ensure_parquet(list(resolved_spec.dataset_ids))
-        market = self.loader.load(
-            LoadRequest(
-                datasets=list(resolved_spec.dataset_ids),
-                start=self._resolve_load_start(effective_config.start, effective_config.warmup_days),
-                end=effective_config.end,
-                universe_id=effective_config.universe_id,
-            )
-        )
-        market.universe = self._universe(market, universe_spec)
-
-        if spec.weight_source.kind == "hook":
-            hook = get_hook(resolved_spec.hook_id or "")
-            hook_plan = hook.build_plan(market=market, resolved_spec=resolved_spec, universe_spec=universe_spec)
-            plan = hook_plan.position_plan
-            schedule_input = hook_plan.schedule
-            extra_tradable = hook_plan.tradable
-            resolution_meta = hook_plan.metadata
-            if hook_plan.schedule is not None:
-                rebalance_dates = tuple(ts.date().isoformat() for ts in hook_plan.schedule[hook_plan.schedule].index)
-                resolved_spec = replace(
-                    resolved_spec,
-                    schedule=ScheduleSpec(kind="custom_dates", dates=rebalance_dates),
+        with timer.stage("data_load"):
+            self._ensure_parquet(list(resolved_spec.dataset_ids))
+            market = self.loader.load(
+                LoadRequest(
+                    datasets=list(resolved_spec.dataset_ids),
+                    start=self._resolve_load_start(effective_config.start, effective_config.warmup_days),
+                    end=effective_config.end,
+                    universe_id=effective_config.universe_id,
                 )
-        elif spec.uses_composable_plan:
-            plan = build_position_plan_from_execution_spec(spec, market)
-            schedule_input = self._schedule_from_spec(resolved_spec)
-            extra_tradable = None
-            resolution_meta = {"plan_source": "selection_weighting_position_policy"}
-        else:
-            strategy = build_strategy(
-                spec.strategy,
-                top_n=spec.top_n,
-                lookback=spec.lookback,
-                flow_lookback=spec.flow_lookback,
-                momentum_lookback=spec.momentum_lookback,
-                liquidity_lookback=spec.liquidity_lookback,
-                momentum_weight=spec.momentum_weight,
             )
-            plan = strategy.build_plan(market)
-            schedule_input = self._schedule_from_spec(resolved_spec)
-            extra_tradable = None
-            resolution_meta = {}
+            market.universe = self._universe(market, universe_spec)
 
-        validate_position_plan(plan)
-        weights = plan.target_weights
-        close = market.frames["close"]
-        tradable = close.notna()
-        if market.universe is not None:
-            tradable = tradable & market.universe.reindex_like(close).fillna(False).astype(bool)
-        if extra_tradable is not None:
-            tradable = tradable & extra_tradable.reindex_like(close).fillna(False).astype(bool)
+        with timer.stage("plan_build"):
+            if spec.weight_source.kind == "hook":
+                hook = get_hook(resolved_spec.hook_id or "")
+                hook_plan = hook.build_plan(market=market, resolved_spec=resolved_spec, universe_spec=universe_spec)
+                plan = hook_plan.position_plan
+                schedule_input = hook_plan.schedule
+                extra_tradable = hook_plan.tradable
+                resolution_meta = hook_plan.metadata
+                if hook_plan.schedule is not None:
+                    rebalance_dates = tuple(ts.date().isoformat() for ts in hook_plan.schedule[hook_plan.schedule].index)
+                    resolved_spec = replace(
+                        resolved_spec,
+                        schedule=ScheduleSpec(kind="custom_dates", dates=rebalance_dates),
+                    )
+            elif spec.uses_composable_plan:
+                plan = build_position_plan_from_execution_spec(spec, market)
+                schedule_input = self._schedule_from_spec(resolved_spec)
+                extra_tradable = None
+                resolution_meta = {"plan_source": "selection_weighting_position_policy"}
+            else:
+                strategy = build_strategy(
+                    spec.strategy,
+                    top_n=spec.top_n,
+                    lookback=spec.lookback,
+                    flow_lookback=spec.flow_lookback,
+                    momentum_lookback=spec.momentum_lookback,
+                    liquidity_lookback=spec.liquidity_lookback,
+                    momentum_weight=spec.momentum_weight,
+                )
+                plan = strategy.build_plan(market)
+                schedule_input = self._schedule_from_spec(resolved_spec)
+                extra_tradable = None
+                resolution_meta = {}
 
-        engine = BacktestEngine(
-            cost=CostModel(
-                fee=effective_config.fee,
-                sell_tax=effective_config.sell_tax,
-                slippage=effective_config.slippage,
+            validate_position_plan(plan)
+            weights = plan.target_weights
+            close = market.frames["close"]
+            tradable = close.notna()
+            if market.universe is not None:
+                tradable = tradable & market.universe.reindex_like(close).fillna(False).astype(bool)
+            if extra_tradable is not None:
+                tradable = tradable & extra_tradable.reindex_like(close).fillna(False).astype(bool)
+
+            engine = BacktestEngine(
+                cost=CostModel(
+                    fee=effective_config.fee,
+                    sell_tax=effective_config.sell_tax,
+                    slippage=effective_config.slippage,
+                )
             )
-        )
-        result = engine.run(
-            close=close,
-            open=market.frames.get("open"),
-            weights=weights,
-            capital=effective_config.capital,
-            tradable=tradable,
-            schedule=schedule_input,
-            fill_mode=effective_config.fill_mode,
-            allow_fractional=effective_config.allow_fractional,
-        )
-        result = self._trim_result_to_display_range(result, start=effective_config.start, end=effective_config.end)
-        plan = self._trim_plan_to_display_range(plan, start=effective_config.start, end=effective_config.end)
-        if result.equity.empty:
-            raise ValueError(
-                f"no backtest rows remain after trimming to display range {effective_config.start}..{effective_config.end}"
-            )
 
-        summary = summarize_perf(result.returns)
-        summary["final_equity"] = float(result.equity.iloc[-1])
-        summary["avg_turnover"] = float(result.turnover.mean())
+        with timer.stage("engine_run"):
+            result = engine.run(
+                close=close,
+                open=market.frames.get("open"),
+                weights=weights,
+                capital=effective_config.capital,
+                tradable=tradable,
+                schedule=schedule_input,
+                fill_mode=effective_config.fill_mode,
+                allow_fractional=effective_config.allow_fractional,
+            )
+            result = self._trim_result_to_display_range(result, start=effective_config.start, end=effective_config.end)
+            plan = self._trim_plan_to_display_range(plan, start=effective_config.start, end=effective_config.end)
+            if result.equity.empty:
+                raise ValueError(
+                    f"no backtest rows remain after trimming to display range {effective_config.start}..{effective_config.end}"
+                )
+
+            summary = summarize_perf(result.returns)
+            summary["final_equity"] = float(result.equity.iloc[-1])
+            summary["avg_turnover"] = float(result.turnover.mean())
         report = RunReport(config=effective_config, summary=summary, result=result, position_plan=plan)
         report.resolved_spec = resolved_spec
         report.execution_resolution = {
@@ -219,7 +260,14 @@ class BacktestRunner:
             "fallbacks_applied": list(spec.data_policy.fallbacks_applied),
             **resolution_meta,
         }
-        report.output_dir = self.writer.write(report)
+        with timer.stage("write_artifacts"):
+            report.output_dir = self.writer.write(report)
+        report.timing = timer.snapshot()
+        if report.timing is not None:
+            if self.timing_sink is not None:
+                self.timing_sink(report.timing)
+            if report.output_dir is not None:
+                self.writer.write_timing(report.output_dir, report.timing)
         return report
 
     def _execution_spec_from_config(self, config: RunConfig) -> ExecutionSpec:
@@ -373,7 +421,7 @@ class BacktestRunner:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run registered backtests.")
-    parser.add_argument("--strategy", choices=list_strategies(), default="momentum")
+    parser.add_argument("--strategy", choices=list_strategies(), default="trend_rank")
     parser.add_argument("--name")
     parser.add_argument("--start")
     parser.add_argument("--end")

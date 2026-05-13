@@ -21,12 +21,12 @@ def test_html_renderer_uses_tearsheet_template(tmp_path: Path) -> None:
         spec=ReportSpec(
             name="single-report",
             run_ids=("run-a",),
-            title="Momentum Tearsheet",
+            title="Trend Rank Tearsheet",
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "single-report",
         run_id="run-a",
-        display_name="Momentum",
+        display_name="Trend Rank",
         pages={
             "performance": _write_asset(tmp_path / "single-report" / "pages" / "performance.png"),
         },
@@ -56,9 +56,9 @@ def test_html_renderer_uses_tearsheet_template(tmp_path: Path) -> None:
     assert '<section class="report-section executive-spread">' in html
     assert '<div class="executive-spread">' not in html
     assert html.index('<section class="report-cover cover">') < html.index('<section class="report-section executive-spread">')
-    assert "Momentum Tearsheet" in html
+    assert "Trend Rank Tearsheet" in html
     assert "Single-Run Tearsheet" in html
-    assert "Momentum" in html
+    assert "Trend Rank" in html
     assert "single-report" in html
     assert "PDF-first single-run performance summary" in html
     assert "KOSPI200" in html
@@ -110,7 +110,7 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "compare-report",
-        display_names=("Momentum", "Momentum Variant"),
+        display_names=("Trend Rank", "Trend Rank Variant"),
         pages={
             "executive": _write_asset(tmp_path / "compare-report" / "pages" / "executive.png"),
             "performance": _write_asset(tmp_path / "compare-report" / "pages" / "performance.html"),
@@ -118,13 +118,13 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
         tables={
             "ranked_summary": pd.DataFrame(
                 [
-                    {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Trend Rank", "cagr": 0.172, "sharpe": 1.10},
+                    {"display_name": "Trend Rank Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
-            "benchmark_relative": pd.DataFrame([{"display_name": "Momentum", "alpha": "3.2%"}]),
-            "exposure_summary": pd.DataFrame([{"display_name": "Momentum", "holdings_count": "20"}]),
-            "sector_summary": pd.DataFrame([{"display_name": "Momentum", "top_sector": "Tech"}]),
+            "benchmark_relative": pd.DataFrame([{"display_name": "Trend Rank", "alpha": "3.2%"}]),
+            "exposure_summary": pd.DataFrame([{"display_name": "Trend Rank", "holdings_count": "20"}]),
+            "sector_summary": pd.DataFrame([{"display_name": "Trend Rank", "top_sector": "Tech"}]),
         },
         notes=("missing_split:run-b",),
     )
@@ -142,8 +142,8 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
     assert "KOSPI200" in html
     assert "compare-report" in html
     assert "Cross-strategy comparison optimized for PDF review" in html
-    assert "Momentum" in html
-    assert "Momentum Variant" in html
+    assert "Trend Rank" in html
+    assert "Trend Rank Variant" in html
     assert "pages/performance.html" in html
     assert '<iframe class="plot-frame"' in html
     assert "Ranked Summary" in html
@@ -153,9 +153,9 @@ def test_html_renderer_uses_comparison_template(tmp_path: Path) -> None:
     assert "Research-Style Comparison" not in html
     assert "Metric Cards" not in html
     assert "Top CAGR" in html
-    assert "Momentum · 17.2%" in html
+    assert "Trend Rank · 17.2%" in html
     assert "Top Sharpe" in html
-    assert "Momentum Variant · 1.35" in html
+    assert "Trend Rank Variant · 1.35" in html
     assert "missing_split:run-b" in html
 
 
@@ -169,7 +169,7 @@ def test_html_renderer_keeps_composed_report_asset_paths_relative(tmp_path: Path
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=out_dir,
-        display_names=("Momentum", "Momentum Variant"),
+        display_names=("Trend Rank", "Trend Rank Variant"),
         pages={
             "executive": _write_asset(out_dir / "pages" / "executive.png"),
             "performance": _write_asset(out_dir / "pages" / "performance.html"),
@@ -177,8 +177,8 @@ def test_html_renderer_keeps_composed_report_asset_paths_relative(tmp_path: Path
         tables={
             "ranked_summary": pd.DataFrame(
                 [
-                    {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Trend Rank", "cagr": 0.172, "sharpe": 1.10},
+                    {"display_name": "Trend Rank Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
             "benchmark_relative": pd.DataFrame(),
@@ -201,12 +201,12 @@ def test_tearsheet_composer_builds_pdf_first_context(tmp_path: Path) -> None:
         spec=ReportSpec(
             name="single-report",
             run_ids=("run-a",),
-            title="Momentum Tearsheet",
+            title="Trend Rank Tearsheet",
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "single-report",
         run_id="run-a",
-        display_name="Momentum",
+        display_name="Trend Rank",
         pages={
             "performance": _write_asset(tmp_path / "single-report" / "pages" / "performance.png"),
         },
@@ -231,7 +231,7 @@ def test_tearsheet_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     report = TearsheetComposer().compose(bundle)
 
     assert report.cover.report_type == "Single-Run Tearsheet"
-    assert report.cover.title == "Momentum Tearsheet"
+    assert report.cover.title == "Trend Rank Tearsheet"
     assert report.cover.benchmark_name == "KOSPI200"
     assert report.cover.report_name == "single-report"
     assert report.cover.descriptor
@@ -259,7 +259,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
             benchmark=BenchmarkConfig.default_kospi200(),
         ),
         out_dir=tmp_path / "compare-report",
-        display_names=("Momentum", "Momentum Variant"),
+        display_names=("Trend Rank", "Trend Rank Variant"),
         pages={
             "executive": _write_asset(tmp_path / "compare-report" / "pages" / "executive.png"),
             "performance": _write_asset(tmp_path / "compare-report" / "pages" / "performance.png"),
@@ -269,13 +269,13 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
         tables={
             "ranked_summary": pd.DataFrame(
                 [
-                    {"display_name": "Momentum", "cagr": 0.172, "sharpe": 1.10},
-                    {"display_name": "Momentum Variant", "cagr": 0.150, "sharpe": 1.35},
+                    {"display_name": "Trend Rank", "cagr": 0.172, "sharpe": 1.10},
+                    {"display_name": "Trend Rank Variant", "cagr": 0.150, "sharpe": 1.35},
                 ]
             ),
-            "benchmark_relative": pd.DataFrame([{"display_name": "Momentum", "alpha": 0.032, "beta": 0.88}]),
-            "exposure_summary": pd.DataFrame([{"display_name": "Momentum", "holdings_count": 20}]),
-            "sector_summary": pd.DataFrame([{"display_name": "Momentum", "top_sector": "Tech"}]),
+            "benchmark_relative": pd.DataFrame([{"display_name": "Trend Rank", "alpha": 0.032, "beta": 0.88}]),
+            "exposure_summary": pd.DataFrame([{"display_name": "Trend Rank", "holdings_count": 20}]),
+            "sector_summary": pd.DataFrame([{"display_name": "Trend Rank", "top_sector": "Tech"}]),
         },
         notes=("missing_split:run-b",),
     )
@@ -288,8 +288,8 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     assert report.cover.report_name == "compare-report"
     assert report.cover.descriptor
     assert [item.label for item in report.executive_metrics] == ["Top CAGR", "Top Sharpe"]
-    assert report.executive_metrics[0].value == "Momentum · 17.2%"
-    assert report.executive_metrics[1].value == "Momentum Variant · 1.35"
+    assert report.executive_metrics[0].value == "Trend Rank · 17.2%"
+    assert report.executive_metrics[1].value == "Trend Rank Variant · 1.35"
     assert tuple(page.key for page in report.executive_pages) == ("executive", "performance")
     assert tuple(table.key for table in report.executive_tables) == ("ranked_summary", "benchmark_relative")
     assert tuple(section.title for section in report.sections) == (
@@ -301,7 +301,7 @@ def test_comparison_composer_builds_pdf_first_context(tmp_path: Path) -> None:
     assert tuple(page.key for page in report.sections[1].pages) == ("exposure",)
     assert tuple(table.key for table in report.sections[1].tables) == ("exposure_summary", "sector_summary")
     assert report.notes == ("missing_split:run-b",)
-    assert report.participants == ("Momentum", "Momentum Variant")
+    assert report.participants == ("Trend Rank", "Trend Rank Variant")
 
 
 def test_html_renderer_keeps_legacy_reportbundle_path_styled(tmp_path: Path) -> None:
@@ -309,7 +309,7 @@ def test_html_renderer_keeps_legacy_reportbundle_path_styled(tmp_path: Path) -> 
     run = SavedRun(
         run_id="legacy-run",
         path=tmp_path / "legacy-run",
-        config={"strategy": "momentum"},
+        config={"strategy": "trend_rank"},
         summary={"cagr": 0.1},
         equity=pd.Series([100.0, 110.0], index=index),
         returns=pd.Series([0.0, 0.1], index=index),
@@ -350,7 +350,7 @@ def test_html_renderer_supports_html_page_asset_fallback_for_new_templates(tmp_p
         ),
         out_dir=tmp_path / "fallback-report",
         run_id="run-a",
-        display_name="Momentum",
+        display_name="Trend Rank",
         pages={
             "performance": _write_asset(tmp_path / "fallback-report" / "pages" / "performance.html"),
         },

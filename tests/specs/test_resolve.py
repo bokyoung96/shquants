@@ -30,7 +30,7 @@ def test_resolve_spec_records_market_cap_fallback_when_float_cap_dataset_missing
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
-        strategy="momentum",
+        strategy="trend_rank",
         schedule=ScheduleSpec(kind="named", name="monthly"),
         weight_source=WeightSourceSpec(kind="hook", hook_id="kospi200_semiannual_floatcap"),
         data_policy=DataPolicySpec(requested_weight_basis="float_market_cap", fallback_order=("market_cap",)),
@@ -57,7 +57,7 @@ def test_resolve_spec_rejects_unknown_hook_id(tmp_path: Path) -> None:
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
-        strategy="momentum",
+        strategy="trend_rank",
         schedule=ScheduleSpec(kind="named", name="monthly"),
         weight_source=WeightSourceSpec(kind="hook", hook_id="does-not-exist"),
     )
@@ -80,7 +80,7 @@ def test_resolve_spec_uses_float_market_cap_when_parquet_exists(tmp_path: Path) 
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
-        strategy="momentum",
+        strategy="trend_rank",
         schedule=ScheduleSpec(kind="named", name="monthly"),
         weight_source=WeightSourceSpec(kind="hook", hook_id="kospi200_semiannual_floatcap"),
         data_policy=DataPolicySpec(requested_weight_basis="float_market_cap", fallback_order=("market_cap",)),
@@ -107,7 +107,7 @@ def test_resolve_spec_prefers_float_market_cap_when_raw_source_exists(tmp_path: 
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
-        strategy="momentum",
+        strategy="trend_rank",
         schedule=ScheduleSpec(kind="named", name="monthly"),
         weight_source=WeightSourceSpec(kind="hook", hook_id="kospi200_semiannual_floatcap"),
         data_policy=DataPolicySpec(requested_weight_basis="float_market_cap", fallback_order=("market_cap",)),

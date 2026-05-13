@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
 from backtesting.catalog import DatasetId
@@ -13,7 +14,7 @@ from .composable import ComposableStrategy
 
 
 @dataclass(slots=True)
-class ConsensusBetaSoftParticipationIndexOverlay(ComposableStrategy):
+class BenchmarkOverlay(ComposableStrategy):
     lookback: int = 60
     flow_lookback: int = 20
     momentum_lookback: int = 120
@@ -24,12 +25,12 @@ class ConsensusBetaSoftParticipationIndexOverlay(ComposableStrategy):
     min_names: int = 25
 
     def __post_init__(self) -> None:
-        self.signal_producer = _ConsensusBetaSoftParticipationIndexOverlaySignalProducer(
+        self.signal_producer = _BenchmarkOverlaySignal(
             lookback=self.lookback,
             flow_lookback=self.flow_lookback,
             beta_lookback=max(120, self.momentum_lookback),
         )
-        self.construction_rule = _IndexOverlayConstruction(
+        self.construction_rule = _BenchmarkOverlayConstruction(
             active_share_target=self.active_share_target,
             max_stock_active=self.max_stock_active,
             max_sector_active=self.max_sector_active,
@@ -38,7 +39,7 @@ class ConsensusBetaSoftParticipationIndexOverlay(ComposableStrategy):
 
 
 @dataclass(slots=True)
-class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
+class _BenchmarkOverlaySignal:
     lookback: int = 60
     flow_lookback: int = 20
     beta_lookback: int = 120
@@ -108,47 +109,27 @@ class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
         denom = market_cap.where(k200)
         benchmark_weights = denom.div(denom.sum(axis=1).replace(0.0, pd.NA), axis=0).fillna(0.0)
 
-        alpha = pd.DataFrame(0.0, index=close.index, columns=close.columns)
-        inclusion = pd.DataFrame(False, index=close.index, columns=close.columns)
-        overlay_scale = pd.Series(0.0, index=close.index, dtype=float)
+        raw_score = (
+            soft_score.reindex(index=close.index, columns=close.columns).fillna(0.0)
+            + 0.20 * self._cross_sectional_zscore(beta.reindex(index=close.index, columns=close.columns), k200)
+            + 0.15
+            * self._cross_sectional_zscore(consensus_level.reindex(index=close.index, columns=close.columns), k200)
+            + 0.10 * self._cross_sectional_zscore(consensus_flow.reindex(index=close.index, columns=close.columns), k200)
+        )
+        raw_score = raw_score.replace([float("inf"), float("-inf")], 0.0).fillna(0.0)
+        weighted_center = raw_score.mul(benchmark_weights, axis=0).sum(axis=1)
+        score = raw_score.sub(weighted_center, axis=0).where(k200, 0.0).fillna(0.0)
 
-        for timestamp in close.index:
-            member_mask = k200.loc[timestamp]
-            members = member_mask[member_mask].index
-            if len(members) == 0:
-                continue
+        active_ranks = score.abs().where(k200).rank(axis=1, ascending=False, method="first", na_option="bottom")
+        active_mask = active_ranks.le(60) & k200
+        alpha = score.where(active_mask, 0.0).astype(float)
+        inclusion = k200.copy()
 
-            base_w = benchmark_weights.loc[timestamp].reindex(members).fillna(0.0)
-            if float(base_w.sum()) <= 0.0:
-                continue
-
-            score = (
-                soft_score.loc[timestamp].reindex(members).fillna(0.0)
-                + 0.20 * self._zscore(beta.loc[timestamp].reindex(members).fillna(0.0))
-                + 0.15 * self._zscore(consensus_level.loc[timestamp].reindex(members).fillna(0.0))
-                + 0.10 * self._zscore(consensus_flow.loc[timestamp].reindex(members).fillna(0.0))
-            )
-
-            score = score.replace([float("inf"), float("-inf")], 0.0).fillna(0.0)
-            score = score - float((score * base_w).sum())
-
-            if score.abs().sum() <= 0.0:
-                continue
-
-            breadth_now = float(market_breadth.loc[timestamp])
-            breadth_anchor = float(breadth_mean.loc[timestamp])
-            breadth_change = float(breadth_delta.loc[timestamp])
-
-            if breadth_now > max(breadth_anchor, 0.03) and breadth_change > 0.0:
-                overlay_scale.loc[timestamp] = 1.00
-            elif breadth_now > -0.02:
-                overlay_scale.loc[timestamp] = 0.70
-            else:
-                overlay_scale.loc[timestamp] = 0.35
-
-            active_names = score.abs().sort_values(ascending=False).head(min(len(score), 60)).index
-            alpha.loc[timestamp, active_names] = score.reindex(active_names).astype(float)
-            inclusion.loc[timestamp, members] = True
+        strong_breadth = market_breadth.gt(pd.concat((breadth_mean, pd.Series(0.03, index=breadth_mean.index)), axis=1).max(axis=1))
+        overlay_scale = pd.Series(0.35, index=close.index, dtype=float)
+        overlay_scale.loc[market_breadth.gt(-0.02)] = 0.70
+        overlay_scale.loc[strong_breadth & breadth_delta.gt(0.0)] = 1.00
+        overlay_scale = overlay_scale.where(score.abs().sum(axis=1).gt(0.0), 0.0)
 
         return SignalBundle(
             alpha=alpha,
@@ -175,9 +156,23 @@ class _ConsensusBetaSoftParticipationIndexOverlaySignalProducer:
         cross_mean = stock_ret.mul(bench_ret, axis=0).rolling(window, min_periods=min_periods).mean()
         return cross_mean - stock_mean.mul(bench_mean, axis=0)
 
+    @staticmethod
+    def _cross_sectional_zscore(frame: pd.DataFrame, membership: pd.DataFrame) -> pd.DataFrame:
+        frame = frame.reindex(index=membership.index, columns=membership.columns)
+        membership = membership.fillna(False).astype(bool)
+        values = frame.where(membership).fillna(0.0).astype(float)
+        counts = membership.sum(axis=1).astype(float)
+        sums = values.sum(axis=1)
+        means = sums.divide(counts.where(counts.ne(0), np.nan)).fillna(0.0)
+        centered = values.sub(means, axis=0).where(membership, 0.0)
+        variance = centered.pow(2).sum(axis=1).divide((counts - 1.0).where(counts.gt(1), np.nan))
+        std = variance.pow(0.5)
+        zscore = centered.div(std.replace(0.0, np.nan), axis=0)
+        return zscore.where(membership, 0.0).fillna(0.0).astype(float)
+
 
 @dataclass(slots=True)
-class _IndexOverlayConstruction:
+class _BenchmarkOverlayConstruction:
     active_share_target: float = 0.20
     max_stock_active: float = 0.015
     max_sector_active: float = 0.05
@@ -191,59 +186,54 @@ class _IndexOverlayConstruction:
         overlay_scale = bundle.context.get("overlay_scale")
         inclusion = bundle.context.get("inclusion")
         if not isinstance(sector, pd.DataFrame):
-            raise ValueError("index overlay construction requires sector context")
+            raise ValueError("benchmark overlay construction requires sector context")
         if not isinstance(benchmark_weights, pd.DataFrame):
-            raise ValueError("index overlay construction requires benchmark_weights context")
+            raise ValueError("benchmark overlay construction requires benchmark_weights context")
         if not isinstance(benchmark_membership, pd.DataFrame):
-            raise ValueError("index overlay construction requires benchmark_membership context")
+            raise ValueError("benchmark overlay construction requires benchmark_membership context")
         if not isinstance(overlay_scale, pd.Series):
-            raise ValueError("index overlay construction requires overlay_scale context")
+            raise ValueError("benchmark overlay construction requires overlay_scale context")
         if not isinstance(inclusion, pd.DataFrame):
-            raise ValueError("index overlay construction requires inclusion context")
+            raise ValueError("benchmark overlay construction requires inclusion context")
 
-        sector = sector.reindex(index=alpha.index, columns=alpha.columns)
+        sector = sector.reindex(index=alpha.index, columns=alpha.columns).fillna("unknown").astype(str)
         benchmark_weights = benchmark_weights.reindex(index=alpha.index, columns=alpha.columns).fillna(0.0).astype(float)
         benchmark_membership = benchmark_membership.reindex(index=alpha.index, columns=alpha.columns).fillna(False).astype(bool)
         inclusion = inclusion.reindex(index=alpha.index, columns=alpha.columns).fillna(False).astype(bool)
         overlay_scale = overlay_scale.reindex(alpha.index).fillna(0.0).astype(float)
 
-        rows: dict[pd.Timestamp, pd.Series] = {}
-        picked: dict[pd.Timestamp, pd.Series] = {}
+        alpha_values = alpha.reindex(index=alpha.index, columns=alpha.columns).fillna(0.0).to_numpy(dtype=float)
+        benchmark_values = benchmark_weights.to_numpy(dtype=float)
+        membership_values = benchmark_membership.to_numpy(dtype=bool)
+        inclusion_values = inclusion.to_numpy(dtype=bool)
+        sector_values = sector.to_numpy(dtype=object)
+        scale_values = overlay_scale.to_numpy(dtype=float)
 
-        for timestamp in alpha.index:
-            base = benchmark_weights.loc[timestamp].where(benchmark_membership.loc[timestamp], 0.0).fillna(0.0).astype(float)
-            if float(base.sum()) <= 0.0:
-                rows[timestamp] = pd.Series(0.0, index=alpha.columns, dtype=float)
-                picked[timestamp] = pd.Series(False, index=alpha.columns, dtype=bool)
+        weight_values = np.zeros_like(alpha_values, dtype=float)
+        for row_index in range(len(alpha.index)):
+            base = np.where(membership_values[row_index], benchmark_values[row_index], 0.0)
+            base = np.nan_to_num(base, nan=0.0, posinf=0.0, neginf=0.0).astype(float, copy=False)
+            base_sum = float(base.sum())
+            if base_sum <= 0.0:
                 continue
-            base = base / float(base.sum())
+            base = base / base_sum
 
-            signal = alpha.loc[timestamp].where(inclusion.loc[timestamp], 0.0).fillna(0.0).astype(float)
-            active = self._build_active_overlay(
+            signal = np.where(inclusion_values[row_index], alpha_values[row_index], 0.0)
+            signal = np.nan_to_num(signal, nan=0.0, posinf=0.0, neginf=0.0).astype(float, copy=False)
+            active = self._build_active_overlay_values(
                 signal=signal,
                 base=base,
-                sector_row=sector.loc[timestamp].fillna("unknown").astype(str),
-                scale=float(overlay_scale.loc[timestamp]),
+                sector=sector_values[row_index],
+                scale=float(scale_values[row_index]),
             )
-            weights = (base + active).clip(lower=0.0)
+            weights = np.clip(base + active, 0.0, None)
             total = float(weights.sum())
             if total > 0.0:
                 weights = weights / total
-            rows[timestamp] = weights.reindex(alpha.columns).fillna(0.0).astype(float)
-            picked[timestamp] = rows[timestamp].gt(0.0)
+            weight_values[row_index] = weights
 
-        base_target_weights = (
-            pd.DataFrame.from_dict(rows, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(0.0)
-            .astype(float)
-        )
-        selection_mask = (
-            pd.DataFrame.from_dict(picked, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(False)
-            .astype(bool)
-        )
+        base_target_weights = pd.DataFrame(weight_values, index=alpha.index, columns=alpha.columns, dtype=float)
+        selection_mask = pd.DataFrame(weight_values > 0.0, index=alpha.index, columns=alpha.columns, dtype=bool)
         return ConstructionResult(
             base_target_weights=base_target_weights,
             selection_mask=selection_mask,
@@ -298,6 +288,47 @@ class _IndexOverlayConstruction:
         active = self._recenter(active, base)
         return active.fillna(0.0)
 
+    def _build_active_overlay_values(
+        self,
+        *,
+        signal: np.ndarray,
+        base: np.ndarray,
+        sector: np.ndarray,
+        scale: float,
+    ) -> np.ndarray:
+        active = np.zeros(signal.shape, dtype=float)
+        if signal.size == 0:
+            return active
+
+        ranked = np.argsort(-np.abs(signal), kind="stable")
+        keep = ranked[: max(self.min_names, 1)]
+        raw = signal[keep].astype(float, copy=True)
+        raw = raw - float((raw * base[keep]).sum())
+        if float(np.abs(raw).sum()) <= 0.0:
+            return active
+
+        gross_budget = max(self.active_share_target * scale, 0.0)
+        if gross_budget <= 0.0:
+            return active
+
+        pos = np.clip(raw, 0.0, None)
+        neg = -np.clip(raw, None, 0.0)
+        pos_sum = float(pos.sum())
+        neg_sum = float(neg.sum())
+        if pos_sum <= 0.0 or neg_sum <= 0.0:
+            return active
+
+        active[keep] += (gross_budget / 2.0) * (pos / pos_sum)
+        active[keep] -= (gross_budget / 2.0) * (neg / neg_sum)
+
+        active = np.clip(active, -self.max_stock_active, self.max_stock_active)
+        active = self._recenter_values(active, base)
+        active = self._cap_sector_values(active, sector)
+        active = self._recenter_values(active, base)
+        active = np.minimum(np.maximum(active, -base), self.max_stock_active)
+        active = self._recenter_values(active, base)
+        return np.nan_to_num(active, nan=0.0, posinf=0.0, neginf=0.0)
+
     @staticmethod
     def _recenter(active: pd.Series, base: pd.Series) -> pd.Series:
         total = float(active.sum())
@@ -321,3 +352,26 @@ class _IndexOverlayConstruction:
                 scale = self.max_sector_active / abs(sector_active)
                 adjusted.loc[names] = adjusted.reindex(names).fillna(0.0) * scale
         return adjusted
+
+    @staticmethod
+    def _recenter_values(active: np.ndarray, base: np.ndarray) -> np.ndarray:
+        total = float(active.sum())
+        if abs(total) < 1e-12:
+            return active
+        denom = float(base.sum())
+        if denom <= 0.0:
+            return active
+        return active - total * (base / denom)
+
+    def _cap_sector_values(self, active: np.ndarray, sector: np.ndarray) -> np.ndarray:
+        adjusted = active.copy()
+        for sector_name in pd.unique(sector):
+            mask = sector == sector_name
+            sector_active = float(adjusted[mask].sum())
+            if sector_active > self.max_sector_active:
+                adjusted[mask] = adjusted[mask] * (self.max_sector_active / sector_active)
+            elif sector_active < -self.max_sector_active:
+                adjusted[mask] = adjusted[mask] * (self.max_sector_active / abs(sector_active))
+        return adjusted
+
+

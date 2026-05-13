@@ -15,6 +15,7 @@ EXPECTED_NPM_COMMAND = "npm.cmd" if sys.platform.startswith("win") else "npm"
 
 def test_launch_dashboard_executes_missing_momentum_preset(tmp_path: Path, monkeypatch) -> None:
     observed_configs = []
+    observed_runner_kwargs = []
     captured_defaults = {}
 
     class FakeRunner:
@@ -24,10 +25,15 @@ def test_launch_dashboard_executes_missing_momentum_preset(tmp_path: Path, monke
 
     monkeypatch.setattr("dashboard.run.build_frontend", lambda frontend_dir: None)
     monkeypatch.setattr("dashboard.run.DEFAULT_LAUNCH_CONFIG", DEFAULT_LAUNCH_CONFIG)
-    monkeypatch.setattr("dashboard.run.BacktestRunner", lambda result_dir=None: FakeRunner())
+    monkeypatch.setattr(
+        "dashboard.run.BacktestRunner",
+        lambda **kwargs: observed_runner_kwargs.append(kwargs) or FakeRunner(),
+    )
     monkeypatch.setattr(
         "dashboard.run.create_app",
-        lambda default_selected_run_ids, frontend_dist=None: captured_defaults.setdefault("run_ids", default_selected_run_ids)
+        lambda default_selected_run_ids, frontend_dist=None, dashboard_payload_service=None: captured_defaults.setdefault(
+            "run_ids", default_selected_run_ids
+        )
         or object(),
     )
     monkeypatch.setattr("dashboard.run.uvicorn.run", lambda app, host, port: None)
@@ -38,7 +44,7 @@ def test_launch_dashboard_executes_missing_momentum_preset(tmp_path: Path, monke
             (),
             {
                 "resolved_runs": (),
-                "missing_presets": (config.strategies[0],),
+                "missing_presets": config.strategies,
                 "selected_run_ids": [],
             },
         )(),
@@ -46,11 +52,21 @@ def test_launch_dashboard_executes_missing_momentum_preset(tmp_path: Path, monke
 
     launch_dashboard(runs_root=tmp_path, host="127.0.0.1", port=8000)
 
-    assert [config.strategy for config in observed_configs] == ["momentum"]
+    assert [config.strategy for config in observed_configs] == ["trend_rank", "earnings_revision", "benchmark_overlay", "benchmark_tilt"]
     assert observed_configs[0].benchmark_code == DEFAULT_LAUNCH_CONFIG.strategies[0].benchmark.code
     assert observed_configs[0].benchmark_name == DEFAULT_LAUNCH_CONFIG.strategies[0].benchmark.name
     assert observed_configs[0].warmup_days == DEFAULT_LAUNCH_CONFIG.strategies[0].warmup.extra_days
-    assert captured_defaults["run_ids"] == ["momentum_20260405_120000"]
+    assert observed_configs[1].schedule == "daily"
+    assert observed_configs[1].fill_mode == "close"
+    assert observed_configs[2].fill_mode == "close"
+    assert observed_configs[3].fill_mode == "close"
+    assert observed_runner_kwargs == [{"result_dir": tmp_path, "write_report_assets": False, "profile": True}]
+    assert captured_defaults["run_ids"] == [
+        "trend_rank_20260405_120000",
+        "earnings_revision_20260405_120000",
+        "benchmark_overlay_20260405_120000",
+        "benchmark_tilt_20260405_120000",
+    ]
 
 
 def test_launch_dashboard_passes_universe_id_to_backtest_runner(tmp_path: Path, monkeypatch) -> None:
@@ -65,10 +81,10 @@ def test_launch_dashboard_passes_universe_id_to_backtest_runner(tmp_path: Path, 
 
     monkeypatch.setattr("dashboard.run.build_frontend", lambda frontend_dir: None)
     monkeypatch.setattr("dashboard.run.DEFAULT_LAUNCH_CONFIG", launch_config)
-    monkeypatch.setattr("dashboard.run.BacktestRunner", lambda result_dir=None: FakeRunner())
+    monkeypatch.setattr("dashboard.run.BacktestRunner", lambda **kwargs: FakeRunner())
     monkeypatch.setattr(
         "dashboard.run.create_app",
-        lambda default_selected_run_ids, frontend_dist=None: object(),
+        lambda default_selected_run_ids, frontend_dist=None, dashboard_payload_service=None: object(),
     )
     monkeypatch.setattr("dashboard.run.uvicorn.run", lambda app, host, port: None)
     monkeypatch.setattr(
@@ -77,7 +93,7 @@ def test_launch_dashboard_passes_universe_id_to_backtest_runner(tmp_path: Path, 
             "Plan",
             (),
             {
-                "resolved_runs": (type("ResolvedRun", (), {"run_id": "momentum_20260405_100000", "strategy_name": "momentum"})(),),
+                "resolved_runs": (type("ResolvedRun", (), {"run_id": "momentum_20260405_100000", "strategy_name": "trend_rank"})(),),
                 "missing_presets": (config.strategies[0],),
                 "selected_run_ids": ["momentum_20260405_100000"],
             },
@@ -195,7 +211,7 @@ def test_build_parser_prints_dashboard_help(capsys) -> None:
 
     parser.print_help()
 
-    assert "Launch the 1W1A dashboard" in capsys.readouterr().out
+    assert "Launch the dashboard" in capsys.readouterr().out
 
 
 def test_run_script_help_works_from_repo_root() -> None:
@@ -210,4 +226,4 @@ def test_run_script_help_works_from_repo_root() -> None:
     )
 
     assert result.returncode == 0
-    assert "Launch the 1W1A dashboard" in result.stdout
+    assert "Launch the dashboard" in result.stdout

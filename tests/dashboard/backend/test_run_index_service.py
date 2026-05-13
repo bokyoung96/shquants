@@ -59,24 +59,24 @@ def _write_run(
 
 
 def test_list_runs_returns_newest_first(tmp_path: Path) -> None:
-    _write_run(tmp_path, "zeta_20240405_090000", name="Momentum", strategy="momentum", final_equity=130_000_000.0)
-    _write_run(tmp_path, "alpha_20260405_100000", name="Momentum Variant", strategy="momentum", final_equity=125_000_000.0, top_n=25)
+    _write_run(tmp_path, "zeta_20240405_090000", name="Trend Rank", strategy="trend_rank", final_equity=130_000_000.0)
+    _write_run(tmp_path, "alpha_20260405_100000", name="Trend Rank Variant", strategy="trend_rank", final_equity=125_000_000.0, top_n=25)
 
     service = RunIndexService(tmp_path)
 
     runs = service.list_runs()
 
     assert [run.run_id for run in runs] == ["alpha_20260405_100000", "zeta_20240405_090000"]
-    assert runs[0].label == "Momentum Variant"
-    assert runs[0].strategy == "momentum"
+    assert runs[0].label == "Trend Rank Variant"
+    assert runs[0].strategy == "trend_rank"
     assert runs[0].summary.final_equity == 125_000_000.0
 
 
 def test_list_runs_ignores_archived_and_duplicate_config_runs(tmp_path: Path) -> None:
-    _write_run(tmp_path, "momentum_20260405_090000", name="Momentum v1", strategy="momentum", final_equity=121_000_000.0)
-    _write_run(tmp_path, "momentum_20260405_100000", name="Momentum v2", strategy="momentum", final_equity=122_000_000.0)
-    _write_run(tmp_path, "momentum_alt_20260405_110000", name="Momentum Alt", strategy="momentum", final_equity=119_000_000.0, top_n=25)
-    _write_run(tmp_path / "_archived", "momentum_20260404_080000", name="Momentum archived", strategy="momentum", final_equity=118_000_000.0)
+    _write_run(tmp_path, "momentum_20260405_090000", name="Trend Rank v1", strategy="trend_rank", final_equity=121_000_000.0)
+    _write_run(tmp_path, "momentum_20260405_100000", name="Trend Rank v2", strategy="trend_rank", final_equity=122_000_000.0)
+    _write_run(tmp_path, "momentum_alt_20260405_110000", name="Trend Rank Alt", strategy="trend_rank", final_equity=119_000_000.0, top_n=25)
+    _write_run(tmp_path / "_archived", "momentum_20260404_080000", name="Trend Rank archived", strategy="trend_rank", final_equity=118_000_000.0)
 
     service = RunIndexService(tmp_path)
 
@@ -86,12 +86,12 @@ def test_list_runs_ignores_archived_and_duplicate_config_runs(tmp_path: Path) ->
 
 
 def test_list_runs_keeps_older_valid_run_when_newer_duplicate_is_incomplete(tmp_path: Path) -> None:
-    _write_run(tmp_path, "momentum_20260405_090000", name="Momentum", strategy="momentum", final_equity=121_000_000.0)
+    _write_run(tmp_path, "momentum_20260405_090000", name="Trend Rank", strategy="trend_rank", final_equity=121_000_000.0)
     _write_run(
         tmp_path,
         "momentum_20260405_100000",
-        name="Momentum latest",
-        strategy="momentum",
+        name="Trend Rank latest",
+        strategy="trend_rank",
         final_equity=122_000_000.0,
         create_artifacts=False,
     )
@@ -106,17 +106,17 @@ def test_list_runs_keeps_older_valid_run_when_newer_duplicate_is_incomplete(tmp_
 def test_list_runs_dedupes_legacy_and_new_schema_copies_of_same_config(tmp_path: Path) -> None:
     _write_run(
         tmp_path,
-        "momentum_variant_20260405_090000",
-        name="Momentum Variant",
-        strategy="momentum",
+        "trend_variant_20260405_090000",
+        name="Trend Rank Variant",
+        strategy="trend_rank",
         final_equity=121_000_000.0,
     )
-    legacy_dir = tmp_path / "momentum_variant_20260405_080000"
+    legacy_dir = tmp_path / "trend_variant_20260405_080000"
     _write_run(
         tmp_path,
         legacy_dir.name,
-        name="Momentum Variant legacy",
-        strategy="momentum",
+        name="Trend Rank Variant legacy",
+        strategy="trend_rank",
         final_equity=120_000_000.0,
     )
     config_path = legacy_dir / "config.json"
@@ -131,12 +131,12 @@ def test_list_runs_dedupes_legacy_and_new_schema_copies_of_same_config(tmp_path:
 
     runs = service.list_runs()
 
-    assert [run.run_id for run in runs] == ["momentum_variant_20260405_090000"]
+    assert [run.run_id for run in runs] == ["trend_variant_20260405_090000"]
 
 
 def test_list_runs_treats_universe_id_as_part_of_signature(tmp_path: Path) -> None:
-    _write_run(tmp_path, "momentum_20260405_090000", name="Momentum", strategy="momentum", final_equity=121.0)
-    _write_run(tmp_path, "momentum_20260405_100000", name="Momentum KOSDAQ", strategy="momentum", final_equity=122.0)
+    _write_run(tmp_path, "momentum_20260405_090000", name="Trend Rank", strategy="trend_rank", final_equity=121.0)
+    _write_run(tmp_path, "momentum_20260405_100000", name="Trend Rank KOSDAQ", strategy="trend_rank", final_equity=122.0)
 
     first = tmp_path / "momentum_20260405_090000" / "config.json"
     second = tmp_path / "momentum_20260405_100000" / "config.json"
@@ -152,8 +152,8 @@ def test_list_runs_treats_universe_id_as_part_of_signature(tmp_path: Path) -> No
 
 
 def test_list_runs_treats_legacy_k200_and_missing_universe_id_as_equivalent(tmp_path: Path) -> None:
-    _write_run(tmp_path, "momentum_20260405_090000", name="Momentum", strategy="momentum", final_equity=121.0)
-    _write_run(tmp_path, "momentum_20260405_100000", name="Momentum legacy", strategy="momentum", final_equity=122.0)
+    _write_run(tmp_path, "momentum_20260405_090000", name="Trend Rank", strategy="trend_rank", final_equity=121.0)
+    _write_run(tmp_path, "momentum_20260405_100000", name="Trend Rank legacy", strategy="trend_rank", final_equity=122.0)
 
     first = tmp_path / "momentum_20260405_090000" / "config.json"
     second = tmp_path / "momentum_20260405_100000" / "config.json"
@@ -170,7 +170,7 @@ def test_list_runs_treats_legacy_k200_and_missing_universe_id_as_equivalent(tmp_
 
 def test_list_runs_skips_malformed_json_and_invalid_numeric_values(tmp_path: Path) -> None:
     valid_dir = tmp_path / "valid_run_20260405_120000"
-    _write_run(valid_dir.parent, valid_dir.name, name="Momentum", strategy="momentum", final_equity=111.0)
+    _write_run(valid_dir.parent, valid_dir.name, name="Trend Rank", strategy="trend_rank", final_equity=111.0)
 
     malformed_config_dir = tmp_path / "bad_config_20260405_110000"
     (malformed_config_dir / "series").mkdir(parents=True)

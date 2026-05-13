@@ -25,6 +25,7 @@ class SavedRun:
     validation: dict[str, object] | None = None
     split: dict[str, object] | None = None
     factor: dict[str, object] | None = None
+    timing: dict[str, float] | None = None
 
 
 class ReportKind(str, Enum):

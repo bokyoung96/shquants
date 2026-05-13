@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
-from backtesting.reporting.models import BenchmarkConfig
+from backtesting.saved_runs import config_signature, is_usable_run_dir
 from dashboard.backend.schemas import RunOptionModel, RunSummaryModel
 from root import ROOT
 
@@ -36,7 +36,7 @@ class RunIndexService:
                 runs.append(run)
                 continue
 
-            signature = self._config_signature(config)
+            signature = config_signature(config)
             if signature is None or signature in seen_signatures:
                 continue
 
@@ -72,7 +72,7 @@ class RunIndexService:
     def _load_run_option(run_dir: Path) -> tuple[RunOptionModel, dict[str, Any]] | None:
         config_path = run_dir / "config.json"
         summary_path = run_dir / "summary.json"
-        if not RunIndexService._is_usable_run_dir(run_dir):
+        if not is_usable_run_dir(run_dir):
             return None
 
         try:
@@ -94,50 +94,3 @@ class RunIndexService:
         except (OSError, JSONDecodeError, TypeError, ValueError):
             return None
 
-    @staticmethod
-    def _is_usable_run_dir(run_dir: Path) -> bool:
-        required_paths = (
-            run_dir / "config.json",
-            run_dir / "summary.json",
-            run_dir / "series" / "equity.csv",
-            run_dir / "series" / "returns.csv",
-            run_dir / "series" / "turnover.csv",
-            run_dir / "positions" / "weights.parquet",
-            run_dir / "positions" / "qty.parquet",
-        )
-        return all(path.is_file() for path in required_paths)
-
-    @staticmethod
-    def _config_signature(config: dict[str, Any]) -> str | None:
-        benchmark = BenchmarkConfig.default_kospi200()
-        relevant = {
-            key: value
-            for key, value in {
-                **config,
-                "benchmark_code": config.get("benchmark_code", benchmark.code),
-                "benchmark_name": config.get("benchmark_name", benchmark.name),
-                "benchmark_dataset": config.get("benchmark_dataset", benchmark.dataset),
-                "warmup_days": config.get("warmup_days", 0),
-                "universe_id": RunIndexService._normalize_universe_id(config.get("universe_id")),
-            }.items()
-            if key != "name"
-        }
-        if not relevant:
-            return None
-        return json.dumps(RunIndexService._normalize_value(relevant), sort_keys=True, separators=(",", ":"))
-
-    @staticmethod
-    def _normalize_universe_id(value: object) -> object:
-        if value in (None, "legacy_k200"):
-            return None
-        return value
-
-    @staticmethod
-    def _normalize_value(value: Any) -> Any:
-        if isinstance(value, dict):
-            return {key: RunIndexService._normalize_value(value[key]) for key in sorted(value)}
-        if isinstance(value, list):
-            return [RunIndexService._normalize_value(item) for item in value]
-        if isinstance(value, tuple):
-            return [RunIndexService._normalize_value(item) for item in value]
-        return value

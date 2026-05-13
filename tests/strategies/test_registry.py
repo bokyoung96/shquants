@@ -1,17 +1,39 @@
 import warnings
 
+import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal
+import pytest
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from backtesting.data import MarketData
 from backtesting.strategies import RegisteredStrategy, build_strategy, list_strategies
 
 
+def test_strategy_modules_export_simple_class_names() -> None:
+    from backtesting.strategies.benchmark_overlay import BenchmarkOverlay
+    from backtesting.strategies.benchmark_tilt import BenchmarkTilt
+    from backtesting.strategies.earnings_revision import EarningsRevision
+
+    assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
+    assert BenchmarkTilt.__name__ == "BenchmarkTilt"
+    assert EarningsRevision.__name__ == "EarningsRevision"
+
+
 def test_registry_lists_default_strategies() -> None:
     strategies = list_strategies()
 
-    assert "momentum" in strategies
-    assert "index_alpha_tilt_consensus_revision_oi_beta" in strategies
+    assert "trend_rank" in strategies
+    assert "earnings_revision" in strategies
+    assert "benchmark_tilt" in strategies
+    assert "benchmark_overlay" in strategies
+    assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
+    assert "q1q5_ls" not in strategies
+    assert "squeeze_ls" not in strategies
+    assert "beta_boost_ls" not in strategies
+    assert "regime_ls" not in strategies
+    assert "sector_tilt" not in strategies
+    assert "breadth_long" not in strategies
+    assert "soft_long" not in strategies
     assert "consensus_beta_persistence_concentrated_longonly" not in strategies
     assert "revision_asymmetric_relay_hedge_ls" not in strategies
     assert "revision_minparam_v02" not in strategies
@@ -23,8 +45,20 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_oi_state_conditioned_short_squeeze_beta_exclusion_ls" not in strategies
 
 
+def test_registry_rejects_old_long_strategy_names() -> None:
+    with pytest.raises(KeyError):
+        build_strategy("index_alpha_tilt_consensus_revision_oi_beta")
+
+
+def test_registry_lists_screened_strategy_names_only() -> None:
+    strategies = set(list_strategies())
+
+    assert strategies == {"trend_rank", "earnings_revision", "benchmark_overlay", "benchmark_tilt"}
+    assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
+
+
 def test_momentum_strategy_builds_weights() -> None:
-    strategy = build_strategy("momentum", top_n=1, lookback=1)
+    strategy = build_strategy("trend_rank", top_n=1, lookback=1)
     close = pd.DataFrame(
         {
             "A": [10.0, 11.0, 12.0],
@@ -74,7 +108,7 @@ def test_registered_strategy_preserves_legacy_extension_path() -> None:
 
 
 def test_momentum_strategy_avoids_future_warning_on_pct_change() -> None:
-    strategy = build_strategy("momentum", top_n=1, lookback=1)
+    strategy = build_strategy("trend_rank", top_n=1, lookback=1)
     close = pd.DataFrame(
         {
             "A": [10.0, 11.0, 12.0],
@@ -92,7 +126,7 @@ def test_momentum_strategy_avoids_future_warning_on_pct_change() -> None:
 
 
 def test_registered_strategy_avoids_future_warning_when_masking_universe() -> None:
-    strategy = build_strategy("momentum", top_n=1, lookback=1)
+    strategy = build_strategy("trend_rank", top_n=1, lookback=1)
     close = pd.DataFrame(
         {
             "A": [10.0, 11.0, 12.0],
@@ -116,8 +150,8 @@ def test_registered_strategy_avoids_future_warning_when_masking_universe() -> No
     assert not any(item.category is FutureWarning for item in caught)
 
 
-def test_index_alpha_tilt_uses_available_market_cap_dataset() -> None:
-    strategy = build_strategy("index_alpha_tilt_consensus_revision_oi_beta")
+def test_benchmark_tilt_uses_available_market_cap_dataset() -> None:
+    strategy = build_strategy("benchmark_tilt")
 
     dataset_values = {dataset.value for dataset in strategy.datasets}
 
@@ -125,8 +159,8 @@ def test_index_alpha_tilt_uses_available_market_cap_dataset() -> None:
     assert "qw_mktcap_flt" not in dataset_values
 
 
-def test_soft_participation_index_overlay_uses_available_market_cap_dataset() -> None:
-    strategy = build_strategy("consensus_beta_soft_participation_index_overlay")
+def test_soft_participation_benchmark_overlay_uses_available_market_cap_dataset() -> None:
+    strategy = build_strategy("benchmark_overlay")
 
     dataset_values = {dataset.value for dataset in strategy.datasets}
 
@@ -134,7 +168,7 @@ def test_soft_participation_index_overlay_uses_available_market_cap_dataset() ->
     assert "qw_mktcap_flt" not in dataset_values
 
 
-def test_index_alpha_tilt_overlays_active_weights_inside_k200_universe() -> None:
+def test_benchmark_tilt_overlays_active_weights_inside_k200_universe() -> None:
     index = pd.date_range("2024-01-02", periods=8, freq="D")
     close = pd.DataFrame(
         {
@@ -210,7 +244,7 @@ def test_index_alpha_tilt_overlays_active_weights_inside_k200_universe() -> None
         benchmark=None,
     )
     strategy = build_strategy(
-        "index_alpha_tilt_consensus_revision_oi_beta",
+        "benchmark_tilt",
         lookback=2,
         flow_lookback=2,
         momentum_lookback=2,
@@ -227,3 +261,63 @@ def test_index_alpha_tilt_overlays_active_weights_inside_k200_universe() -> None
     assert last.sum() == 1.0
     assert last["A"] > (1.0 / 3.0)
     assert last["B"] < (1.0 / 3.0)
+
+
+def test_benchmark_overlay_fast_active_helper_matches_reference() -> None:
+    from backtesting.strategies.benchmark_overlay import _BenchmarkOverlayConstruction
+
+    construction = _BenchmarkOverlayConstruction(
+        active_share_target=0.30,
+        max_stock_active=0.08,
+        max_sector_active=0.12,
+        min_names=5,
+    )
+    index = pd.Index(["A", "B", "C", "D", "E", "F"])
+    signal = pd.Series([1.4, -0.8, 0.4, -0.2, 0.1, -0.05], index=index, dtype=float)
+    base = pd.Series([0.30, 0.22, 0.18, 0.14, 0.10, 0.06], index=index, dtype=float)
+    sector = pd.Series(["tech", "tech", "finance", "finance", "industrial", "industrial"], index=index)
+
+    expected = construction._build_active_overlay(signal=signal, base=base, sector_row=sector, scale=0.75)
+    actual_values = construction._build_active_overlay_values(
+        signal=signal.to_numpy(dtype=float),
+        base=base.to_numpy(dtype=float),
+        sector=sector.to_numpy(dtype=object),
+        scale=0.75,
+    )
+    actual = pd.Series(actual_values, index=index, dtype=float)
+
+    assert_series_equal(actual, expected, check_exact=False, atol=1e-12, rtol=1e-12)
+    assert np.isfinite(actual_values).all()
+
+
+def test_benchmark_overlay_cross_sectional_zscore_matches_reference() -> None:
+    from backtesting.strategies.benchmark_overlay import _BenchmarkOverlaySignal
+
+    frame = pd.DataFrame(
+        {
+            "A": [1.0, 2.0],
+            "B": [3.0, None],
+            "C": [5.0, 4.0],
+            "D": [7.0, 6.0],
+        },
+        index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+    )
+    membership = pd.DataFrame(
+        {
+            "A": [True, True],
+            "B": [True, True],
+            "C": [False, True],
+            "D": [False, False],
+        },
+        index=frame.index,
+    )
+
+    expected_rows = []
+    for timestamp in frame.index:
+        members = membership.loc[timestamp][membership.loc[timestamp]].index
+        expected_rows.append(_BenchmarkOverlaySignal._zscore(frame.loc[timestamp].reindex(members).fillna(0.0)))
+    expected = pd.DataFrame(expected_rows, index=frame.index).reindex(columns=frame.columns).fillna(0.0)
+
+    actual = _BenchmarkOverlaySignal._cross_sectional_zscore(frame, membership)
+
+    assert_frame_equal(actual, expected, check_exact=False, atol=1e-12, rtol=1e-12)

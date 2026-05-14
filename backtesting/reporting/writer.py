@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import re
 from dataclasses import asdict, dataclass
@@ -10,13 +9,10 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from .assets import ReportAssetWriter, _EMPTY_PNG
+
 if TYPE_CHECKING:
     from backtesting.run import RunReport
-
-
-_EMPTY_PNG = base64.b64decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgL9enZsAAAAASUVORK5CYII="
-)
 
 
 @dataclass(slots=True)
@@ -28,11 +24,8 @@ class RunWriter:
         run_dir = self._run_dir(report)
         series_dir = run_dir / "series"
         positions_dir = run_dir / "positions"
-        plots_dir = run_dir / "plots"
 
         output_dirs = (run_dir, series_dir, positions_dir)
-        if self.write_report_assets:
-            output_dirs = (*output_dirs, plots_dir)
         for path in output_dirs:
             path.mkdir(parents=True, exist_ok=True)
 
@@ -64,19 +57,7 @@ class RunWriter:
         self._latest_weights(report).to_csv(positions_dir / "latest_weights.csv", index=False)
 
         if self.write_report_assets:
-            self._plot_series(
-                path=plots_dir / "equity.png",
-                series=report.result.equity,
-                title="Equity Curve",
-                ylabel="Equity",
-            )
-            self._plot_series(
-                path=plots_dir / "drawdown.png",
-                series=self._drawdown(report.result.equity),
-                title="Drawdown",
-                ylabel="Drawdown",
-            )
-            self._write_performance_page(report, run_dir)
+            ReportAssetWriter(plot_series=self._plot_series).write(report, run_dir)
         return run_dir
 
     def write_timing(self, run_dir: Path, timing: dict[str, float]) -> None:
@@ -92,68 +73,11 @@ class RunWriter:
     def _write_json(path: Path, payload: dict[str, object]) -> None:
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def _write_performance_page(self, report: "RunReport", run_dir: Path) -> None:
-        pages_dir = run_dir / "pages"
-        pages_dir.mkdir(parents=True, exist_ok=True)
-        performance_path = pages_dir / "performance.png"
-        try:
-            from .builder import ReportBuilder
-            from .figures import TearsheetFigureBuilder
-            from .models import SavedRun
-            from .snapshots import PerformanceSnapshotFactory
-
-            saved_run = SavedRun(
-                run_id=run_dir.name,
-                path=run_dir,
-                config=asdict(report.config),
-                summary=report.summary,
-                equity=report.result.equity,
-                returns=report.result.returns,
-                turnover=report.result.turnover,
-                weights=report.result.weights,
-                qty=report.result.qty,
-                monthly_returns=self._monthly_returns(report.result.returns),
-                latest_qty=self._latest_qty(report),
-                latest_weights=self._latest_weights(report),
-                bucket_ledger=None if report.position_plan is None else self._bucket_ledger(report),
-                validation=getattr(report, "validation", None) or {"warnings": []},
-                split=getattr(report, "split", None) or {"is": None, "oos": None},
-                factor=getattr(report, "factor", None) or {"metrics": {}},
-            )
-            benchmark = self._benchmark_config(report)
-            benchmark_repo, sector_repo = ReportBuilder._repositories_for_run(saved_run)
-            snapshot = PerformanceSnapshotFactory(
-                benchmark_repo=benchmark_repo,
-                sector_repo=sector_repo,
-            ).build(saved_run, benchmark, None)
-            TearsheetFigureBuilder(pages_dir).build(snapshot, require_png=True)
-        except Exception:
-            performance_path.write_bytes(_EMPTY_PNG)
-
-    @staticmethod
-    def _benchmark_config(report: "RunReport"):
-        code = report.config.benchmark_code
-        name = report.config.benchmark_name
-        if not code or not name:
-            return None
-        from .models import BenchmarkConfig
-
-        return BenchmarkConfig(
-            code=str(code),
-            name=str(name),
-            dataset=str(report.config.benchmark_dataset or "qw_BM"),
-        )
-
     @staticmethod
     def _monthly_returns(returns: pd.Series) -> pd.Series:
         monthly = (1.0 + returns).resample("ME").prod().sub(1.0)
         monthly.index = monthly.index.normalize()
         return monthly.astype(float)
-
-    @staticmethod
-    def _drawdown(equity: pd.Series) -> pd.Series:
-        peak = equity.cummax()
-        return equity.div(peak).sub(1.0).astype(float)
 
     @staticmethod
     def _latest_qty(report: "RunReport") -> pd.DataFrame:

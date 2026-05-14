@@ -12,7 +12,7 @@ import pandas as pd
 
 from root import ROOT
 
-from .calculation import BacktestCalculation
+from .calculation import BacktestCalculation, BacktestCalculationAdapters, BacktestCalculationContext
 from .catalog import DataCatalog, DatasetId
 from .data import DataLoader, ParquetStore
 from .engine import BacktestEngine, BacktestResult
@@ -166,20 +166,24 @@ class BacktestRunner:
     def run_spec(self, resolved_spec) -> RunReport:
         timer = _BacktestTimer(self.profile or self.timing_sink is not None)
         calculation = BacktestCalculation(
-            loader=self.loader,
-            ensure_parquet=self._ensure_parquet,
-            resolve_universe_spec=self._resolve_universe_spec_from_spec,
-            resolve_effective_config=self._resolve_effective_config_from_spec,
-            resolve_load_start=self._resolve_load_start,
-            resolve_universe=self._universe,
-            schedule_from_spec=self._schedule_from_spec,
-            trim_result_to_display_range=self._trim_result_to_display_range,
-            trim_plan_to_display_range=self._trim_plan_to_display_range,
-            build_strategy=build_strategy,
-            build_position_plan=build_position_plan_from_execution_spec,
-            get_hook=get_hook,
-            engine_factory=BacktestEngine,
-            validate_position_plan=validate_position_plan,
+            context=BacktestCalculationContext(
+                loader=self.loader,
+                ensure_parquet=self._ensure_parquet,
+                resolve_universe_spec=self._resolve_universe_spec_from_spec,
+                resolve_effective_config=self._resolve_effective_config_from_spec,
+                resolve_load_start=self._resolve_load_start,
+                resolve_universe=self._universe,
+                schedule_from_spec=self._schedule_from_spec,
+                trim_result_to_display_range=self._trim_result_to_display_range,
+                trim_plan_to_display_range=self._trim_plan_to_display_range,
+            ),
+            adapters=BacktestCalculationAdapters(
+                build_strategy=build_strategy,
+                build_position_plan=build_position_plan_from_execution_spec,
+                get_hook=get_hook,
+                engine_factory=BacktestEngine,
+                validate_position_plan=validate_position_plan,
+            ),
             timer=timer,
         )
         calculation_result = calculation.run(resolved_spec)

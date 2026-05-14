@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import date
 import json
-from math import isfinite
 from pathlib import Path
 
 from .models import (
@@ -20,160 +19,19 @@ from .models import (
     WeightingSpec,
     WeightSourceSpec,
 )
-
-
-def _read_date_string(payload: dict[str, object], key: str) -> str:
-    value = payload.get(key)
-    if not isinstance(value, str):
-        raise ValueError(f"{key} must be a YYYY-MM-DD date string")
-    try:
-        parsed = date.fromisoformat(value)
-    except ValueError as exc:
-        raise ValueError(f"{key} must be a YYYY-MM-DD date string") from exc
-    if value != parsed.isoformat():
-        raise ValueError(f"{key} must be a YYYY-MM-DD date string")
-    return value
-
-
-def _read_date_tuple(payload: dict[str, object], key: str, error_key: str) -> tuple[str, ...]:
-    if key not in payload:
-        return ()
-    values = payload[key]
-    if not isinstance(values, list):
-        raise ValueError(f"{error_key} must be a list")
-    parsed: list[str] = []
-    for value in values:
-        if not isinstance(value, str):
-            raise ValueError(f"{error_key} entries must be YYYY-MM-DD date strings")
-        try:
-            parsed_date = date.fromisoformat(value)
-        except ValueError as exc:
-            raise ValueError(f"{error_key} entries must be YYYY-MM-DD date strings") from exc
-        if value != parsed_date.isoformat():
-            raise ValueError(f"{error_key} entries must be YYYY-MM-DD date strings")
-        parsed.append(value)
-    return tuple(parsed)
-
-
-def _read_bool(payload: dict[str, object], key: str, default: bool) -> bool:
-    value = payload.get(key, default)
-    if isinstance(value, bool):
-        return value
-    raise ValueError(f"{key} must be a boolean")
-
-
-def _read_optional_bool(payload: dict[str, object], key: str, default: bool, error_key: str | None = None) -> bool:
-    if key not in payload:
-        return default
-    value = payload[key]
-    if isinstance(value, bool):
-        return value
-    label = error_key or key
-    raise ValueError(f"{label} must be a boolean")
-
-
-def _read_object(payload: dict[str, object], key: str) -> dict[str, object] | None:
-    if key not in payload:
-        return None
-    value = payload[key]
-    if isinstance(value, dict):
-        return value
-    raise ValueError(f"{key} must be an object")
-
-
-def _read_required_string(payload: dict[str, object], key: str, error_key: str | None = None) -> str:
-    value = payload.get(key)
-    if isinstance(value, str):
-        return value
-    label = error_key or key
-    raise ValueError(f"{label} must be a string")
-
-
-def _read_optional_string(payload: dict[str, object], key: str, error_key: str | None = None) -> str | None:
-    if key not in payload:
-        return None
-    value = payload[key]
-    if value is None:
-        return None
-    if isinstance(value, str):
-        return value
-    label = error_key or key
-    raise ValueError(f"{label} must be a string")
-
-
-def _read_string_choice(
-    payload: dict[str, object],
-    key: str,
-    *,
-    default: str | None = None,
-    error_key: str | None = None,
-    allowed: set[str],
-) -> str:
-    if key not in payload:
-        if default is None:
-            return _read_required_string(payload, key, error_key)
-        value = default
-    else:
-        value = _read_required_string(payload, key, error_key)
-    if value not in allowed:
-        label = error_key or key
-        allowed_values = ", ".join(sorted(allowed))
-        raise ValueError(f"{label} must be one of: {allowed_values}")
-    return value
-
-
-def _read_int(
-    payload: dict[str, object],
-    key: str,
-    default: int | None = None,
-    *,
-    error_key: str | None = None,
-    min_value: int | None = None,
-) -> int | None:
-    if key not in payload:
-        return default
-    value = payload[key]
-    label = error_key or key
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{label} must be an integer")
-    if min_value is not None and value < min_value:
-        raise ValueError(f"{label} must be >= {min_value}")
-    return value
-
-
-def _read_float(
-    payload: dict[str, object],
-    key: str,
-    default: float | None = None,
-    *,
-    error_key: str | None = None,
-    min_value: float | None = None,
-    max_value: float | None = None,
-) -> float | None:
-    if key not in payload:
-        return default
-    value = payload[key]
-    label = error_key or key
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{label} must be numeric")
-    parsed = float(value)
-    if not isfinite(parsed):
-        raise ValueError(f"{label} must be finite")
-    if min_value is not None and parsed < min_value:
-        raise ValueError(f"{label} must be >= {min_value:g}")
-    if max_value is not None and parsed > max_value:
-        raise ValueError(f"{label} must be <= {max_value:g}")
-    return parsed
-
-
-def _read_params(payload: dict[str, object], key: str, error_key: str | None = None) -> dict[str, object]:
-    if key not in payload:
-        return {}
-    value = payload[key]
-    if isinstance(value, dict):
-        return value
-    label = error_key or key
-    raise ValueError(f"{label} must be an object")
+from .schema_readers import (
+    read_bool as _read_bool,
+    read_date_string as _read_date_string,
+    read_date_tuple as _read_date_tuple,
+    read_float as _read_float,
+    read_int as _read_int,
+    read_object as _read_object,
+    read_optional_bool as _read_optional_bool,
+    read_optional_string as _read_optional_string,
+    read_params as _read_params,
+    read_required_string as _read_required_string,
+    read_string_choice as _read_string_choice,
+)
 
 
 def _read_conditions(raw_conditions: object) -> tuple[ConditionSpec, ...]:

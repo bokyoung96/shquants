@@ -86,10 +86,10 @@ uv run python -m pytest \
   tests/ingest \
   tests/policy \
   tests/reporting \
+  tests/run \
   tests/strategies \
   tests/strategy \
   tests/test_report_cli.py \
-  tests/test_run.py \
   tests/test_smoke.py
 ```
 

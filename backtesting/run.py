@@ -12,17 +12,18 @@ import pandas as pd
 
 from root import ROOT
 
-from .analytics import summarize_perf
+from .calculation import BacktestCalculation
 from .catalog import DataCatalog, DatasetId
-from .data import DataLoader, LoadRequest, ParquetStore
+from .data import DataLoader, ParquetStore
 from .engine import BacktestEngine, BacktestResult
-from .execution import CostModel, CustomSchedule, DailySchedule, MonthlySchedule, WeeklySchedule
+from .execution import CustomSchedule, DailySchedule, MonthlySchedule, WeeklySchedule
 from .ingest import IngestJob
 from .policy.base import PositionPlan
 from .reporting import RunWriter
 from .specs import (
     ExecutionSpec,
     ScheduleSpec,
+    ShortingSpec,
     build_position_plan_from_execution_spec,
     get_hook,
     get_preset,
@@ -164,108 +165,32 @@ class BacktestRunner:
 
     def run_spec(self, resolved_spec) -> RunReport:
         timer = _BacktestTimer(self.profile or self.timing_sink is not None)
-        spec = resolved_spec.execution
-        universe_spec = self._resolve_universe_spec_from_spec(spec)
-        effective_config = self._resolve_effective_config_from_spec(spec, universe_spec)
-
-        with timer.stage("data_load"):
-            self._ensure_parquet(list(resolved_spec.dataset_ids))
-            market = self.loader.load(
-                LoadRequest(
-                    datasets=list(resolved_spec.dataset_ids),
-                    start=self._resolve_load_start(effective_config.start, effective_config.warmup_days),
-                    end=effective_config.end,
-                    universe_id=effective_config.universe_id,
-                )
-            )
-            market.universe = self._universe(market, universe_spec)
-
-        with timer.stage("plan_build"):
-            if spec.weight_source.kind == "hook":
-                hook = get_hook(resolved_spec.hook_id or "")
-                hook_plan = hook.build_plan(market=market, resolved_spec=resolved_spec, universe_spec=universe_spec)
-                plan = hook_plan.position_plan
-                schedule_input = hook_plan.schedule
-                extra_tradable = hook_plan.tradable
-                resolution_meta = hook_plan.metadata
-                if hook_plan.schedule is not None:
-                    rebalance_dates = tuple(ts.date().isoformat() for ts in hook_plan.schedule[hook_plan.schedule].index)
-                    resolved_spec = replace(
-                        resolved_spec,
-                        schedule=ScheduleSpec(kind="custom_dates", dates=rebalance_dates),
-                    )
-            elif spec.uses_composable_plan:
-                plan = build_position_plan_from_execution_spec(spec, market)
-                schedule_input = None
-                extra_tradable = None
-                resolution_meta = {"plan_source": "selection_weighting_position_policy"}
-            else:
-                strategy = build_strategy(
-                    spec.strategy,
-                    top_n=spec.top_n,
-                    lookback=spec.lookback,
-                    flow_lookback=spec.flow_lookback,
-                    momentum_lookback=spec.momentum_lookback,
-                    liquidity_lookback=spec.liquidity_lookback,
-                    momentum_weight=spec.momentum_weight,
-                )
-                plan = strategy.build_plan(market)
-                schedule_input = None
-                extra_tradable = None
-                resolution_meta = {}
-
-            validate_position_plan(plan)
-            weights = plan.target_weights
-            if schedule_input is None:
-                schedule_input = self._schedule_from_spec(resolved_spec, weights=weights)
-            close = market.frames["close"]
-            tradable = close.notna()
-            if market.universe is not None:
-                tradable = tradable & market.universe.reindex_like(close).fillna(False).astype(bool)
-            if extra_tradable is not None:
-                tradable = tradable & extra_tradable.reindex_like(close).fillna(False).astype(bool)
-
-            engine = BacktestEngine(
-                cost=CostModel(
-                    fee=effective_config.fee,
-                    sell_tax=effective_config.sell_tax,
-                    slippage=effective_config.slippage,
-                    borrow_fee_annual=effective_config.borrow_fee_annual,
-                    short_cash_collateral_ratio=effective_config.short_cash_collateral_ratio,
-                )
-            )
-
-        with timer.stage("engine_run"):
-            result = engine.run(
-                close=close,
-                open=market.frames.get("open"),
-                weights=weights,
-                capital=effective_config.capital,
-                tradable=tradable,
-                schedule=schedule_input,
-                fill_mode=effective_config.fill_mode,
-                allow_fractional=effective_config.allow_fractional,
-            )
-            result = self._trim_result_to_display_range(result, start=effective_config.start, end=effective_config.end)
-            plan = self._trim_plan_to_display_range(plan, start=effective_config.start, end=effective_config.end)
-            if result.equity.empty:
-                raise ValueError(
-                    f"no backtest rows remain after trimming to display range {effective_config.start}..{effective_config.end}"
-                )
-
-            summary = summarize_perf(result.returns)
-            summary["final_equity"] = float(result.equity.iloc[-1])
-            summary["avg_turnover"] = float(result.turnover.mean())
-        report = RunReport(config=effective_config, summary=summary, result=result, position_plan=plan)
-        report.resolved_spec = resolved_spec
-        report.execution_resolution = {
-            "spec_source": spec.spec_source,
-            "preset_id": spec.preset_id,
-            "hook_id": resolved_spec.hook_id,
-            "resolution_notes": list(resolved_spec.resolution_notes),
-            "fallbacks_applied": list(spec.data_policy.fallbacks_applied),
-            **resolution_meta,
-        }
+        calculation = BacktestCalculation(
+            loader=self.loader,
+            ensure_parquet=self._ensure_parquet,
+            resolve_universe_spec=self._resolve_universe_spec_from_spec,
+            resolve_effective_config=self._resolve_effective_config_from_spec,
+            resolve_load_start=self._resolve_load_start,
+            resolve_universe=self._universe,
+            schedule_from_spec=self._schedule_from_spec,
+            trim_result_to_display_range=self._trim_result_to_display_range,
+            trim_plan_to_display_range=self._trim_plan_to_display_range,
+            build_strategy=build_strategy,
+            build_position_plan=build_position_plan_from_execution_spec,
+            get_hook=get_hook,
+            engine_factory=BacktestEngine,
+            validate_position_plan=validate_position_plan,
+            timer=timer,
+        )
+        calculation_result = calculation.run(resolved_spec)
+        report = RunReport(
+            config=calculation_result.config,
+            summary=calculation_result.summary,
+            result=calculation_result.result,
+            position_plan=calculation_result.position_plan,
+        )
+        report.resolved_spec = calculation_result.resolved_spec
+        report.execution_resolution = calculation_result.execution_resolution
         with timer.stage("write_artifacts"):
             report.output_dir = self.writer.write(report)
         report.timing = timer.snapshot()
@@ -294,6 +219,11 @@ class BacktestRunner:
             fee=config.fee,
             sell_tax=config.sell_tax,
             slippage=config.slippage,
+            shorting=ShortingSpec(
+                enabled=config.borrow_fee_annual > 0.0 or config.short_cash_collateral_ratio != 1.0,
+                borrow_fee_annual=config.borrow_fee_annual,
+                cash_collateral_ratio=config.short_cash_collateral_ratio,
+            ),
             use_k200=config.use_k200,
             allow_fractional=config.allow_fractional,
             universe_id=config.universe_id,

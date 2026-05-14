@@ -17,6 +17,12 @@ from backtesting.specs import (
 )
 
 
+def _write_spec(tmp_path: Path, payload: object) -> Path:
+    path = tmp_path / "run_spec.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
 def test_load_execution_spec_from_json(tmp_path: Path) -> None:
     path = tmp_path / "run_spec.json"
     path.write_text(
@@ -431,6 +437,104 @@ def test_load_execution_spec_rejects_invalid_selection_field_label(tmp_path: Pat
     )
 
     with pytest.raises(ValueError, match="selection.field must be a string"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_non_object_root(tmp_path: Path) -> None:
+    path = _write_spec(tmp_path, ["not", "an", "object"])
+
+    with pytest.raises(ValueError, match="execution spec must be an object"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_missing_or_malformed_dates(tmp_path: Path) -> None:
+    path = _write_spec(tmp_path, {"start": "2024/01/01", "end": "2024-12-31"})
+
+    with pytest.raises(ValueError, match="start must be a YYYY-MM-DD date string"):
+        load_execution_spec(path)
+
+    path = _write_spec(tmp_path, {"start": "2024-12-31", "end": "2024-01-01"})
+
+    with pytest.raises(ValueError, match="start must be on or before end"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_bool_and_negative_integer_fields(tmp_path: Path) -> None:
+    path = _write_spec(tmp_path, {"start": "2024-01-01", "end": "2024-12-31", "top_n": True})
+
+    with pytest.raises(ValueError, match="top_n must be an integer"):
+        load_execution_spec(path)
+
+    path = _write_spec(tmp_path, {"start": "2024-01-01", "end": "2024-12-31", "warmup_days": -1})
+
+    with pytest.raises(ValueError, match="warmup_days must be >= 0"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_missing_condition_fields(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "selection": {"kind": "filter", "conditions": [{"op": ">", "value": 0}]},
+        },
+    )
+
+    with pytest.raises(ValueError, match="selection.conditions.field must be a string"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_invalid_portfolio_shape_values(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "portfolio_shape": {"kind": "market_neutral"},
+        },
+    )
+
+    with pytest.raises(ValueError, match="portfolio_shape.kind must be one of"):
+        load_execution_spec(path)
+
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "portfolio_shape": {"kind": "sector_neutral", "group_budget": "market_cap"},
+        },
+    )
+
+    with pytest.raises(ValueError, match="portfolio_shape.group_budget must be one of"):
+        load_execution_spec(path)
+
+
+def test_load_execution_spec_rejects_invalid_shorting_and_bucket_values(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "shorting": {"borrow_fee_annual": -0.01},
+        },
+    )
+
+    with pytest.raises(ValueError, match="shorting.borrow_fee_annual must be >= 0"):
+        load_execution_spec(path)
+
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "selection": {"kind": "rank_top_n", "field": "momentum_20d", "n": 2},
+            "position_policy": {"kind": "staged", "buckets": [{"id": "entry", "fraction": 1.5}]},
+        },
+    )
+
+    with pytest.raises(ValueError, match="position_policy.buckets.fraction must be <= 1"):
         load_execution_spec(path)
 
 

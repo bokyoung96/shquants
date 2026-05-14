@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from backtesting.saved_runs import config_signature, is_usable_run_dir
+from backtesting.reporting.models import SavedRun as ReportingSavedRun
+from backtesting.saved_runs import SavedRun, config_signature, is_usable_run_dir
+
+
+def test_saved_run_contract_lives_in_saved_runs_with_reporting_compatibility_alias() -> None:
+    assert ReportingSavedRun is SavedRun
 
 
 def test_config_signature_normalizes_legacy_defaults_and_excludes_name() -> None:

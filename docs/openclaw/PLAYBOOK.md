@@ -180,7 +180,7 @@ uv run python -m pytest tests/specs tests/selection tests/weighting tests/constr
 Run broader backtesting verification:
 
 ```powershell
-uv run python -m pytest tests/strategies tests/test_run.py tests/reporting tests/dashboard
+uv run python -m pytest tests/strategies tests/run tests/reporting tests/dashboard
 ```
 
 ## Verification Checklist

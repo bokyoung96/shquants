@@ -6,26 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-
-@dataclass(frozen=True, slots=True)
-class SavedRun:
-    run_id: str
-    path: Path
-    config: dict[str, object]
-    summary: dict[str, float]
-    equity: pd.Series
-    returns: pd.Series
-    turnover: pd.Series
-    weights: pd.DataFrame
-    qty: pd.DataFrame
-    monthly_returns: pd.Series | None = None
-    latest_qty: pd.DataFrame | None = None
-    latest_weights: pd.DataFrame | None = None
-    bucket_ledger: pd.DataFrame | None = None
-    validation: dict[str, object] | None = None
-    split: dict[str, object] | None = None
-    factor: dict[str, object] | None = None
-    timing: dict[str, float] | None = None
+from backtesting.saved_runs import SavedRun
 
 
 class ReportKind(str, Enum):

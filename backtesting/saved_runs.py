@@ -1,10 +1,32 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any
 
-from backtesting.reporting.models import BenchmarkConfig
+import pandas as pd
+
+
+@dataclass(frozen=True, slots=True)
+class SavedRun:
+    run_id: str
+    path: Path
+    config: dict[str, object]
+    summary: dict[str, float]
+    equity: pd.Series
+    returns: pd.Series
+    turnover: pd.Series
+    weights: pd.DataFrame
+    qty: pd.DataFrame
+    monthly_returns: pd.Series | None = None
+    latest_qty: pd.DataFrame | None = None
+    latest_weights: pd.DataFrame | None = None
+    bucket_ledger: pd.DataFrame | None = None
+    validation: dict[str, object] | None = None
+    split: dict[str, object] | None = None
+    factor: dict[str, object] | None = None
+    timing: dict[str, float] | None = None
 
 
 REQUIRED_RUN_FILES = (
@@ -23,14 +45,13 @@ def is_usable_run_dir(run_dir: Path) -> bool:
 
 
 def config_signature(config: dict[str, Any]) -> str | None:
-    benchmark = BenchmarkConfig.default_kospi200()
     relevant = {
         key: value
         for key, value in {
             **config,
-            "benchmark_code": config.get("benchmark_code", benchmark.code),
-            "benchmark_name": config.get("benchmark_name", benchmark.name),
-            "benchmark_dataset": config.get("benchmark_dataset", benchmark.dataset),
+            "benchmark_code": config.get("benchmark_code", "IKS200"),
+            "benchmark_name": config.get("benchmark_name", "KOSPI200"),
+            "benchmark_dataset": config.get("benchmark_dataset", "qw_BM"),
             "warmup_days": config.get("warmup_days", 0),
             "universe_id": normalize_universe_id(config.get("universe_id")),
         }.items()

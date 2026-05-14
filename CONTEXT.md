@@ -113,8 +113,8 @@ _Avoid_: Domain model, user manual, generated run artifact
 - `signal_dates` was resolved against final target-weight changes rather than raw signal changes so the rule works across event, filter, explicit, and hook-driven plans.
 - Combining `signal_dates` with a named calendar base schedule was resolved through nested `schedule.evaluation`, keeping trade-trigger semantics and signal-evaluation cadence in the same schedule axis.
 - Short borrow and collateral assumptions are first-class enough for research simulation, but broker-specific locate, recall, liquidation, and margin waterfall behavior remain out of scope.
-- `SavedRun` currently lives under reporting code, but the resolved domain concept is **Saved Run**: a Backtesting result contract rather than a report-only object.
-- Physical movement of `SavedRun`, `RunReader`, and `RunWriter` is deferred; existing `backtesting.reporting.*` imports remain compatible while the domain treats **Saved Run** as a Backtesting result contract.
+- `SavedRun` lives in `backtesting.saved_runs` as the canonical Backtesting result contract; `backtesting.reporting.models.SavedRun` remains a compatibility alias for older reporting imports.
+- Physical movement of `RunReader` and `RunWriter` is deferred; existing `backtesting.reporting.*` imports remain compatible while the domain treats **Saved Run** as a Backtesting result contract.
 - "calculation speed" is treated as **Backtest Calculation** speed unless narrowed further; it excludes frontend rendering and report visual redesign.
 - Backtest performance work must be measurement-led: optimize the largest measured Backtest Calculation stage first while preserving portfolio math and strategy meaning.
 - Timing/profiling support should use the standard library only; tests verify timing records are produced structurally, not that a stage meets an environment-dependent millisecond threshold.

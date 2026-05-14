@@ -13,10 +13,12 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_overlay import BenchmarkOverlay
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
+    from backtesting.strategies.revision_signal import RevisionSignal
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
+    assert RevisionSignal.__name__ == "RevisionSignal"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -24,6 +26,7 @@ def test_registry_lists_default_strategies() -> None:
 
     assert "trend_rank" in strategies
     assert "earnings_revision" in strategies
+    assert "revision_signal" in strategies
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
@@ -53,7 +56,7 @@ def test_registry_rejects_old_long_strategy_names() -> None:
 def test_registry_lists_screened_strategy_names_only() -> None:
     strategies = set(list_strategies())
 
-    assert strategies == {"trend_rank", "earnings_revision", "benchmark_overlay", "benchmark_tilt"}
+    assert strategies == {"trend_rank", "earnings_revision", "revision_signal", "benchmark_overlay", "benchmark_tilt"}
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
 
 
@@ -157,6 +160,69 @@ def test_benchmark_tilt_uses_available_market_cap_dataset() -> None:
 
     assert "qw_mktcap" in dataset_values
     assert "qw_mktcap_flt" not in dataset_values
+
+
+def test_revision_signal_holds_all_positive_revision_names_without_top_n() -> None:
+    index = pd.date_range("2024-01-02", periods=125, freq="D")
+    close = pd.DataFrame(
+        {
+            "A": [100.0 + i for i in range(len(index))],
+            "B": [100.0 + i for i in range(len(index))],
+            "C": [100.0 + i for i in range(len(index))],
+        },
+        index=index,
+    )
+    eps = pd.DataFrame(
+        {
+            "A": [10.0 + 0.1 * i for i in range(len(index))],
+            "B": [11.0 + 0.1 * i for i in range(len(index))],
+            "C": [12.0 - 0.1 * i for i in range(len(index))],
+        },
+        index=index,
+    )
+    op = eps * 2.0
+    benchmark = pd.DataFrame({"IKS200": [100.0 + i for i in range(len(index))]}, index=index)
+    market = MarketData(
+        frames={
+            "close": close,
+            "eps_fwd_q1": eps,
+            "op_fwd_q1": op,
+            "benchmark": benchmark,
+        },
+        universe=None,
+        benchmark=None,
+    )
+    strategy = build_strategy("revision_signal", lookback=20)
+
+    plan = strategy.build_plan(market)
+    last = plan.target_weights.iloc[-1]
+
+    assert last["A"] == 0.5
+    assert last["B"] == 0.5
+    assert last["C"] == 0.0
+
+
+def test_revision_signal_moves_to_cash_when_benchmark_trend_fails() -> None:
+    index = pd.date_range("2024-01-02", periods=125, freq="D")
+    close = pd.DataFrame({"A": [100.0 + i for i in range(len(index))]}, index=index)
+    eps = pd.DataFrame({"A": [10.0 + 0.1 * i for i in range(len(index))]}, index=index)
+    op = eps * 2.0
+    benchmark = pd.DataFrame({"IKS200": [200.0 - i for i in range(len(index))]}, index=index)
+    market = MarketData(
+        frames={
+            "close": close,
+            "eps_fwd_q1": eps,
+            "op_fwd_q1": op,
+            "benchmark": benchmark,
+        },
+        universe=None,
+        benchmark=None,
+    )
+    strategy = build_strategy("revision_signal", lookback=20)
+
+    plan = strategy.build_plan(market)
+
+    assert plan.target_weights.iloc[-1].sum() == 0.0
 
 
 def test_soft_participation_benchmark_overlay_uses_available_market_cap_dataset() -> None:

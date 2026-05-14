@@ -10,6 +10,7 @@ logic:
 
 - `trend_rank`: price trend ranking.
 - `earnings_revision`: forward EPS/OP consensus revision.
+- `revision_signal`: signal-triggered earnings revision with market trend risk-off.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
 
@@ -51,6 +52,17 @@ should use the current `id` values.
 - `construction`: long-only top-N equal weight through `LongOnlyTopN`.
 - `use`: simple long-only consensus revision strategy. Prefer daily or weekly rebalancing; the monthly smoke window can miss active dates and understate this strategy.
 
+### Revision Signal
+
+- `id`: `revision_signal`
+- `file`: `revision_signal.py`
+- `class`: `RevisionSignal`
+- `profile`: absolute or benchmark-relative, depending on the report config.
+- `data`: `close`, `benchmark`, `eps_fwd_q1`, `op_fwd_q1`
+- `signal`: hold every KOSPI200 name where both EPS and OP forward revisions are positive over `lookback`; move to cash when KOSPI200 is below its fixed 120-day trend average.
+- `construction`: long-only equal weight across all currently passing signal names; no top-N rank cap.
+- `use`: signal-triggered KOSPI200 strategy for lower drawdown than concentrated revision ranking. Prefer the `kospi200_revision_signal` preset so `signal_dates` rebalances only when target weights change.
+
 ### Benchmark Overlay
 
 - `id`: `benchmark_overlay`
@@ -87,6 +99,7 @@ a preset overrides schedule or fill mode:
 - default `schedule`: `monthly`
 - default `fill_mode`: `next_open`
 - `earnings_revision`: `daily`, `close`
+- `revision_signal`: use `uv run python -m backtesting.run --preset kospi200_revision_signal`
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
 
@@ -112,6 +125,12 @@ Retested and restored:
 | current id | window | schedule | total return | CAGR | MDD | Sharpe |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | `earnings_revision` | `2015-01-02..2026-03-25` | daily, close fill | 3484.1396% | 38.7330% | -32.9083% | 1.8985 |
+
+New signal-based implementation:
+
+| current id | window | schedule | total return | CAGR | MDD | Sharpe |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| `revision_signal` | `2015-01-02..2026-03-25` | signal dates, close fill | 681.9187% | 20.6973% | -18.2929% | 1.4999 |
 
 Removed after screening:
 

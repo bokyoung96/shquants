@@ -46,4 +46,31 @@ def _semiannual_floatcap_preset() -> ExecutionSpec:
     )
 
 
+def _revision_signal_preset() -> ExecutionSpec:
+    return ExecutionSpec(
+        start="2015-01-02",
+        end=pd.Timestamp.today().date().isoformat(),
+        strategy="revision_signal",
+        name="kospi200_revision_signal_close_v1",
+        top_n=0,
+        lookback=20,
+        warmup_days=180,
+        schedule=ScheduleSpec(kind="signal_dates", name=None),
+        fill_mode="close",
+        fee=0.0002,
+        sell_tax=0.0015,
+        slippage=0.0005,
+        use_k200=True,
+        allow_fractional=True,
+        spec_source="preset",
+        preset_id="kospi200_revision_signal",
+        notes=(
+            "Hold all KOSPI200 names with positive 20-day EPS and OP forward revisions.",
+            "Move to cash when the KOSPI200 benchmark is below its fixed 120-day trend average.",
+            "Use signal_dates so trades occur only when target weights change.",
+        ),
+    )
+
+
 register_preset("kospi200_semiannual_floatcap", _semiannual_floatcap_preset)
+register_preset("kospi200_revision_signal", _revision_signal_preset)

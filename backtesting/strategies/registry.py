@@ -7,6 +7,7 @@ from .base import RegisteredStrategy
 from .benchmark_overlay import BenchmarkOverlay
 from .benchmark_tilt import BenchmarkTilt
 from .earnings_revision import EarningsRevision
+from .revision_signal import RevisionSignal
 from .trend_rank import TrendRank
 
 
@@ -38,6 +39,7 @@ def list_strategies() -> tuple[str, ...]:
 
 register_strategy("trend_rank", TrendRank)
 register_strategy("earnings_revision", EarningsRevision)
+register_strategy("revision_signal", RevisionSignal)
 register_strategy("benchmark_overlay", BenchmarkOverlay)
 register_strategy("benchmark_tilt", BenchmarkTilt)
 

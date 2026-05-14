@@ -62,6 +62,7 @@ class BacktestCalculationContext:
 class BacktestCalculationAdapters:
     build_strategy: Callable[..., Any]
     build_position_plan: Callable[[ExecutionSpec, MarketData], PositionPlan]
+    build_target_weight_plan: Callable[[ExecutionSpec, MarketData], tuple[PositionPlan, dict[str, object]]]
     get_hook: Callable[[str], Any]
     engine_factory: Callable[..., BacktestEngine]
     validate_position_plan: Callable[[PositionPlan], None]
@@ -168,6 +169,10 @@ class BacktestCalculation:
         market: MarketData,
         universe_spec: UniverseSpec | None,
     ) -> tuple[PositionPlan, Any, pd.DataFrame | None, dict[str, object], ResolvedExecutionSpec]:
+        if spec.target_weights is not None:
+            plan, metadata = self.adapters.build_target_weight_plan(spec, market)
+            return plan, None, None, metadata, resolved_spec
+
         if spec.weight_source.kind == "hook":
             hook = self.adapters.get_hook(resolved_spec.hook_id or "")
             hook_plan = hook.build_plan(market=market, resolved_spec=resolved_spec, universe_spec=universe_spec)

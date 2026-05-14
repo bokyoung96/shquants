@@ -12,6 +12,7 @@ from backtesting.specs import (
     ScheduleEvaluationSpec,
     SelectionSpec,
     ShortingSpec,
+    TargetWeightsSpec,
     WeightingSpec,
     load_execution_spec,
 )
@@ -137,6 +138,67 @@ def test_load_execution_spec_parses_rank_top_bottom_and_portfolio_shape(tmp_path
         shortable_field="shortable",
         cash_collateral_ratio=1.25,
     )
+
+
+def test_load_execution_spec_parses_target_weights_file(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "target_weights": {
+                    "kind": "file",
+                    "path": "weights.csv",
+                    "missing_policy": "zero",
+                    "untradable_policy": "fail",
+                    "unshortable_policy": "fail",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    spec = load_execution_spec(path)
+
+    assert spec.target_weights == TargetWeightsSpec(
+        kind="file",
+        path="weights.csv",
+        missing_policy="zero",
+        untradable_policy="fail",
+        unshortable_policy="fail",
+    )
+    assert spec.uses_composable_plan is False
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("kind", "hook", "target_weights.kind must be one of"),
+        ("missing_policy", "fail", "target_weights.missing_policy must be one of"),
+        ("untradable_policy", "zero", "target_weights.untradable_policy must be one of"),
+        ("unshortable_policy", "zero", "target_weights.unshortable_policy must be one of"),
+    ],
+)
+def test_load_execution_spec_rejects_invalid_target_weights_policy(
+    tmp_path: Path,
+    field: str,
+    value: str,
+    message: str,
+) -> None:
+    target_weights = {"kind": "file", "path": "weights.csv"}
+    target_weights[field] = value
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "target_weights": target_weights,
+        },
+    )
+
+    with pytest.raises(ValueError, match=message):
+        load_execution_spec(path)
 
 
 def test_load_execution_spec_rejects_yaml_without_parser_support(tmp_path: Path) -> None:

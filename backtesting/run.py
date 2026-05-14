@@ -25,6 +25,7 @@ from .specs import (
     ScheduleSpec,
     ShortingSpec,
     build_position_plan_from_execution_spec,
+    build_position_plan_from_target_weights,
     get_hook,
     get_preset,
     load_execution_spec,
@@ -180,6 +181,7 @@ class BacktestRunner:
             adapters=BacktestCalculationAdapters(
                 build_strategy=build_strategy,
                 build_position_plan=build_position_plan_from_execution_spec,
+                build_target_weight_plan=build_position_plan_from_target_weights,
                 get_hook=get_hook,
                 engine_factory=BacktestEngine,
                 validate_position_plan=validate_position_plan,

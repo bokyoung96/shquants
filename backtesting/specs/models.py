@@ -39,6 +39,16 @@ class WeightingSpec:
 
 
 @dataclass(frozen=True, slots=True)
+class TargetWeightsSpec:
+    kind: str = "file"
+    path: str | None = None
+    hook_id: str | None = None
+    missing_policy: str = "zero"
+    untradable_policy: str = "fail"
+    unshortable_policy: str = "fail"
+
+
+@dataclass(frozen=True, slots=True)
 class PortfolioShapeSpec:
     kind: str = "long_only"
     gross_long: float = 1.0
@@ -138,6 +148,7 @@ class ExecutionSpec:
     benchmark_dataset: str | None = None
     warmup_days: int = 0
     weight_source: WeightSourceSpec = dc_field(default_factory=WeightSourceSpec)
+    target_weights: TargetWeightsSpec | None = None
     data_policy: DataPolicySpec = dc_field(default_factory=DataPolicySpec)
     selection: SelectionSpec | None = None
     weighting: WeightingSpec | None = None

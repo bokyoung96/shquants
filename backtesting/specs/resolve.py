@@ -90,7 +90,7 @@ def resolve_execution_spec(
         hook = get_hook(spec.weight_source.hook_id or "")
         dataset_ids.extend(_resolve_universe_dataset(universe_spec, dataset_id) for dataset_id in hook.required_datasets)
 
-    if not spec.uses_composable_plan:
+    if spec.target_weights is None and not spec.uses_composable_plan:
         if spec.weight_source.kind == "strategy":
             strategy = build_strategy(
                 spec.strategy,

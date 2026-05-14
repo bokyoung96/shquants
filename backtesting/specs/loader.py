@@ -16,6 +16,7 @@ from .models import (
     ScheduleSpec,
     SelectionSpec,
     ShortingSpec,
+    TargetWeightsSpec,
     WeightingSpec,
     WeightSourceSpec,
 )
@@ -271,6 +272,44 @@ def _read_weight_source(payload: dict[str, object]) -> WeightSourceSpec:
     )
 
 
+def _read_target_weights(payload: dict[str, object]) -> TargetWeightsSpec | None:
+    raw = _read_object(payload, "target_weights")
+    if raw is None:
+        return None
+    return TargetWeightsSpec(
+        kind=_read_string_choice(
+            raw,
+            "kind",
+            default="file",
+            error_key="target_weights.kind",
+            allowed={"file"},
+        ),
+        path=_read_required_string(raw, "path", "target_weights.path"),
+        hook_id=_read_optional_string(raw, "hook_id", "target_weights.hook_id"),
+        missing_policy=_read_string_choice(
+            raw,
+            "missing_policy",
+            default="zero",
+            error_key="target_weights.missing_policy",
+            allowed={"zero"},
+        ),
+        untradable_policy=_read_string_choice(
+            raw,
+            "untradable_policy",
+            default="fail",
+            error_key="target_weights.untradable_policy",
+            allowed={"fail"},
+        ),
+        unshortable_policy=_read_string_choice(
+            raw,
+            "unshortable_policy",
+            default="fail",
+            error_key="target_weights.unshortable_policy",
+            allowed={"fail"},
+        ),
+    )
+
+
 def _read_data_policy(payload: dict[str, object]) -> DataPolicySpec:
     raw = _read_object(payload, "data_policy")
     if raw is None:
@@ -330,6 +369,7 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         benchmark_dataset=_read_optional_string(payload, "benchmark_dataset"),
         warmup_days=_read_int(payload, "warmup_days", 0, min_value=0) or 0,
         weight_source=_read_weight_source(payload),
+        target_weights=_read_target_weights(payload),
         data_policy=_read_data_policy(payload),
         selection=selection,
         weighting=_read_weighting(payload, selection),

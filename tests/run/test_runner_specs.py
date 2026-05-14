@@ -26,6 +26,7 @@ from backtesting.specs import (
     ScheduleSpec,
     SelectionSpec,
     ShortingSpec,
+    TargetWeightsSpec,
     WeightSourceSpec,
     WeightingSpec,
 )
@@ -269,6 +270,76 @@ def test_runner_executes_rank_top_bottom_long_short_portfolio_shape(tmp_path: Pa
         index=index,
     )
     assert_frame_equal(report.result.weights, expected)
+
+
+def test_runner_executes_signed_target_weights_file(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 10.0], "B": [10.0, 10.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1], "B": [1, 1]}, index=index))
+    weights_path = tmp_path / "signed_weights.csv"
+    weights_path.write_text(
+        ",A,B\n"
+        "2024-01-02,0.5,-0.5\n"
+        "2024-01-03,0.5,-0.5\n",
+        encoding="utf-8",
+    )
+
+    runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-03",
+        schedule=ScheduleSpec(kind="named", name="daily"),
+        fill_mode="close",
+        target_weights=TargetWeightsSpec(kind="file", path=str(weights_path)),
+        shorting=ShortingSpec(enabled=True),
+    )
+
+    report = runner.run_spec(runner.resolve_spec(spec))
+
+    expected = pd.DataFrame({"A": [0.5, 0.5], "B": [-0.5, -0.5]}, index=index)
+    assert_frame_equal(report.result.weights, expected)
+    assert report.result.qty.loc["2024-01-02", "B"] == pytest.approx(-5_000_000.0)
+    assert report.execution_resolution["plan_source"] == "target_weights"
+
+
+def test_runner_signal_dates_uses_signed_target_weight_changes(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 10.0, 10.0], "B": [10.0, 10.0, 10.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 1, 1], "B": [1, 1, 1]}, index=index))
+    weights_path = tmp_path / "signed_weights.csv"
+    weights_path.write_text(
+        ",A,B\n"
+        "2024-01-02,0.5,-0.5\n"
+        "2024-01-03,0.5,-0.5\n"
+        "2024-01-04,0,0\n",
+        encoding="utf-8",
+    )
+
+    runner = BacktestRunner(catalog=DataCatalog.default(), raw_dir=raw_dir, parquet_dir=parquet_dir, result_dir=result_dir)
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-04",
+        schedule=ScheduleSpec(kind="signal_dates", weight_change_tolerance=1e-8),
+        fill_mode="close",
+        target_weights=TargetWeightsSpec(kind="file", path=str(weights_path)),
+        shorting=ShortingSpec(enabled=True),
+    )
+
+    report = runner.run_spec(runner.resolve_spec(spec))
+
+    assert list(report.result.turnover.round(8)) == [1.0, 0.0, 1.0]
 
 def test_runner_executes_rank_top_bottom_sector_neutral_portfolio_shape(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"

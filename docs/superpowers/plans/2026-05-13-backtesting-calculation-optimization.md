@@ -21,6 +21,15 @@ Dashboard preset run with `write_report_assets=False` and `profile=True`:
 
 Engine execution is only ~0.2-0.4s and is not the first optimization target.
 
+## Current Measurement
+
+Measured on 2026-05-14 after the numpy active-overlay path:
+
+| Strategy | Total | Plan build | Improvement vs baseline |
+| --- | ---: | ---: | ---: |
+| `benchmark_overlay` | ~5.02s | ~2.64s | ~4.1x total, ~7.1x plan build |
+| `benchmark_tilt` | ~4.06s | ~2.34s | ~3.8x total, ~6.0x plan build |
+
 ## File Map
 
 - Modify: `backtesting/strategies/benchmark_overlay.py`
@@ -31,24 +40,24 @@ Engine execution is only ~0.2-0.4s and is not the first optimization target.
 
 ### Task 1: Lock active overlay equivalence
 
-- [ ] Add a test in `tests/strategies/test_registry.py` that calls the existing `_build_active_overlay()` and the new `_build_active_overlay_values()` with the same representative signal/base/sector data.
-- [ ] Run only that test and verify it fails because `_build_active_overlay_values()` does not exist.
+- [x] Add a test in `tests/strategies/test_registry.py` that calls the existing `_build_active_overlay()` and the new `_build_active_overlay_values()` with the same representative signal/base/sector data.
+- [x] Run only that test and verify it fails because `_build_active_overlay_values()` does not exist.
 
 ### Task 2: Add numpy active overlay helper
 
-- [ ] Implement `_build_active_overlay_values()` in `_BenchmarkOverlayConstruction`.
-- [ ] Keep `_build_active_overlay()` unchanged as the reference helper for tests and low-risk comparison.
-- [ ] Run the new test and verify it passes.
+- [x] Implement `_build_active_overlay_values()` in `_BenchmarkOverlayConstruction`.
+- [x] Keep `_build_active_overlay()` unchanged as the reference helper for tests and low-risk comparison.
+- [x] Run the new test and verify it passes.
 
 ### Task 3: Switch construction build to arrays
 
-- [ ] Update `_BenchmarkOverlayConstruction.build()` to allocate numpy arrays for weights and selection masks.
-- [ ] For each date, compute base weights and active overlay using `_build_active_overlay_values()`.
-- [ ] Return the same `ConstructionResult` shape and columns as before.
-- [ ] Run strategy tests and backtesting run tests.
+- [x] Update `_BenchmarkOverlayConstruction.build()` to allocate numpy arrays for weights and selection masks.
+- [x] For each date, compute base weights and active overlay using `_build_active_overlay_values()`.
+- [x] Return the same `ConstructionResult` shape and columns as before.
+- [x] Run strategy tests and backtesting run tests.
 
 ### Task 4: Measure and verify
 
-- [ ] Re-run dashboard preset timing measurement.
-- [ ] Run focused verification: `uv run python -m pytest tests/strategies tests/test_run.py tests/dashboard tests/reporting`.
-- [ ] If timing improves without test regressions, report the before/after by strategy.
+- [x] Re-run dashboard preset timing measurement.
+- [x] Run focused verification: `uv run python -m pytest tests/strategies tests/run tests/dashboard tests/reporting`.
+- [x] If timing improves without test regressions, report the before/after by strategy.

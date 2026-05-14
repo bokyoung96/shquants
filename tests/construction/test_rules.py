@@ -170,6 +170,49 @@ def test_sector_neutral_top_bottom_supports_proportional_selected_group_budget()
     assert result.group_short_budget.loc[index[0], "Energy"] == pytest.approx(1.0 / 3.0)
 
 
+def test_sector_neutral_top_bottom_builds_weights_without_row_by_row_sort(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    alpha = pd.DataFrame(
+        {
+            "A": [9.0, 2.0],
+            "B": [1.0, 8.0],
+            "C": [8.0, 7.0],
+            "D": [0.0, 3.0],
+        },
+        index=index,
+    )
+    sector = pd.DataFrame(
+        {
+            "A": ["Tech", "Tech"],
+            "B": ["Tech", "Tech"],
+            "C": ["Energy", "Energy"],
+            "D": ["Energy", "Energy"],
+        },
+        index=index,
+    )
+    bundle = SignalBundle(alpha=alpha, context={"sector": sector})
+
+    def fail_series_sort(self: pd.Series, *args, **kwargs) -> pd.Series:
+        raise AssertionError("SectorNeutralTopBottom should vectorize across dates and groups")
+
+    monkeypatch.setattr(pd.Series, "sort_values", fail_series_sort)
+
+    result = SectorNeutralTopBottom(top_n=1, bottom_n=1).build(bundle)
+
+    expected = pd.DataFrame(
+        {
+            "A": [0.5, -0.5],
+            "B": [-0.5, 0.5],
+            "C": [0.5, 0.5],
+            "D": [-0.5, -0.5],
+        },
+        index=index,
+    )
+    pd.testing.assert_frame_equal(result.base_target_weights, expected)
+
+
 def test_long_short_top_bottom_shrinks_long_leg_to_preserve_small_universe_neutrality() -> None:
     index = pd.to_datetime(["2024-01-02"])
     alpha = pd.DataFrame(

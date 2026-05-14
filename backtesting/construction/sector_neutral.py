@@ -23,87 +23,115 @@ class SectorNeutralTopBottom:
             raise ValueError(f"unsupported group_budget: {self.group_budget}")
 
     def build(self, bundle: SignalBundle) -> ConstructionResult:
-        alpha = bundle.alpha
+        alpha = bundle.alpha.astype(float)
         sector = bundle.context["sector"]
-        weights_by_date: dict[pd.Timestamp, pd.Series] = {}
-        group_long_budget_by_date: dict[pd.Timestamp, pd.Series] = {}
-        group_short_budget_by_date: dict[pd.Timestamp, pd.Series] = {}
-        selected_long_by_date: dict[pd.Timestamp, pd.Series] = {}
-        selected_short_by_date: dict[pd.Timestamp, pd.Series] = {}
         group_id = (
             sector.reindex(index=alpha.index, columns=alpha.columns)
             if isinstance(sector, pd.DataFrame)
             else pd.DataFrame(index=alpha.index, columns=alpha.columns)
         )
+        valid_alpha = alpha.where(group_id.notna())
+        stacked_alpha = valid_alpha.stack()
+        if stacked_alpha.empty:
+            empty_weights = pd.DataFrame(0.0, index=alpha.index, columns=alpha.columns, dtype=float)
+            empty_selection = pd.DataFrame(False, index=alpha.index, columns=alpha.columns, dtype=bool)
+            empty_budget = pd.DataFrame(index=alpha.index, dtype=float)
+            return ConstructionResult(
+                base_target_weights=empty_weights,
+                selection_mask=empty_selection,
+                group_long_budget=empty_budget,
+                group_short_budget=empty_budget.copy(),
+                meta={
+                    "selected_long": empty_selection.copy(),
+                    "selected_short": empty_selection.copy(),
+                    "group_id": group_id,
+                    "group_long_budget": empty_budget,
+                    "group_short_budget": empty_budget.copy(),
+                },
+            )
 
-        for timestamp in alpha.index:
-            weights = pd.Series(0.0, index=alpha.columns, dtype=float)
-            group_long_budget = pd.Series(dtype=float)
-            group_short_budget = pd.Series(dtype=float)
+        stacked_alpha.index = stacked_alpha.index.set_names(["date", "symbol"])
+        stacked_sector = group_id.stack().reindex(stacked_alpha.index)
+        records = pd.DataFrame({"alpha": stacked_alpha, "sector": stacked_sector})
+        grouped = records.groupby(
+            [records.index.get_level_values("date"), records["sector"]],
+            sort=False,
+        )
+        available_count = grouped["alpha"].transform("size").astype(int)
+        short_count = (available_count - 1).clip(lower=0, upper=self.bottom_n).astype(int)
+        long_count = (available_count - short_count).clip(lower=0, upper=self.top_n).astype(int)
+        qualified = (long_count > 0) & (short_count > 0)
+        long_count = long_count.where(qualified, 0)
+        short_count = short_count.where(qualified, 0)
 
-            sector_row = sector.loc[timestamp].dropna()
-            signal = alpha.loc[timestamp].dropna().reindex(sector_row.index).dropna()
-            sector_membership = sector_row.reindex(signal.index).dropna()
-            qualified_sectors: list[tuple[object, pd.Index, int, int]] = []
+        long_rank = grouped["alpha"].rank(method="first", ascending=False)
+        short_rank = grouped["alpha"].rank(method="first", ascending=True)
+        selected_long_values = long_rank.le(long_count) & qualified
+        selected_short_values = short_rank.le(short_count) & qualified & ~selected_long_values
 
-            for sector_name, members in sector_membership.groupby(sector_membership, sort=False):
-                long_count, short_count = _leg_sizes(
-                    available_count=len(members.index),
-                    top_n=self.top_n,
-                    bottom_n=self.bottom_n,
-                )
-                if long_count > 0 and short_count > 0:
-                    qualified_sectors.append(
-                        (sector_name, members.index, long_count, short_count)
-                    )
+        group_summary = (
+            pd.DataFrame(
+                {
+                    "long_count": long_count.to_numpy(),
+                    "short_count": short_count.to_numpy(),
+                    "qualified": qualified.to_numpy(),
+                },
+                index=records.index,
+            )
+            .groupby(
+                [records.index.get_level_values("date"), records["sector"].to_numpy()],
+                sort=False,
+            )
+            .first()
+        )
+        group_summary.index = group_summary.index.set_names(["date", "sector"])
+        group_summary = group_summary[group_summary["qualified"]].copy()
+        group_summary["budget"] = _group_budget_series(group_summary, self.group_budget).astype(float)
 
-            group_budgets = _group_budgets(qualified_sectors, self.group_budget)
-            for sector_name, member_index, long_count, short_count in qualified_sectors:
-                sector_signal = signal.loc[member_index]
-                longs = sector_signal.sort_values(ascending=False).head(long_count)
-                short_pool = sector_signal.drop(index=longs.index, errors="ignore")
-                shorts = short_pool.sort_values(ascending=True).head(short_count)
-                group_budget = group_budgets[sector_name]
+        row_group_index = pd.MultiIndex.from_arrays(
+            [records.index.get_level_values("date"), records["sector"]],
+            names=["date", "sector"],
+        )
+        row_budget = pd.Series(
+            group_summary["budget"].reindex(row_group_index).to_numpy(),
+            index=records.index,
+            dtype=float,
+        ).fillna(0.0)
 
-                weights.loc[longs.index] = group_budget / len(longs)
-                weights.loc[shorts.index] = -group_budget / len(shorts)
-                group_long_budget.loc[sector_name] = float(weights.loc[longs.index].sum())
-                group_short_budget.loc[sector_name] = float(weights.loc[shorts.index].abs().sum())
-
-            weights_by_date[timestamp] = weights
-            group_long_budget_by_date[timestamp] = group_long_budget
-            group_short_budget_by_date[timestamp] = group_short_budget
-            selected_long_by_date[timestamp] = weights.gt(0.0)
-            selected_short_by_date[timestamp] = weights.lt(0.0)
+        weights = pd.Series(0.0, index=records.index, dtype=float)
+        long_denominator = long_count.astype(float).where(long_count.ne(0))
+        short_denominator = short_count.astype(float).where(short_count.ne(0))
+        weights.loc[selected_long_values] = (row_budget / long_denominator).loc[selected_long_values]
+        weights.loc[selected_short_values] = -(row_budget / short_denominator).loc[selected_short_values]
 
         base_target_weights = (
-            pd.DataFrame.from_dict(weights_by_date, orient="index")
+            weights.unstack("symbol")
             .reindex(index=alpha.index, columns=alpha.columns)
             .fillna(0.0)
             .astype(float)
         )
         group_long_budget = (
-            pd.DataFrame.from_dict(group_long_budget_by_date, orient="index")
+            group_summary["budget"]
+            .unstack("sector")
             .reindex(index=alpha.index)
             .fillna(0.0)
             .astype(float)
         )
         group_short_budget = (
-            pd.DataFrame.from_dict(group_short_budget_by_date, orient="index")
+            group_summary["budget"]
+            .unstack("sector")
             .reindex(index=alpha.index)
             .fillna(0.0)
             .astype(float)
         )
         selected_long = (
-            pd.DataFrame.from_dict(selected_long_by_date, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(False)
+            selected_long_values.unstack("symbol", fill_value=False)
+            .reindex(index=alpha.index, columns=alpha.columns, fill_value=False)
             .astype(bool)
         )
         selected_short = (
-            pd.DataFrame.from_dict(selected_short_by_date, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(False)
+            selected_short_values.unstack("symbol", fill_value=False)
+            .reindex(index=alpha.index, columns=alpha.columns, fill_value=False)
             .astype(bool)
         )
         return ConstructionResult(
@@ -151,4 +179,17 @@ def _group_budgets(
             sector_name: selected_count / total
             for sector_name, selected_count in selected_counts.items()
         }
+    raise ValueError(f"unsupported group_budget: {group_budget}")
+
+
+def _group_budget_series(group_summary: pd.DataFrame, group_budget: str) -> pd.Series:
+    if group_summary.empty:
+        return pd.Series(dtype=float)
+    if group_budget == "equal_group":
+        sector_count = group_summary.groupby(level="date")["qualified"].transform("sum")
+        return 1.0 / sector_count.astype(float)
+    if group_budget == "proportional_selected":
+        selected_count = group_summary["long_count"] + group_summary["short_count"]
+        total_selected = selected_count.groupby(level="date").transform("sum")
+        return selected_count.astype(float) / total_selected.astype(float)
     raise ValueError(f"unsupported group_budget: {group_budget}")

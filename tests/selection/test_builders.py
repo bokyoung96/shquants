@@ -94,6 +94,23 @@ def test_rank_top_n_selects_exact_count_per_date(feature_frames: dict[str, pd.Da
     assert_frame_equal(actual, expected)
 
 
+def test_rank_top_bottom_selects_long_and_short_candidates(feature_frames: dict[str, pd.DataFrame]) -> None:
+    spec = SelectionSpec(kind="rank_top_bottom", field="score", top_n=1, bottom_n=1)
+
+    actual = build_selection(spec, feature_frames)
+
+    expected = pd.DataFrame(
+        {
+            "A": [True, True, False],
+            "B": [False, True, True],
+            "C": [True, False, True],
+        },
+        index=feature_frames["score"].index,
+        dtype=bool,
+    )
+    assert_frame_equal(actual, expected)
+
+
 def test_rank_top_n_rejects_non_positive_n(feature_frames: dict[str, pd.DataFrame]) -> None:
     spec = SelectionSpec(kind="rank_top_n", field="score", n=0)
 

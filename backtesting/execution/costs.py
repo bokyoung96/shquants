@@ -17,6 +17,8 @@ class CostModel:
     fee: float = 0.0
     sell_tax: float = 0.0
     slippage: float = 0.0
+    borrow_fee_annual: float = 0.0
+    short_cash_collateral_ratio: float = 1.0
 
     def calc(self, price: float, qty: float, side: str) -> TradeCost:
         if side not in {"buy", "sell"}:

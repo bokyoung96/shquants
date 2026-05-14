@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
 from backtesting.signals.base import SignalBundle
@@ -22,49 +23,29 @@ class LongShortTopBottom:
         validate_positive("bottom_n", self.bottom_n)
 
     def build(self, bundle: SignalBundle) -> ConstructionResult:
-        alpha = bundle.alpha
-        weights_by_date: dict[pd.Timestamp, pd.Series] = {}
-        selected_long_by_date: dict[pd.Timestamp, pd.Series] = {}
-        selected_short_by_date: dict[pd.Timestamp, pd.Series] = {}
+        alpha = bundle.alpha.astype(float)
+        valid = alpha.notna()
+        valid_count = valid.sum(axis=1).astype(int)
+        short_count = (valid_count - 1).clip(lower=0, upper=self.bottom_n).astype(int)
+        long_count = (valid_count - short_count).clip(lower=0, upper=self.top_n).astype(int)
+        qualified = (long_count > 0) & (short_count > 0)
+        long_count = long_count.where(qualified, 0)
+        short_count = short_count.where(qualified, 0)
 
-        for timestamp in alpha.index:
-            signal = alpha.loc[timestamp].dropna()
-            weights = pd.Series(0.0, index=alpha.columns, dtype=float)
-            long_count, short_count = _leg_sizes(
-                available_count=len(signal),
-                top_n=self.top_n,
-                bottom_n=self.bottom_n,
-            )
-            if long_count > 0 and short_count > 0:
-                longs = signal.sort_values(ascending=False).head(long_count)
-                short_pool = signal.drop(index=longs.index, errors="ignore")
-                shorts = short_pool.sort_values(ascending=True).head(short_count)
+        long_rank = alpha.rank(axis=1, ascending=False, method="first", na_option="bottom")
+        short_rank = alpha.rank(axis=1, ascending=True, method="first", na_option="bottom")
+        selected_long = long_rank.le(long_count, axis=0) & valid
+        selected_short = short_rank.le(short_count, axis=0) & valid & ~selected_long
 
-                weights.loc[longs.index] = self.gross_long / len(longs)
-                weights.loc[shorts.index] = -self.gross_short / len(shorts)
-
-            weights_by_date[timestamp] = weights
-            selected_long_by_date[timestamp] = weights.gt(0.0)
-            selected_short_by_date[timestamp] = weights.lt(0.0)
-
+        long_denominator = long_count.astype(float).replace(0.0, np.nan)
+        short_denominator = short_count.astype(float).replace(0.0, np.nan)
         base_target_weights = (
-            pd.DataFrame.from_dict(weights_by_date, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(0.0)
-            .astype(float)
+            selected_long.astype(float).mul(float(self.gross_long), axis=0).div(long_denominator, axis=0)
+            - selected_short.astype(float).mul(float(self.gross_short), axis=0).div(short_denominator, axis=0)
         )
-        selected_long = (
-            pd.DataFrame.from_dict(selected_long_by_date, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(False)
-            .astype(bool)
-        )
-        selected_short = (
-            pd.DataFrame.from_dict(selected_short_by_date, orient="index")
-            .reindex(index=alpha.index, columns=alpha.columns)
-            .fillna(False)
-            .astype(bool)
-        )
+        base_target_weights = base_target_weights.fillna(0.0).astype(float)
+        selected_long = selected_long.astype(bool)
+        selected_short = selected_short.astype(bool)
         return ConstructionResult(
             base_target_weights=base_target_weights,
             selection_mask=base_target_weights.ne(0.0),

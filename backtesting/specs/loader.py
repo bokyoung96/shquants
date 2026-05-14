@@ -7,11 +7,14 @@ from .models import (
     ConditionSpec,
     DataPolicySpec,
     ExecutionSpec,
+    PortfolioShapeSpec,
     PositionBucketSpec,
     PositionPolicySpec,
     PositionRuleSpec,
+    ScheduleEvaluationSpec,
     ScheduleSpec,
     SelectionSpec,
+    ShortingSpec,
     WeightingSpec,
     WeightSourceSpec,
 )
@@ -108,6 +111,8 @@ def _read_selection(payload: dict[str, object]) -> SelectionSpec | None:
         field=_read_optional_string(raw, "field", "selection.field"),
         conditions=_read_conditions(raw.get("conditions")),
         n=int(raw["n"]) if raw.get("n") is not None else None,
+        top_n=int(raw["top_n"]) if raw.get("top_n") is not None else None,
+        bottom_n=int(raw["bottom_n"]) if raw.get("bottom_n") is not None else None,
         ascending=_read_optional_bool(raw, "ascending", False, "selection.ascending"),
         threshold=float(raw["threshold"]) if raw.get("threshold") is not None else None,
         path=_read_optional_string(raw, "path", "selection.path"),
@@ -128,6 +133,35 @@ def _read_weighting(payload: dict[str, object], selection: SelectionSpec | None)
         path=_read_optional_string(raw, "path", "weighting.path"),
         hook_id=_read_optional_string(raw, "hook_id", "weighting.hook_id"),
         params=_read_params(raw, "params", "weighting.params"),
+    )
+
+
+def _read_portfolio_shape(payload: dict[str, object]) -> PortfolioShapeSpec | None:
+    raw = _read_object(payload, "portfolio_shape")
+    if raw is None:
+        return None
+    return PortfolioShapeSpec(
+        kind=_read_required_string(raw, "kind", "portfolio_shape.kind") if "kind" in raw else "long_only",
+        gross_long=float(raw.get("gross_long", 1.0)),
+        gross_short=float(raw.get("gross_short", 1.0)),
+        group_field=(
+            _read_required_string(raw, "group_field", "portfolio_shape.group_field")
+            if "group_field" in raw
+            else "sector"
+        ),
+        group_budget=_read_required_string(raw, "group_budget", "portfolio_shape.group_budget") if "group_budget" in raw else "equal_group",
+    )
+
+
+def _read_shorting(payload: dict[str, object]) -> ShortingSpec:
+    raw = _read_object(payload, "shorting")
+    if raw is None:
+        return ShortingSpec()
+    return ShortingSpec(
+        enabled=_read_optional_bool(raw, "enabled", False, "shorting.enabled"),
+        borrow_fee_annual=float(raw.get("borrow_fee_annual", 0.0)),
+        shortable_field=_read_optional_string(raw, "shortable_field", "shorting.shortable_field"),
+        cash_collateral_ratio=float(raw.get("cash_collateral_ratio", 1.0)),
     )
 
 
@@ -197,6 +231,36 @@ def _read_position_policy(payload: dict[str, object], selection: SelectionSpec |
     )
 
 
+def _read_schedule(payload: dict[str, object]) -> ScheduleSpec:
+    raw = payload.get("schedule")
+    if raw is None:
+        return ScheduleSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("schedule must be an object")
+    evaluation = _read_schedule_evaluation(raw)
+    return ScheduleSpec(
+        kind=_read_required_string(raw, "kind", "schedule.kind") if "kind" in raw else "named",
+        name=_read_optional_string(raw, "name", "schedule.name") if "name" in raw else "monthly",
+        dates=tuple(str(value) for value in raw.get("dates", ())),
+        weight_change_tolerance=float(raw.get("weight_change_tolerance", 1e-8)),
+        evaluate_on_schedule=True,
+        evaluation=evaluation,
+    )
+
+
+def _read_schedule_evaluation(raw_schedule: dict[str, object]) -> ScheduleEvaluationSpec | None:
+    raw = raw_schedule.get("evaluation")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError("schedule.evaluation must be an object")
+    return ScheduleEvaluationSpec(
+        kind=_read_required_string(raw, "kind", "schedule.evaluation.kind") if "kind" in raw else "named",
+        name=_read_optional_string(raw, "name", "schedule.evaluation.name") if "name" in raw else "daily",
+        dates=tuple(str(value) for value in raw.get("dates", ())),
+    )
+
+
 def load_execution_spec(path: str | Path) -> ExecutionSpec:
     spec_path = Path(path)
     suffix = spec_path.suffix.lower()
@@ -224,7 +288,7 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         momentum_lookback=int(payload.get("momentum_lookback", 60)),
         liquidity_lookback=int(payload.get("liquidity_lookback", 20)),
         momentum_weight=float(payload.get("momentum_weight", 0.5)),
-        schedule=ScheduleSpec(**payload.get("schedule", {"kind": "named", "name": "monthly"})),
+        schedule=_read_schedule(payload),
         fill_mode=str(payload.get("fill_mode", "next_open")),
         fee=float(payload.get("fee", 0.0)),
         sell_tax=float(payload.get("sell_tax", 0.0)),
@@ -240,6 +304,8 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         data_policy=DataPolicySpec(**payload.get("data_policy", {})),
         selection=selection,
         weighting=_read_weighting(payload, selection),
+        portfolio_shape=_read_portfolio_shape(payload),
+        shorting=_read_shorting(payload),
         position_policy=_read_position_policy(payload, selection),
         spec_source="spec_file",
         preset_id=payload.get("preset_id"),

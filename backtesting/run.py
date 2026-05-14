@@ -52,6 +52,8 @@ class RunConfig:
     fee: float = 0.0
     sell_tax: float = 0.0
     slippage: float = 0.0
+    borrow_fee_annual: float = 0.0
+    short_cash_collateral_ratio: float = 1.0
     use_k200: bool = True
     allow_fractional: bool = True
     universe_id: str | None = None
@@ -194,7 +196,7 @@ class BacktestRunner:
                     )
             elif spec.uses_composable_plan:
                 plan = build_position_plan_from_execution_spec(spec, market)
-                schedule_input = self._schedule_from_spec(resolved_spec)
+                schedule_input = None
                 extra_tradable = None
                 resolution_meta = {"plan_source": "selection_weighting_position_policy"}
             else:
@@ -208,12 +210,14 @@ class BacktestRunner:
                     momentum_weight=spec.momentum_weight,
                 )
                 plan = strategy.build_plan(market)
-                schedule_input = self._schedule_from_spec(resolved_spec)
+                schedule_input = None
                 extra_tradable = None
                 resolution_meta = {}
 
             validate_position_plan(plan)
             weights = plan.target_weights
+            if schedule_input is None:
+                schedule_input = self._schedule_from_spec(resolved_spec, weights=weights)
             close = market.frames["close"]
             tradable = close.notna()
             if market.universe is not None:
@@ -226,6 +230,8 @@ class BacktestRunner:
                     fee=effective_config.fee,
                     sell_tax=effective_config.sell_tax,
                     slippage=effective_config.slippage,
+                    borrow_fee_annual=effective_config.borrow_fee_annual,
+                    short_cash_collateral_ratio=effective_config.short_cash_collateral_ratio,
                 )
             )
 
@@ -331,6 +337,8 @@ class BacktestRunner:
             fee=spec.fee,
             sell_tax=spec.sell_tax,
             slippage=spec.slippage,
+            borrow_fee_annual=spec.shorting.borrow_fee_annual,
+            short_cash_collateral_ratio=spec.shorting.cash_collateral_ratio,
             use_k200=spec.use_k200,
             allow_fractional=spec.allow_fractional,
             universe_id=spec.universe_id,
@@ -369,7 +377,7 @@ class BacktestRunner:
         return membership.fillna(0).astype(bool)
 
     @staticmethod
-    def _schedule_from_spec(resolved_spec):
+    def _schedule_from_spec(resolved_spec, *, weights: pd.DataFrame | None = None):
         schedule = resolved_spec.schedule
         if schedule.kind == "named":
             if schedule.name == "daily":
@@ -381,7 +389,21 @@ class BacktestRunner:
             raise ValueError(f"unsupported schedule: {schedule.name}")
         if schedule.kind == "custom_dates":
             return CustomSchedule(pd.to_datetime(list(schedule.dates)))
+        if schedule.kind == "signal_dates":
+            if weights is None:
+                raise ValueError("signal_dates schedule requires target weights")
+            return BacktestRunner._signal_dates_schedule(
+                weights,
+                tolerance=schedule.weight_change_tolerance,
+            )
         raise ValueError(f"unsupported schedule kind: {schedule.kind}")
+
+    @staticmethod
+    def _signal_dates_schedule(weights: pd.DataFrame, *, tolerance: float) -> pd.Series:
+        target = weights.fillna(0.0).astype(float)
+        previous = target.shift(1, fill_value=0.0)
+        changed = target.sub(previous).abs().gt(float(tolerance)).any(axis=1)
+        return changed.astype(bool)
 
     @staticmethod
     def _resolve_load_start(start: str, warmup_days: int) -> str:

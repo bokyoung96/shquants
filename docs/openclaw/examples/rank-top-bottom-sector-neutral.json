@@ -1,0 +1,27 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "name": "rank-top-bottom-sector-neutral-example",
+  "selection": {
+    "kind": "rank_top_bottom",
+    "field": "momentum_60d",
+    "top_n": 3,
+    "bottom_n": 3
+  },
+  "portfolio_shape": {
+    "kind": "sector_neutral",
+    "group_field": "sector",
+    "group_budget": "equal_group"
+  },
+  "shorting": {
+    "enabled": true,
+    "borrow_fee_annual": 0.0,
+    "cash_collateral_ratio": 1.0
+  },
+  "schedule": {"kind": "named", "name": "monthly"},
+  "fill_mode": "next_open",
+  "notes": [
+    "Sector-neutral long-short example.",
+    "Undersized sectors are skipped by the construction rule."
+  ]
+}

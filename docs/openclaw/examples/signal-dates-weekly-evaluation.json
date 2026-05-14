@@ -1,0 +1,23 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "name": "signal-dates-weekly-evaluation-example",
+  "selection": {
+    "kind": "filter",
+    "conditions": [
+      {"field": "momentum_20d", "op": ">", "value": 0},
+      {"field": "avg_trading_value_20d", "op": ">=", "value": 1000000000}
+    ]
+  },
+  "weighting": {"kind": "equal_weight"},
+  "schedule": {
+    "kind": "signal_dates",
+    "weight_change_tolerance": 1e-8,
+    "evaluation": {"kind": "named", "name": "weekly"}
+  },
+  "fill_mode": "next_open",
+  "notes": [
+    "Evaluate signals only on the weekly schedule, hold the last evaluated target between evaluation dates, and rebalance only when that target changes.",
+    "Use this when the user says signals should be checked weekly but trades should still happen only on position-state changes."
+  ]
+}

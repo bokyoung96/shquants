@@ -44,6 +44,10 @@ def _spec_feature_fields(spec: ExecutionSpec) -> tuple[str, ...]:
         ordered.extend(selection_fields(spec.selection))
     if spec.weighting is not None:
         ordered.extend(weighting_fields(spec.weighting))
+    if spec.portfolio_shape is not None and spec.portfolio_shape.kind == "sector_neutral":
+        ordered.append(spec.portfolio_shape.group_field)
+    if spec.shorting.shortable_field is not None:
+        ordered.append(spec.shorting.shortable_field)
     return tuple(dict.fromkeys(ordered))
 
 

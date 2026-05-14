@@ -62,6 +62,40 @@ def test_long_short_top_bottom_is_dollar_neutral() -> None:
     assert bool(result.meta["selected_short"].loc[index[0], "D"])
 
 
+def test_long_short_top_bottom_builds_weights_without_row_by_row_sort(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    alpha = pd.DataFrame(
+        {
+            "A": [5.0, 1.0],
+            "B": [4.0, float("nan")],
+            "C": [1.0, 3.0],
+            "D": [0.0, 2.0],
+        },
+        index=index,
+    )
+    bundle = SignalBundle(alpha=alpha, context={"tradable": alpha.notna()})
+
+    def fail_series_sort(self: pd.Series, *args, **kwargs) -> pd.Series:
+        raise AssertionError("LongShortTopBottom should vectorize across dates")
+
+    monkeypatch.setattr(pd.Series, "sort_values", fail_series_sort)
+
+    result = LongShortTopBottom(top_n=2, bottom_n=1).build(bundle)
+
+    expected = pd.DataFrame(
+        {
+            "A": [0.5, -1.0],
+            "B": [0.5, 0.0],
+            "C": [0.0, 0.5],
+            "D": [-1.0, 0.5],
+        },
+        index=index,
+    )
+    pd.testing.assert_frame_equal(result.base_target_weights, expected)
+
+
 def test_sector_neutral_top_bottom_balances_by_sector() -> None:
     index = pd.to_datetime(["2024-01-02"])
     alpha = pd.DataFrame(
@@ -96,6 +130,44 @@ def test_sector_neutral_top_bottom_balances_by_sector() -> None:
     assert result.meta["group_id"].loc[index[0], "A"] == "Tech"
     assert result.meta["group_long_budget"].loc[index[0], "Tech"] == 0.5
     assert result.meta["group_short_budget"].loc[index[0], "Energy"] == 0.5
+
+
+def test_sector_neutral_top_bottom_supports_proportional_selected_group_budget() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    alpha = pd.DataFrame(
+        {"A": [10.0], "B": [9.0], "C": [1.0], "D": [0.0], "E": [8.0], "F": [2.0]},
+        index=index,
+    )
+    sector = pd.DataFrame(
+        {
+            "A": ["Tech"],
+            "B": ["Tech"],
+            "C": ["Tech"],
+            "D": ["Tech"],
+            "E": ["Energy"],
+            "F": ["Energy"],
+        },
+        index=index,
+    )
+    bundle = SignalBundle(alpha=alpha, context={"tradable": alpha.notna(), "sector": sector})
+
+    result = SectorNeutralTopBottom(
+        top_n=2,
+        bottom_n=2,
+        group_budget="proportional_selected",
+    ).build(bundle)
+
+    weights = result.base_target_weights.loc[index[0]]
+    assert weights["A"] == pytest.approx(1.0 / 3.0)
+    assert weights["B"] == pytest.approx(1.0 / 3.0)
+    assert weights["C"] == pytest.approx(-1.0 / 3.0)
+    assert weights["D"] == pytest.approx(-1.0 / 3.0)
+    assert weights["E"] == pytest.approx(1.0 / 3.0)
+    assert weights["F"] == pytest.approx(-1.0 / 3.0)
+    assert result.group_long_budget.loc[index[0], "Tech"] == pytest.approx(2.0 / 3.0)
+    assert result.group_long_budget.loc[index[0], "Energy"] == pytest.approx(1.0 / 3.0)
+    assert result.group_short_budget.loc[index[0], "Tech"] == pytest.approx(2.0 / 3.0)
+    assert result.group_short_budget.loc[index[0], "Energy"] == pytest.approx(1.0 / 3.0)
 
 
 def test_long_short_top_bottom_shrinks_long_leg_to_preserve_small_universe_neutrality() -> None:

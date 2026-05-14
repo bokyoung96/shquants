@@ -14,10 +14,13 @@ from .base import ConstructionResult
 class SectorNeutralTopBottom:
     top_n: int
     bottom_n: int
+    group_budget: str = "equal_group"
 
     def __post_init__(self) -> None:
         validate_positive("top_n", self.top_n)
         validate_positive("bottom_n", self.bottom_n)
+        if self.group_budget not in {"equal_group", "proportional_selected"}:
+            raise ValueError(f"unsupported group_budget: {self.group_budget}")
 
     def build(self, bundle: SignalBundle) -> ConstructionResult:
         alpha = bundle.alpha
@@ -54,15 +57,16 @@ class SectorNeutralTopBottom:
                         (sector_name, members.index, long_count, short_count)
                     )
 
-            sector_count = len(qualified_sectors)
+            group_budgets = _group_budgets(qualified_sectors, self.group_budget)
             for sector_name, member_index, long_count, short_count in qualified_sectors:
                 sector_signal = signal.loc[member_index]
                 longs = sector_signal.sort_values(ascending=False).head(long_count)
                 short_pool = sector_signal.drop(index=longs.index, errors="ignore")
                 shorts = short_pool.sort_values(ascending=True).head(short_count)
+                group_budget = group_budgets[sector_name]
 
-                weights.loc[longs.index] = 1.0 / sector_count / len(longs)
-                weights.loc[shorts.index] = -1.0 / sector_count / len(shorts)
+                weights.loc[longs.index] = group_budget / len(longs)
+                weights.loc[shorts.index] = -group_budget / len(shorts)
                 group_long_budget.loc[sector_name] = float(weights.loc[longs.index].sum())
                 group_short_budget.loc[sector_name] = float(weights.loc[shorts.index].abs().sum())
 
@@ -126,3 +130,25 @@ def _leg_sizes(available_count: int, top_n: int, bottom_n: int) -> tuple[int, in
     if long_count <= 0 or short_count <= 0:
         return 0, 0
     return long_count, short_count
+
+
+def _group_budgets(
+    qualified_sectors: list[tuple[object, pd.Index, int, int]],
+    group_budget: str,
+) -> dict[object, float]:
+    if not qualified_sectors:
+        return {}
+    if group_budget == "equal_group":
+        budget = 1.0 / len(qualified_sectors)
+        return {sector_name: budget for sector_name, *_ in qualified_sectors}
+    if group_budget == "proportional_selected":
+        selected_counts = {
+            sector_name: long_count + short_count
+            for sector_name, _, long_count, short_count in qualified_sectors
+        }
+        total = float(sum(selected_counts.values()))
+        return {
+            sector_name: selected_count / total
+            for sector_name, selected_count in selected_counts.items()
+        }
+    raise ValueError(f"unsupported group_budget: {group_budget}")

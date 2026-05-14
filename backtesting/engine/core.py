@@ -63,6 +63,7 @@ class BacktestEngine:
                     )
                 else:
                     turn = 0.0
+                cash = self._apply_borrow_fee(cash, current_qty, close_values[index])
                 equity_values[index] = cash + np.nansum(current_qty * self._zero_nan(close_values[index]))
                 qty_values[index] = current_qty
                 turnover_values[index] = turn
@@ -78,6 +79,7 @@ class BacktestEngine:
                 )
             else:
                 turn = 0.0
+            cash = self._apply_borrow_fee(cash, current_qty, close_values[0])
             equity_values[0] = cash + np.nansum(current_qty * self._zero_nan(close_values[0]))
             qty_values[0] = current_qty
             turnover_values[0] = turn
@@ -94,6 +96,7 @@ class BacktestEngine:
                     )
                 else:
                     turn = 0.0
+                cash = self._apply_borrow_fee(cash, current_qty, close_values[index])
                 equity_values[index] = cash + np.nansum(current_qty * self._zero_nan(close_values[index]))
                 qty_values[index] = current_qty
                 turnover_values[index] = turn
@@ -142,7 +145,7 @@ class BacktestEngine:
         buy_delta = self._cap_buy_values(
             buy_delta=buy_delta,
             fill_price=fill_price,
-            cash=next_cash,
+            cash=max(0.0, next_cash - self._short_cash_collateral(target_qty, price)),
             allow_fractional=allow_fractional,
         )
         delta = sell_delta + buy_delta
@@ -154,6 +157,22 @@ class BacktestEngine:
         turn = 0.0 if nav == 0.0 else float(trade_value.sum() / nav)
         next_qty = (current_qty + delta).astype(float, copy=False)
         return next_cash, next_qty, turn
+
+    def _apply_borrow_fee(self, cash: float, current_qty: np.ndarray, close_price: np.ndarray) -> float:
+        if self.cost.borrow_fee_annual <= 0.0:
+            return cash
+        price = self._zero_nan(close_price)
+        short_notional = float(np.abs(np.minimum(current_qty, 0.0) * price).sum())
+        if short_notional <= 0.0:
+            return cash
+        return cash - short_notional * (self.cost.borrow_fee_annual / 252.0)
+
+    def _short_cash_collateral(self, target_qty: np.ndarray, price: np.ndarray) -> float:
+        ratio = self.cost.short_cash_collateral_ratio
+        if ratio <= 0.0:
+            return 0.0
+        short_notional = float(np.abs(np.minimum(target_qty, 0.0) * price).sum())
+        return short_notional * ratio
 
     @staticmethod
     def _tradable(tradable: pd.DataFrame | None, close: pd.DataFrame) -> pd.DataFrame:

@@ -42,6 +42,8 @@ def build_selection(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFra
         return _build_filter(spec, feature_frames)
     if spec.kind == "rank_top_n":
         return _build_rank_top_n(spec, feature_frames)
+    if spec.kind == "rank_top_bottom":
+        return _build_rank_top_bottom(spec, feature_frames)
     if spec.kind == "score_threshold":
         return _build_score_threshold(spec, feature_frames)
     if spec.kind == "event":
@@ -69,6 +71,19 @@ def _build_rank_top_n(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataF
     ranks = scores.rank(axis=1, ascending=spec.ascending, method="first", na_option="bottom")
     selected = ranks.le(n) & scores.notna()
     return selected.astype(bool)
+
+
+def _build_rank_top_bottom(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
+    field = _require_field(spec)
+    top_n, bottom_n = _require_top_bottom(spec)
+    scores = _frame_for_field(feature_frames, field)
+    valid = scores.notna()
+    long_rank = scores.rank(axis=1, ascending=False, method="first", na_option="bottom")
+    selected_long = long_rank.le(top_n) & valid
+
+    short_rank = scores.rank(axis=1, ascending=True, method="first", na_option="bottom")
+    selected_short = short_rank.le(bottom_n) & valid & ~selected_long
+    return (selected_long | selected_short).astype(bool)
 
 
 def _build_score_threshold(spec: SelectionSpec, feature_frames: Mapping[str, pd.DataFrame]) -> pd.DataFrame:
@@ -237,6 +252,16 @@ def _require_positive_n(spec: SelectionSpec) -> int:
     if value <= 0:
         raise ValueError("selection kind 'rank_top_n' requires n > 0")
     return value
+
+
+def _require_top_bottom(spec: SelectionSpec) -> tuple[int, int]:
+    top_n = _require_non_negative_int(spec.top_n, "rank_top_bottom", "top_n")
+    bottom_n = _require_non_negative_int(spec.bottom_n, "rank_top_bottom", "bottom_n")
+    if top_n <= 0:
+        raise ValueError("selection kind 'rank_top_bottom' requires top_n > 0")
+    if bottom_n <= 0:
+        raise ValueError("selection kind 'rank_top_bottom' requires bottom_n > 0")
+    return top_n, bottom_n
 
 
 def _require_threshold(spec: SelectionSpec) -> float:

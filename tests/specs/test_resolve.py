@@ -13,8 +13,10 @@ from backtesting.specs import (
     DataPolicySpec,
     ExecutionSpec,
     HookRegistration,
+    PortfolioShapeSpec,
     ScheduleSpec,
     SelectionSpec,
+    ShortingSpec,
     WeightSourceSpec,
     WeightingSpec,
     register_hook,
@@ -331,3 +333,44 @@ def test_resolve_spec_maps_feature_datasets_through_universe(tmp_path: Path) -> 
         DatasetId.QW_KSDQ_MKTCAP,
         DatasetId.QW_KSDQ_MKTCAP_FLT,
     )
+
+
+def test_resolve_spec_adds_sector_dataset_for_sector_neutral_portfolio_shape(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        selection=SelectionSpec(kind="rank_top_bottom", field="momentum_60d", top_n=2, bottom_n=2),
+        portfolio_shape=PortfolioShapeSpec(kind="sector_neutral", group_field="sector"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=UniverseRegistry.default().get("kosdaq150"),
+    )
+
+    assert DatasetId.QW_KSDQ_WICS_SEC_BIG in resolved.dataset_ids
+
+
+def test_resolve_spec_adds_shortable_dataset_for_shorting_field(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+        selection=SelectionSpec(kind="rank_top_bottom", field="momentum_60d", top_n=2, bottom_n=2),
+        portfolio_shape=PortfolioShapeSpec(kind="long_short"),
+        shorting=ShortingSpec(enabled=True, shortable_field="shortable"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert DatasetId.QW_TRS_BAN in resolved.dataset_ids

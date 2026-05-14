@@ -1,0 +1,19 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "name": "signal-dates-filter-example",
+  "selection": {
+    "kind": "filter",
+    "conditions": [
+      {"field": "momentum_20d", "op": ">", "value": 0},
+      {"field": "avg_trading_value_20d", "op": ">=", "value": 1000000000}
+    ]
+  },
+  "weighting": {"kind": "equal_weight"},
+  "schedule": {"kind": "signal_dates", "weight_change_tolerance": 1e-8},
+  "fill_mode": "next_open",
+  "notes": [
+    "Signal-Triggered Trading example: rebalance only when final target weights change.",
+    "Do not translate this request into top_n unless the user asks for ranking."
+  ]
+}

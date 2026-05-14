@@ -1,0 +1,27 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "name": "rank-top-bottom-long-short-example",
+  "selection": {
+    "kind": "rank_top_bottom",
+    "field": "momentum_60d",
+    "top_n": 20,
+    "bottom_n": 20
+  },
+  "portfolio_shape": {
+    "kind": "long_short",
+    "gross_long": 1.0,
+    "gross_short": 1.0
+  },
+  "shorting": {
+    "enabled": true,
+    "borrow_fee_annual": 0.0,
+    "cash_collateral_ratio": 1.0
+  },
+  "schedule": {"kind": "named", "name": "monthly"},
+  "fill_mode": "next_open",
+  "notes": [
+    "Dollar-neutral long-short example.",
+    "selection chooses candidate long and short legs; portfolio_shape assigns signed exposure."
+  ]
+}

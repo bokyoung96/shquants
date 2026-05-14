@@ -74,6 +74,12 @@ def _require_frame(market: MarketData, frame_key: str) -> pd.DataFrame:
         raise KeyError(f"missing market frame: {frame_key}") from exc
 
 
+def _shortable_builder(market: MarketData) -> pd.DataFrame:
+    if "shortable" in market.frames:
+        return market.frames["shortable"]
+    return ~_require_frame(market, "trade_ban").fillna(1).astype(bool)
+
+
 register_feature(
     FeatureDefinition(
         field="close",
@@ -152,5 +158,21 @@ register_feature(
         dataset_ids=(DatasetId.QW_RETAIL,),
         warmup_days=20,
         build=lambda market: _require_frame(market, "retail_flow").rolling(20, min_periods=20).sum(),
+    )
+)
+register_feature(
+    FeatureDefinition(
+        field="sector",
+        dataset_ids=(DatasetId.QW_WICS_SEC_BIG,),
+        warmup_days=0,
+        build=_frame_builder("sector_big"),
+    )
+)
+register_feature(
+    FeatureDefinition(
+        field="shortable",
+        dataset_ids=(DatasetId.QW_TRS_BAN,),
+        warmup_days=0,
+        build=_shortable_builder,
     )
 )

@@ -173,3 +173,28 @@ def test_engine_uses_prior_schedule_flag_for_next_open_rebalances() -> None:
 
     assert result.qty["A"].tolist() == [0.0, 0.0, 10.0, 10.0]
     assert result.turnover.tolist() == [0.0, 0.0, 1.0, 0.0]
+
+
+def test_engine_applies_daily_borrow_fee_to_short_notional() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    close = pd.DataFrame({"A": [100.0]}, index=index)
+    weights = pd.DataFrame({"A": [-1.0]}, index=index)
+
+    engine = BacktestEngine(cost=CostModel(borrow_fee_annual=0.252))
+    result = engine.run(close=close, weights=weights, capital=100.0, fill_mode="close")
+
+    assert result.qty.loc["2024-01-02", "A"] == -1.0
+    assert result.equity.loc["2024-01-02"] == pytest.approx(99.9)
+
+
+def test_engine_reserves_short_cash_collateral_before_scaling_buys() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    close = pd.DataFrame({"A": [100.0], "B": [100.0]}, index=index)
+    weights = pd.DataFrame({"A": [2.0], "B": [-1.0]}, index=index)
+
+    engine = BacktestEngine(cost=CostModel(short_cash_collateral_ratio=1.0))
+    result = engine.run(close=close, weights=weights, capital=100.0, fill_mode="close")
+
+    assert result.qty.loc["2024-01-02", "A"] == pytest.approx(1.0)
+    assert result.qty.loc["2024-01-02", "B"] == pytest.approx(-1.0)
+    assert result.equity.loc["2024-01-02"] == pytest.approx(100.0)

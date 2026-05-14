@@ -5,10 +5,13 @@ import pytest
 
 from backtesting.specs import (
     ConditionSpec,
+    PortfolioShapeSpec,
     PositionBucketSpec,
     PositionPolicySpec,
     PositionRuleSpec,
+    ScheduleEvaluationSpec,
     SelectionSpec,
+    ShortingSpec,
     WeightingSpec,
     load_execution_spec,
 )
@@ -34,6 +37,100 @@ def test_load_execution_spec_from_json(tmp_path: Path) -> None:
     assert spec.start == "2024-01-01"
     assert spec.schedule.name == "monthly"
     assert spec.weight_source.kind == "strategy"
+
+
+def test_load_execution_spec_parses_signal_dates_schedule(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "schedule": {"kind": "signal_dates", "weight_change_tolerance": 1e-6},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    spec = load_execution_spec(path)
+
+    assert spec.schedule.kind == "signal_dates"
+    assert spec.schedule.weight_change_tolerance == 1e-6
+
+
+def test_load_execution_spec_parses_signal_dates_evaluation_schedule(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "schedule": {
+                    "kind": "signal_dates",
+                    "weight_change_tolerance": 1e-6,
+                    "evaluation": {"kind": "named", "name": "weekly"},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    spec = load_execution_spec(path)
+
+    assert spec.schedule.kind == "signal_dates"
+    assert spec.schedule.evaluation == ScheduleEvaluationSpec(kind="named", name="weekly")
+
+
+def test_load_execution_spec_parses_rank_top_bottom_and_portfolio_shape(tmp_path: Path) -> None:
+    path = tmp_path / "run_spec.json"
+    path.write_text(
+        json.dumps(
+            {
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "selection": {
+                    "kind": "rank_top_bottom",
+                    "field": "momentum_60d",
+                    "top_n": 20,
+                    "bottom_n": 10,
+                },
+                "portfolio_shape": {
+                    "kind": "long_short",
+                    "gross_long": 1.5,
+                    "gross_short": 0.5,
+                    "group_budget": "proportional_selected",
+                },
+                "shorting": {
+                    "enabled": True,
+                    "borrow_fee_annual": 0.03,
+                    "shortable_field": "shortable",
+                    "cash_collateral_ratio": 1.25,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    spec = load_execution_spec(path)
+
+    assert spec.selection == SelectionSpec(
+        kind="rank_top_bottom",
+        field="momentum_60d",
+        top_n=20,
+        bottom_n=10,
+    )
+    assert spec.portfolio_shape == PortfolioShapeSpec(
+        kind="long_short",
+        gross_long=1.5,
+        gross_short=0.5,
+        group_budget="proportional_selected",
+    )
+    assert spec.shorting == ShortingSpec(
+        enabled=True,
+        borrow_fee_annual=0.03,
+        shortable_field="shortable",
+        cash_collateral_ratio=1.25,
+    )
 
 
 def test_load_execution_spec_rejects_yaml_without_parser_support(tmp_path: Path) -> None:
@@ -341,6 +438,10 @@ def test_example_specs_parse() -> None:
     examples = [
         Path("docs/superpowers/specs/examples/filter-equal-weight.json"),
         Path("docs/superpowers/specs/examples/filter-staged.json"),
+        Path("docs/openclaw/examples/signal-dates-filter.json"),
+        Path("docs/openclaw/examples/signal-dates-weekly-evaluation.json"),
+        Path("docs/openclaw/examples/rank-top-bottom-long-short.json"),
+        Path("docs/openclaw/examples/rank-top-bottom-sector-neutral.json"),
     ]
     for path in examples:
         spec = load_execution_spec(path)

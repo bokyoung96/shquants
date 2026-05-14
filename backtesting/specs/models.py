@@ -19,6 +19,8 @@ class SelectionSpec:
     field: str | None = None
     conditions: tuple[ConditionSpec, ...] = ()
     n: int | None = None
+    top_n: int | None = None
+    bottom_n: int | None = None
     ascending: bool = False
     threshold: float | None = None
     path: str | None = None
@@ -34,6 +36,23 @@ class WeightingSpec:
     path: str | None = None
     hook_id: str | None = None
     params: dict[str, object] = dc_field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class PortfolioShapeSpec:
+    kind: str = "long_only"
+    gross_long: float = 1.0
+    gross_short: float = 1.0
+    group_field: str = "sector"
+    group_budget: str = "equal_group"
+
+
+@dataclass(frozen=True, slots=True)
+class ShortingSpec:
+    enabled: bool = False
+    borrow_fee_annual: float = 0.0
+    shortable_field: str | None = None
+    cash_collateral_ratio: float = 1.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +82,16 @@ class PositionPolicySpec:
 class ScheduleSpec:
     kind: str = "named"
     name: str | None = "monthly"
+    dates: tuple[str, ...] = ()
+    weight_change_tolerance: float = 1e-8
+    evaluate_on_schedule: bool = False
+    evaluation: ScheduleEvaluationSpec | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ScheduleEvaluationSpec:
+    kind: str = "named"
+    name: str | None = "daily"
     dates: tuple[str, ...] = ()
 
 
@@ -112,6 +141,8 @@ class ExecutionSpec:
     data_policy: DataPolicySpec = dc_field(default_factory=DataPolicySpec)
     selection: SelectionSpec | None = None
     weighting: WeightingSpec | None = None
+    portfolio_shape: PortfolioShapeSpec | None = None
+    shorting: ShortingSpec = dc_field(default_factory=ShortingSpec)
     position_policy: PositionPolicySpec | None = None
     spec_source: str = "cli"
     preset_id: str | None = None
@@ -119,7 +150,12 @@ class ExecutionSpec:
 
     @property
     def uses_composable_plan(self) -> bool:
-        return self.selection is not None or self.weighting is not None or self.position_policy is not None
+        return (
+            self.selection is not None
+            or self.weighting is not None
+            or self.portfolio_shape is not None
+            or self.position_policy is not None
+        )
 
 
 @dataclass(frozen=True, slots=True)

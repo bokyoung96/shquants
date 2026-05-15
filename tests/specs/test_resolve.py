@@ -335,6 +335,27 @@ def test_resolve_spec_maps_feature_datasets_through_universe(tmp_path: Path) -> 
     )
 
 
+def test_resolve_spec_maps_price_datasets_to_etf_universe(tmp_path: Path) -> None:
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        schedule=ScheduleSpec(kind="named", name="monthly"),
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=UniverseRegistry.default().get("etf"),
+    )
+
+    assert resolved.dataset_ids == (
+        DatasetId.QW_ETF_ADJ_C,
+        DatasetId.QW_ETF_ADJ_O,
+    )
+
+
 def test_resolve_spec_adds_sector_dataset_for_sector_neutral_portfolio_shape(tmp_path: Path) -> None:
     spec = ExecutionSpec(
         start="2024-01-01",

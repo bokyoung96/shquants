@@ -286,6 +286,17 @@ def default_repositories_for_universe(
             BenchmarkRepository.default(),
             sector_repo,
         )
+    if universe_id == "etf":
+        _sector_name_map, stock_name_map = _load_display_name_maps(ROOT.raw_path / "map.xlsx")
+        sector_repo = SectorRepository.from_frame(
+            _read_static_sector_frame(ROOT.raw_path / "map.xlsx", sector_value="ETF"),
+            prices=_load_default_frame(DatasetId.QW_ETF_ADJ_C),
+            stock_name_map=stock_name_map,
+        )
+        return (
+            BenchmarkRepository.default(),
+            sector_repo,
+        )
     return BenchmarkRepository.default(), SectorRepository.default()
 
 
@@ -369,6 +380,45 @@ def _read_historical_sector_frame(
     pivoted.index.name = "date"
     pivoted.columns.name = None
     return pivoted
+
+
+def _read_static_sector_frame(
+    path: Path,
+    *,
+    ticker_column: str = "TICKER",
+    sector_column: str = "GICS_SECTOR_NAME",
+    sector_value: str | None = None,
+) -> pd.DataFrame:
+    workbook = pd.ExcelFile(path)
+    requested_ticker = ticker_column.strip().upper()
+    requested_sector = sector_column.strip().upper()
+    normalized_filter = None if sector_value is None else sector_value.strip().upper()
+
+    for sheet_name in workbook.sheet_names:
+        frame = pd.read_excel(path, sheet_name=sheet_name)
+        columns = {str(column).strip().upper(): column for column in frame.columns}
+        if requested_ticker not in columns or requested_sector not in columns:
+            continue
+
+        selected = frame.loc[:, [columns[requested_ticker], columns[requested_sector]]].copy()
+        selected.columns = ["symbol", "sector"]
+        selected = selected.dropna(subset=["symbol", "sector"])
+        selected["symbol"] = selected["symbol"].map(lambda value: SectorRepository._normalize_symbol_key(str(value)))
+        selected["sector"] = selected["sector"].astype(str).str.strip()
+        if normalized_filter is not None:
+            selected = selected.loc[selected["sector"].str.upper().eq(normalized_filter)]
+        selected = selected.drop_duplicates(subset=["symbol"], keep="last")
+        if selected.empty:
+            continue
+
+        frame = pd.DataFrame(
+            [dict(zip(selected["symbol"], selected["sector"], strict=True))],
+            index=pd.to_datetime(["1900-01-01"]),
+        ).sort_index(axis=1)
+        frame.index.name = "date"
+        return frame
+
+    raise KeyError(f"missing static sector mapping in {path.name}: {ticker_column}, {sector_column}")
 
 
 def _resolve_kosdaq_gics_level_path(raw_dir: Path, *, level: str = "lv1") -> Path:

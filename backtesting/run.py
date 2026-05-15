@@ -396,7 +396,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--liquidity-lookback", type=int, default=20)
     parser.add_argument("--momentum-weight", type=float, default=0.5)
     parser.add_argument("--out-root")
-    parser.add_argument("--universe", choices=("kosdaq150",), dest="universe_id")
+    parser.add_argument("--universe", choices=("kosdaq150", "etf"), dest="universe_id")
     parser.add_argument("--no-k200", action="store_true")
     parser.add_argument("--no-fractional", action="store_true")
     parser.add_argument("--preset")

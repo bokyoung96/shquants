@@ -221,6 +221,58 @@ def test_loader_uses_semantic_key_for_kosdaq_close_data(tmp_path: Path) -> None:
     assert list(data.frames["close"].columns) == ["A035720"]
 
 
+def test_loader_uses_semantic_key_for_etf_close_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_etf_adj_c",
+        pd.DataFrame(
+            {"A069500": [35000.0, 35100.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_ETF_ADJ_C],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "close" in data.frames
+    assert "qw_etf_adj_c" not in data.frames
+    assert list(data.frames["close"].columns) == ["A069500"]
+
+
+def test_loader_uses_semantic_key_for_etf_adjusted_volume_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_etf_adj_v",
+        pd.DataFrame(
+            {"A069500": [1000.0, 1100.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_ETF_ADJ_V],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "volume" in data.frames
+    assert "qw_etf_adj_v" not in data.frames
+    assert list(data.frames["volume"].columns) == ["A069500"]
+
+
 def test_loader_rejects_duplicate_semantic_frame_keys(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     parquet_dir.mkdir()

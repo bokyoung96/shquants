@@ -13,6 +13,17 @@ EXPECTED_RAW_STEMS = {
     "qw_eps_nfq2",
     "qw_eps_nfy1",
     "qw_equity_lfq0",
+    "qw_etf_adj_c",
+    "qw_etf_adj_h",
+    "qw_etf_adj_l",
+    "qw_etf_adj_o",
+    "qw_etf_adj_v",
+    "qw_etf_aum",
+    "qw_etf_div",
+    "qw_etf_pdf_avg_ret",
+    "qw_etf_pdf_v_value",
+    "qw_etf_spread",
+    "qw_etf_te",
     "qw_foreign",
     "qw_foreign_ratio",
     "qw_gp_lfq0",
@@ -49,6 +60,7 @@ def test_catalog_groups_cover_known_datasets() -> None:
     catalog = DataCatalog.default()
 
     assert DatasetId.QW_ADJ_C in catalog.ids(DatasetGroup.PRICE)
+    assert DatasetId.QW_ETF_ADJ_C in catalog.ids(DatasetGroup.PRICE)
     assert DatasetId.QW_KSDQ_ADJ_C in catalog.ids(DatasetGroup.PRICE)
     assert DatasetId.QW_KSDQ150_YN in catalog.ids(DatasetGroup.FLAG)
     assert DatasetId.QW_OP_NFY1 in catalog.ids(DatasetGroup.ESTIMATE)

@@ -79,6 +79,22 @@ class UniverseRegistry:
                         "membership": DatasetId.QW_KSDQ150_YN,
                     },
                 ),
+                "etf": UniverseSpec(
+                    id="etf",
+                    display_name="ETF",
+                    description="ETF-only price dataset family.",
+                    membership_dataset=None,
+                    default_benchmark_code="IKS200",
+                    default_benchmark_name="KOSPI200",
+                    default_benchmark_dataset="qw_BM",
+                    dataset_aliases={
+                        "close": DatasetId.QW_ETF_ADJ_C,
+                        "open": DatasetId.QW_ETF_ADJ_O,
+                        "high": DatasetId.QW_ETF_ADJ_H,
+                        "low": DatasetId.QW_ETF_ADJ_L,
+                        "volume": DatasetId.QW_ETF_ADJ_V,
+                    },
+                ),
             }
         )
 

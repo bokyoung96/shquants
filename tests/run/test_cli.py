@@ -74,6 +74,47 @@ def test_run_parser_accepts_universe_argument(monkeypatch: pytest.MonkeyPatch) -
 
     assert observed["config"].universe_id == "kosdaq150"
 
+def test_run_parser_accepts_etf_universe_argument(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: dict[str, object] = {}
+
+    class StubRunner:
+        def __init__(self, result_dir=None):
+            pass
+
+        def run_resolved_cli(self, *, preset_id=None, spec_path=None, config=None):
+            observed["config"] = config
+            observed["preset_id"] = preset_id
+            observed["spec_path"] = spec_path
+            index = pd.to_datetime(["2024-01-02"])
+            result = BacktestResult(
+                equity=pd.Series([1.0], index=index),
+                returns=pd.Series([0.0], index=index),
+                weights=pd.DataFrame({"A069500": [1.0]}, index=index),
+                qty=pd.DataFrame({"A069500": [1.0]}, index=index),
+                turnover=pd.Series([0.0], index=index),
+            )
+            return RunReport(config=config, summary={"final_equity": 1.0, "avg_turnover": 0.0}, result=result)
+
+    monkeypatch.setattr("backtesting.run.BacktestRunner", StubRunner)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "run.py",
+            "--strategy",
+            "trend_rank",
+            "--start",
+            "2024-01-02",
+            "--end",
+            "2024-01-02",
+            "--universe",
+            "etf",
+        ],
+    )
+
+    backtesting_main()
+
+    assert observed["config"].universe_id == "etf"
+
 def test_run_parser_accepts_preset_argument(monkeypatch: pytest.MonkeyPatch) -> None:
     observed: dict[str, object] = {}
 

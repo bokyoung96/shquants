@@ -393,3 +393,39 @@ def test_runner_uses_kosdaq_default_next_open_path(tmp_path: Path) -> None:
     assert report.config.use_k200 is False
     assert report.config.benchmark_name == "KOSDAQ150"
     assert report.result.equity.index[-1].isoformat() == "2024-01-04T00:00:00"
+
+def test_runner_uses_etf_universe_specific_datasets(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+
+    store.write("qw_adj_c", pd.DataFrame({"A069500": [1.0, 1.0, 1.0]}, index=index))
+    store.write("qw_etf_adj_c", pd.DataFrame({"A069500": [35000.0, 35100.0, 35200.0]}, index=index))
+
+    runner = BacktestRunner(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+        result_dir=result_dir,
+        write_report_assets=False,
+    )
+    report = runner.run(
+        RunConfig(
+            strategy="trend_rank",
+            start="2024-01-02",
+            end="2024-01-04",
+            lookback=1,
+            schedule="daily",
+            fill_mode="close",
+            universe_id="etf",
+        )
+    )
+
+    assert report.config.universe_id == "etf"
+    assert report.config.use_k200 is False
+    assert report.config.benchmark_name == "KOSPI200"
+    assert report.result.equity.index[-1].isoformat() == "2024-01-04T00:00:00"

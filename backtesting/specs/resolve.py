@@ -94,12 +94,7 @@ def resolve_execution_spec(
         if spec.weight_source.kind == "strategy":
             strategy = build_strategy(
                 spec.strategy,
-                top_n=spec.top_n,
-                lookback=spec.lookback,
-                flow_lookback=spec.flow_lookback,
-                momentum_lookback=spec.momentum_lookback,
-                liquidity_lookback=spec.liquidity_lookback,
-                momentum_weight=spec.momentum_weight,
+                **_strategy_kwargs(spec),
             )
             dataset_ids.extend(_resolve_universe_dataset(universe_spec, dataset_id) for dataset_id in strategy.datasets)
         elif spec.weight_source.kind != "hook":
@@ -140,3 +135,16 @@ def resolve_execution_spec(
         hook_id=execution.weight_source.hook_id,
         resolution_notes=tuple(notes),
     )
+
+
+def _strategy_kwargs(spec: ExecutionSpec) -> dict[str, object]:
+    kwargs: dict[str, object] = {
+        "top_n": spec.top_n,
+        "lookback": spec.lookback,
+        "flow_lookback": spec.flow_lookback,
+        "momentum_lookback": spec.momentum_lookback,
+        "liquidity_lookback": spec.liquidity_lookback,
+        "momentum_weight": spec.momentum_weight,
+    }
+    kwargs.update(spec.strategy_params)
+    return kwargs

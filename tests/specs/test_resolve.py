@@ -395,3 +395,55 @@ def test_resolve_spec_adds_shortable_dataset_for_shorting_field(tmp_path: Path) 
     )
 
     assert DatasetId.QW_TRS_BAN in resolved.dataset_ids
+
+
+def test_resolve_spec_passes_strategy_params_to_registered_strategy(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    class _Strategy:
+        datasets = (DatasetId.QW_BM,)
+
+    def _build_strategy(name: str, **kwargs: object) -> _Strategy:
+        captured["name"] = name
+        captured["kwargs"] = kwargs
+        return _Strategy()
+
+    monkeypatch.setattr(resolve_module, "build_strategy", _build_strategy)
+    spec = ExecutionSpec(
+        start="2024-01-01",
+        end="2024-12-31",
+        strategy="rrg_sector_rotation",
+        top_n=7,
+        flow_lookback=11,
+        momentum_lookback=99,
+        strategy_params={
+            "bottom_n": 9,
+            "rrg_momentum_lookback": 13,
+            "gross_short": 0.75,
+        },
+    )
+
+    resolved = resolve_execution_spec(
+        spec,
+        catalog=DataCatalog.default(),
+        parquet_dir=tmp_path,
+        raw_dir=None,
+        universe_spec=None,
+    )
+
+    assert captured["name"] == "rrg_sector_rotation"
+    assert captured["kwargs"] == {
+        "top_n": 7,
+        "lookback": 20,
+        "flow_lookback": 11,
+        "momentum_lookback": 99,
+        "liquidity_lookback": 20,
+        "momentum_weight": 0.5,
+        "bottom_n": 9,
+        "rrg_momentum_lookback": 13,
+        "gross_short": 0.75,
+    }
+    assert DatasetId.QW_BM in resolved.dataset_ids

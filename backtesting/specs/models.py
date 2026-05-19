@@ -127,6 +127,7 @@ class ExecutionSpec:
     end: str
     capital: float = 100_000_000.0
     strategy: str = "trend_rank"
+    strategy_params: dict[str, object] = dc_field(default_factory=dict)
     name: str | None = None
     description: str | None = None
     top_n: int = 20

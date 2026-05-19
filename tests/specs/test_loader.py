@@ -46,6 +46,31 @@ def test_load_execution_spec_from_json(tmp_path: Path) -> None:
     assert spec.weight_source.kind == "strategy"
 
 
+def test_load_execution_spec_parses_strategy_params(tmp_path: Path) -> None:
+    path = _write_spec(
+        tmp_path,
+        {
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "strategy": "rrg_sector_rotation",
+            "strategy_params": {
+                "bottom_n": 30,
+                "rrg_momentum_lookback": 13,
+                "gross_short": 0.75,
+            },
+        },
+    )
+
+    spec = load_execution_spec(path)
+
+    assert spec.strategy == "rrg_sector_rotation"
+    assert spec.strategy_params == {
+        "bottom_n": 30,
+        "rrg_momentum_lookback": 13,
+        "gross_short": 0.75,
+    }
+
+
 def test_load_execution_spec_parses_signal_dates_schedule(tmp_path: Path) -> None:
     path = tmp_path / "run_spec.json"
     path.write_text(

@@ -85,6 +85,17 @@ should use the current `id` values.
 - `construction`: K200 market-cap base with active-share target and stock/sector active caps.
 - `use`: index-like mandate that should lean toward improving consensus and supportive flow without leaving the benchmark too far behind.
 
+### RRG Sector Rotation
+
+- `id`: `rrg_sector_rotation`
+- `file`: `rrg_sector_rotation.py`
+- `class`: `RrgSectorRotation`
+- `profile`: long-short
+- `data`: `close`, `benchmark`, `k200_yn`, `sector_big`, `market_cap`, `volume`, `eps_fwd_q1`, `eps_fwd_q2`, `eps_fwd`, `op_fwd_q1`, `op_fwd_q2`, `op_fwd`, `foreign_flow`, `inst_flow`, `retail_flow`
+- `signal`: RRG sector leadership/lagging context plus sector-internal forward revision and investor flow imbalance ranks.
+- `construction`: dollar-neutral sector rotation long-short with sector-directed long and short books; not sector-neutral.
+- `use`: benchmark-aware sector rotation when you want relative-strength regime context with balanced gross long and short exposure.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless

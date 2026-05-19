@@ -145,6 +145,27 @@ def test_rrg_sector_rotation_builds_signed_weights_from_market_data() -> None:
     assert last.sum() == pytest.approx(0.0)
 
 
+def test_rrg_sector_rotation_has_no_sector_legs_before_rrg_warmup() -> None:
+    market = _rrg_market()
+    strategy = RrgSectorRotation(
+        top_n=2,
+        bottom_n=2,
+        lookback=20,
+        flow_lookback=20,
+        flow_impulse_lookback=5,
+        rrg_medium_lookback=126,
+        rrg_momentum_lookback=21,
+        rrg_short_lookback=42,
+    )
+
+    bundle = strategy.signal_producer.build(market)
+    first_date = market.frames["close"].index[0]
+
+    assert not bool(bundle.context["long_sector"].loc[first_date].any())
+    assert not bool(bundle.context["short_sector"].loc[first_date].any())
+    assert set(bundle.meta["rrg_state"].loc[first_date]) == {"Unclassified"}
+
+
 def test_rrg_sector_rotation_emits_negative_weights_for_short_leg() -> None:
     strategy = RrgSectorRotation(top_n=2, bottom_n=2)
 

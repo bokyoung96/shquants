@@ -35,6 +35,8 @@ from .strategies import build_strategy, list_strategies
 from .universe import UniverseRegistry, UniverseSpec
 from .validation import validate_position_plan
 
+_SHORTING_STRATEGIES = {"rrg_sector_rotation"}
+
 
 @dataclass(frozen=True, slots=True)
 class RunConfig:
@@ -226,7 +228,11 @@ class BacktestRunner:
             sell_tax=config.sell_tax,
             slippage=config.slippage,
             shorting=ShortingSpec(
-                enabled=config.borrow_fee_annual > 0.0 or config.short_cash_collateral_ratio != 1.0,
+                enabled=(
+                    config.strategy in _SHORTING_STRATEGIES
+                    or config.borrow_fee_annual > 0.0
+                    or config.short_cash_collateral_ratio != 1.0
+                ),
                 borrow_fee_annual=config.borrow_fee_annual,
                 cash_collateral_ratio=config.short_cash_collateral_ratio,
             ),

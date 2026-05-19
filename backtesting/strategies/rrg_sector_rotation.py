@@ -170,8 +170,8 @@ def _build_rrg_context(
     momentum = short_relative - short_relative.shift(momentum_lookback)
 
     return _classify_rrg_states(
-        relative_strength=relative_strength.fillna(0.0),
-        momentum=momentum.fillna(0.0),
+        relative_strength=relative_strength,
+        momentum=momentum,
     )
 
 
@@ -352,11 +352,13 @@ def _classify_rrg_states(
     lagging = relative_strength.lt(0.0) & momentum.lt(0.0)
     weakening = relative_strength.ge(0.0) & momentum.lt(0.0)
 
-    states = pd.DataFrame("Weakening", index=relative_strength.index, columns=relative_strength.columns, dtype=object)
+    valid = relative_strength.notna() & momentum.notna()
+    states = pd.DataFrame("Unclassified", index=relative_strength.index, columns=relative_strength.columns, dtype=object)
     states = states.mask(leading, "Leading")
     states = states.mask(improving, "Improving")
     states = states.mask(lagging, "Lagging")
+    states = states.mask(weakening, "Weakening")
 
-    long_sector = leading | improving
-    short_sector = lagging | weakening
+    long_sector = (leading | improving) & valid
+    short_sector = (lagging | weakening) & valid
     return states, long_sector.astype(bool), short_sector.astype(bool)

@@ -98,6 +98,7 @@ class BacktestCalculation:
                 market=market,
                 universe_spec=universe_spec,
             )
+            _validate_shorting_enabled_for_plan(spec, plan)
             self.adapters.validate_position_plan(plan)
             weights = plan.target_weights
             if schedule_input is None:
@@ -208,3 +209,8 @@ class BacktestCalculation:
             momentum_weight=spec.momentum_weight,
         )
         return strategy.build_plan(market), None, None, {}, resolved_spec
+
+
+def _validate_shorting_enabled_for_plan(spec: ExecutionSpec, plan: PositionPlan) -> None:
+    if bool(plan.target_weights.lt(0.0).any().any()) and not spec.shorting.enabled:
+        raise ValueError("negative target weights require shorting.enabled = true")

@@ -32,6 +32,37 @@ def _rrg_rows() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _quadrant_rows() -> pd.DataFrame:
+    dates = pd.date_range("2024-01-01", periods=2, freq="D")
+    states = {
+        "G45": ("Leading", 0.02, 0.03, 1.0),
+        "G35": ("Improving", -0.02, 0.03, 0.5),
+        "G10": ("Lagging", -0.02, -0.03, -1.0),
+        "G40": ("Weakening", 0.02, -0.03, -0.5),
+    }
+    rows = []
+    for sector, (state, rs_value, mom_value, acc_value) in states.items():
+        for i, date in enumerate(dates):
+            rows.append(
+                {
+                    "date": date,
+                    "sector": sector,
+                    "horizon": "short",
+                    "rs": 1.0,
+                    "log_rs": rs_value,
+                    "rs_centered": rs_value + i * 0.001,
+                    "mom": mom_value + i * 0.001,
+                    "acc": acc_value,
+                    "acc_z": acc_value,
+                    "state": state,
+                    "turning_label": "Neutral",
+                    "persistence": i + 1,
+                    "confidence": 5.0,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def test_make_rrg_3d_figure_contains_scatter3d_traces_and_horizon_dropdown() -> None:
     fig = make_rrg_3d_figure(_rrg_rows(), trail_length=2)
 
@@ -40,6 +71,17 @@ def test_make_rrg_3d_figure_contains_scatter3d_traces_and_horizon_dropdown() -> 
     assert fig.layout.updatemenus
     buttons = fig.layout.updatemenus[0].buttons
     assert [button.label for button in buttons] == ["short", "medium"]
+
+
+def test_make_rrg_3d_figure_maps_sector_names_and_styles_quadrants() -> None:
+    fig = make_rrg_3d_figure(_quadrant_rows(), trail_length=2)
+
+    marker_traces = [trace for trace in fig.data if "marker" in trace.mode and trace.name in {"Information Technology", "Health Care", "Energy", "Financials"}]
+
+    assert {trace.name for trace in marker_traces} == {"Information Technology", "Health Care", "Energy", "Financials"}
+    assert {trace.marker.color for trace in marker_traces} == {"#1f9d55", "#2563eb", "#dc2626", "#f59e0b"}
+    assert {trace.marker.symbol for trace in marker_traces} == {"diamond", "circle", "x", "square"}
+    assert all(float(trace.marker.size) >= 14.0 for trace in marker_traces)
 
 
 def test_export_multi_horizon_rrg_writes_html(tmp_path) -> None:

@@ -17,6 +17,26 @@ The 3D phase-space axes are:
 - `y`: relative momentum
 - `z`: normalized acceleration, `ACC z-score`
 
+The default Plotly view maps WICS sector codes to readable names:
+
+- `G10`: Energy
+- `G15`: Materials
+- `G20`: Industrials
+- `G25`: Consumer Discretionary
+- `G30`: Consumer Staples
+- `G35`: Health Care
+- `G40`: Financials
+- `G45`: Information Technology
+- `G50`: Communication Services
+- `G55`: Utilities
+
+Quadrants are visually separated by marker style:
+
+- Leading: green diamond
+- Improving: blue circle
+- Lagging: red x
+- Weakening: amber square
+
 ## Example
 
 ```bash

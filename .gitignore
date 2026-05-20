@@ -212,6 +212,7 @@ tmp_*.py
 
 # Local agent/runtime state and generated frontend artifacts
 .omx/
+.superpowers/
 tmp-dashboard-logs/
 dashboard/frontend/node_modules/
 dashboard/frontend/*.tsbuildinfo

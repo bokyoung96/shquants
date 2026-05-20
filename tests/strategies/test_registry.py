@@ -66,6 +66,8 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "benchmark_overlay",
         "benchmark_tilt",
         "rrg_sector_rotation",
+        "rrg_fwd_benchmark_tilt",
+        "rrg_pure_sector_rotation",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
 

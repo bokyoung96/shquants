@@ -6,12 +6,13 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import run as root_run
+from backtesting.calculation import _strategy_kwargs, _validate_shorting_enabled_for_plan
 from backtesting.catalog import DataCatalog
 from backtesting.data import ParquetStore
 from backtesting.engine import BacktestResult
 from backtesting.policy.base import BUCKET_LEDGER_COLUMNS, PositionPlan
 from backtesting.reporting.writer import RunWriter, _EMPTY_PNG
-from backtesting.run import BacktestRunner, RunConfig, RunReport, main as backtesting_main
+from backtesting.run import BacktestRunner, RunConfig, RunReport, _parse_strategy_params, main as backtesting_main
 from backtesting.specs import (
     ConditionSpec,
     DataPolicySpec,
@@ -45,6 +46,109 @@ def test_runner_maps_run_config_shorting_costs_to_execution_spec(tmp_path: Path)
     assert resolved_spec.execution.shorting.enabled is True
     assert resolved_spec.execution.shorting.borrow_fee_annual == 0.252
     assert resolved_spec.execution.shorting.cash_collateral_ratio == 1.25
+
+def test_runner_enables_shorting_for_rrg_sector_rotation_run_config(tmp_path: Path) -> None:
+    runner = BacktestRunner(parquet_dir=tmp_path / "parquet", raw_dir=tmp_path / "raw", result_dir=tmp_path / "results")
+
+    resolved_spec = runner.resolve_spec_from_config(
+        RunConfig(
+            strategy="rrg_sector_rotation",
+            start="2024-01-02",
+            end="2024-01-04",
+        )
+    )
+
+    assert resolved_spec.execution.shorting.enabled is True
+    assert resolved_spec.execution.shorting.borrow_fee_annual == 0.0
+    assert resolved_spec.execution.shorting.cash_collateral_ratio == 1.0
+
+def test_runner_maps_run_config_strategy_params_to_execution_spec(tmp_path: Path) -> None:
+    runner = BacktestRunner(parquet_dir=tmp_path / "parquet", raw_dir=tmp_path / "raw", result_dir=tmp_path / "results")
+
+    resolved_spec = runner.resolve_spec_from_config(
+        RunConfig(
+            strategy="rrg_sector_rotation",
+            strategy_params={
+                "bottom_n": 9,
+                "rrg_momentum_lookback": 13,
+                "gross_short": 0.75,
+            },
+            start="2024-01-02",
+            end="2024-01-04",
+        )
+    )
+
+    assert resolved_spec.execution.strategy_params == {
+        "bottom_n": 9,
+        "rrg_momentum_lookback": 13,
+        "gross_short": 0.75,
+    }
+
+def test_parse_strategy_params_parses_json_values() -> None:
+    assert _parse_strategy_params(
+        [
+            "bottom_n=9",
+            "gross_short=0.75",
+            "label=\"core\"",
+            "flag=true",
+        ]
+    ) == {
+        "bottom_n": 9,
+        "gross_short": 0.75,
+        "label": "core",
+        "flag": True,
+    }
+
+def test_calculation_strategy_kwargs_include_strategy_params() -> None:
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-04",
+        strategy="rrg_sector_rotation",
+        top_n=7,
+        flow_lookback=11,
+        strategy_params={
+            "bottom_n": 9,
+            "rrg_momentum_lookback": 13,
+            "gross_short": 0.75,
+        },
+    )
+
+    assert _strategy_kwargs(spec) == {
+        "top_n": 7,
+        "lookback": 20,
+        "flow_lookback": 11,
+        "momentum_lookback": 60,
+        "liquidity_lookback": 20,
+        "momentum_weight": 0.5,
+        "bottom_n": 9,
+        "rrg_momentum_lookback": 13,
+        "gross_short": 0.75,
+    }
+
+def test_position_plan_shorting_gate_rejects_negative_weights_without_shorting_enabled() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    plan = PositionPlan(
+        target_weights=pd.DataFrame({"A": [1.0], "B": [-1.0]}, index=index),
+        bucket_ledger=pd.DataFrame(),
+        bucket_meta=pd.DataFrame(),
+        validation={},
+    )
+    spec = ExecutionSpec(start="2024-01-02", end="2024-01-02", shorting=ShortingSpec(enabled=False))
+
+    with pytest.raises(ValueError, match="shorting.enabled"):
+        _validate_shorting_enabled_for_plan(spec, plan)
+
+def test_position_plan_shorting_gate_allows_negative_weights_when_shorting_enabled() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    plan = PositionPlan(
+        target_weights=pd.DataFrame({"A": [1.0], "B": [-1.0]}, index=index),
+        bucket_ledger=pd.DataFrame(),
+        bucket_meta=pd.DataFrame(),
+        validation={},
+    )
+    spec = ExecutionSpec(start="2024-01-02", end="2024-01-02", shorting=ShortingSpec(enabled=True))
+
+    _validate_shorting_enabled_for_plan(spec, plan)
 
 def test_runner_executes_momentum_strategy(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"

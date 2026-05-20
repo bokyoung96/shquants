@@ -14,11 +14,13 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.revision_signal import RevisionSignal
+    from backtesting.strategies.rrg_sector_rotation import RrgSectorRotation
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
     assert RevisionSignal.__name__ == "RevisionSignal"
+    assert RrgSectorRotation.__name__ == "RrgSectorRotation"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -29,6 +31,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_signal" in strategies
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
+    assert "rrg_sector_rotation" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -56,7 +59,16 @@ def test_registry_rejects_old_long_strategy_names() -> None:
 def test_registry_lists_screened_strategy_names_only() -> None:
     strategies = set(list_strategies())
 
-    assert strategies == {"trend_rank", "earnings_revision", "revision_signal", "benchmark_overlay", "benchmark_tilt"}
+    assert strategies == {
+        "trend_rank",
+        "earnings_revision",
+        "revision_signal",
+        "benchmark_overlay",
+        "benchmark_tilt",
+        "rrg_sector_rotation",
+        "rrg_fwd_benchmark_tilt",
+        "rrg_pure_sector_rotation",
+    }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
 
 

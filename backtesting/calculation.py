@@ -98,6 +98,7 @@ class BacktestCalculation:
                 market=market,
                 universe_spec=universe_spec,
             )
+            _validate_shorting_enabled_for_plan(spec, plan)
             self.adapters.validate_position_plan(plan)
             weights = plan.target_weights
             if schedule_input is None:
@@ -200,11 +201,24 @@ class BacktestCalculation:
 
         strategy = self.adapters.build_strategy(
             spec.strategy,
-            top_n=spec.top_n,
-            lookback=spec.lookback,
-            flow_lookback=spec.flow_lookback,
-            momentum_lookback=spec.momentum_lookback,
-            liquidity_lookback=spec.liquidity_lookback,
-            momentum_weight=spec.momentum_weight,
+            **_strategy_kwargs(spec),
         )
         return strategy.build_plan(market), None, None, {}, resolved_spec
+
+
+def _validate_shorting_enabled_for_plan(spec: ExecutionSpec, plan: PositionPlan) -> None:
+    if bool(plan.target_weights.lt(0.0).any().any()) and not spec.shorting.enabled:
+        raise ValueError("negative target weights require shorting.enabled = true")
+
+
+def _strategy_kwargs(spec: ExecutionSpec) -> dict[str, object]:
+    kwargs: dict[str, object] = {
+        "top_n": spec.top_n,
+        "lookback": spec.lookback,
+        "flow_lookback": spec.flow_lookback,
+        "momentum_lookback": spec.momentum_lookback,
+        "liquidity_lookback": spec.liquidity_lookback,
+        "momentum_weight": spec.momentum_weight,
+    }
+    kwargs.update(spec.strategy_params)
+    return kwargs

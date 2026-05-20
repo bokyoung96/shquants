@@ -343,6 +343,7 @@ def load_execution_spec(path: str | Path) -> ExecutionSpec:
         end=end,
         capital=_read_float(payload, "capital", 100_000_000.0, min_value=0.0) or 0.0,
         strategy=_read_required_string(payload, "strategy") if "strategy" in payload else "trend_rank",
+        strategy_params=_read_params(payload, "strategy_params", "strategy_params"),
         name=_read_optional_string(payload, "name"),
         description=_read_optional_string(payload, "description"),
         top_n=_read_int(payload, "top_n", 20, min_value=1) or 20,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from time import perf_counter
 from typing import Callable, Iterator
@@ -35,6 +35,8 @@ from .strategies import build_strategy, list_strategies
 from .universe import UniverseRegistry, UniverseSpec
 from .validation import validate_position_plan
 
+_SHORTING_STRATEGIES = {"rrg_sector_rotation"}
+
 
 @dataclass(frozen=True, slots=True)
 class RunConfig:
@@ -42,6 +44,7 @@ class RunConfig:
     end: str
     capital: float = 100_000_000.0
     strategy: str = "trend_rank"
+    strategy_params: dict[str, object] = field(default_factory=dict)
     name: str | None = None
     top_n: int = 20
     lookback: int = 20
@@ -213,6 +216,7 @@ class BacktestRunner:
             end=config.end,
             capital=config.capital,
             strategy=config.strategy,
+            strategy_params=dict(config.strategy_params),
             name=config.name,
             top_n=config.top_n,
             lookback=config.lookback,
@@ -226,7 +230,11 @@ class BacktestRunner:
             sell_tax=config.sell_tax,
             slippage=config.slippage,
             shorting=ShortingSpec(
-                enabled=config.borrow_fee_annual > 0.0 or config.short_cash_collateral_ratio != 1.0,
+                enabled=(
+                    config.strategy in _SHORTING_STRATEGIES
+                    or config.borrow_fee_annual > 0.0
+                    or config.short_cash_collateral_ratio != 1.0
+                ),
                 borrow_fee_annual=config.borrow_fee_annual,
                 cash_collateral_ratio=config.short_cash_collateral_ratio,
             ),
@@ -261,6 +269,7 @@ class BacktestRunner:
             end=spec.end,
             capital=spec.capital,
             strategy=spec.strategy,
+            strategy_params=dict(spec.strategy_params),
             name=spec.name,
             top_n=spec.top_n,
             lookback=spec.lookback,
@@ -395,6 +404,13 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--momentum-lookback", type=int, default=60)
     parser.add_argument("--liquidity-lookback", type=int, default=20)
     parser.add_argument("--momentum-weight", type=float, default=0.5)
+    parser.add_argument(
+        "--strategy-param",
+        action="append",
+        default=[],
+        metavar="KEY=JSON",
+        help="strategy-specific parameter, e.g. --strategy-param bottom_n=30",
+    )
     parser.add_argument("--out-root")
     parser.add_argument("--universe", choices=("kosdaq150", "etf"), dest="universe_id")
     parser.add_argument("--no-k200", action="store_true")
@@ -417,6 +433,7 @@ def main() -> None:
             end=args.end,
             capital=args.capital,
             strategy=args.strategy,
+            strategy_params=_parse_strategy_params(args.strategy_param),
             name=args.name,
             top_n=args.top_n,
             lookback=args.lookback,
@@ -442,6 +459,19 @@ def main() -> None:
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     print(report.result.equity.tail())
+
+
+def _parse_strategy_params(values: list[str]) -> dict[str, object]:
+    params: dict[str, object] = {}
+    for raw in values:
+        key, separator, value = raw.partition("=")
+        if not separator or not key:
+            raise SystemExit("--strategy-param values must be KEY=JSON")
+        try:
+            params[key] = json.loads(value)
+        except json.JSONDecodeError:
+            params[key] = value
+    return params
 
 
 if __name__ == "__main__":

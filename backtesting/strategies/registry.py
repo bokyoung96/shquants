@@ -8,7 +8,6 @@ from .benchmark_overlay import BenchmarkOverlay
 from .benchmark_tilt import BenchmarkTilt
 from .earnings_revision import EarningsRevision
 from .revision_signal import RevisionSignal
-from .rrg_sector_rotation import RrgFwdBenchmarkTilt, RrgPureSectorRotation, RrgSectorRotation
 from .trend_rank import TrendRank
 
 
@@ -43,8 +42,5 @@ register_strategy("earnings_revision", EarningsRevision)
 register_strategy("revision_signal", RevisionSignal)
 register_strategy("benchmark_overlay", BenchmarkOverlay)
 register_strategy("benchmark_tilt", BenchmarkTilt)
-register_strategy("rrg_sector_rotation", RrgSectorRotation)
-register_strategy("rrg_fwd_benchmark_tilt", RrgFwdBenchmarkTilt)
-register_strategy("rrg_pure_sector_rotation", RrgPureSectorRotation)
 
 

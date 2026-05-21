@@ -47,31 +47,16 @@ def test_runner_maps_run_config_shorting_costs_to_execution_spec(tmp_path: Path)
     assert resolved_spec.execution.shorting.borrow_fee_annual == 0.252
     assert resolved_spec.execution.shorting.cash_collateral_ratio == 1.25
 
-def test_runner_enables_shorting_for_rrg_sector_rotation_run_config(tmp_path: Path) -> None:
-    runner = BacktestRunner(parquet_dir=tmp_path / "parquet", raw_dir=tmp_path / "raw", result_dir=tmp_path / "results")
-
-    resolved_spec = runner.resolve_spec_from_config(
-        RunConfig(
-            strategy="rrg_sector_rotation",
-            start="2024-01-02",
-            end="2024-01-04",
-        )
-    )
-
-    assert resolved_spec.execution.shorting.enabled is True
-    assert resolved_spec.execution.shorting.borrow_fee_annual == 0.0
-    assert resolved_spec.execution.shorting.cash_collateral_ratio == 1.0
-
 def test_runner_maps_run_config_strategy_params_to_execution_spec(tmp_path: Path) -> None:
     runner = BacktestRunner(parquet_dir=tmp_path / "parquet", raw_dir=tmp_path / "raw", result_dir=tmp_path / "results")
 
     resolved_spec = runner.resolve_spec_from_config(
         RunConfig(
-            strategy="rrg_sector_rotation",
+            strategy="benchmark_tilt",
             strategy_params={
-                "bottom_n": 9,
-                "rrg_momentum_lookback": 13,
-                "gross_short": 0.75,
+                "active_share_target": 0.25,
+                "max_stock_active": 0.08,
+                "min_names": 10,
             },
             start="2024-01-02",
             end="2024-01-04",
@@ -79,9 +64,9 @@ def test_runner_maps_run_config_strategy_params_to_execution_spec(tmp_path: Path
     )
 
     assert resolved_spec.execution.strategy_params == {
-        "bottom_n": 9,
-        "rrg_momentum_lookback": 13,
-        "gross_short": 0.75,
+        "active_share_target": 0.25,
+        "max_stock_active": 0.08,
+        "min_names": 10,
     }
 
 def test_parse_strategy_params_parses_json_values() -> None:
@@ -103,13 +88,13 @@ def test_calculation_strategy_kwargs_include_strategy_params() -> None:
     spec = ExecutionSpec(
         start="2024-01-02",
         end="2024-01-04",
-        strategy="rrg_sector_rotation",
+        strategy="benchmark_tilt",
         top_n=7,
         flow_lookback=11,
         strategy_params={
-            "bottom_n": 9,
-            "rrg_momentum_lookback": 13,
-            "gross_short": 0.75,
+            "active_share_target": 0.25,
+            "max_stock_active": 0.08,
+            "min_names": 10,
         },
     )
 
@@ -120,9 +105,9 @@ def test_calculation_strategy_kwargs_include_strategy_params() -> None:
         "momentum_lookback": 60,
         "liquidity_lookback": 20,
         "momentum_weight": 0.5,
-        "bottom_n": 9,
-        "rrg_momentum_lookback": 13,
-        "gross_short": 0.75,
+        "active_share_target": 0.25,
+        "max_stock_active": 0.08,
+        "min_names": 10,
     }
 
 def test_position_plan_shorting_gate_rejects_negative_weights_without_shorting_enabled() -> None:

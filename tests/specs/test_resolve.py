@@ -415,14 +415,14 @@ def test_resolve_spec_passes_strategy_params_to_registered_strategy(
     spec = ExecutionSpec(
         start="2024-01-01",
         end="2024-12-31",
-        strategy="rrg_sector_rotation",
+        strategy="benchmark_tilt",
         top_n=7,
         flow_lookback=11,
         momentum_lookback=99,
         strategy_params={
-            "bottom_n": 9,
-            "rrg_momentum_lookback": 13,
-            "gross_short": 0.75,
+            "active_share_target": 0.25,
+            "max_stock_active": 0.08,
+            "min_names": 10,
         },
     )
 
@@ -434,7 +434,7 @@ def test_resolve_spec_passes_strategy_params_to_registered_strategy(
         universe_spec=None,
     )
 
-    assert captured["name"] == "rrg_sector_rotation"
+    assert captured["name"] == "benchmark_tilt"
     assert captured["kwargs"] == {
         "top_n": 7,
         "lookback": 20,
@@ -442,8 +442,8 @@ def test_resolve_spec_passes_strategy_params_to_registered_strategy(
         "momentum_lookback": 99,
         "liquidity_lookback": 20,
         "momentum_weight": 0.5,
-        "bottom_n": 9,
-        "rrg_momentum_lookback": 13,
-        "gross_short": 0.75,
+        "active_share_target": 0.25,
+        "max_stock_active": 0.08,
+        "min_names": 10,
     }
     assert DatasetId.QW_BM in resolved.dataset_ids

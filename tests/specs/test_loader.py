@@ -52,22 +52,22 @@ def test_load_execution_spec_parses_strategy_params(tmp_path: Path) -> None:
         {
             "start": "2024-01-01",
             "end": "2024-12-31",
-            "strategy": "rrg_sector_rotation",
+            "strategy": "benchmark_tilt",
             "strategy_params": {
-                "bottom_n": 30,
-                "rrg_momentum_lookback": 13,
-                "gross_short": 0.75,
+                "active_share_target": 0.25,
+                "max_stock_active": 0.08,
+                "flow_lookback": 13,
             },
         },
     )
 
     spec = load_execution_spec(path)
 
-    assert spec.strategy == "rrg_sector_rotation"
+    assert spec.strategy == "benchmark_tilt"
     assert spec.strategy_params == {
-        "bottom_n": 30,
-        "rrg_momentum_lookback": 13,
-        "gross_short": 0.75,
+        "active_share_target": 0.25,
+        "max_stock_active": 0.08,
+        "flow_lookback": 13,
     }
 
 

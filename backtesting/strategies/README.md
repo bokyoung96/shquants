@@ -13,6 +13,7 @@ logic:
 - `revision_signal`: signal-triggered earnings revision with market trend risk-off.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
+- `rrg_sector_rotation`: RRG sector rotation with revision and optional flow signals.
 
 Each strategy entry below follows the same schema:
 
@@ -85,6 +86,18 @@ should use the current `id` values.
 - `construction`: K200 market-cap base with active-share target and stock/sector active caps.
 - `use`: index-like mandate that should lean toward improving consensus and supportive flow without leaving the benchmark too far behind.
 
+### RRG Sector Rotation
+
+- `id`: `rrg_sector_rotation`
+- `file`: `rrg_sector_rotation.py`
+- `class`: `RrgSectorRotation`
+- `profile`: long-short by default; can run as a long-only research book with `gross_short=0`.
+- `data`: `close`, `benchmark`, `sector_big`, `market_cap`, `k200_yn`, forward estimate horizons, and flow frames unless `alpha_mode="fwd_only"`.
+- `signal`: RRG sector leadership/lagging context plus sector-internal forward revision and optional investor flow ranks.
+- `construction`: sector-directed long and short books; the saved fwd-only no-name-cap variant uses state-equal long budgets and can cap Weakening survivors at prior weights.
+- `compatibility`: the exact archived parameter set reuses `results/backtests/rrg_20260519_174931/positions/weights.parquet` when present, because the deleted intermediate construction code is not recoverable from Git.
+- `use`: restored RRG research strategy needed to rebuild saved runs such as `results/backtests/rrg_20260519_174931`.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless
@@ -102,6 +115,7 @@ a preset overrides schedule or fill mode:
 - `revision_signal`: use `uv run python -m backtesting.run --preset kospi200_revision_signal`
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
+- `rrg_sector_rotation`: `weekly`, `close`
 
 ## Screening Notes
 

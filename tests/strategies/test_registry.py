@@ -14,11 +14,13 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.revision_signal import RevisionSignal
+    from backtesting.strategies.rrg_sector_rotation import RrgSectorRotation
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
     assert RevisionSignal.__name__ == "RevisionSignal"
+    assert RrgSectorRotation.__name__ == "RrgSectorRotation"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -29,6 +31,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_signal" in strategies
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
+    assert "rrg_sector_rotation" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -62,6 +65,7 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "revision_signal",
         "benchmark_overlay",
         "benchmark_tilt",
+        "rrg_sector_rotation",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
 
@@ -238,6 +242,104 @@ def test_soft_participation_benchmark_overlay_uses_available_market_cap_dataset(
 
     assert "qw_mktcap" in dataset_values
     assert "qw_mktcap_flt" not in dataset_values
+
+
+def test_rrg_sector_rotation_uses_saved_run_dataset_contract() -> None:
+    strategy = build_strategy(
+        "rrg_sector_rotation",
+        gross_short=0,
+        alpha_mode="fwd_only",
+        use_name_cap=False,
+        sector_budget_mode="state_equal",
+        fwd_entry_rule="majority_horizons",
+        hold_weakening_longs=True,
+        hold_long_mode="cap",
+    )
+
+    assert [dataset.value for dataset in strategy.datasets] == [
+        "qw_adj_c",
+        "qw_BM",
+        "qw_k200_yn",
+        "qw_wics_sec_big",
+        "qw_mktcap",
+        "qw_eps_nfq1",
+        "qw_eps_nfq2",
+        "qw_eps_nfy1",
+        "qw_op_nfq1",
+        "qw_op_nfq2",
+        "qw_op_nfy1",
+    ]
+
+
+def test_rrg_sector_rotation_fwd_only_saved_config_builds_without_flow_frames() -> None:
+    index = pd.date_range("2024-01-02", periods=12, freq="D")
+    close = pd.DataFrame(
+        {
+            "A": np.linspace(100, 150, len(index)),
+            "B": np.linspace(100, 145, len(index)),
+            "C": np.linspace(100, 95, len(index)),
+        },
+        index=index,
+        dtype=float,
+    )
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100, 110, len(index))}, index=index, dtype=float)
+    sector = pd.DataFrame(
+        {
+            "A": ["tech"] * len(index),
+            "B": ["tech"] * len(index),
+            "C": ["finance"] * len(index),
+        },
+        index=index,
+    )
+    membership = pd.DataFrame(1, index=index, columns=close.columns)
+    market_cap = pd.DataFrame(100.0, index=index, columns=close.columns)
+    revisions = pd.DataFrame(
+        {
+            "A": np.linspace(10, 20, len(index)),
+            "B": np.linspace(10, 18, len(index)),
+            "C": np.linspace(10, 8, len(index)),
+        },
+        index=index,
+        dtype=float,
+    )
+    market = MarketData(
+        frames={
+            "close": close,
+            "benchmark": benchmark,
+            "sector_big": sector,
+            "k200_yn": membership,
+            "market_cap": market_cap,
+            "eps_fwd_q1": revisions,
+            "eps_fwd_q2": revisions,
+            "eps_fwd": revisions,
+            "op_fwd_q1": revisions,
+            "op_fwd_q2": revisions,
+            "op_fwd": revisions,
+        },
+        universe=None,
+        benchmark=None,
+    )
+    strategy = build_strategy(
+        "rrg_sector_rotation",
+        lookback=1,
+        rrg_medium_lookback=5,
+        rrg_short_lookback=5,
+        rrg_momentum_lookback=1,
+        gross_short=0,
+        alpha_mode="fwd_only",
+        sector_budget_mode="state_equal",
+        fwd_entry_rule="majority_horizons",
+        hold_weakening_longs=True,
+        hold_long_mode="cap",
+        use_name_cap=False,
+    )
+
+    weights = strategy.build_weights(market)
+
+    assert weights.index.equals(index)
+    assert set(weights.columns) == {"A", "B", "C"}
+    assert weights.min().min() >= 0.0
+    assert weights.max().max() <= 1.0
 
 
 def test_benchmark_tilt_overlays_active_weights_inside_k200_universe() -> None:

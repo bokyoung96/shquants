@@ -91,6 +91,37 @@ class RrgSectorRotation(ComposableStrategy):
 
 
 @dataclass(slots=True)
+class RrgFwdFlow1(ComposableStrategy):
+    max_names: int = 10
+    lookback: int = 20
+    flow_lookback: int = 20
+    rrg_medium_lookback: int = 126
+    rrg_momentum_lookback: int = 21
+    rrg_short_lookback: int = 42
+    rrg_transition_threshold: float = 0.005
+    gross_long: float = 1.0
+
+    def __post_init__(self) -> None:
+        validate_positive("max_names", self.max_names)
+        validate_positive("lookback", self.lookback)
+        validate_positive("flow_lookback", self.flow_lookback)
+        if self.gross_long < 0.0:
+            raise ValueError("gross_long must be non-negative")
+        self.signal_producer = _RrgFwdFlow1Signal(
+            lookback=self.lookback,
+            flow_lookback=self.flow_lookback,
+            rrg_medium_lookback=self.rrg_medium_lookback,
+            rrg_momentum_lookback=self.rrg_momentum_lookback,
+            rrg_short_lookback=self.rrg_short_lookback,
+            rrg_transition_threshold=self.rrg_transition_threshold,
+        )
+        self.construction_rule = _RrgConcentratedEqualWeight(
+            max_names=self.max_names,
+            gross_long=self.gross_long,
+        )
+
+
+@dataclass(slots=True)
 class RrgFwdBenchmarkTilt(ComposableStrategy):
     lookback: int = 20
     rrg_medium_lookback: int = 126
@@ -327,6 +358,51 @@ class _RrgSectorRotationLongShort:
                 "group_long_budget": group_long_budget,
                 "group_short_budget": group_short_budget,
                 "side_exposure": side_exposure,
+            },
+        )
+
+
+@dataclass(slots=True)
+class _RrgConcentratedEqualWeight:
+    max_names: int
+    gross_long: float = 1.0
+
+    def __post_init__(self) -> None:
+        validate_positive("max_names", self.max_names)
+        if self.gross_long < 0.0:
+            raise ValueError("gross_long must be non-negative")
+
+    def build(self, bundle: SignalBundle) -> ConstructionResult:
+        alpha = bundle.alpha.astype(float)
+        tradable = _optional_frame(bundle, "tradable", alpha.notna()).reindex(index=alpha.index, columns=alpha.columns)
+        tradable = tradable.fillna(False).astype(bool)
+        entry_mask = _required_frame(bundle, "entry_mask").reindex(index=alpha.index, columns=alpha.columns)
+        entry_mask = entry_mask.fillna(False).astype(bool)
+        hold_mask = _required_frame(bundle, "hold_mask").reindex(index=alpha.index, columns=alpha.columns)
+        hold_mask = hold_mask.fillna(False).astype(bool)
+
+        weights = pd.DataFrame(0.0, index=alpha.index, columns=alpha.columns, dtype=float)
+        selected = pd.DataFrame(False, index=alpha.index, columns=alpha.columns, dtype=bool)
+        previous_selected = pd.Series(False, index=alpha.columns, dtype=bool)
+
+        for ts in alpha.index:
+            row_alpha = alpha.loc[ts]
+            candidates = entry_mask.loc[ts] | (previous_selected & hold_mask.loc[ts])
+            candidates = candidates & tradable.loc[ts] & row_alpha.notna() & row_alpha.gt(0.0)
+            ranked = row_alpha.loc[candidates].sort_values(ascending=False, kind="stable").head(self.max_names)
+            if not ranked.empty and self.gross_long > 0.0:
+                weight = float(self.gross_long) / len(ranked)
+                weights.loc[ts, ranked.index] = weight
+                selected.loc[ts, ranked.index] = True
+            previous_selected = selected.loc[ts].copy()
+
+        return ConstructionResult(
+            base_target_weights=weights,
+            selection_mask=selected,
+            group_long_budget=None,
+            group_short_budget=None,
+            meta={
+                "selected_long": selected,
             },
         )
 
@@ -827,6 +903,133 @@ class _SparseBenchmarkOverlayConstruction(_BenchmarkOverlayConstruction):
 
 
 @dataclass(slots=True)
+class _RrgFwdFlow1Signal:
+    lookback: int = 20
+    flow_lookback: int = 20
+    rrg_medium_lookback: int = 126
+    rrg_momentum_lookback: int = 21
+    rrg_short_lookback: int = 42
+    rrg_transition_threshold: float = 0.005
+
+    @property
+    def datasets(self) -> tuple[DatasetId, ...]:
+        return (
+            DatasetId.QW_ADJ_C,
+            DatasetId.QW_BM,
+            DatasetId.QW_K200_YN,
+            DatasetId.QW_WICS_SEC_BIG,
+            DatasetId.QW_MKTCAP,
+            DatasetId.QW_MKTCAP_FLT,
+            DatasetId.QW_V,
+            DatasetId.QW_FOREIGN,
+            DatasetId.QW_INSTITUTION,
+            DatasetId.QW_RETAIL,
+            DatasetId.QW_EPS_NFQ1,
+            DatasetId.QW_EPS_NFQ2,
+            DatasetId.QW_EPS_NFY1,
+            DatasetId.QW_OP_NFQ1,
+            DatasetId.QW_OP_NFQ2,
+            DatasetId.QW_OP_NFY1,
+        )
+
+    def build(self, market: MarketData) -> SignalBundle:
+        close = market.frames["close"].astype(float)
+        k200 = market.frames["k200_yn"].reindex_like(close).fillna(False).astype(bool)
+        active_columns = k200.columns[k200.any(axis=0)]
+        if len(active_columns) > 0:
+            close = close.loc[:, active_columns]
+            k200 = k200.loc[:, active_columns]
+
+        sector = market.frames["sector_big"].reindex(index=close.index, columns=close.columns).ffill()
+        market_cap_source = market.frames.get("float_market_cap", market.frames["market_cap"])
+        market_cap = market_cap_source.reindex(index=close.index, columns=close.columns).ffill().astype(float)
+        benchmark_frame = market.frames["benchmark"]
+        benchmark = benchmark_frame["IKS200"] if "IKS200" in benchmark_frame.columns else benchmark_frame.iloc[:, 0]
+        benchmark = benchmark.reindex(close.index).ffill().astype(float)
+
+        rrg_state, _long_sector, _short_sector = _build_rrg_context(
+            close=close,
+            benchmark=benchmark,
+            sector=sector,
+            membership=k200,
+            market_cap=market_cap,
+            medium_lookback=self.rrg_medium_lookback,
+            momentum_lookback=self.rrg_momentum_lookback,
+            short_lookback=self.rrg_short_lookback,
+            transition_threshold=self.rrg_transition_threshold,
+        )
+        stock_consensus = _build_stock_consensus_confirmation(
+            frames=market.frames,
+            index=close.index,
+            columns=close.columns,
+            sector=sector,
+            lookback=self.lookback,
+        )
+        sector_consensus = _build_sector_consensus_confirmation(
+            stock_score=stock_consensus,
+            sector=sector,
+            membership=k200,
+            weights=market_cap,
+        )
+        stock_flow = _build_stock_flow_confirmation(
+            frames=market.frames,
+            close=close,
+            flow_lookback=self.flow_lookback,
+        )
+        sector_flow = _build_sector_flow_confirmation(
+            stock_score=stock_flow,
+            sector=sector,
+            membership=k200,
+            weights=market_cap,
+        )
+
+        stock_confirm = stock_consensus.where(stock_consensus.notna(), stock_flow)
+        sector_confirm = sector_consensus.where(sector_consensus.notna(), sector_flow)
+        sector_confirm_by_symbol = _map_sector_values_to_symbols(
+            sector=sector,
+            sector_values=sector_confirm,
+        )
+        state_by_symbol = _map_sector_state_to_symbols(
+            sector=sector.reindex(index=close.index, columns=close.columns),
+            rrg_state=rrg_state.reindex(index=close.index),
+        )
+        confirmed = sector_confirm_by_symbol.gt(0.0) & stock_confirm.gt(0.0)
+        entry_mask = state_by_symbol.isin(("Leading", "Improving")) & confirmed & k200
+        hold_mask = state_by_symbol.isin(("Leading", "Improving", "Weakening")) & confirmed & k200
+
+        sector_rank = sector_confirm.rank(axis=1, ascending=True, pct=True)
+        sector_rank_by_symbol = _map_sector_values_to_symbols(
+            sector=sector,
+            sector_values=sector_rank,
+        )
+        stock_rank = stock_confirm.rank(axis=1, ascending=True, pct=True)
+        candidate_score = sector_rank_by_symbol.combine(stock_rank, np.minimum)
+        candidate_score = candidate_score.where((entry_mask | hold_mask) & k200)
+
+        return SignalBundle(
+            alpha=candidate_score,
+            context={
+                "tradable": k200,
+                "entry_mask": entry_mask.fillna(False).astype(bool),
+                "hold_mask": hold_mask.fillna(False).astype(bool),
+                "sector": sector,
+                "rrg_state": rrg_state,
+                "sector_confirm_score": sector_confirm_by_symbol,
+                "stock_confirm_score": stock_confirm,
+                "stock_consensus_score": stock_consensus,
+                "stock_flow_score": stock_flow,
+            },
+            meta={
+                "rrg_state": rrg_state,
+                "sector_consensus_score": sector_consensus,
+                "sector_flow_score": sector_flow,
+                "stock_consensus_score": stock_consensus,
+                "stock_flow_score": stock_flow,
+            },
+        )
+
+
+@dataclass(slots=True)
 class _RrgSectorRotationSignal:
     lookback: int = 20
     flow_lookback: int = 20
@@ -1255,6 +1458,114 @@ def _sector_weighted_returns(
             row[sector_name] = float((returns.loc[ts, names] * sector_weights).sum())
         rows[ts] = row
     return pd.DataFrame.from_dict(rows, orient="index").reindex(index=returns.index)
+
+
+def _build_stock_consensus_confirmation(
+    *,
+    frames: dict[str, pd.DataFrame],
+    index: pd.Index,
+    columns: pd.Index,
+    sector: pd.DataFrame,
+    lookback: int,
+) -> pd.DataFrame:
+    eps_delta, _eps_count, _eps_positive_count = _estimate_family_delta(
+        frames=frames,
+        keys=("eps_fwd_q1", "eps_fwd_q2", "eps_fwd"),
+        index=index,
+        columns=columns,
+        sector=sector,
+        lookback=lookback,
+    )
+    op_delta, _op_count, _op_positive_count = _estimate_family_delta(
+        frames=frames,
+        keys=("op_fwd_q1", "op_fwd_q2", "op_fwd"),
+        index=index,
+        columns=columns,
+        sector=sector,
+        lookback=lookback,
+    )
+    return eps_delta.mul(0.5).add(op_delta.mul(0.5), fill_value=np.nan).where(eps_delta.notna() & op_delta.notna())
+
+
+def _build_stock_flow_confirmation(
+    *,
+    frames: dict[str, pd.DataFrame],
+    close: pd.DataFrame,
+    flow_lookback: int,
+) -> pd.DataFrame:
+    foreign = frames["foreign_flow"].reindex_like(close).fillna(0.0).astype(float)
+    inst = frames["inst_flow"].reindex_like(close).fillna(0.0).astype(float)
+    retail = frames["retail_flow"].reindex_like(close).fillna(0.0).astype(float)
+    volume = frames["volume"].reindex_like(close).fillna(0.0).astype(float)
+    trading_value = close.mul(volume).replace(0.0, np.nan)
+    flow_pressure = foreign.add(inst, fill_value=0.0).sub(retail, fill_value=0.0).divide(trading_value)
+    flow_mean = flow_pressure.rolling(flow_lookback, min_periods=max(2, flow_lookback // 2)).mean()
+    return _rolling_zscore(flow_mean, flow_lookback)
+
+
+def _build_sector_consensus_confirmation(
+    *,
+    stock_score: pd.DataFrame,
+    sector: pd.DataFrame,
+    membership: pd.DataFrame,
+    weights: pd.DataFrame,
+) -> pd.DataFrame:
+    return _sector_weighted_signal(
+        values=stock_score,
+        sector=sector,
+        membership=membership,
+        weights=weights,
+    )
+
+
+def _build_sector_flow_confirmation(
+    *,
+    stock_score: pd.DataFrame,
+    sector: pd.DataFrame,
+    membership: pd.DataFrame,
+    weights: pd.DataFrame,
+) -> pd.DataFrame:
+    return _sector_weighted_signal(
+        values=stock_score,
+        sector=sector,
+        membership=membership,
+        weights=weights,
+    )
+
+
+def _sector_weighted_signal(
+    *,
+    values: pd.DataFrame,
+    sector: pd.DataFrame,
+    membership: pd.DataFrame,
+    weights: pd.DataFrame,
+) -> pd.DataFrame:
+    rows: dict[pd.Timestamp, dict[object, float]] = {}
+    aligned_sector = sector.reindex(index=values.index, columns=values.columns)
+    aligned_membership = membership.reindex(index=values.index, columns=values.columns).fillna(False).astype(bool)
+    aligned_weights = weights.reindex(index=values.index, columns=values.columns).ffill().astype(float)
+    for ts in values.index:
+        valid = aligned_membership.loc[ts] & values.loc[ts].notna() & aligned_sector.loc[ts].notna()
+        row: dict[object, float] = {}
+        for sector_name in pd.unique(aligned_sector.loc[ts, valid]):
+            names = values.columns[valid & aligned_sector.loc[ts].eq(sector_name)]
+            if len(names) == 0:
+                continue
+            sector_weights = aligned_weights.loc[ts, names].fillna(0.0).clip(lower=0.0)
+            if float(sector_weights.sum()) <= 0.0:
+                sector_weights = pd.Series(1.0, index=names, dtype=float)
+            sector_weights = sector_weights / float(sector_weights.sum())
+            row[sector_name] = float((values.loc[ts, names] * sector_weights).sum())
+        rows[ts] = row
+    return pd.DataFrame.from_dict(rows, orient="index").reindex(index=values.index)
+
+
+def _map_sector_values_to_symbols(*, sector: pd.DataFrame, sector_values: pd.DataFrame) -> pd.DataFrame:
+    values_by_symbol = pd.DataFrame(np.nan, index=sector.index, columns=sector.columns, dtype=float)
+    for ts in sector.index:
+        row_values = sector_values.loc[ts] if ts in sector_values.index else pd.Series(dtype=float)
+        values_by_symbol.loc[ts] = sector.loc[ts].map(row_values)
+    return values_by_symbol
 
 
 def _build_forward_score(

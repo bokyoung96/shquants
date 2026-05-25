@@ -14,12 +14,13 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.revision_signal import RevisionSignal
-    from backtesting.strategies.rrg_sector_rotation import RrgSectorRotation
+    from backtesting.strategies.rrg_sector_rotation import RrgFwdFlow1, RrgSectorRotation
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
     assert RevisionSignal.__name__ == "RevisionSignal"
+    assert RrgFwdFlow1.__name__ == "RrgFwdFlow1"
     assert RrgSectorRotation.__name__ == "RrgSectorRotation"
 
 
@@ -31,6 +32,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_signal" in strategies
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
+    assert "rrg-fwd-flow1" in strategies
     assert "rrg_sector_rotation" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
@@ -65,9 +67,135 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "revision_signal",
         "benchmark_overlay",
         "benchmark_tilt",
+        "rrg-fwd-flow1",
         "rrg_sector_rotation",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
+
+
+def test_rrg_fwd_flow1_concentrates_equal_weight_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=60, freq="D")
+    columns = [f"A{i:03d}" for i in range(12)]
+    close = pd.DataFrame(
+        {symbol: np.linspace(100.0, 130.0 + i, len(index)) for i, symbol in enumerate(columns)},
+        index=index,
+    )
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame(
+        {symbol: ("Tech" if i < 6 else "Bio") for i, symbol in enumerate(columns)},
+        index=index,
+    )
+    market_cap = pd.DataFrame(
+        {symbol: 100.0 + i for i, symbol in enumerate(columns)},
+        index=index,
+    )
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 125.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    zeros = pd.DataFrame(0.0, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "eps_fwd_q1": empty,
+            "eps_fwd_q2": empty,
+            "eps_fwd": empty,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+            "volume": pd.DataFrame(1_000.0, index=index, columns=columns),
+            "foreign_flow": zeros,
+            "inst_flow": zeros,
+            "retail_flow": zeros,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    def fake_rrg_context(**_: object) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        state = pd.DataFrame({"Tech": "Leading", "Bio": "Improving"}, index=index)
+        long_sector = state.isin(("Leading", "Improving"))
+        short_sector = state.isin(("Lagging", "Weakening"))
+        return state, long_sector, short_sector
+
+    stock_consensus = pd.DataFrame(
+        {symbol: (12 - i) / 100.0 for i, symbol in enumerate(columns)},
+        index=index,
+    )
+    sector_consensus = pd.DataFrame({"Tech": 0.20, "Bio": 0.10}, index=index)
+
+    monkeypatch.setattr(module, "_build_rrg_context", fake_rrg_context)
+    monkeypatch.setattr(module, "_build_stock_consensus_confirmation", lambda **_: stock_consensus)
+    monkeypatch.setattr(module, "_build_sector_consensus_confirmation", lambda **_: sector_consensus)
+
+    strategy = build_strategy("rrg-fwd-flow1")
+    weights = strategy.build_weights(market)
+    last = weights.iloc[-1]
+
+    assert int(last.ne(0.0).sum()) == 10
+    assert set(last[last.ne(0.0)].unique()) == {0.1}
+    assert last.sum() == pytest.approx(1.0)
+
+
+def test_rrg_fwd_flow1_uses_flow_only_when_consensus_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=60, freq="D")
+    columns = ["A", "B"]
+    close = pd.DataFrame({"A": np.linspace(100.0, 130.0, len(index)), "B": np.linspace(100.0, 125.0, len(index))}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame({"A": "Tech", "B": "Tech"}, index=index)
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 125.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    zeros = pd.DataFrame(0.0, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "eps_fwd_q1": empty,
+            "eps_fwd_q2": empty,
+            "eps_fwd": empty,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+            "volume": pd.DataFrame(1_000.0, index=index, columns=columns),
+            "foreign_flow": zeros,
+            "inst_flow": zeros,
+            "retail_flow": zeros,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    def fake_rrg_context(**_: object) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        state = pd.DataFrame({"Tech": "Leading"}, index=index)
+        return state, state.eq("Leading"), state.eq("Lagging")
+
+    stock_consensus = pd.DataFrame(np.nan, index=index, columns=columns)
+    sector_consensus = pd.DataFrame({"Tech": np.nan}, index=index)
+    stock_flow = pd.DataFrame({"A": 0.3, "B": -0.2}, index=index)
+    sector_flow = pd.DataFrame({"Tech": 0.1}, index=index)
+
+    monkeypatch.setattr(module, "_build_rrg_context", fake_rrg_context)
+    monkeypatch.setattr(module, "_build_stock_consensus_confirmation", lambda **_: stock_consensus)
+    monkeypatch.setattr(module, "_build_sector_consensus_confirmation", lambda **_: sector_consensus)
+    monkeypatch.setattr(module, "_build_stock_flow_confirmation", lambda **_: stock_flow)
+    monkeypatch.setattr(module, "_build_sector_flow_confirmation", lambda **_: sector_flow)
+
+    strategy = build_strategy("rrg-fwd-flow1")
+    weights = strategy.build_weights(market)
+    last = weights.iloc[-1]
+
+    assert last["A"] == 1.0
+    assert last["B"] == 0.0
 
 
 def test_momentum_strategy_builds_weights() -> None:

@@ -98,6 +98,14 @@ should use the current `id` values.
 - `compatibility`: the exact archived parameter set reuses `results/backtests/rrg_20260519_174931/positions/weights.parquet` when present, because the deleted intermediate construction code is not recoverable from Git.
 - `use`: restored RRG research strategy needed to rebuild saved runs such as `results/backtests/rrg_20260519_174931`.
 
+### `rrg-fwd-flow1`
+
+- `profile`: concentrated long-only stock strategy.
+- `data`: `close`, `benchmark`, `sector_big`, K200 membership, market cap/float market cap, forward EPS/OP estimates, and investor flow frames.
+- `signal`: RRG state is a regime gate; stock and cap-weighted sector EPS/OP forward revision are primary confirmation signals; flow is used only when consensus confirmation is missing.
+- `construction`: at most 10 equal-weight positions; the strategy does not force-fill 10 names and can hold cash when fewer names pass the gates.
+- `use`: signal-confirmed RRG concentration variant from `docs/superpowers/specs/2026-05-25-rrg-signal-confirmed-concentration-design.md`.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless

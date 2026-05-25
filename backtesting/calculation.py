@@ -105,6 +105,7 @@ class BacktestCalculation:
                 schedule_input = self.context.schedule_from_spec(resolved_spec, weights=weights)
             close = market.frames["close"]
             tradable = close.notna()
+            exit_tradable = close.notna()
             if market.universe is not None:
                 tradable = tradable & market.universe.reindex_like(close).fillna(False).astype(bool)
             if extra_tradable is not None:
@@ -127,6 +128,7 @@ class BacktestCalculation:
                 weights=weights,
                 capital=effective_config.capital,
                 tradable=tradable,
+                exit_tradable=exit_tradable,
                 schedule=schedule_input,
                 fill_mode=effective_config.fill_mode,
                 allow_fractional=effective_config.allow_fractional,

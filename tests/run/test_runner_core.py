@@ -27,6 +27,7 @@ from backtesting.specs import (
     ScheduleSpec,
     SelectionSpec,
     ShortingSpec,
+    TargetWeightsSpec,
     WeightSourceSpec,
     WeightingSpec,
 )
@@ -182,6 +183,49 @@ def test_runner_executes_momentum_strategy(tmp_path: Path) -> None:
     assert (report.output_dir / "validation.json").exists()
     assert (report.output_dir / "split.json").exists()
     assert (report.output_dir / "factor.json").exists()
+
+
+def test_runner_allows_exits_after_symbol_leaves_universe(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    raw_dir = tmp_path / "raw"
+    result_dir = tmp_path / "results"
+    parquet_dir.mkdir()
+    raw_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    store.write("qw_adj_c", pd.DataFrame({"A": [10.0, 10.0]}, index=index))
+    store.write("qw_k200_yn", pd.DataFrame({"A": [1, 0]}, index=index))
+    weights_path = tmp_path / "weights.csv"
+    weights_path.write_text(
+        "date,A\n"
+        "2024-01-02,1\n"
+        "2024-01-03,0\n",
+        encoding="utf-8",
+    )
+
+    runner = BacktestRunner(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+        result_dir=result_dir,
+        write_report_assets=False,
+    )
+    spec = ExecutionSpec(
+        start="2024-01-02",
+        end="2024-01-03",
+        capital=100.0,
+        target_weights=TargetWeightsSpec(kind="file", path=str(weights_path)),
+        schedule=ScheduleSpec(kind="named", name="daily"),
+        fill_mode="close",
+        use_k200=True,
+    )
+
+    report = runner.run_spec(runner.resolve_spec(spec))
+
+    assert report.result.qty.loc["2024-01-02", "A"] == 10.0
+    assert report.result.qty.loc["2024-01-03", "A"] == 0.0
+    assert report.result.turnover.loc["2024-01-03"] == 1.0
+
 
 def test_runner_can_skip_heavy_report_assets_for_dashboard_launch(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"

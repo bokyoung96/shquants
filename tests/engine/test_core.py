@@ -100,6 +100,48 @@ def test_engine_respects_tradable_mask() -> None:
     assert result.equity.iloc[-1] == 120.0
 
 
+def test_engine_exit_tradable_allows_closing_when_entry_tradable_is_false() -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+    close = pd.DataFrame({"A": [100.0, 100.0]}, index=index)
+    weights = pd.DataFrame({"A": [1.0, 0.0]}, index=index)
+    tradable = pd.DataFrame({"A": [True, False]}, index=index)
+    exit_tradable = pd.DataFrame({"A": [True, True]}, index=index)
+
+    engine = BacktestEngine(cost=CostModel())
+    result = engine.run(
+        close=close,
+        weights=weights,
+        tradable=tradable,
+        exit_tradable=exit_tradable,
+        capital=100.0,
+        fill_mode="close",
+    )
+
+    assert result.qty.loc["2024-01-03", "A"] == 0.0
+    assert result.turnover.loc["2024-01-03"] == 1.0
+
+
+def test_engine_exit_tradable_does_not_allow_new_buys_when_entry_tradable_is_false() -> None:
+    index = pd.to_datetime(["2024-01-02"])
+    close = pd.DataFrame({"A": [100.0]}, index=index)
+    weights = pd.DataFrame({"A": [1.0]}, index=index)
+    tradable = pd.DataFrame({"A": [False]}, index=index)
+    exit_tradable = pd.DataFrame({"A": [True]}, index=index)
+
+    engine = BacktestEngine(cost=CostModel())
+    result = engine.run(
+        close=close,
+        weights=weights,
+        tradable=tradable,
+        exit_tradable=exit_tradable,
+        capital=100.0,
+        fill_mode="close",
+    )
+
+    assert result.qty.loc["2024-01-02", "A"] == 0.0
+    assert result.turnover.loc["2024-01-02"] == 0.0
+
+
 def test_engine_rounds_target_quantity_when_fractional_disabled() -> None:
     index = pd.to_datetime(["2024-01-02", "2024-01-03"])
     close = pd.DataFrame({"A": [42.0, 42.0]}, index=index)

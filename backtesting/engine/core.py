@@ -21,6 +21,7 @@ class BacktestEngine:
         capital: float,
         open: pd.DataFrame | None = None,
         tradable: pd.DataFrame | None = None,
+        exit_tradable: pd.DataFrame | None = None,
         schedule: pd.Series | RebalanceSchedule | None = None,
         fill_mode: str = "next_open",
         allow_fractional: bool = True,
@@ -29,6 +30,10 @@ class BacktestEngine:
         close = close.astype(float)
         weights = weights.reindex_like(close).fillna(0.0).astype(float)
         tradable = self._tradable(tradable=tradable, close=close)
+        exit_tradable = self._tradable(
+            tradable=tradable if exit_tradable is None else exit_tradable,
+            close=close,
+        )
         schedule = self._schedule(schedule=schedule, close=close)
 
         cash = float(capital)
@@ -37,6 +42,7 @@ class BacktestEngine:
         close_values = close.to_numpy(dtype=float, copy=False)
         weight_values = weights.to_numpy(dtype=float, copy=False)
         tradable_values = tradable.to_numpy(dtype=bool, copy=False)
+        exit_tradable_values = exit_tradable.to_numpy(dtype=bool, copy=False)
         schedule_values = schedule.to_numpy(dtype=bool, copy=False)
 
         equity_values = np.zeros(len(dates), dtype=float)
@@ -59,6 +65,7 @@ class BacktestEngine:
                         fill_price=exec_values[index - 1],
                         target_weight=weight_values[index - 1],
                         tradable=tradable_values[index],
+                        exit_tradable=exit_tradable_values[index],
                         allow_fractional=allow_fractional,
                     )
                 else:
@@ -75,6 +82,7 @@ class BacktestEngine:
                     fill_price=close_values[0],
                     target_weight=weight_values[0],
                     tradable=tradable_values[0],
+                    exit_tradable=exit_tradable_values[0],
                     allow_fractional=allow_fractional,
                 )
             else:
@@ -92,6 +100,7 @@ class BacktestEngine:
                         fill_price=close_values[index],
                         target_weight=weight_values[index],
                         tradable=tradable_values[index],
+                        exit_tradable=exit_tradable_values[index],
                         allow_fractional=allow_fractional,
                     )
                 else:
@@ -122,16 +131,24 @@ class BacktestEngine:
         fill_price: np.ndarray,
         target_weight: np.ndarray,
         tradable: np.ndarray,
+        exit_tradable: np.ndarray,
         allow_fractional: bool,
     ) -> tuple[float, np.ndarray, float]:
         safe_price = np.where(fill_price != 0.0, fill_price, np.nan)
-        can_trade = tradable & ~np.isnan(safe_price)
+        valid_price = ~np.isnan(safe_price)
+        can_enter = tradable & valid_price
+        can_exit = exit_tradable & valid_price
         nav = cash + float(np.nansum(current_qty * self._zero_nan(fill_price)))
 
         with np.errstate(divide="ignore", invalid="ignore"):
             target_qty = target_weight * nav / safe_price
         target_qty = self._zero_nan(target_qty)
-        target_qty = np.where(can_trade, target_qty, current_qty)
+        current_sign = np.sign(current_qty)
+        target_sign = np.sign(target_qty)
+        same_side = (current_sign == target_sign) | (current_sign == 0.0) | (target_sign == 0.0)
+        reduces_position = same_side & (np.abs(target_qty) <= np.abs(current_qty))
+        trade_allowed = np.where(reduces_position, can_exit, can_enter & can_exit)
+        target_qty = np.where(trade_allowed, target_qty, current_qty)
         target_qty = self._normalize_quantity_values(target_qty, allow_fractional=allow_fractional)
 
         raw_delta = self._zero_nan(target_qty - current_qty)

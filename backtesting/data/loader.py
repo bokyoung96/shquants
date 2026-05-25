@@ -105,11 +105,27 @@ class DataLoader:
     def _load_frame(self, spec: DatasetSpec, request: LoadRequest) -> pd.DataFrame:
         frame = self.store.read(spec.stem)
         if spec.validity == "daily":
-            return frame.loc[request.start : request.end]
+            start = self._lagged_start(request.start, spec.lag)
+            frame = frame.loc[start : request.end]
+            return self._apply_lag(frame, spec.lag).loc[request.start : request.end]
         if spec.validity == "month_only":
-            start = pd.Timestamp(request.start).to_period("M").start_time
+            load_start = self._lagged_start(request.start, spec.lag)
+            start = pd.Timestamp(load_start).to_period("M").start_time
             end = pd.Timestamp(request.end).to_period("M").end_time.normalize()
             frame = frame.loc[start:end]
-            calendar = pd.date_range(request.start, request.end, freq="D")
-            return expand_monthly_frame(frame=frame, calendar=calendar, validity=spec.validity)
+            load_calendar = pd.date_range(load_start, request.end, freq="D")
+            expanded = expand_monthly_frame(frame=frame, calendar=load_calendar, validity=spec.validity)
+            return self._apply_lag(expanded, spec.lag).loc[request.start : request.end]
         raise ValueError(f"unsupported validity: {spec.validity}")
+
+    @staticmethod
+    def _lagged_start(start: str, lag: int) -> pd.Timestamp:
+        return pd.Timestamp(start) - pd.Timedelta(days=max(int(lag), 0))
+
+    @staticmethod
+    def _apply_lag(frame: pd.DataFrame, lag: int) -> pd.DataFrame:
+        if lag <= 0:
+            return frame
+        lagged = frame.copy()
+        lagged.index = pd.DatetimeIndex(lagged.index) + pd.Timedelta(days=int(lag))
+        return lagged

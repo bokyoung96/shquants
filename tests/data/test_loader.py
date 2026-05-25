@@ -145,6 +145,49 @@ def test_loader_expands_month_only_data_without_crossing_missing_months(
     assert close.loc["2024-05-15", "005930"] == 3.0
 
 
+def test_loader_applies_lag_after_expanding_month_only_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_adj_c",
+        pd.DataFrame(
+            {"005930": [1.0, 2.0]},
+            index=pd.to_datetime(["2024-01-31", "2024-02-29"]),
+        ),
+    )
+
+    catalog = DataCatalog(
+        specs={
+            DatasetId.QW_ADJ_C: DatasetSpec(
+                id=DatasetId.QW_ADJ_C,
+                stem="qw_adj_c",
+                group=DatasetGroup.PRICE,
+                freq="M",
+                kind="price",
+                fill="none",
+                validity="month_only",
+                lag=31,
+                dtype="float64",
+            )
+        }
+    )
+    loader = DataLoader(catalog, store)
+
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_ADJ_C],
+            start="2024-02-01",
+            end="2024-03-31",
+        )
+    )
+
+    close = data.frames["close"]
+    assert close.loc["2024-02-01", "005930"] == 1.0
+    assert close.loc["2024-03-01", "005930"] == 1.0
+    assert close.loc["2024-03-31", "005930"] == 2.0
+
+
 def test_loader_rejects_unsupported_price_mode(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     parquet_dir.mkdir()

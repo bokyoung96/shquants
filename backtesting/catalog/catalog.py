@@ -5,6 +5,9 @@ from .groups import DatasetGroups
 from .specs import DatasetSpec
 
 
+FORWARD_ESTIMATE_LAG_DAYS = 31
+
+
 def _spec(
     dataset_id: DatasetId,
     *,
@@ -43,9 +46,27 @@ class DataCatalog:
             DatasetId.QW_ASSET_LFQ0: _spec(DatasetId.QW_ASSET_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="asset"),
             DatasetId.QW_BM: _spec(DatasetId.QW_BM, group=DatasetGroup.BENCHMARK, freq="D", kind="benchmark"),
             DatasetId.QW_C: _spec(DatasetId.QW_C, group=DatasetGroup.PRICE, freq="D", kind="price"),
-            DatasetId.QW_EPS_NFQ1: _spec(DatasetId.QW_EPS_NFQ1, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
-            DatasetId.QW_EPS_NFQ2: _spec(DatasetId.QW_EPS_NFQ2, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
-            DatasetId.QW_EPS_NFY1: _spec(DatasetId.QW_EPS_NFY1, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
+            DatasetId.QW_EPS_NFQ1: _spec(
+                DatasetId.QW_EPS_NFQ1,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
+            DatasetId.QW_EPS_NFQ2: _spec(
+                DatasetId.QW_EPS_NFQ2,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
+            DatasetId.QW_EPS_NFY1: _spec(
+                DatasetId.QW_EPS_NFY1,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
             DatasetId.QW_EQUITY_LFQ0: _spec(DatasetId.QW_EQUITY_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="equity"),
             DatasetId.QW_ETF_ADJ_C: _spec(DatasetId.QW_ETF_ADJ_C, group=DatasetGroup.PRICE, freq="D", kind="price"),
             DatasetId.QW_ETF_ADJ_O: _spec(DatasetId.QW_ETF_ADJ_O, group=DatasetGroup.PRICE, freq="D", kind="price"),
@@ -97,9 +118,27 @@ class DataCatalog:
             DatasetId.QW_NI_LFQ0: _spec(DatasetId.QW_NI_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="net_income"),
             DatasetId.QW_OCF_LFQ0: _spec(DatasetId.QW_OCF_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="oper_cash_flow"),
             DatasetId.QW_OP_LFQ0: _spec(DatasetId.QW_OP_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="oper_profit"),
-            DatasetId.QW_OP_NFQ1: _spec(DatasetId.QW_OP_NFQ1, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
-            DatasetId.QW_OP_NFQ2: _spec(DatasetId.QW_OP_NFQ2, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
-            DatasetId.QW_OP_NFY1: _spec(DatasetId.QW_OP_NFY1, group=DatasetGroup.ESTIMATE, freq="M", kind="estimate"),
+            DatasetId.QW_OP_NFQ1: _spec(
+                DatasetId.QW_OP_NFQ1,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
+            DatasetId.QW_OP_NFQ2: _spec(
+                DatasetId.QW_OP_NFQ2,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
+            DatasetId.QW_OP_NFY1: _spec(
+                DatasetId.QW_OP_NFY1,
+                group=DatasetGroup.ESTIMATE,
+                freq="M",
+                kind="estimate",
+                lag=FORWARD_ESTIMATE_LAG_DAYS,
+            ),
             DatasetId.QW_RETAIL: _spec(DatasetId.QW_RETAIL, group=DatasetGroup.FLOW, freq="D", kind="flow"),
             DatasetId.QW_SHA_OUT: _spec(DatasetId.QW_SHA_OUT, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="shares_out"),
             DatasetId.QW_TRS_BAN: _spec(DatasetId.QW_TRS_BAN, group=DatasetGroup.FLAG, freq="D", kind="flag", fill="zero", dtype="int64"),

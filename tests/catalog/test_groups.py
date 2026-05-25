@@ -79,6 +79,20 @@ def test_catalog_returns_grouped_specs() -> None:
     assert all(spec.group is DatasetGroup.ESTIMATE for spec in specs)
 
 
+def test_catalog_lags_forward_estimate_datasets() -> None:
+    catalog = DataCatalog.default()
+    estimate_ids = (
+        DatasetId.QW_EPS_NFQ1,
+        DatasetId.QW_EPS_NFQ2,
+        DatasetId.QW_EPS_NFY1,
+        DatasetId.QW_OP_NFQ1,
+        DatasetId.QW_OP_NFQ2,
+        DatasetId.QW_OP_NFY1,
+    )
+
+    assert all(catalog.get(dataset_id).lag == 31 for dataset_id in estimate_ids)
+
+
 def test_catalog_covers_all_stock_raw_stems() -> None:
     catalog = DataCatalog.default()
 

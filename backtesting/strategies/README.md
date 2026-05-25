@@ -106,6 +106,14 @@ should use the current `id` values.
 - `construction`: at most 10 equal-weight positions; the strategy does not force-fill 10 names and can hold cash when fewer names pass the gates.
 - `use`: signal-confirmed RRG concentration variant from `docs/superpowers/specs/2026-05-25-rrg-signal-confirmed-concentration-design.md`.
 
+### `rrg-fwd-flow1-ls`
+
+- `profile`: long plus weak-hedge long-short extension of `rrg-fwd-flow1`.
+- `long sleeve`: same positive RRG/confirmation rules as `rrg-fwd-flow1`, with at most 10 equal-weight long names by default.
+- `short sleeve`: `Lagging` or `Weakening` sectors whose sector and stock confirmation scores are both negative, with at most 10 equal-weight short names by default.
+- `exposure`: default `gross_long=1.0` and `gross_short=0.5`; neither long nor short sleeve is force-filled.
+- `use`: drawdown-smoothing test variant for the concentrated RRG confirmation scheme.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless

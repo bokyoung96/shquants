@@ -122,6 +122,44 @@ class RrgFwdFlow1(ComposableStrategy):
 
 
 @dataclass(slots=True)
+class RrgFwdFlow1LongShort(ComposableStrategy):
+    max_long_names: int = 10
+    max_short_names: int = 10
+    lookback: int = 20
+    flow_lookback: int = 20
+    rrg_medium_lookback: int = 126
+    rrg_momentum_lookback: int = 21
+    rrg_short_lookback: int = 42
+    rrg_transition_threshold: float = 0.005
+    gross_long: float = 1.0
+    gross_short: float = 0.5
+
+    def __post_init__(self) -> None:
+        validate_positive("max_long_names", self.max_long_names)
+        validate_positive("max_short_names", self.max_short_names)
+        validate_positive("lookback", self.lookback)
+        validate_positive("flow_lookback", self.flow_lookback)
+        if self.gross_long < 0.0:
+            raise ValueError("gross_long must be non-negative")
+        if self.gross_short < 0.0:
+            raise ValueError("gross_short must be non-negative")
+        self.signal_producer = _RrgFwdFlow1Signal(
+            lookback=self.lookback,
+            flow_lookback=self.flow_lookback,
+            rrg_medium_lookback=self.rrg_medium_lookback,
+            rrg_momentum_lookback=self.rrg_momentum_lookback,
+            rrg_short_lookback=self.rrg_short_lookback,
+            rrg_transition_threshold=self.rrg_transition_threshold,
+        )
+        self.construction_rule = _RrgConcentratedLongShortEqualWeight(
+            max_long_names=self.max_long_names,
+            max_short_names=self.max_short_names,
+            gross_long=self.gross_long,
+            gross_short=self.gross_short,
+        )
+
+
+@dataclass(slots=True)
 class RrgFwdBenchmarkTilt(ComposableStrategy):
     lookback: int = 20
     rrg_medium_lookback: int = 126
@@ -403,6 +441,72 @@ class _RrgConcentratedEqualWeight:
             group_short_budget=None,
             meta={
                 "selected_long": selected,
+            },
+        )
+
+
+@dataclass(slots=True)
+class _RrgConcentratedLongShortEqualWeight:
+    max_long_names: int
+    max_short_names: int
+    gross_long: float = 1.0
+    gross_short: float = 0.5
+
+    def __post_init__(self) -> None:
+        validate_positive("max_long_names", self.max_long_names)
+        validate_positive("max_short_names", self.max_short_names)
+        if self.gross_long < 0.0:
+            raise ValueError("gross_long must be non-negative")
+        if self.gross_short < 0.0:
+            raise ValueError("gross_short must be non-negative")
+
+    def build(self, bundle: SignalBundle) -> ConstructionResult:
+        long_alpha = bundle.alpha.astype(float)
+        short_alpha = _required_frame(bundle, "short_alpha").reindex(index=long_alpha.index, columns=long_alpha.columns).astype(float)
+        tradable = _optional_frame(bundle, "tradable", long_alpha.notna()).reindex(index=long_alpha.index, columns=long_alpha.columns)
+        tradable = tradable.fillna(False).astype(bool)
+        long_entry = _required_frame(bundle, "entry_mask").reindex(index=long_alpha.index, columns=long_alpha.columns)
+        long_entry = long_entry.fillna(False).astype(bool)
+        long_hold = _required_frame(bundle, "hold_mask").reindex(index=long_alpha.index, columns=long_alpha.columns)
+        long_hold = long_hold.fillna(False).astype(bool)
+        short_entry = _required_frame(bundle, "short_entry_mask").reindex(index=long_alpha.index, columns=long_alpha.columns)
+        short_entry = short_entry.fillna(False).astype(bool)
+        short_hold = _required_frame(bundle, "short_hold_mask").reindex(index=long_alpha.index, columns=long_alpha.columns)
+        short_hold = short_hold.fillna(False).astype(bool)
+
+        weights = pd.DataFrame(0.0, index=long_alpha.index, columns=long_alpha.columns, dtype=float)
+        selected = pd.DataFrame(False, index=long_alpha.index, columns=long_alpha.columns, dtype=bool)
+        previous_long = pd.Series(False, index=long_alpha.columns, dtype=bool)
+        previous_short = pd.Series(False, index=long_alpha.columns, dtype=bool)
+
+        for ts in long_alpha.index:
+            long_candidates = long_entry.loc[ts] | (previous_long & long_hold.loc[ts])
+            long_candidates = long_candidates & tradable.loc[ts] & long_alpha.loc[ts].notna() & long_alpha.loc[ts].gt(0.0)
+            long_ranked = long_alpha.loc[ts, long_candidates].sort_values(ascending=False, kind="stable").head(self.max_long_names)
+            if not long_ranked.empty and self.gross_long > 0.0:
+                weights.loc[ts, long_ranked.index] = float(self.gross_long) / len(long_ranked)
+                selected.loc[ts, long_ranked.index] = True
+
+            short_candidates = short_entry.loc[ts] | (previous_short & short_hold.loc[ts])
+            short_candidates = short_candidates & tradable.loc[ts] & short_alpha.loc[ts].notna() & short_alpha.loc[ts].gt(0.0)
+            no_long_overlap = pd.Series(True, index=long_alpha.columns, dtype=bool)
+            no_long_overlap.loc[long_ranked.index] = False
+            short_candidates = short_candidates & no_long_overlap
+            short_ranked = short_alpha.loc[ts, short_candidates].sort_values(ascending=False, kind="stable").head(self.max_short_names)
+            if not short_ranked.empty and self.gross_short > 0.0:
+                weights.loc[ts, short_ranked.index] = -float(self.gross_short) / len(short_ranked)
+                selected.loc[ts, short_ranked.index] = True
+
+            previous_long = weights.loc[ts].gt(0.0)
+            previous_short = weights.loc[ts].lt(0.0)
+
+        return ConstructionResult(
+            base_target_weights=weights,
+            selection_mask=selected,
+            group_long_budget=None,
+            group_short_budget=None,
+            meta={
+                "selected": selected,
             },
         )
 
@@ -996,6 +1100,9 @@ class _RrgFwdFlow1Signal:
         confirmed = sector_confirm_by_symbol.gt(0.0) & stock_confirm.gt(0.0)
         entry_mask = state_by_symbol.isin(("Leading", "Improving")) & confirmed & k200
         hold_mask = state_by_symbol.isin(("Leading", "Improving", "Weakening")) & confirmed & k200
+        short_confirmed = sector_confirm_by_symbol.lt(0.0) & stock_confirm.lt(0.0)
+        short_entry_mask = state_by_symbol.isin(("Lagging", "Weakening")) & short_confirmed & k200
+        short_hold_mask = state_by_symbol.isin(("Lagging", "Weakening")) & short_confirmed & k200
 
         sector_rank = sector_confirm.rank(axis=1, ascending=True, pct=True)
         sector_rank_by_symbol = _map_sector_values_to_symbols(
@@ -1005,6 +1112,14 @@ class _RrgFwdFlow1Signal:
         stock_rank = stock_confirm.rank(axis=1, ascending=True, pct=True)
         candidate_score = sector_rank_by_symbol.combine(stock_rank, np.minimum)
         candidate_score = candidate_score.where((entry_mask | hold_mask) & k200)
+        short_sector_rank = sector_confirm.mul(-1.0).rank(axis=1, ascending=True, pct=True)
+        short_sector_rank_by_symbol = _map_sector_values_to_symbols(
+            sector=sector,
+            sector_values=short_sector_rank,
+        )
+        short_stock_rank = stock_confirm.mul(-1.0).rank(axis=1, ascending=True, pct=True)
+        short_candidate_score = short_sector_rank_by_symbol.combine(short_stock_rank, np.minimum)
+        short_candidate_score = short_candidate_score.where((short_entry_mask | short_hold_mask) & k200)
 
         return SignalBundle(
             alpha=candidate_score,
@@ -1012,6 +1127,9 @@ class _RrgFwdFlow1Signal:
                 "tradable": k200,
                 "entry_mask": entry_mask.fillna(False).astype(bool),
                 "hold_mask": hold_mask.fillna(False).astype(bool),
+                "short_entry_mask": short_entry_mask.fillna(False).astype(bool),
+                "short_hold_mask": short_hold_mask.fillna(False).astype(bool),
+                "short_alpha": short_candidate_score,
                 "sector": sector,
                 "rrg_state": rrg_state,
                 "sector_confirm_score": sector_confirm_by_symbol,

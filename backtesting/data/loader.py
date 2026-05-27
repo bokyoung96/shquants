@@ -77,6 +77,7 @@ class DataLoader:
         DatasetId.QW_SHA_OUT: "shares_out",
         DatasetId.QW_TRS_BAN: "trade_ban",
         DatasetId.QW_V: "volume",
+        DatasetId.QW_V_VALUE: "trading_value",
         DatasetId.QW_WICS_SEC_BIG: "sector_big",
     }
 

@@ -64,4 +64,5 @@ class DatasetId(str, Enum):
     QW_SHA_OUT = "qw_sha_out"
     QW_TRS_BAN = "qw_trs_ban"
     QW_V = "qw_v"
+    QW_V_VALUE = "qw_v_value"
     QW_WICS_SEC_BIG = "qw_wics_sec_big"

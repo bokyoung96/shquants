@@ -5,7 +5,7 @@ from .groups import DatasetGroups
 from .specs import DatasetSpec
 
 
-FORWARD_ESTIMATE_LAG_DAYS = 31
+FORWARD_ESTIMATE_LAG_DAYS = 0
 
 
 def _spec(
@@ -143,6 +143,7 @@ class DataCatalog:
             DatasetId.QW_SHA_OUT: _spec(DatasetId.QW_SHA_OUT, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="shares_out"),
             DatasetId.QW_TRS_BAN: _spec(DatasetId.QW_TRS_BAN, group=DatasetGroup.FLAG, freq="D", kind="flag", fill="zero", dtype="int64"),
             DatasetId.QW_V: _spec(DatasetId.QW_V, group=DatasetGroup.PRICE, freq="D", kind="volume", fill="zero"),
+            DatasetId.QW_V_VALUE: _spec(DatasetId.QW_V_VALUE, group=DatasetGroup.PRICE, freq="D", kind="trading_value"),
             DatasetId.QW_WICS_SEC_BIG: _spec(DatasetId.QW_WICS_SEC_BIG, group=DatasetGroup.META, freq="M", kind="sector", dtype="string"),
         }
         return cls(specs=specs)

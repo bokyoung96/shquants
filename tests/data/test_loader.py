@@ -100,6 +100,31 @@ def test_loader_uses_semantic_key_for_volume_data(tmp_path: Path) -> None:
     assert "qw_v" not in data.frames
 
 
+def test_loader_uses_semantic_key_for_trading_value_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_v_value",
+        pd.DataFrame(
+            {"005930": [1_000_000.0, 2_000_000.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_V_VALUE],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "trading_value" in data.frames
+    assert "qw_v_value" not in data.frames
+
+
 def test_loader_expands_month_only_data_without_crossing_missing_months(
     tmp_path: Path,
 ) -> None:

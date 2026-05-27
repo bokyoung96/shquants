@@ -217,7 +217,7 @@ class _RrgFwdFlow1Signal:
             DatasetId.QW_WICS_SEC_BIG,
             DatasetId.QW_MKTCAP,
             DatasetId.QW_MKTCAP_FLT,
-            DatasetId.QW_V,
+            DatasetId.QW_V_VALUE,
             DatasetId.QW_FOREIGN,
             DatasetId.QW_INSTITUTION,
             DatasetId.QW_RETAIL,
@@ -466,8 +466,7 @@ def _build_stock_flow_confirmation(
     foreign = frames["foreign_flow"].reindex_like(close).fillna(0.0).astype(float)
     inst = frames["inst_flow"].reindex_like(close).fillna(0.0).astype(float)
     retail = frames["retail_flow"].reindex_like(close).fillna(0.0).astype(float)
-    volume = frames["volume"].reindex_like(close).fillna(0.0).astype(float)
-    trading_value = close.mul(volume).replace(0.0, np.nan)
+    trading_value = frames["trading_value"].reindex_like(close).fillna(0.0).astype(float).replace(0.0, np.nan)
     flow_pressure = foreign.add(inst, fill_value=0.0).sub(retail, fill_value=0.0).divide(trading_value)
     flow_mean = flow_pressure.rolling(flow_lookback, min_periods=max(2, flow_lookback // 2)).mean()
     return _rolling_zscore(flow_mean, flow_lookback)

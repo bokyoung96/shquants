@@ -52,6 +52,7 @@ EXPECTED_RAW_STEMS = {
     "qw_sha_out",
     "qw_trs_ban",
     "qw_v",
+    "qw_v_value",
     "qw_wics_sec_big",
 }
 
@@ -79,7 +80,7 @@ def test_catalog_returns_grouped_specs() -> None:
     assert all(spec.group is DatasetGroup.ESTIMATE for spec in specs)
 
 
-def test_catalog_lags_forward_estimate_datasets() -> None:
+def test_catalog_treats_forward_estimate_datasets_as_point_in_time() -> None:
     catalog = DataCatalog.default()
     estimate_ids = (
         DatasetId.QW_EPS_NFQ1,
@@ -90,7 +91,7 @@ def test_catalog_lags_forward_estimate_datasets() -> None:
         DatasetId.QW_OP_NFY1,
     )
 
-    assert all(catalog.get(dataset_id).lag == 31 for dataset_id in estimate_ids)
+    assert all(catalog.get(dataset_id).lag == 0 for dataset_id in estimate_ids)
 
 
 def test_catalog_covers_all_stock_raw_stems() -> None:

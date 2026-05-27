@@ -133,7 +133,7 @@ def test_rrg_fwd_flow1_ls_uses_flow_only_when_consensus_is_missing(monkeypatch: 
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
             "op_fwd": empty,
-            "volume": pd.DataFrame(1_000.0, index=index, columns=columns),
+            "trading_value": pd.DataFrame(1_000_000.0, index=index, columns=columns),
             "foreign_flow": zeros,
             "inst_flow": zeros,
             "retail_flow": zeros,
@@ -163,6 +163,36 @@ def test_rrg_fwd_flow1_ls_uses_flow_only_when_consensus_is_missing(monkeypatch: 
 
     assert last["A"] == 1.0
     assert last["B"] == 0.0
+
+
+def test_rrg_flow_confirmation_uses_trading_value_frame() -> None:
+    from backtesting.strategies.rrg_sector_rotation import _build_stock_flow_confirmation
+
+    index = pd.date_range("2024-01-02", periods=5, freq="D")
+    columns = ["A"]
+    close = pd.DataFrame(100.0, index=index, columns=columns)
+    foreign = pd.DataFrame([1.0, 2.0, 4.0, 8.0, 16.0], index=index, columns=columns)
+    inst = pd.DataFrame(1.0, index=index, columns=columns)
+    retail = pd.DataFrame(0.5, index=index, columns=columns)
+    trading_value = pd.DataFrame(10.0, index=index, columns=columns)
+
+    actual = _build_stock_flow_confirmation(
+        frames={
+            "foreign_flow": foreign,
+            "inst_flow": inst,
+            "retail_flow": retail,
+            "trading_value": trading_value,
+        },
+        close=close,
+        flow_lookback=2,
+    )
+
+    flow_pressure = foreign.add(inst, fill_value=0.0).sub(retail, fill_value=0.0).divide(trading_value)
+    flow_mean = flow_pressure.rolling(2, min_periods=2).mean()
+    expected = flow_mean.sub(flow_mean.rolling(2, min_periods=2).mean()).divide(
+        flow_mean.rolling(2, min_periods=2).std(ddof=0).replace(0.0, np.nan)
+    )
+    assert_frame_equal(actual, expected)
 
 
 def test_rrg_fwd_flow1_ls_adds_equal_weight_short_sleeve(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -202,7 +232,7 @@ def test_rrg_fwd_flow1_ls_adds_equal_weight_short_sleeve(monkeypatch: pytest.Mon
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
             "op_fwd": empty,
-            "volume": pd.DataFrame(1_000.0, index=index, columns=columns),
+            "trading_value": pd.DataFrame(1_000_000.0, index=index, columns=columns),
             "foreign_flow": zeros,
             "inst_flow": zeros,
             "retail_flow": zeros,

@@ -9,12 +9,7 @@ from .benchmark_tilt import BenchmarkTilt
 from .earnings_revision import EarningsRevision
 from .mfbt import Mfbt
 from .revision_signal import RevisionSignal
-from .rrg_sector_rotation import (
-    RrgFwdFlow1LongShort,
-    RrgFwdFlow1Ls03Change10EtfShortoffResearch,
-    RrgFwdFlow1LsGs05ListedExitValidated,
-    RrgFwdFlow1LsLag31MonthlyGs00L5Validated,
-)
+from .rrg_sector_rotation import RrgFwdFlow1LongShort
 from .trend_rank import TrendRank
 
 
@@ -51,6 +46,3 @@ register_strategy("mfbt", Mfbt)
 register_strategy("benchmark_overlay", BenchmarkOverlay)
 register_strategy("benchmark_tilt", BenchmarkTilt)
 register_strategy("rrg-fwd-flow1-ls", RrgFwdFlow1LongShort)
-register_strategy("rrg-fwd-flow1-ls-gs0.5-listed-exit-validated", RrgFwdFlow1LsGs05ListedExitValidated)
-register_strategy("rrg-fwd-flow1-ls03-change10-etf-shortoff-research", RrgFwdFlow1Ls03Change10EtfShortoffResearch)
-register_strategy("rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated", RrgFwdFlow1LsLag31MonthlyGs00L5Validated)

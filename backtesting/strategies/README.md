@@ -14,10 +14,7 @@ logic:
 - `mfbt`: multi-factor backtest scaffold, currently seeded with price momentum.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
-- `rrg-fwd-flow1-ls`: RRG sector rotation with revision/flow confirmation and a weak short sleeve.
-- `rrg-fwd-flow1-ls-gs0.5-listed-exit-validated`: archived replay of the validated gross-short 0.5 RRG run.
-- `rrg-fwd-flow1-ls03-change10-etf-shortoff-research`: archived replay of the change-threshold/ETF-short-off RRG research run.
-- `rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated`: archived replay of the monthly long-only 5-name RRG validation run.
+- `rrg-fwd-flow1-ls`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
 
 Each strategy entry below follows the same schema:
 
@@ -104,26 +101,13 @@ should use the current `id` values.
 ### `rrg-fwd-flow1-ls`
 
 - `profile`: concentrated long plus weak-hedge long-short stock strategy.
-- `data`: `close`, `benchmark`, `sector_big`, K200 membership, market cap/float market cap, forward EPS/OP estimates, and investor flow frames.
-- `signal`: RRG state is a regime gate; stock and cap-weighted sector EPS/OP forward revision are primary confirmation signals; flow is used only when consensus confirmation is missing.
-- `long sleeve`: positive RRG/confirmation names, with at most 10 equal-weight long names by default.
-- `short sleeve`: `Lagging` or `Weakening` sectors whose sector and stock confirmation scores are both negative, with at most 10 equal-weight short names by default.
+- `data`: `close`, `benchmark`, `sector_big`, K200 membership, market cap/float market cap, and forward OP estimates.
+- `signal`: RRG state is a regime gate; stock and cap-weighted sector OP forward revision are the confirmation signals. Investor flow is not used.
+- `long sleeve`: `Leading`, `Improving`, or `Weakening` sectors whose sector and stock OP revisions are both positive.
+- `short sleeve`: `Lagging` sectors whose sector and stock OP revisions are both negative.
+- `weighting`: selected long and short sleeves are weighted by cross-sectional OP revision rank, not equal weight or top-N count.
 - `exposure`: default `gross_long=1.0` and `gross_short=0.5`; neither long nor short sleeve is force-filled.
-- `use`: selected RRG candidate after validation. Kept reference runs:
-  `rrg-fwd-flow1-ls-gs0.5-listed-exit-validated_20260525_123450`,
-  `rrg-fwd-flow1-ls03-change10-etf-shortoff-research_20260525_122853`,
-  and `rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated_20260525_134348`.
-
-### Archived RRG strategy ids
-
-- `profile`: fixed replay strategies for the three kept RRG research/validation runs.
-- `data`: `close` is used only to align saved dates and symbols.
-- `construction`: load `positions/weights.parquet` from the preserved run directory and return those weights unchanged, with missing dates/symbols filled at zero.
-- `use`: exact preservation of selected RRG schemes without refitting parameters or rebuilding deleted research transforms.
-- `ids`:
-  - `rrg-fwd-flow1-ls-gs0.5-listed-exit-validated`
-  - `rrg-fwd-flow1-ls03-change10-etf-shortoff-research`
-  - `rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated`
+- `use`: selected RRG candidate after validation.
 
 ## Dashboard Defaults
 
@@ -143,7 +127,6 @@ a preset overrides schedule or fill mode:
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
 - `rrg-fwd-flow1-ls`: `weekly`, `next_open`
-- archived RRG ids: use their preserved run configs/results as the source of truth.
 
 ## Screening Notes
 

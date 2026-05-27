@@ -1,5 +1,4 @@
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -10,26 +9,13 @@ from backtesting.data import MarketData
 from backtesting.strategies import RegisteredStrategy, build_strategy, list_strategies
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-RRG_ARCHIVED_STRATEGIES = {
-    "rrg-fwd-flow1-ls-gs0.5-listed-exit-validated": "rrg-fwd-flow1-ls-gs0.5-listed-exit-validated_20260525_123450",
-    "rrg-fwd-flow1-ls03-change10-etf-shortoff-research": "rrg-fwd-flow1-ls03-change10-etf-shortoff-research_20260525_122853",
-    "rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated": "rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated_20260525_134348",
-}
-
-
 def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_overlay import BenchmarkOverlay
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.mfbt import Mfbt
     from backtesting.strategies.revision_signal import RevisionSignal
-    from backtesting.strategies.rrg_sector_rotation import (
-        RrgFwdFlow1LongShort,
-        RrgFwdFlow1Ls03Change10EtfShortoffResearch,
-        RrgFwdFlow1LsGs05ListedExitValidated,
-        RrgFwdFlow1LsLag31MonthlyGs00L5Validated,
-    )
+    from backtesting.strategies.rrg_sector_rotation import RrgFwdFlow1LongShort
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
@@ -37,9 +23,6 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert Mfbt.__name__ == "Mfbt"
     assert RevisionSignal.__name__ == "RevisionSignal"
     assert RrgFwdFlow1LongShort.__name__ == "RrgFwdFlow1LongShort"
-    assert RrgFwdFlow1LsGs05ListedExitValidated.__name__ == "RrgFwdFlow1LsGs05ListedExitValidated"
-    assert RrgFwdFlow1Ls03Change10EtfShortoffResearch.__name__ == "RrgFwdFlow1Ls03Change10EtfShortoffResearch"
-    assert RrgFwdFlow1LsLag31MonthlyGs00L5Validated.__name__ == "RrgFwdFlow1LsLag31MonthlyGs00L5Validated"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -52,8 +35,6 @@ def test_registry_lists_default_strategies() -> None:
     assert "benchmark_overlay" in strategies
     assert "mfbt" in strategies
     assert "rrg-fwd-flow1-ls" in strategies
-    for strategy_id in RRG_ARCHIVED_STRATEGIES:
-        assert strategy_id in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -71,6 +52,9 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_oi_state_conditioned_beta_gate_ls" not in strategies
     assert "revision_oi_state_conditioned_short_squeeze_beta_cap_ls" not in strategies
     assert "revision_oi_state_conditioned_short_squeeze_beta_exclusion_ls" not in strategies
+    assert "rrg-fwd-flow1-ls-gs0.5-listed-exit-validated" not in strategies
+    assert "rrg-fwd-flow1-ls03-change10-etf-shortoff-research" not in strategies
+    assert "rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated" not in strategies
 
 
 def test_registry_rejects_old_long_strategy_names() -> None:
@@ -89,26 +73,11 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "benchmark_tilt",
         "mfbt",
         "rrg-fwd-flow1-ls",
-        *RRG_ARCHIVED_STRATEGIES,
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
 
 
-@pytest.mark.parametrize(("strategy_id", "run_dir_name"), RRG_ARCHIVED_STRATEGIES.items())
-def test_archived_rrg_strategies_replay_saved_weights(strategy_id: str, run_dir_name: str) -> None:
-    saved = pd.read_parquet(REPO_ROOT / "results" / "backtests" / run_dir_name / "positions" / "weights.parquet")
-    close = pd.DataFrame(1.0, index=saved.index[:5], columns=saved.columns)
-    market = MarketData(frames={"close": close}, universe=None, benchmark=None)
-
-    strategy = build_strategy(strategy_id)
-    plan = strategy.build_plan(market)
-
-    expected = saved.reindex(index=close.index, columns=close.columns).fillna(0.0).astype(float)
-    assert_frame_equal(plan.target_weights, expected)
-    assert plan.validation["archived_strategy"] is True
-
-
-def test_rrg_fwd_flow1_ls_uses_flow_only_when_consensus_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_rrg_fwd_flow1_ls_ignores_flow_when_op_revision_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     from backtesting.strategies import rrg_sector_rotation as module
 
     index = pd.date_range("2024-01-02", periods=60, freq="D")
@@ -146,56 +115,49 @@ def test_rrg_fwd_flow1_ls_uses_flow_only_when_consensus_is_missing(monkeypatch: 
         state = pd.DataFrame({"Tech": "Leading"}, index=index)
         return state, state.eq("Leading"), state.eq("Lagging")
 
-    stock_consensus = pd.DataFrame(np.nan, index=index, columns=columns)
-    sector_consensus = pd.DataFrame({"Tech": np.nan}, index=index)
-    stock_flow = pd.DataFrame({"A": 0.3, "B": -0.2}, index=index)
-    sector_flow = pd.DataFrame({"Tech": 0.1}, index=index)
+    stock_op = pd.DataFrame(np.nan, index=index, columns=columns)
+    sector_op = pd.DataFrame({"Tech": np.nan}, index=index)
 
     monkeypatch.setattr(module, "_build_rrg_context", fake_rrg_context)
-    monkeypatch.setattr(module, "_build_stock_consensus_confirmation", lambda **_: stock_consensus)
-    monkeypatch.setattr(module, "_build_sector_consensus_confirmation", lambda **_: sector_consensus)
-    monkeypatch.setattr(module, "_build_stock_flow_confirmation", lambda **_: stock_flow)
-    monkeypatch.setattr(module, "_build_sector_flow_confirmation", lambda **_: sector_flow)
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+    monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
 
     strategy = build_strategy("rrg-fwd-flow1-ls", gross_short=0.0)
     weights = strategy.build_weights(market)
     last = weights.iloc[-1]
 
-    assert last["A"] == 1.0
+    assert last["A"] == 0.0
     assert last["B"] == 0.0
 
 
-def test_rrg_flow_confirmation_uses_trading_value_frame() -> None:
-    from backtesting.strategies.rrg_sector_rotation import _build_stock_flow_confirmation
+def test_rrg_op_revision_uses_prior_based_change() -> None:
+    from backtesting.strategies.rrg_sector_rotation import _build_stock_op_revision
 
-    index = pd.date_range("2024-01-02", periods=5, freq="D")
-    columns = ["A"]
-    close = pd.DataFrame(100.0, index=index, columns=columns)
-    foreign = pd.DataFrame([1.0, 2.0, 4.0, 8.0, 16.0], index=index, columns=columns)
-    inst = pd.DataFrame(1.0, index=index, columns=columns)
-    retail = pd.DataFrame(0.5, index=index, columns=columns)
-    trading_value = pd.DataFrame(10.0, index=index, columns=columns)
+    index = pd.date_range("2024-01-02", periods=3, freq="D")
+    columns = ["A", "B", "C", "D"]
+    sector = pd.DataFrame("Tech", index=index, columns=columns)
+    prior = pd.Series({"A": 100.0, "B": -100.0, "C": 0.0, "D": 1.0})
+    current = pd.Series({"A": 120.0, "B": -80.0, "C": 10.0, "D": 100.0})
+    op = pd.DataFrame([prior, prior, current], index=index)
 
-    actual = _build_stock_flow_confirmation(
-        frames={
-            "foreign_flow": foreign,
-            "inst_flow": inst,
-            "retail_flow": retail,
-            "trading_value": trading_value,
-        },
-        close=close,
-        flow_lookback=2,
+    actual = _build_stock_op_revision(
+        frames={"op_fwd_q1": op, "op_fwd_q2": op, "op_fwd": op},
+        index=index,
+        columns=pd.Index(columns),
+        sector=sector,
+        lookback=1,
     )
 
-    flow_pressure = foreign.add(inst, fill_value=0.0).sub(retail, fill_value=0.0).divide(trading_value)
-    flow_mean = flow_pressure.rolling(2, min_periods=2).mean()
-    expected = flow_mean.sub(flow_mean.rolling(2, min_periods=2).mean()).divide(
-        flow_mean.rolling(2, min_periods=2).std(ddof=0).replace(0.0, np.nan)
-    )
-    assert_frame_equal(actual, expected)
+    last = actual.iloc[-1]
+    assert last["A"] == pytest.approx(0.20)
+    assert last["B"] == pytest.approx(0.20)
+    assert pd.isna(last["C"])
+    assert last["D"] == pytest.approx(1.0)
 
 
-def test_rrg_fwd_flow1_ls_adds_equal_weight_short_sleeve(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_rrg_fwd_flow1_ls_weights_op_revision_scores_and_keeps_weakening_off_short(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from backtesting.strategies import rrg_sector_rotation as module
 
     index = pd.date_range("2024-01-02", periods=60, freq="D")
@@ -210,7 +172,7 @@ def test_rrg_fwd_flow1_ls_adds_equal_weight_short_sleeve(monkeypatch: pytest.Mon
             "L1": "Strong",
             "L2": "Strong",
             "S1": "Weak",
-            "S2": "Weak",
+            "S2": "WeakeningSector",
             "N": "Neutral",
         },
         index=index,
@@ -242,36 +204,42 @@ def test_rrg_fwd_flow1_ls_adds_equal_weight_short_sleeve(monkeypatch: pytest.Mon
     )
 
     def fake_rrg_context(**_: object) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        state = pd.DataFrame({"Strong": "Leading", "Weak": "Lagging", "Neutral": "Improving"}, index=index)
-        long_sector = state.isin(("Leading", "Improving"))
-        short_sector = state.isin(("Lagging", "Weakening"))
+        state = pd.DataFrame(
+            {"Strong": "Leading", "Weak": "Lagging", "WeakeningSector": "Weakening", "Neutral": "Improving"},
+            index=index,
+        )
+        long_sector = state.isin(("Leading", "Improving", "Weakening"))
+        short_sector = state.eq("Lagging")
         return state, long_sector, short_sector
 
-    stock_consensus = pd.DataFrame(
+    stock_op = pd.DataFrame(
         {
             "L1": 0.4,
             "L2": 0.3,
             "S1": -0.4,
             "S2": -0.2,
-            "N": -0.1,
+            "N": 0.2,
         },
         index=index,
     )
-    sector_consensus = pd.DataFrame({"Strong": 0.5, "Weak": -0.5, "Neutral": 0.2}, index=index)
+    sector_op = pd.DataFrame(
+        {"Strong": 0.5, "Weak": -0.5, "WeakeningSector": -0.5, "Neutral": 0.2},
+        index=index,
+    )
 
     monkeypatch.setattr(module, "_build_rrg_context", fake_rrg_context)
-    monkeypatch.setattr(module, "_build_stock_consensus_confirmation", lambda **_: stock_consensus)
-    monkeypatch.setattr(module, "_build_sector_consensus_confirmation", lambda **_: sector_consensus)
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+    monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
 
     strategy = build_strategy("rrg-fwd-flow1-ls", max_long_names=2, max_short_names=2, gross_short=0.5)
     weights = strategy.build_weights(market)
     last = weights.iloc[-1]
 
-    assert last["L1"] == 0.5
-    assert last["L2"] == 0.5
-    assert last["S1"] == -0.25
-    assert last["S2"] == -0.25
-    assert last["N"] == 0.0
+    assert last["L1"] == pytest.approx(0.5)
+    assert last["L2"] == pytest.approx(1.0 / 3.0)
+    assert last["N"] == pytest.approx(1.0 / 6.0)
+    assert last["S1"] == pytest.approx(-0.5)
+    assert last["S2"] == 0.0
     assert last[last.gt(0.0)].sum() == pytest.approx(1.0)
     assert last[last.lt(0.0)].sum() == pytest.approx(-0.5)
 

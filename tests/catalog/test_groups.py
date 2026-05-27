@@ -12,6 +12,7 @@ EXPECTED_RAW_STEMS = {
     "qw_eps_nfq1",
     "qw_eps_nfq2",
     "qw_eps_nfy1",
+    "qw_op_fwd_12m",
     "qw_equity_lfq0",
     "qw_etf_adj_c",
     "qw_etf_adj_h",
@@ -64,6 +65,7 @@ def test_catalog_groups_cover_known_datasets() -> None:
     assert DatasetId.QW_ETF_ADJ_C in catalog.ids(DatasetGroup.PRICE)
     assert DatasetId.QW_KSDQ_ADJ_C in catalog.ids(DatasetGroup.PRICE)
     assert DatasetId.QW_KSDQ150_YN in catalog.ids(DatasetGroup.FLAG)
+    assert DatasetId.QW_OP_FWD_12M in catalog.ids(DatasetGroup.ESTIMATE)
     assert DatasetId.QW_OP_NFY1 in catalog.ids(DatasetGroup.ESTIMATE)
     assert DatasetId.QW_FOREIGN in catalog.ids(DatasetGroup.FLOW)
     assert DatasetId.QW_K200_YN in catalog.ids(DatasetGroup.FLAG)
@@ -89,6 +91,7 @@ def test_catalog_treats_forward_estimate_datasets_as_point_in_time() -> None:
         DatasetId.QW_OP_NFQ1,
         DatasetId.QW_OP_NFQ2,
         DatasetId.QW_OP_NFY1,
+        DatasetId.QW_OP_FWD_12M,
     )
 
     assert all(catalog.get(dataset_id).lag == 0 for dataset_id in estimate_ids)
@@ -105,6 +108,7 @@ def test_catalog_exposes_group_view() -> None:
     groups = catalog.groups()
 
     assert DatasetId.QW_ADJ_C in groups.price
+    assert DatasetId.QW_OP_FWD_12M in groups.estimate
     assert DatasetId.QW_OP_NFY1 in groups.estimate
     assert DatasetId.QW_EQUITY_LFQ0 in groups.fundamental
     assert groups.get(DatasetGroup.FLAG) == groups.flag

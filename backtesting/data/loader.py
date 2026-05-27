@@ -70,6 +70,7 @@ class DataLoader:
         DatasetId.QW_NI_LFQ0: "net_income",
         DatasetId.QW_OCF_LFQ0: "oper_cash_flow",
         DatasetId.QW_OP_LFQ0: "op",
+        DatasetId.QW_OP_FWD_12M: "op_fwd_12m",
         DatasetId.QW_OP_NFQ1: "op_fwd_q1",
         DatasetId.QW_OP_NFQ2: "op_fwd_q2",
         DatasetId.QW_OP_NFY1: "op_fwd",

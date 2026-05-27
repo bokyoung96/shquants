@@ -57,6 +57,7 @@ class DatasetId(str, Enum):
     QW_NI_LFQ0 = "qw_ni_lfq0"
     QW_OCF_LFQ0 = "qw_ocf_lfq0"
     QW_OP_LFQ0 = "qw_op_lfq0"
+    QW_OP_FWD_12M = "qw_op_fwd_12m"
     QW_OP_NFQ1 = "qw_op_nfq1"
     QW_OP_NFQ2 = "qw_op_nfq2"
     QW_OP_NFY1 = "qw_op_nfy1"

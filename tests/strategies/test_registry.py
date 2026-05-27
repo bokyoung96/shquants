@@ -22,6 +22,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_overlay import BenchmarkOverlay
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
+    from backtesting.strategies.mfbt import Mfbt
     from backtesting.strategies.revision_signal import RevisionSignal
     from backtesting.strategies.rrg_sector_rotation import (
         RrgFwdFlow1LongShort,
@@ -33,6 +34,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
+    assert Mfbt.__name__ == "Mfbt"
     assert RevisionSignal.__name__ == "RevisionSignal"
     assert RrgFwdFlow1LongShort.__name__ == "RrgFwdFlow1LongShort"
     assert RrgFwdFlow1LsGs05ListedExitValidated.__name__ == "RrgFwdFlow1LsGs05ListedExitValidated"
@@ -48,6 +50,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_signal" in strategies
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
+    assert "mfbt" in strategies
     assert "rrg-fwd-flow1-ls" in strategies
     for strategy_id in RRG_ARCHIVED_STRATEGIES:
         assert strategy_id in strategies
@@ -84,6 +87,7 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "revision_signal",
         "benchmark_overlay",
         "benchmark_tilt",
+        "mfbt",
         "rrg-fwd-flow1-ls",
         *RRG_ARCHIVED_STRATEGIES,
     }

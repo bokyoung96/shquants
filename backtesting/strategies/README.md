@@ -11,6 +11,7 @@ logic:
 - `trend_rank`: price trend ranking.
 - `earnings_revision`: forward EPS/OP consensus revision.
 - `revision_signal`: signal-triggered earnings revision with market trend risk-off.
+- `mfbt`: multi-factor backtest scaffold, currently seeded with price momentum.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
 - `rrg-fwd-flow1-ls`: RRG sector rotation with revision/flow confirmation and a weak short sleeve.
@@ -66,6 +67,17 @@ should use the current `id` values.
 - `signal`: hold every KOSPI200 name where both EPS and OP forward revisions are positive over `lookback`; move to cash when KOSPI200 is below its fixed 120-day trend average.
 - `construction`: long-only equal weight across all currently passing signal names; no top-N rank cap.
 - `use`: signal-triggered KOSPI200 strategy for lower drawdown than concentrated revision ranking. Prefer the `kospi200_revision_signal` preset so `signal_dates` rebalances only when target weights change.
+
+### MFBT
+
+- `id`: `mfbt`
+- `file`: `mfbt.py`
+- `class`: `Mfbt`
+- `profile`: absolute or benchmark-relative, depending on the report config.
+- `data`: `close`
+- `signal`: `price_momentum`, a binary factor set to `1.0` when `close / close.rolling(252).max() > 0.8`; otherwise `0.0`.
+- `construction`: long-only equal weight across selected `price_momentum == 1.0` names, capped by `top_n`.
+- `use`: multi-factor backtest scaffold. Add new factors inside this strategy and combine them with the existing `price_momentum` factor as the model evolves.
 
 ### Benchmark Overlay
 

@@ -288,6 +288,145 @@ def test_loader_uses_semantic_key_for_op_fwd_12m_data(tmp_path: Path) -> None:
     assert "qw_op_fwd_12m" not in data.frames
 
 
+def test_loader_uses_semantic_key_for_dps_ttm_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_dps_ttm",
+        pd.DataFrame(
+            {"005930": [1444.0, 1444.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_DPS_TTM],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "dps_ttm" in data.frames
+    assert "qw_dps_ttm" not in data.frames
+
+
+def test_loader_uses_semantic_key_for_dividend_cash_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_dividend_cash",
+        pd.DataFrame(
+            {"005930": [361.0, 0.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_DIVIDEND_CASH],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "dividend_cash" in data.frames
+    assert "qw_dividend_cash" not in data.frames
+
+
+def test_loader_uses_semantic_key_for_dividend_cash_ttm_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_dividend_cash_ttm",
+        pd.DataFrame(
+            {"005930": [1444.0, 1444.0]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_DIVIDEND_CASH_TTM],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "dividend_cash_ttm" in data.frames
+    assert "qw_dividend_cash_ttm" not in data.frames
+
+
+def test_loader_uses_semantic_key_for_wi26_sector_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_wi_sec_26",
+        pd.DataFrame(
+            {"A005930": ["WI62010"]},
+            index=pd.to_datetime(["2024-01-31"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_WI_SEC_26],
+            start="2024-01-01",
+            end="2024-01-31",
+        )
+    )
+
+    assert "sector_big" in data.frames
+    assert "qw_wi_sec_26" not in data.frames
+
+
+@pytest.mark.parametrize(
+    ("dataset_id", "stem", "frame_key"),
+    [
+        (DatasetId.QW_FCF, "qw_fcf", "free_cash_flow"),
+        (DatasetId.QW_INT_BEARING_LIAB_NFQ0, "qw_int_bearing_liab_nfq0", "interest_bearing_liability"),
+        (DatasetId.QW_QUICK_ASSETS_NFQ0, "qw_quick_assets_nfq0", "quick_asset"),
+        (DatasetId.QW_TANGIBLE_ASSETS_NFQ0, "qw_tangible_assets_nfq0", "tangible_asset"),
+    ],
+)
+def test_loader_uses_semantic_key_for_value_fundamental_data(
+    tmp_path: Path,
+    dataset_id: DatasetId,
+    stem: str,
+    frame_key: str,
+) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        stem,
+        pd.DataFrame(
+            {"005930": [10.0]},
+            index=pd.to_datetime(["2024-01-31"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[dataset_id],
+            start="2024-01-01",
+            end="2024-01-31",
+        )
+    )
+
+    assert frame_key in data.frames
+    assert stem not in data.frames
+
+
 def test_loader_uses_semantic_key_for_kosdaq_close_data(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     parquet_dir.mkdir()

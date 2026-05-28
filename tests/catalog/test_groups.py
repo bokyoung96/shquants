@@ -9,6 +9,9 @@ EXPECTED_RAW_STEMS = {
     "qw_asset_lfq0",
     "qw_BM",
     "qw_c",
+    "qw_dividend_cash",
+    "qw_dividend_cash_ttm",
+    "qw_dps_ttm",
     "qw_eps_nfq1",
     "qw_eps_nfq2",
     "qw_eps_nfy1",
@@ -27,8 +30,10 @@ EXPECTED_RAW_STEMS = {
     "qw_etf_te",
     "qw_foreign",
     "qw_foreign_ratio",
+    "qw_fcf",
     "qw_gp_lfq0",
     "qw_institution",
+    "qw_int_bearing_liab_nfq0",
     "qw_ksdq150_yn",
     "qw_ksdq_adj_c",
     "qw_ksdq_adj_h",
@@ -49,11 +54,14 @@ EXPECTED_RAW_STEMS = {
     "qw_op_nfq1",
     "qw_op_nfq2",
     "qw_op_nfy1",
+    "qw_quick_assets_nfq0",
     "qw_retail",
     "qw_sha_out",
+    "qw_tangible_assets_nfq0",
     "qw_trs_ban",
     "qw_v",
     "qw_v_value",
+    "qw_wi_sec_26",
     "qw_wics_sec_big",
 }
 
@@ -69,6 +77,14 @@ def test_catalog_groups_cover_known_datasets() -> None:
     assert DatasetId.QW_OP_NFY1 in catalog.ids(DatasetGroup.ESTIMATE)
     assert DatasetId.QW_FOREIGN in catalog.ids(DatasetGroup.FLOW)
     assert DatasetId.QW_K200_YN in catalog.ids(DatasetGroup.FLAG)
+    assert DatasetId.QW_DPS_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_DIVIDEND_CASH in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_DIVIDEND_CASH_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_FCF in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_INT_BEARING_LIAB_NFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_QUICK_ASSETS_NFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_TANGIBLE_ASSETS_NFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_WI_SEC_26 in catalog.ids(DatasetGroup.META)
     assert DatasetId.QW_WICS_SEC_BIG in catalog.ids(DatasetGroup.META)
     assert DatasetId.QW_KSDQ_WICS_SEC_BIG in catalog.ids(DatasetGroup.META)
 
@@ -97,6 +113,16 @@ def test_catalog_treats_forward_estimate_datasets_as_point_in_time() -> None:
     assert all(catalog.get(dataset_id).lag == 0 for dataset_id in estimate_ids)
 
 
+def test_catalog_treats_wi26_sector_as_daily_observations() -> None:
+    catalog = DataCatalog.default()
+
+    spec = catalog.get(DatasetId.QW_WI_SEC_26)
+
+    assert spec.freq == "D"
+    assert spec.validity == "daily"
+    assert spec.dtype == "string"
+
+
 def test_catalog_covers_all_stock_raw_stems() -> None:
     catalog = DataCatalog.default()
 
@@ -110,5 +136,12 @@ def test_catalog_exposes_group_view() -> None:
     assert DatasetId.QW_ADJ_C in groups.price
     assert DatasetId.QW_OP_FWD_12M in groups.estimate
     assert DatasetId.QW_OP_NFY1 in groups.estimate
+    assert DatasetId.QW_DPS_TTM in groups.fundamental
+    assert DatasetId.QW_DIVIDEND_CASH in groups.fundamental
+    assert DatasetId.QW_DIVIDEND_CASH_TTM in groups.fundamental
     assert DatasetId.QW_EQUITY_LFQ0 in groups.fundamental
+    assert DatasetId.QW_FCF in groups.fundamental
+    assert DatasetId.QW_INT_BEARING_LIAB_NFQ0 in groups.fundamental
+    assert DatasetId.QW_QUICK_ASSETS_NFQ0 in groups.fundamental
+    assert DatasetId.QW_TANGIBLE_ASSETS_NFQ0 in groups.fundamental
     assert groups.get(DatasetGroup.FLAG) == groups.flag

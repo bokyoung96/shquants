@@ -11,7 +11,7 @@ logic:
 - `trend_rank`: price trend ranking.
 - `earnings_revision`: forward EPS/OP consensus revision.
 - `revision_signal`: signal-triggered earnings revision with market trend risk-off.
-- `mfbt`: multi-factor backtest scaffold, currently seeded with price momentum.
+- `mfbt`: multi-factor backtest scaffold with price, earnings, dividend, and retail-flow signals.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
 - `rrg-fwd-flow1-ls`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
@@ -71,10 +71,18 @@ should use the current `id` values.
 - `file`: `mfbt.py`
 - `class`: `Mfbt`
 - `profile`: absolute or benchmark-relative, depending on the report config.
-- `data`: `close`
-- `signal`: `price_momentum`, a binary factor set to `1.0` when `close / close.rolling(252).max() > 0.8`; otherwise `0.0`.
+- `data`: `close`, `op_fwd_12m`, `dps_ttm`, `dividend_cash_ttm`, `retail_flow`, `sector_big` from daily `qw_wi_sec_26`, `market_cap`, `free_cash_flow`, `interest_bearing_liability`, `quick_asset`
+- `universe`: factor scores and cross-sectional buckets use the active strategy universe, typically `legacy_k200`. Non-universe names remain `NaN` in factor metadata.
+- `frequency`: all factor outputs are month-end observations. Non-month-end rows remain `NaN` in factor metadata and alpha. The final `mfbt` factor metadata is additionally masked to dates where every required factor has at least one computable signal; ticker-level availability remains factor-specific, so missing raw inputs stay `NaN` instead of becoming a `0.0` score.
+- `signal`: `price_momentum`, a month-end binary factor set to `1.0` when `close / close.rolling(252).max() > 0.8`; otherwise `0.0`. It requires a full 252-trading-day close history. Earlier month-end rows stay `NaN`; a valid ratio at or below the threshold is the real `0.0` score.
+- `signal`: `earnings_momentum`, a 0-4 monthly cross-sectional score based on month-end 12MF operating-profit estimate growth, with missing current/previous consensus kept as `NaN` and extreme growth for `op_fwd_12m < 100bn` filtered to `0.0` before scoring. Non-month-end rows are `NaN`.
+- `signal`: `dividend_yield`, a 0-4 monthly cross-sectional score based on month-end `dps_ttm / close`, plus `1.0` when the most recent three completed calendar-year year-end `dividend_cash_ttm` values increased consecutively. Missing dividend yield inputs stay `NaN`; non-month-end rows are `NaN`.
+- `signal`: `retail_flow`, a 0-4 monthly WI26 sector score from each sector's average 252-day cumulative retail net flow inside the active universe. Larger average retail net selling gets the higher score, then the sector score is assigned to member names. Non-month-end rows are `NaN`. The sector statistic is an average, not a sum, so sectors with more K200 constituents are not mechanically pushed toward larger absolute flow values.
+- `retail_flow` size note: the source flow is still an unscaled currency amount, not a market-cap-normalized or trading-value-normalized ratio. Averaging removes the constituent-count bias, but large-cap and highly liquid names can still make their sector's average absolute flow larger than sectors dominated by smaller names. Treat the factor as a sector-level retail pressure signal with residual size/liquidity characteristics.
+- `signal`: `value`, a 0-4 monthly cross-sectional score based on `free_cash_flow / TEV`, where `TEV = market_cap + interest_bearing_liability - quick_asset`. Market cap uses the signal month-end value. Financial inputs use fixed source-month windows: April-May signals use March-end data, June-August use May-end data, September-November use August-end data, and December-March use November-end data.
+- `value` data policy: missing `free_cash_flow`, `interest_bearing_liability`, or `quick_asset` leaves the final score as `NaN`. `TEV <= 0` is not excluded; it is forced into the lowest value metric before scoring so negative-TEV edge cases cannot receive a high FCF/TEV score. A 2026-02-27 K200 check showed G40 financials had 0/21 non-null `free_cash_flow`, 0/21 non-null `quick_asset`, and 0/21 computable TEV, so financial names are expected to fall out as `NaN` under this definition.
 - `construction`: long-only equal weight across selected `price_momentum == 1.0` names, capped by `top_n`.
-- `use`: multi-factor backtest scaffold. Add new factors inside this strategy and combine them with the existing `price_momentum` factor as the model evolves.
+- `use`: multi-factor backtest scaffold. Current portfolio selection still uses `price_momentum` as the alpha while preserving factor scores in signal metadata for later combination.
 
 ### Benchmark Overlay
 

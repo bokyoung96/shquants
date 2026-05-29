@@ -4,6 +4,11 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
+
+
+DATE_FORMAT = "yyyy-mm-dd"
+SCORE_FORMAT = "0"
 
 from backtesting.catalog import DatasetId
 from backtesting.data import DataLoader, LoadRequest, ParquetStore
@@ -52,7 +57,14 @@ def write_signal_matrix_workbook(path: Path, factors: dict[str, pd.DataFrame]) -
         values = output.to_numpy(dtype=object, copy=True)
         values[pd.isna(values)] = None
         for idx, row_values in zip(output.index, values):
-            ws.append([idx.to_pydatetime(), *row_values.tolist()])
+            date_cell = WriteOnlyCell(ws, value=idx.to_pydatetime())
+            date_cell.number_format = DATE_FORMAT
+            row = [date_cell]
+            for value in row_values.tolist():
+                cell = WriteOnlyCell(ws, value=value)
+                cell.number_format = SCORE_FORMAT
+                row.append(cell)
+            ws.append(row)
     wb.save(path)
 
 

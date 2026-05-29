@@ -355,13 +355,12 @@ def test_mfbt_dividend_yield_scores_quantiles_inside_universe_only() -> None:
     assert_frame_equal(score, expected)
 
 
-def test_mfbt_dividend_yield_adds_bonus_for_three_year_dividend_cash_increase() -> None:
-    index = pd.to_datetime(["2021-12-31", "2022-12-31", "2023-12-31", "2024-01-30", "2024-01-31"])
+def test_mfbt_dividend_yield_adds_bonus_for_same_month_three_year_ttm_increase() -> None:
+    index = pd.to_datetime(["2022-01-31", "2023-01-31", "2024-01-30", "2024-01-31"])
     columns = ["A", "B", "C", "D", "E"]
     close = pd.DataFrame(100.0, index=index, columns=columns)
     dps_ttm = pd.DataFrame(
         [
-            [1.0, 2.0, 3.0, 4.0, 5.0],
             [1.0, 2.0, 3.0, 4.0, 5.0],
             [1.0, 2.0, 3.0, 4.0, 5.0],
             [1.0, 2.0, 3.0, 4.0, 5.0],
@@ -371,12 +370,12 @@ def test_mfbt_dividend_yield_adds_bonus_for_three_year_dividend_cash_increase() 
         columns=columns,
     )
     dividend_cash = pd.DataFrame(0.0, index=index, columns=columns)
-    dividend_cash.loc["2021-12-31", "E"] = 10.0
-    dividend_cash.loc["2022-12-31", "E"] = 20.0
-    dividend_cash.loc["2023-12-31", "E"] = 30.0
-    dividend_cash.loc["2021-12-31", "D"] = 30.0
-    dividend_cash.loc["2022-12-31", "D"] = 20.0
-    dividend_cash.loc["2023-12-31", "D"] = 10.0
+    dividend_cash.loc["2022-01-31", "E"] = 10.0
+    dividend_cash.loc["2023-01-31", "E"] = 20.0
+    dividend_cash.loc["2024-01-31", "E"] = 30.0
+    dividend_cash.loc["2022-01-31", "D"] = 30.0
+    dividend_cash.loc["2023-01-31", "D"] = 20.0
+    dividend_cash.loc["2024-01-31", "D"] = 10.0
     market = _mfbt_market(close=close, dps_ttm=dps_ttm, dividend_cash_ttm=dividend_cash)
 
     score = _factor_score("dividend_yield", market)
@@ -386,15 +385,13 @@ def test_mfbt_dividend_yield_adds_bonus_for_three_year_dividend_cash_increase() 
     assert score.loc["2024-01-31", "E"] == 5.0
 
 
-def test_mfbt_dividend_yield_bonus_uses_year_end_dividend_cash_not_annual_sum() -> None:
+def test_mfbt_dividend_yield_bonus_uses_same_month_ttm_not_year_end_cash() -> None:
     index = pd.to_datetime(
         [
-            "2021-06-30",
-            "2021-12-31",
-            "2022-06-30",
-            "2022-12-31",
-            "2023-06-30",
-            "2023-12-31",
+            "2022-01-31",
+            "2022-12-30",
+            "2023-01-31",
+            "2023-12-29",
             "2024-01-31",
         ]
     )
@@ -411,13 +408,13 @@ def test_mfbt_dividend_yield_bonus_uses_year_end_dividend_cash_not_annual_sum() 
         index=index,
     )
     dividend_cash = pd.DataFrame(0.0, index=index, columns=columns)
-    dividend_cash.loc[["2021-06-30", "2022-06-30", "2023-06-30"], "E"] = [0.0, 100.0, 200.0]
-    dividend_cash.loc[["2021-12-31", "2022-12-31", "2023-12-31"], "E"] = [30.0, 20.0, 10.0]
+    dividend_cash.loc[["2022-01-31", "2023-01-31", "2024-01-31"], "E"] = [10.0, 20.0, 30.0]
+    dividend_cash.loc[["2022-12-30", "2023-12-29"], "E"] = [100.0, 10.0]
     market = _mfbt_market(close=close, dps_ttm=dps_ttm, dividend_cash_ttm=dividend_cash)
 
     score = _factor_score("dividend_yield", market)
 
-    assert score.loc["2024-01-31", "E"] == 4.0
+    assert score.loc["2024-01-31", "E"] == 5.0
 
 
 def test_mfbt_retail_flow_scores_sector_net_selling_inside_universe_only() -> None:

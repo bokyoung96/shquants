@@ -81,3 +81,16 @@ def test_write_signal_matrix_workbook_writes_one_sheet_per_factor(tmp_path) -> N
     assert len(list(wb["price_momentum"].iter_rows())) == 3
     assert len(list(wb["value"].iter_rows())) == 2
     assert [cell.value for cell in next(wb["price_momentum"].iter_rows(max_row=1))] == ["date", "A", "B"]
+
+
+def test_write_signal_matrix_workbook_formats_dates_and_scores(tmp_path) -> None:
+    index = pd.to_datetime(["2024-01-31"])
+    factors = {"price_momentum": pd.DataFrame([[1.0]], index=index, columns=["A"])}
+    path = tmp_path / "signals.xlsx"
+
+    write_signal_matrix_workbook(path, factors)
+
+    wb = load_workbook(path, read_only=False, data_only=False)
+    ws = wb["price_momentum"]
+    assert ws["A2"].number_format == "yyyy-mm-dd"
+    assert ws["B2"].number_format == "0"

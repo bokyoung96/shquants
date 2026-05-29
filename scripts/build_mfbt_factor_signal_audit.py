@@ -15,6 +15,11 @@ from backtesting.strategies.mfbt import _month_end_observations, _quarter_lagged
 
 
 OUTPUT = Path("reports") / "mfbt_factor_signal_audit_by_factor.xlsx"
+DATE_FORMAT = "yyyy-mm-dd"
+SCORE_FORMAT = "0"
+PERCENT_FORMAT = "0.00%"
+ACCOUNTING_FORMAT = '_-* #,##0.00_-;[Red]-* #,##0.00_-;_-* "-"??_-;_-@_-'
+NUMBER_FORMAT = "#,##0.00"
 FACTOR_SHEET_NAMES = (
     "price_momentum",
     "earnings_momentum",
@@ -119,9 +124,9 @@ def _build_calculations(
     monthly_close = _month_end_observations(close)
     monthly_dps = _month_end_observations(dps_ttm).reindex(index=monthly_close.index, columns=monthly_close.columns)
     dividend_yield = monthly_dps.divide(monthly_close.where(monthly_close.gt(0.0)))
-    years = pd.Index(dividend_cash.index.year)
-    year_end_cash = dividend_cash.loc[~years.duplicated(keep="last")].copy()
-    year_end_cash.index = year_end_cash.index.year
+    monthly_dividend_cash_ttm = _month_end_observations(dividend_cash).copy()
+    monthly_dividend_cash_ttm.index = monthly_dividend_cash_ttm.index.to_period("M")
+    monthly_dividend_cash_ttm = monthly_dividend_cash_ttm.loc[~monthly_dividend_cash_ttm.index.duplicated(keep="last")]
 
     monthly_retail = _month_end_observations(retail_flow.rolling(252, min_periods=252).sum())
     monthly_sector = _month_end_observations(sector).reindex(index=monthly_retail.index, columns=monthly_retail.columns)
@@ -155,7 +160,7 @@ def _build_calculations(
         "monthly_close": monthly_close,
         "monthly_dps": monthly_dps,
         "dividend_yield": dividend_yield,
-        "year_end_cash": year_end_cash,
+        "dividend_cash_ttm": monthly_dividend_cash_ttm,
         "monthly_retail": monthly_retail,
         "retail_sector_table": retail_sector_table,
         "monthly_mktcap": monthly_mktcap,
@@ -241,7 +246,7 @@ def _methodology() -> pd.DataFrame:
             {"구분": "날짜 기준", "설명": "모든 팩터 output은 month-end observation입니다. daily row 중 월말 observation이 아닌 날짜는 NaN입니다."},
             {"구분": "price_momentum", "설명": "현재가 / 최근 252거래일 종가 최고가 > 0.8이면 1, 아니면 0입니다. 252거래일 종가 이력이 없으면 계산 불가이므로 NaN입니다."},
             {"구분": "earnings_momentum", "설명": "(월말 12MF 영업이익 - 전월말 12MF 영업이익) / abs(전월말 12MF 영업이익)을 K200 내부 quantile 0~4로 점수화합니다. OP가 1000억 미만이고 성장률이 50% 초과면 성장률을 0으로 리셋합니다."},
-            {"구분": "dividend_yield", "설명": "dps_ttm / close를 K200 내부 quantile 0~4로 점수화하고, 최근 완료 3개 연도 연말 dividend_cash_ttm이 연속 증가하면 +1을 더합니다."},
+            {"구분": "dividend_yield", "설명": "dps_ttm / close를 K200 내부 quantile 0~4로 점수화하고, 신호월 기준 24개월 전, 12개월 전, 현재월의 dividend_cash_ttm이 연속 증가하면 +1을 더합니다."},
             {"구분": "retail_flow", "설명": "종목별 252일 개인 순매수대금을 구한 뒤 K200 구성종목 기준 섹터 평균을 계산합니다. 개인 순매도가 큰 섹터가 높은 점수입니다."},
             {"구분": "value", "설명": "free_cash_flow / TEV를 K200 내부 quantile 0~4로 점수화합니다. TEV = market_cap + interest_bearing_liability - quick_asset입니다."},
             {"구분": "value lag 예시", "설명": "4~5월 signal은 3월말 데이터, 6~8월은 5월말 데이터, 9~11월은 8월말 데이터, 12~3월은 11월말 데이터를 사용합니다."},
@@ -331,7 +336,7 @@ def _ticker_detail(ticker: str, market, factors: dict[str, pd.DataFrame], base: 
                 "배당계산_종가": _at(calc["monthly_close"], date, ticker),
                 "배당수익률_값": _at(calc["dividend_yield"], date, ticker),
                 "배당수익률_엑셀수식": None,
-                **_dividend_bonus_parts(calc["year_end_cash"], date, ticker),
+                **_dividend_bonus_parts(calc["dividend_cash_ttm"], date, ticker),
                 "배당증가_bonus_엑셀수식": None,
                 "dividend_yield_score": factors["dividend_yield"].loc[date, ticker],
                 "개인수급_252일누적": _at(calc["monthly_retail"], date, ticker),
@@ -374,16 +379,21 @@ def _source_period_for_signal(quarter_source_frame: pd.DataFrame, signal_date: p
     return str(candidates.iloc[-1]["_source_period"])
 
 
-def _dividend_bonus_parts(year_end_cash: pd.DataFrame, date: pd.Timestamp, ticker: str) -> dict[str, object]:
-    completed_year = date.year if date.month == 12 else date.year - 1
-    years = [completed_year - 2, completed_year - 1, completed_year]
-    values = [year_end_cash.loc[year, ticker] if year in year_end_cash.index and ticker in year_end_cash.columns else pd.NA for year in years]
+def _dividend_bonus_parts(monthly_dividend_cash_ttm: pd.DataFrame, date: pd.Timestamp, ticker: str) -> dict[str, object]:
+    signal_period = date.to_period("M")
+    periods = [signal_period - 24, signal_period - 12, signal_period]
+    values = [
+        monthly_dividend_cash_ttm.loc[period, ticker]
+        if period in monthly_dividend_cash_ttm.index and ticker in monthly_dividend_cash_ttm.columns
+        else pd.NA
+        for period in periods
+    ]
     return {
-        "배당증가_연도1": years[0],
+        "배당증가_연도1": str(periods[0]),
         "배당증가_현금배당1": values[0],
-        "배당증가_연도2": years[1],
+        "배당증가_연도2": str(periods[1]),
         "배당증가_현금배당2": values[1],
-        "배당증가_연도3": years[2],
+        "배당증가_연도3": str(periods[2]),
         "배당증가_현금배당3": values[2],
     }
 
@@ -626,6 +636,7 @@ def _write_factor_sheet_workbook(
             for current in row:
                 if isinstance(current.value, str) and current.value.startswith("="):
                     current.fill = formula_fill
+        _apply_number_formats(ws)
         for index in range(1, max_col + 1):
             width = 16 if index <= max_col else 12
             ws.column_dimensions[get_column_letter(index)].width = width
@@ -640,6 +651,78 @@ def _write_factor_sheet_workbook(
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
+
+
+def _apply_number_formats(ws) -> None:
+    for row in ws.iter_rows():
+        for current in row:
+            current.number_format = _number_format_for_cell(ws, current.row, current.column)
+
+
+def _number_format_for_cell(ws, row: int, column: int) -> str:
+    value = ws.cell(row, column).value
+    if isinstance(value, pd.Timestamp):
+        return DATE_FORMAT
+    if hasattr(value, "to_pydatetime"):
+        return DATE_FORMAT
+    header = _nearest_header(ws, row, column)
+    if header is None:
+        return "General"
+    if _is_date_header(header):
+        return DATE_FORMAT
+    if _is_percent_header(header):
+        return PERCENT_FORMAT
+    if _is_score_header(header):
+        return SCORE_FORMAT
+    if _is_accounting_header(header):
+        return ACCOUNTING_FORMAT
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        return NUMBER_FORMAT
+    return "General"
+
+
+def _nearest_header(ws, row: int, column: int) -> str | None:
+    for header_row in range(row - 1, 0, -1):
+        value = ws.cell(header_row, column).value
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def _is_date_header(header: str) -> bool:
+    normalized = header.lower()
+    return normalized in {"date", "raw_date", "신호일"} or normalized.endswith("_date")
+
+
+def _is_percent_header(header: str) -> bool:
+    return any(token in header for token in ("비율", "성장률", "수익률", "FCF/TEV", "FCF_over_TEV", "over_TEV"))
+
+
+def _is_score_header(header: str) -> bool:
+    return any(token in header.lower() for token in ("score", "bonus", "점수"))
+
+
+def _is_accounting_header(header: str) -> bool:
+    return any(
+        token in header
+        for token in (
+            "종가",
+            "고가",
+            "raw_close",
+            "OP",
+            "DPS",
+            "배당",
+            "현금배당",
+            "개인수급",
+            "평균",
+            "시가총액",
+            "FCF",
+            "부채",
+            "자산",
+            "TEV",
+            "12MF",
+        )
+    )
 
 
 def _write_price_factor_sheet(ws, write_row, finish, tickers, signal_date, factors, calc, header_fill, raw_fill) -> None:
@@ -704,14 +787,14 @@ def _write_dividend_factor_sheet(ws, write_row, finish, tickers, signal_date, fa
     valid = factors["dividend_yield"].loc[signal_date].notna()
     row = support_start
     for ticker in valid.index[valid]:
-        bonus = _dividend_bonus_parts(calc["year_end_cash"], signal_date, ticker)
+        bonus = _dividend_bonus_parts(calc["dividend_cash_ttm"], signal_date, ticker)
         write_row(ws, row, [ticker, _at(calc["monthly_dps"], signal_date, ticker), _at(calc["monthly_close"], signal_date, ticker), f"=IFERROR(B{row}/C{row},NA())", bonus["배당증가_현금배당1"], bonus["배당증가_현금배당2"], bonus["배당증가_현금배당3"], f"=IF(AND(E{row}<F{row},F{row}<G{row}),1,0)", None])
         row += 1
     end = row - 1
     for support_row in range(support_start, end + 1):
         ws.cell(support_row, 9, f"=IFERROR(MIN(4,INT((RANK.AVG(D{support_row},$D${support_start}:$D${end},1)-1)*5/COUNT($D${support_start}:$D${end})))+H{support_row},NA())")
     for idx, ticker in enumerate(tickers, start=5):
-        bonus = _dividend_bonus_parts(calc["year_end_cash"], signal_date, ticker)
+        bonus = _dividend_bonus_parts(calc["dividend_cash_ttm"], signal_date, ticker)
         ws.cell(idx, 1, TICKERS[ticker])
         ws.cell(idx, 2, ticker)
         ws.cell(idx, 3, _at(calc["monthly_dps"], signal_date, ticker))
@@ -962,7 +1045,7 @@ def _write_dividend_support(ws, row, signal_date, factors, calc, section, write_
     row_by_ticker = {}
     valid = factors["dividend_yield"].loc[signal_date].notna()
     for ticker in valid.index[valid]:
-        bonus = _dividend_bonus_parts(calc["year_end_cash"], signal_date, ticker)
+        bonus = _dividend_bonus_parts(calc["dividend_cash_ttm"], signal_date, ticker)
         row_by_ticker[ticker] = row
         cell(row, 1, ticker)
         cell(row, 2, _at(calc["monthly_dps"], signal_date, ticker))

@@ -153,7 +153,7 @@ class EarningsMomentumFactor:
 
 @dataclass(slots=True)
 class DividendYieldFactor:
-    # Signal: score monthly dividend yield into 0-4 buckets, then add a 3-year year-end cash-dividend growth bonus.
+    # Signal: score monthly dividend yield into 0-4 buckets, then add a same-month 3-year TTM cash-dividend growth bonus.
     quantile_count: int = 5
     name: str = "dividend_yield"
 
@@ -172,7 +172,7 @@ class DividendYieldFactor:
 
         base_score = _score_frame(dividend_yield, market, self.quantile_count)
         monthly_score = base_score.add(
-            self._three_year_increase_bonus(dividend_cash_ttm, base_score.index, base_score.columns),
+            self._same_month_three_year_increase_bonus(dividend_cash_ttm, base_score.index, base_score.columns),
             fill_value=0.0,
         )
         monthly_score = monthly_score.where(base_score.notna())
@@ -181,24 +181,25 @@ class DividendYieldFactor:
         return _monthly_output(close, monthly_score, market)
 
     @staticmethod
-    def _three_year_increase_bonus(
-        dividend_cash: pd.DataFrame,
+    def _same_month_three_year_increase_bonus(
+        dividend_cash_ttm: pd.DataFrame,
         signal_dates: pd.DatetimeIndex,
         columns: pd.Index,
     ) -> pd.DataFrame:
-        years = pd.Index(dividend_cash.index.year)
-        year_end_cash = dividend_cash.loc[~years.duplicated(keep="last")].copy()
-        year_end_cash.index = year_end_cash.index.year
+        monthly_cash = _month_end_observations(dividend_cash_ttm)
+        monthly_cash = monthly_cash.copy()
+        monthly_cash.index = monthly_cash.index.to_period("M")
+        monthly_cash = monthly_cash.loc[~monthly_cash.index.duplicated(keep="last")]
         bonus = pd.DataFrame(0.0, index=signal_dates, columns=columns, dtype=float)
 
         for signal_date in signal_dates:
-            completed_year = signal_date.year if signal_date.month == 12 else signal_date.year - 1
-            years = [completed_year - 2, completed_year - 1, completed_year]
-            if any(year not in year_end_cash.index for year in years):
+            signal_period = signal_date.to_period("M")
+            periods = [signal_period - 24, signal_period - 12, signal_period]
+            if any(period not in monthly_cash.index for period in periods):
                 continue
-            first = year_end_cash.loc[years[0], columns]
-            second = year_end_cash.loc[years[1], columns]
-            third = year_end_cash.loc[years[2], columns]
+            first = monthly_cash.loc[periods[0], columns]
+            second = monthly_cash.loc[periods[1], columns]
+            third = monthly_cash.loc[periods[2], columns]
             increased = first.notna() & second.notna() & third.notna() & first.lt(second) & second.lt(third)
             bonus.loc[signal_date, increased.index] = increased.astype(float)
         return bonus

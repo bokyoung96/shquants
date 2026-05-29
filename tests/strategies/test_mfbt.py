@@ -133,7 +133,8 @@ def test_mfbt_lists_earnings_momentum_datasets() -> None:
     assert "qw_dividend_cash_ttm" in dataset_values
     assert "qw_dividend_cash" not in dataset_values
     assert "qw_retail" in dataset_values
-    assert "qw_wi_sec_26" in dataset_values
+    assert "qw_wi_sec_26_big" in dataset_values
+    assert "qw_wi_sec_26" not in dataset_values
     assert "qw_wics_sec_big" not in dataset_values
     assert "qw_mktcap" in dataset_values
     assert "qw_fcf" in dataset_values

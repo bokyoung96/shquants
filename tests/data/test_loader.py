@@ -388,6 +388,31 @@ def test_loader_uses_semantic_key_for_wi26_sector_data(tmp_path: Path) -> None:
     assert "qw_wi_sec_26" not in data.frames
 
 
+def test_loader_uses_semantic_key_for_wi26_big_sector_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_wi_sec_26_big",
+        pd.DataFrame(
+            {"A005930": ["WI26B10"]},
+            index=pd.to_datetime(["2024-01-31"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_WI_SEC_26_BIG],
+            start="2024-01-01",
+            end="2024-01-31",
+        )
+    )
+
+    assert "sector_big" in data.frames
+    assert "qw_wi_sec_26_big" not in data.frames
+
+
 @pytest.mark.parametrize(
     ("dataset_id", "stem", "frame_key"),
     [

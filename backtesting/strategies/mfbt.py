@@ -214,7 +214,7 @@ class RetailFlowFactor:
 
     @property
     def datasets(self) -> tuple[DatasetId, ...]:
-        return (DatasetId.QW_RETAIL, DatasetId.QW_WI_SEC_26)
+        return (DatasetId.QW_RETAIL, DatasetId.QW_WI_SEC_26_BIG)
 
     def build(self, market: MarketData) -> pd.DataFrame:
         close = market.frames["close"]

@@ -87,6 +87,7 @@ class DataLoader:
         DatasetId.QW_V: "volume",
         DatasetId.QW_V_VALUE: "trading_value",
         DatasetId.QW_WI_SEC_26: "sector_big",
+        DatasetId.QW_WI_SEC_26_BIG: "sector_big",
         DatasetId.QW_WICS_SEC_BIG: "sector_big",
     }
 

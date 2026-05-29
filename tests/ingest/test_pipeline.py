@@ -146,6 +146,35 @@ def test_ingest_reads_wi26_sector_code_sources(tmp_path: Path) -> None:
     assert stored.iloc[1, 0] == "WI62010"
 
 
+def test_ingest_reads_wi26_big_sector_code_sources(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    parquet_dir = tmp_path / "parquet"
+    raw_dir.mkdir()
+    parquet_dir.mkdir()
+
+    frame = pd.DataFrame(
+        {
+            "date": ["2024-01-03", "2024-01-02"],
+            "A005930": ["WI26B20", "WI26B10"],
+        }
+    )
+    frame.to_excel(raw_dir / "qw_wi_sec_26_big.xlsx", index=False)
+
+    job = IngestJob(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+    )
+
+    result = job.run(DatasetId.QW_WI_SEC_26_BIG)
+
+    assert result.rows == 2
+    stored = pd.read_parquet(parquet_dir / "qw_wi_sec_26_big.parquet", engine="pyarrow")
+    assert stored.index.tolist() == list(pd.to_datetime(["2024-01-02", "2024-01-03"]))
+    assert stored.iloc[0, 0] == "WI26B10"
+    assert stored.iloc[1, 0] == "WI26B20"
+
+
 def test_ingest_reads_dividend_cash_ttm_sources(tmp_path: Path) -> None:
     raw_dir = tmp_path / "raw"
     parquet_dir = tmp_path / "parquet"

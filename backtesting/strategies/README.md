@@ -14,7 +14,7 @@ logic:
 - `mfbt`: multi-factor backtest scaffold with price, earnings, dividend, and retail-flow signals.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
-- `rrg-fwd-flow1-ls`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
+- `rrg_sector_rotation`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
 
 Each strategy entry below follows the same schema:
 
@@ -106,10 +106,10 @@ should use the current `id` values.
 - `construction`: K200 market-cap base with active-share target and stock/sector active caps.
 - `use`: index-like mandate that should lean toward improving consensus and supportive flow without leaving the benchmark too far behind.
 
-### `rrg-fwd-flow1-ls`
+### `rrg_sector_rotation`
 
 - `profile`: concentrated long plus weak-hedge long-short stock strategy.
-- `data`: `close`, `benchmark`, `sector_big`, K200 membership, market cap/float market cap, and forward OP estimates.
+- `data`: `close`, `benchmark`, `sector_big` from daily `qw_wi_sec_26_big`, K200 membership, market cap/float market cap, and forward OP estimates.
 - `signal`: RRG state is a regime gate; stock and cap-weighted sector OP forward revision are the confirmation signals. Investor flow is not used.
 - `long sleeve`: `Leading`, `Improving`, or `Weakening` sectors whose sector and stock OP revisions are both positive.
 - `short sleeve`: `Lagging` sectors whose sector and stock OP revisions are both negative.
@@ -134,7 +134,7 @@ a preset overrides schedule or fill mode:
 - `revision_signal`: use `uv run python -m backtesting.run --preset kospi200_revision_signal`
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
-- `rrg-fwd-flow1-ls`: `weekly`, `next_open`
+- `rrg_sector_rotation`: `weekly`, `next_open`
 
 ## Screening Notes
 

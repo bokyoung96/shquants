@@ -15,7 +15,7 @@ from .composable import ComposableStrategy
 
 
 @dataclass(slots=True)
-class RrgFwdFlow1LongShort(ComposableStrategy):
+class RrgSectorRotation(ComposableStrategy):
     lookback: int = 20
     rrg_medium_lookback: int = 126
     rrg_momentum_lookback: int = 21
@@ -146,7 +146,7 @@ class _RrgFwdFlow1Signal:
             DatasetId.QW_ADJ_C,
             DatasetId.QW_BM,
             DatasetId.QW_K200_YN,
-            DatasetId.QW_WICS_SEC_BIG,
+            DatasetId.QW_WI_SEC_26_BIG,
             DatasetId.QW_MKTCAP,
             DatasetId.QW_MKTCAP_FLT,
             DatasetId.QW_OP_NFQ1,

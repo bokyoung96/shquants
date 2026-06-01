@@ -15,14 +15,14 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.mfbt import Mfbt
     from backtesting.strategies.revision_signal import RevisionSignal
-    from backtesting.strategies.rrg_sector_rotation import RrgFwdFlow1LongShort
+    from backtesting.strategies.rrg_sector_rotation import RrgSectorRotation
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
     assert Mfbt.__name__ == "Mfbt"
     assert RevisionSignal.__name__ == "RevisionSignal"
-    assert RrgFwdFlow1LongShort.__name__ == "RrgFwdFlow1LongShort"
+    assert RrgSectorRotation.__name__ == "RrgSectorRotation"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -34,7 +34,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "benchmark_tilt" in strategies
     assert "benchmark_overlay" in strategies
     assert "mfbt" in strategies
-    assert "rrg-fwd-flow1-ls" in strategies
+    assert "rrg_sector_rotation" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -52,6 +52,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "revision_oi_state_conditioned_beta_gate_ls" not in strategies
     assert "revision_oi_state_conditioned_short_squeeze_beta_cap_ls" not in strategies
     assert "revision_oi_state_conditioned_short_squeeze_beta_exclusion_ls" not in strategies
+    assert "rrg-fwd-flow1-ls" not in strategies
     assert "rrg-fwd-flow1-ls-gs0.5-listed-exit-validated" not in strategies
     assert "rrg-fwd-flow1-ls03-change10-etf-shortoff-research" not in strategies
     assert "rrg-fwd-flow1-ls-lag31-monthly-gs0.0-l5-validated" not in strategies
@@ -72,12 +73,23 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "benchmark_overlay",
         "benchmark_tilt",
         "mfbt",
-        "rrg-fwd-flow1-ls",
+        "rrg_sector_rotation",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
+    assert "rrg-fwd-flow1-ls" not in strategies
 
 
-def test_rrg_fwd_flow1_ls_ignores_flow_when_op_revision_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_rrg_sector_rotation_uses_wi26_big_sector_dataset() -> None:
+    from backtesting.catalog import DatasetId
+
+    strategy = build_strategy("rrg_sector_rotation")
+    dataset_values = {dataset.value for dataset in strategy.datasets}
+
+    assert DatasetId.QW_WI_SEC_26_BIG.value in dataset_values
+    assert DatasetId.QW_WICS_SEC_BIG.value not in dataset_values
+
+
+def test_rrg_sector_rotation_ignores_flow_when_op_revision_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     from backtesting.strategies import rrg_sector_rotation as module
 
     index = pd.date_range("2024-01-02", periods=60, freq="D")
@@ -122,7 +134,7 @@ def test_rrg_fwd_flow1_ls_ignores_flow_when_op_revision_is_missing(monkeypatch: 
     monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
     monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
 
-    strategy = build_strategy("rrg-fwd-flow1-ls", gross_short=0.0)
+    strategy = build_strategy("rrg_sector_rotation", gross_short=0.0)
     weights = strategy.build_weights(market)
     last = weights.iloc[-1]
 
@@ -155,7 +167,7 @@ def test_rrg_op_revision_uses_prior_based_change() -> None:
     assert last["D"] == pytest.approx(1.0)
 
 
-def test_rrg_fwd_flow1_ls_weights_op_revision_scores_and_keeps_weakening_off_short(
+def test_rrg_sector_rotation_weights_op_revision_scores_and_keeps_weakening_off_short(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from backtesting.strategies import rrg_sector_rotation as module
@@ -231,7 +243,7 @@ def test_rrg_fwd_flow1_ls_weights_op_revision_scores_and_keeps_weakening_off_sho
     monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
     monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
 
-    strategy = build_strategy("rrg-fwd-flow1-ls", max_long_names=2, max_short_names=2, gross_short=0.5)
+    strategy = build_strategy("rrg_sector_rotation", max_long_names=2, max_short_names=2, gross_short=0.5)
     weights = strategy.build_weights(market)
     last = weights.iloc[-1]
 

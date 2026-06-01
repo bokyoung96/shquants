@@ -210,6 +210,9 @@ results/
 raw/
 tmp_*.py
 
+# Local API credentials
+orderbook/config.json
+
 # Local agent/runtime state and generated frontend artifacts
 .omx/
 tmp-dashboard-logs/

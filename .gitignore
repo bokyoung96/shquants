@@ -212,6 +212,8 @@ tmp_*.py
 
 # Local API credentials
 orderbook/config.json
+wrds/config.json
+wrds/output/
 
 # Local agent/runtime state and generated frontend artifacts
 .omx/

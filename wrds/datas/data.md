@@ -1,6 +1,7 @@
 # WRDS Historical Data Pipeline
 
-This document summarizes the backtest data downloader in `wrds/data/`.
+This document summarizes the WRDS provider in `wrds/provider.py`, which uses the shared
+download and source interfaces from `backtesting.data`.
 
 ## Scope
 

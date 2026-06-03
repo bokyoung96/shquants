@@ -8,18 +8,19 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from client import Client
-from options import Options
-from options import OptionRegistry
-from data import (
+from backtesting.data import (
     BrokerRegistry,
-    FlowRegistry,
+    Csv,
     Plan,
     Pipeline,
-    Registry,
     Source,
+    SourceRegistry,
     StrategyRegistry,
     Table,
 )
+from options import Options
+from options import OptionRegistry
+from provider import flow_registry, source_registry
 from run import command_handlers, parse_args, split_csv
 from us import US
 from us import USRegistry
@@ -398,7 +399,7 @@ class FakeDataDb:
 
 
 def test_data_catalog_resolves_rank_numbers_to_libraries() -> None:
-    catalog = Registry.default()
+    catalog = source_registry()
 
     plan = catalog.plan(["1", "2", "4", "12"])
 
@@ -412,12 +413,12 @@ def test_data_catalog_resolves_rank_numbers_to_libraries() -> None:
 
 
 def test_data_catalog_rejects_unknown_selection() -> None:
-    catalog = Registry.default()
+    catalog = source_registry()
 
     try:
         catalog.plan(["99"])
     except ValueError as exc:
-        assert "unknown data library selection" in str(exc)
+        assert "unknown data source selection" in str(exc)
     else:
         raise AssertionError("expected invalid selection to fail")
 
@@ -425,7 +426,7 @@ def test_data_catalog_rejects_unknown_selection() -> None:
 def test_data_pipeline_saves_selected_tables_with_limit(tmp_path: Path) -> None:
     client = Client()
     client.db = FakeDataDb()
-    catalog = Registry.default()
+    catalog = source_registry()
     plan = catalog.plan(["1", "4"], tables=["stkdlysecuritydata", "det_epsus"])
 
     results = Pipeline(client).save(plan, output=tmp_path / "data", limit=5)
@@ -442,7 +443,7 @@ def test_data_pipeline_saves_selected_tables_with_limit(tmp_path: Path) -> None:
 def test_data_pipeline_writes_manifest_for_final_review(tmp_path: Path) -> None:
     client = Client()
     client.db = FakeDataDb()
-    plan = Registry.default().plan(["1", "2"], tables=["stkmthsecuritydata", "company"])
+    plan = source_registry().plan(["1", "2"], tables=["stkmthsecuritydata", "company"])
 
     Pipeline(client).save(plan, output=tmp_path / "data_sample", limit=2)
 
@@ -464,7 +465,7 @@ def test_data_pipeline_skips_existing_files_unless_overwrite(tmp_path: Path) -> 
     path = tmp_path / "data" / "crsp" / "stkmthsecuritydata.csv"
     path.parent.mkdir(parents=True)
     path.write_text("value\nexisting\n")
-    plan = Registry.default().plan(["1"], tables=["stkmthsecuritydata"])
+    plan = source_registry().plan(["1"], tables=["stkmthsecuritydata"])
 
     results = Pipeline(client).save(plan, output=tmp_path / "data", limit=1)
 
@@ -625,7 +626,7 @@ def test_data_command_defaults_to_final_data_output(monkeypatch) -> None:
 
 
 def test_data_registry_defaults_to_2015_through_current_year() -> None:
-    plan = Registry.default().plan(["1"], tables=["stkdlysecuritydata"])
+    plan = source_registry().plan(["1"], tables=["stkdlysecuritydata"])
     table = plan.sources[0].tables[0]
 
     assert table.start == 2015
@@ -635,20 +636,22 @@ def test_data_registry_defaults_to_2015_through_current_year() -> None:
 
 
 def test_data_registry_uses_current_crsp_price_tables_without_legacy_duplicates() -> None:
-    tables = {table.name for table in Registry.default().get("crsp").tables}
+    tables = {table.name for table in source_registry().get("crsp").tables}
 
     assert {"stkdlysecuritydata", "stkmthsecuritydata", "stksecurityinfohist"} <= tables
     assert "dsf" not in tables
     assert "msf" not in tables
 
 
-def test_data_package_uses_simple_module_file_names() -> None:
+def test_wrds_uses_backtesting_data_interfaces_instead_of_private_data_package() -> None:
     root = Path(__file__).resolve().parents[1]
+    project = root.parent
 
+    assert not (root / "data").exists()
     assert not (root / "data_catalog.py").exists()
     assert not (root / "data_pipeline.py").exists()
-    assert (root / "data" / "pipeline.py").exists()
-    assert (root / "data" / "registry.py").exists()
+    assert (project / "backtesting" / "data" / "download.py").exists()
+    assert (project / "backtesting" / "data" / "source.py").exists()
 
 
 def test_strategy_and_broker_registries_manage_composed_objects() -> None:
@@ -679,7 +682,7 @@ def test_pipeline_accepts_injected_writer(tmp_path: Path) -> None:
     client = Client()
     client.db = FakeChunkDataDb()
     writer = Writer()
-    plan = Registry.default().plan(["1"], tables=["stksecurityinfohist"])
+    plan = source_registry().plan(["1"], tables=["stksecurityinfohist"])
 
     results = Pipeline(client, writer=writer).save(plan, output=tmp_path / "data", chunksize=1)
 
@@ -687,11 +690,21 @@ def test_pipeline_accepts_injected_writer(tmp_path: Path) -> None:
     assert results[0].rows == 2
 
 
+def test_csv_writer_is_shared_by_backtesting_data_package() -> None:
+    assert Csv().write
+
+
 def test_flow_registry_dispatches_us_and_universe_workflows() -> None:
-    registry = FlowRegistry.default()
+    registry = flow_registry()
 
     assert registry.get("us").name == "us"
     assert registry.get("universe").name == "universe"
+
+
+def test_source_registry_is_shared_by_backtesting_data_package() -> None:
+    registry = SourceRegistry([Source(1, "demo", "demo", (Table("table"),))])
+
+    assert registry.plan(["demo"]).table_count == 1
 
 
 def test_run_command_handlers_include_data_workflows() -> None:

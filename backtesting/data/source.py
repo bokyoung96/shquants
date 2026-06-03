@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Iterable
+from typing import Iterable, Protocol
 
 
 SINCE = 2015
@@ -85,6 +85,53 @@ class Plan:
         return sum(len(source.tables) for source in self.sources)
 
 
+class Named(Protocol):
+    name: str
+
+
+class SourceRegistry:
+    def __init__(self, sources: Iterable[Source]) -> None:
+        self.sources = tuple(sources)
+        self._rank = {str(source.rank): source for source in self.sources}
+        self._name = {source.name: source for source in self.sources}
+
+    def plan(self, choices: Iterable[str], *, tables: Iterable[str] | None = None) -> Plan:
+        sources = []
+        for choice in choices:
+            source = self.get(choice).withtables(tables)
+            if source.tables:
+                sources.append(source)
+        return Plan(tuple(sources))
+
+    def get(self, choice: str) -> Source:
+        key = choice.strip()
+        if key in self._rank:
+            return self._rank[key]
+        if key in self._name:
+            return self._name[key]
+        raise ValueError(f"unknown data source selection: {choice}")
+
+
+class ObjectRegistry:
+    def __init__(self, items: Iterable[Named]) -> None:
+        self._items = {item.name: item for item in items}
+
+    def get(self, name: str) -> Named:
+        try:
+            return self._items[name]
+        except KeyError as exc:
+            raise ValueError(f"unknown registry item: {name}") from exc
+
+
+class StrategyRegistry(ObjectRegistry):
+    pass
+
+
+class BrokerRegistry(ObjectRegistry):
+    pass
+
+
 DataTableSpec = Table
 DataLibrarySpec = Source
 DataDownloadPlan = Plan
+DataCatalog = SourceRegistry

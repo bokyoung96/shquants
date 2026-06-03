@@ -9,7 +9,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from client import Client
 from options import Options
+from options import OptionRegistry
+from data import (
+    BrokerRegistry,
+    FlowRegistry,
+    Plan,
+    Pipeline,
+    Registry,
+    Source,
+    StrategyRegistry,
+    Table,
+)
+from run import command_handlers, parse_args, split_csv
 from us import US
+from us import USRegistry
+from universe import Universe, UniverseRegistry
 
 
 class FakeDb:
@@ -314,3 +328,373 @@ def test_options_raw_downloads_table_named_files(tmp_path: Path) -> None:
     assert (tmp_path / "raw" / "stdopd2025.csv").exists()
     assert "from wrdsapps.opcrsphist" in client.db.sql[0]
     assert len(pd.read_csv(tmp_path / "raw" / "opcrsphist.csv")) == 3
+
+
+def test_us_registry_composes_sources_and_builder() -> None:
+    client = Client()
+    client.db = FakeUsDb()
+
+    registry = USRegistry.default(client)
+    us = US.from_registry(registry)
+
+    assert registry.get("stocks").latest_date() == pd.Timestamp("2025-12-31")
+    assert us.latest() == "2025-12-31"
+
+
+def test_universe_uses_injected_source_and_strategy() -> None:
+    class Source:
+        def latest(self) -> str:
+            return "2025-12-31"
+
+        def links(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+            return pd.DataFrame(
+                {
+                    "permno": [10001, 10001],
+                    "permco": [1, 1],
+                    "ticker": ["OLD", "NEW"],
+                    "issuernm": ["OLD INC", "NEW INC"],
+                    "fsym_regional_id": ["OLD-R", "NEW-R"],
+                    "fsym_security_id": ["OLD-S", "NEW-S"],
+                    "factset_entity_id": ["OLD-E", "NEW-E"],
+                    "link_bdate": ["2020-01-01", "2021-01-01"],
+                    "link_edate": ["2025-12-31", "2025-12-31"],
+                }
+            )
+
+    universe = Universe(source=Source())
+    rows = universe.build(universe.links())
+
+    assert list(rows["ticker"]) == ["NEW"]
+
+
+def test_universe_registry_builds_default_source() -> None:
+    client = Client()
+    client.db = FakeDb()
+
+    registry = UniverseRegistry.default(client)
+
+    assert registry.get("links").latest() == "2025-12-31"
+
+
+def test_options_registry_composes_sources() -> None:
+    client = Client()
+    client.db = FakeOptionsDb()
+
+    registry = OptionRegistry.default(client)
+    options = Options.from_registry(registry)
+    links = options.links.at(date="2025-08-29", limit=1)
+
+    assert len(links) == 3
+
+
+class FakeDataDb:
+    def __init__(self) -> None:
+        self.sql: list[str] = []
+
+    def raw_sql(self, sql: str) -> pd.DataFrame:
+        self.sql.append(sql)
+        table = sql.split("from ", 1)[1].split()[0].replace(".", "_")
+        return pd.DataFrame({"source": [table], "rownum": [1]})
+
+
+def test_data_catalog_resolves_rank_numbers_to_libraries() -> None:
+    catalog = Registry.default()
+
+    plan = catalog.plan(["1", "2", "4", "12"])
+
+    assert [library.name for library in plan.libraries] == [
+        "crsp",
+        "comp",
+        "ibes",
+        "crsp_a_indexes",
+    ]
+    assert plan.libraries[0].tables[0].name == "stkdlysecuritydata"
+
+
+def test_data_catalog_rejects_unknown_selection() -> None:
+    catalog = Registry.default()
+
+    try:
+        catalog.plan(["99"])
+    except ValueError as exc:
+        assert "unknown data library selection" in str(exc)
+    else:
+        raise AssertionError("expected invalid selection to fail")
+
+
+def test_data_pipeline_saves_selected_tables_with_limit(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeDataDb()
+    catalog = Registry.default()
+    plan = catalog.plan(["1", "4"], tables=["stkdlysecuritydata", "det_epsus"])
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", limit=5)
+
+    assert (tmp_path / "data" / "crsp" / "stkdlysecuritydata.csv").exists()
+    assert (tmp_path / "data" / "ibes" / "det_epsus.csv").exists()
+    assert client.db.sql == [
+        "select * from crsp.stkdlysecuritydata limit 5",
+        "select * from ibes.det_epsus limit 5",
+    ]
+    assert [result.table for result in results] == ["crsp.stkdlysecuritydata", "ibes.det_epsus"]
+
+
+def test_data_pipeline_writes_manifest_for_final_review(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeDataDb()
+    plan = Registry.default().plan(["1", "2"], tables=["stkmthsecuritydata", "company"])
+
+    Pipeline(client).save(plan, output=tmp_path / "data_sample", limit=2)
+
+    manifest = pd.read_csv(tmp_path / "data_sample" / "manifest.csv")
+    assert list(manifest["rank"]) == [1, 2]
+    assert list(manifest["library"]) == ["crsp", "comp"]
+    assert list(manifest["table"]) == ["stkmthsecuritydata", "company"]
+    assert list(manifest["rows"]) == [1, 1]
+    assert list(manifest["status"]) == ["saved", "saved"]
+    assert list(manifest["path"]) == [
+        "crsp/stkmthsecuritydata.csv",
+        "comp/company.csv",
+    ]
+
+
+def test_data_pipeline_skips_existing_files_unless_overwrite(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeDataDb()
+    path = tmp_path / "data" / "crsp" / "stkmthsecuritydata.csv"
+    path.parent.mkdir(parents=True)
+    path.write_text("value\nexisting\n")
+    plan = Registry.default().plan(["1"], tables=["stkmthsecuritydata"])
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", limit=1)
+
+    assert client.db.sql == []
+    assert results[0].status == "skipped"
+    assert path.read_text() == "value\nexisting\n"
+
+
+class FakeChunkDataDb:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def raw_sql(self, sql: str, **kwargs) -> list[pd.DataFrame]:
+        self.calls.append({"sql": sql, **kwargs})
+        return [
+            pd.DataFrame({"rownum": [1]}),
+            pd.DataFrame({"rownum": [2]}),
+        ]
+
+
+class EmptyChunkDataDb:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def raw_sql(self, sql: str, **kwargs) -> list[pd.DataFrame]:
+        self.calls.append({"sql": sql, **kwargs})
+        return [pd.DataFrame(columns=["rownum"])]
+
+
+def test_data_pipeline_streams_chunks_to_csv(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeChunkDataDb()
+    plan = Plan(
+        (
+            Source(
+                rank=1,
+                name="crsp",
+                about="test",
+                tables=(Table("stocknames"),),
+            ),
+        )
+    )
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", chunksize=1)
+
+    assert client.db.calls[0]["return_iter"] is True
+    assert client.db.calls[0]["chunksize"] == 1
+    assert len(pd.read_csv(tmp_path / "data" / "crsp" / "stocknames.csv")) == 2
+    assert results[0].rows == 2
+
+
+def test_data_pipeline_partitions_large_tables_by_year(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeChunkDataDb()
+    plan = Plan(
+        (
+            Source(
+                rank=1,
+                name="crsp",
+                about="test",
+                tables=(Table("dsf", date="date", start=2020, end=2021),),
+            ),
+        )
+    )
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", chunksize=1)
+
+    sql = [call["sql"] for call in client.db.calls]
+    assert sql == [
+        "select * from crsp.dsf where date >= '2020-01-01' and date < '2021-01-01'",
+        "select * from crsp.dsf where date >= '2021-01-01' and date < '2022-01-01'",
+    ]
+    assert len(pd.read_csv(tmp_path / "data" / "crsp" / "dsf" / "year=2020.csv")) == 2
+    assert len(pd.read_csv(tmp_path / "data" / "crsp" / "dsf" / "year=2021.csv")) == 2
+    assert results[0].rows == 4
+
+
+def test_data_pipeline_redownloads_header_only_partitions(tmp_path: Path) -> None:
+    client = Client()
+    client.db = FakeChunkDataDb()
+    path = tmp_path / "data" / "crsp" / "stkdlysecuritydata" / "year=2025.csv"
+    path.parent.mkdir(parents=True)
+    path.write_text("rownum\n")
+    plan = Plan((Source(1, "crsp", "test", (Table("stkdlysecuritydata", date="dlycaldt", start=2025, end=2025),)),))
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", chunksize=1)
+
+    assert len(client.db.calls) == 1
+    assert len(pd.read_csv(path)) == 2
+    assert results[0].status == "saved"
+
+
+def test_data_pipeline_removes_empty_partitions(tmp_path: Path) -> None:
+    client = Client()
+    client.db = EmptyChunkDataDb()
+    plan = Plan((Source(1, "crsp", "test", (Table("stkdlysecuritydata", date="dlycaldt", start=2026, end=2026),)),))
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", chunksize=1)
+
+    assert not (tmp_path / "data" / "crsp" / "stkdlysecuritydata" / "year=2026.csv").exists()
+    assert results[0].rows == 0
+    assert results[0].status == "empty"
+
+
+class FailingDataDb:
+    def raw_sql(self, sql: str, **kwargs) -> list[pd.DataFrame]:
+        raise RuntimeError("connection lost")
+
+
+class RecoveringDataClient(Client):
+    def __init__(self) -> None:
+        super().__init__()
+        self.db = FailingDataDb()
+        self.closed_count = 0
+        self.connected_count = 0
+
+    def close(self) -> None:
+        self.closed_count += 1
+
+    def connect(self) -> None:
+        self.connected_count += 1
+        self.db = FakeChunkDataDb()
+
+
+def test_data_pipeline_reconnects_and_retries_partition_failures(tmp_path: Path) -> None:
+    client = RecoveringDataClient()
+    plan = Plan(
+        (
+            Source(
+                rank=1,
+                name="crsp",
+                about="test",
+                tables=(Table("dsf", date="date", start=2020, end=2020),),
+            ),
+        )
+    )
+
+    results = Pipeline(client).save(plan, output=tmp_path / "data", chunksize=1, retries=1)
+
+    assert client.closed_count == 1
+    assert client.connected_count == 1
+    assert len(pd.read_csv(tmp_path / "data" / "crsp" / "dsf" / "year=2020.csv")) == 2
+    assert results[0].rows == 2
+
+
+def test_split_csv_ignores_empty_table_filters() -> None:
+    assert split_csv("stkmthsecuritydata, stkdlysecuritydata,,") == ["stkmthsecuritydata", "stkdlysecuritydata"]
+    assert split_csv(None) is None
+
+
+def test_data_command_defaults_to_final_data_output(monkeypatch) -> None:
+    monkeypatch.setattr(sys, "argv", ["run.py", "data", "1", "--limit", "1"])
+
+    args = parse_args()
+
+    assert args.command == "data"
+    assert args.output == Path("wrds/output/datas")
+
+
+def test_data_registry_defaults_to_2015_through_current_year() -> None:
+    plan = Registry.default().plan(["1"], tables=["stkdlysecuritydata"])
+    table = plan.sources[0].tables[0]
+
+    assert table.start == 2015
+    assert table.end >= 2026
+    assert table.parts("crsp")[0][0] == 2015
+    assert "dlycaldt" in table.parts("crsp")[0][1]
+
+
+def test_data_registry_uses_current_crsp_price_tables_without_legacy_duplicates() -> None:
+    tables = {table.name for table in Registry.default().get("crsp").tables}
+
+    assert {"stkdlysecuritydata", "stkmthsecuritydata", "stksecurityinfohist"} <= tables
+    assert "dsf" not in tables
+    assert "msf" not in tables
+
+
+def test_data_package_uses_simple_module_file_names() -> None:
+    root = Path(__file__).resolve().parents[1]
+
+    assert not (root / "data_catalog.py").exists()
+    assert not (root / "data_pipeline.py").exists()
+    assert (root / "data" / "pipeline.py").exists()
+    assert (root / "data" / "registry.py").exists()
+
+
+def test_strategy_and_broker_registries_manage_composed_objects() -> None:
+    class Strategy:
+        name = "value"
+
+    class Broker:
+        name = "paper"
+
+    strategies = StrategyRegistry([Strategy()])
+    brokers = BrokerRegistry([Broker()])
+
+    assert strategies.get("value").name == "value"
+    assert brokers.get("paper").name == "paper"
+
+
+def test_pipeline_accepts_injected_writer(tmp_path: Path) -> None:
+    class Writer:
+        def __init__(self) -> None:
+            self.paths: list[Path] = []
+
+        def write(self, chunks, path: Path) -> int:
+            self.paths.append(path)
+            frames = list(chunks)
+            pd.concat(frames).to_csv(path, index=False)
+            return sum(len(frame) for frame in frames)
+
+    client = Client()
+    client.db = FakeChunkDataDb()
+    writer = Writer()
+    plan = Registry.default().plan(["1"], tables=["stksecurityinfohist"])
+
+    results = Pipeline(client, writer=writer).save(plan, output=tmp_path / "data", chunksize=1)
+
+    assert writer.paths == [tmp_path / "data" / "crsp" / "stksecurityinfohist.csv"]
+    assert results[0].rows == 2
+
+
+def test_flow_registry_dispatches_us_and_universe_workflows() -> None:
+    registry = FlowRegistry.default()
+
+    assert registry.get("us").name == "us"
+    assert registry.get("universe").name == "universe"
+
+
+def test_run_command_handlers_include_data_workflows() -> None:
+    handlers = command_handlers()
+
+    assert {"check", "query", "table", "data", "us", "universe", "options"} <= set(handlers)

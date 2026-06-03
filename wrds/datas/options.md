@@ -13,13 +13,13 @@ permno -> wrdsapps.opcrsphist -> secid -> optionm raw tables
 Raw downloads are organized by date:
 
 ```text
-wrds/output/options/raw/<date>/
+wrds/output/datas/options/raw/<date>/
 ```
 
 Example:
 
 ```text
-wrds/output/options/raw/2025-08-29/
+wrds/output/datas/options/raw/2025-08-29/
 ```
 
 `wrds/output/` is ignored by git.
@@ -28,7 +28,7 @@ wrds/output/options/raw/2025-08-29/
 
 ```bash
 uv run --with wrds python3 wrds/run.py options raw 2025-08-29 \
-  --output wrds/output/options/raw/2025-08-29 \
+  --output wrds/output/datas/options/raw/2025-08-29 \
   --limit 1000
 ```
 

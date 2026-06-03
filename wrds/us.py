@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable, Protocol
 
 import pandas as pd
 from tqdm import tqdm
@@ -47,7 +48,64 @@ class Coverage:
         return str(min(self.stock_date, self.factset_date).date())
 
 
+class StockSource(Protocol):
+    def latest_date(self) -> pd.Timestamp:
+        ...
+
+    def current(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def history(self, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class LinkSource(Protocol):
+    def latest_date(self) -> pd.Timestamp:
+        ...
+
+    def current(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def history(self, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class Builder(Protocol):
+    def current(self, names: pd.DataFrame, factset: pd.DataFrame) -> pd.DataFrame:
+        ...
+
+    def history(self, names: pd.DataFrame, factset: pd.DataFrame) -> pd.DataFrame:
+        ...
+
+    def at(self, date: str, history: pd.DataFrame) -> pd.DataFrame:
+        ...
+
+    def latest_rows(self, history: pd.DataFrame) -> pd.DataFrame:
+        ...
+
+
+class Named(Protocol):
+    name: str
+
+
+class USRegistry:
+    def __init__(self, items: Iterable[Named]) -> None:
+        self._items = {item.name: item for item in items}
+
+    @classmethod
+    def default(cls, client) -> "USRegistry":
+        return cls((StockNames(client), FactSetLinks(client), UniverseBuilder()))
+
+    def get(self, name: str):
+        try:
+            return self._items[name]
+        except KeyError as exc:
+            raise ValueError(f"unknown US component: {name}") from exc
+
+
 class StockNames:
+    name = "stocks"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -109,6 +167,8 @@ class StockNames:
 
 
 class FactSetLinks:
+    name = "factsets"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -149,6 +209,8 @@ class FactSetLinks:
 
 
 class UniverseBuilder:
+    name = "builder"
+
     columns = [
         "permno",
         "permco",
@@ -220,11 +282,26 @@ class UniverseBuilder:
 
 
 class US:
-    def __init__(self, client) -> None:
-        self.client = client
-        self.stocks = StockNames(client) if client is not None else None
-        self.factsets = FactSetLinks(client) if client is not None else None
-        self.builder = UniverseBuilder()
+    def __init__(
+        self,
+        client=None,
+        *,
+        stocks: StockSource | None = None,
+        factsets: LinkSource | None = None,
+        builder: Builder | None = None,
+    ) -> None:
+        registry = USRegistry.default(client) if stocks is None or factsets is None or builder is None else None
+        self.stocks = stocks or registry.get("stocks")
+        self.factsets = factsets or registry.get("factsets")
+        self.builder = builder or registry.get("builder")
+
+    @classmethod
+    def from_registry(cls, registry: USRegistry) -> "US":
+        return cls(
+            stocks=registry.get("stocks"),
+            factsets=registry.get("factsets"),
+            builder=registry.get("builder"),
+        )
 
     def coverage(self) -> Coverage:
         return Coverage(self.stocks.latest_date(), self.factsets.latest_date())
@@ -270,7 +347,7 @@ class US:
     def latest_rows(self, history: pd.DataFrame) -> pd.DataFrame:
         return self.builder.latest_rows(history)
 
-    def save_current(self, *, date: str = "latest", output: str | Path = "wrds/output/us/current", limit: int | None = None) -> None:
+    def save_current(self, *, date: str = "latest", output: str | Path = "wrds/output/datas/us/current", limit: int | None = None) -> None:
         if date == "latest":
             date = self.latest()
         output = Path(output)
@@ -292,7 +369,7 @@ class US:
         print(f"factset_links={len(factset)} {output / 'factset_links.csv'}")
         print(f"universe={len(universe)} {output / 'universe.csv'}")
 
-    def save_history(self, *, output: str | Path = "wrds/output/us/history", limit: int | None = None) -> None:
+    def save_history(self, *, output: str | Path = "wrds/output/datas/us/history", limit: int | None = None) -> None:
         output = Path(output)
         output.mkdir(parents=True, exist_ok=True)
         steps = tqdm(total=5, desc="history", unit="step")
@@ -315,7 +392,7 @@ class US:
         print(f"history={len(history)} {output / 'history.csv'}")
         print(f"latest={len(latest)} {output / 'latest.csv'}")
 
-    def save_at(self, *, date: str, output: str | Path = "wrds/output/us/at.csv", history_path: str | Path | None = None) -> None:
+    def save_at(self, *, date: str, output: str | Path = "wrds/output/datas/us/at.csv", history_path: str | Path | None = None) -> None:
         output = Path(output)
         output.parent.mkdir(parents=True, exist_ok=True)
         history = self.history() if history_path is None else clean(pd.read_csv(history_path))
@@ -324,7 +401,7 @@ class US:
         print(f"date={date}")
         print(f"rows={len(frame)} {output}")
 
-    def save(self, *, date: str = "latest", output: str | Path = "wrds/output/us", limit: int | None = None) -> None:
+    def save(self, *, date: str = "latest", output: str | Path = "wrds/output/datas/us", limit: int | None = None) -> None:
         self.save_current(date=date, output=output, limit=limit)
 
     @staticmethod

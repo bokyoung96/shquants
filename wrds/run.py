@@ -2,67 +2,69 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-
-import pandas as pd
+from typing import Callable
 
 from client import Client
+from data import FlowRegistry, Pipeline, Registry
 from download import Downloader
-from options import Options
-from us import US
-from universe import Universe
 
 
 def main() -> None:
     args = parse_args()
+    handlers = command_handlers()
     if args.command == "us" and args.us_command in {"at", "latest"}:
-        us = US(None)
-        if args.us_command == "at":
-            us.save_at(date=args.date, output=args.output, history_path=args.history)
-        else:
-            history = us.clean(pd.read_csv(args.history))
-            latest = us.latest_rows(history)
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            latest.to_csv(args.output, index=False)
-            print(f"latest={len(latest)} {args.output}")
+        handlers[args.command](None, args)
         return
 
     with Client(args.config) as wrds:
-        if args.command == "check":
-            result = wrds.query("select 1 as ok")
-            print(result.to_string(index=False))
-        elif args.command == "query":
-            path = Downloader(wrds).query(args.sql, args.output)
-            print(path)
-        elif args.command == "table":
-            path = Downloader(wrds).table(args.name, args.output, limit=args.limit)
-            print(path)
-        elif args.command == "universe":
-            builder = Universe(wrds)
-            links = builder.links(date=args.date, limit=args.limit)
-            universe = builder.build(links)
-            args.output.mkdir(parents=True, exist_ok=True)
-            links.to_csv(args.output / "fscrsplink.csv", index=False)
-            universe.to_csv(args.output / "universe.csv", index=False)
-            print(f"fscrsplink={len(links)} {args.output / 'fscrsplink.csv'}")
-            print(f"universe={len(universe)} {args.output / 'universe.csv'}")
-        elif args.command == "us":
-            us = US(wrds)
-            if args.us_command == "current":
-                us.save_current(date=args.date, output=args.output, limit=args.limit)
-            elif args.us_command == "history":
-                us.save_history(output=args.output, limit=args.limit)
-            elif args.us_command == "at":
-                us.save_at(date=args.date, output=args.output, history_path=args.history)
-            elif args.us_command == "latest":
-                history = us.clean(pd.read_csv(args.history))
-                latest = us.latest_rows(history)
-                args.output.parent.mkdir(parents=True, exist_ok=True)
-                latest.to_csv(args.output, index=False)
-                print(f"latest={len(latest)} {args.output}")
-        elif args.command == "options":
-            options = Options(wrds)
-            if args.options_command == "raw":
-                options.save_raw(date=args.date, output=args.output, limit=args.limit)
+        handlers[args.command](wrds, args)
+
+
+Command = Callable[[object, argparse.Namespace], None]
+
+
+def command_handlers() -> dict[str, Command]:
+    return {
+        "check": check,
+        "query": query,
+        "table": table,
+        "universe": workflow,
+        "us": workflow,
+        "options": workflow,
+        "data": data,
+    }
+
+
+def check(wrds, args) -> None:
+    result = wrds.query("select 1 as ok")
+    print(result.to_string(index=False))
+
+
+def query(wrds, args) -> None:
+    path = Downloader(wrds).query(args.sql, args.output)
+    print(path)
+
+
+def table(wrds, args) -> None:
+    path = Downloader(wrds).table(args.name, args.output, limit=args.limit)
+    print(path)
+
+
+def workflow(wrds, args) -> None:
+    FlowRegistry.default().get(args.command).run(wrds, args)
+
+
+def data(wrds, args) -> None:
+    tables = split_csv(args.tables)
+    plan = Registry.default().plan(args.selections, tables=tables)
+    Pipeline(wrds).save(
+        plan,
+        output=args.output,
+        limit=args.limit,
+        chunksize=args.chunksize,
+        retries=args.retries,
+        overwrite=args.overwrite,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -83,7 +85,7 @@ def parse_args() -> argparse.Namespace:
 
     universe = commands.add_parser("universe", help="Build CRSP-FactSet PERMNO universe.")
     universe.add_argument("--date", default="latest")
-    universe.add_argument("--output", default="wrds/output", type=Path)
+    universe.add_argument("--output", default="wrds/output/datas/universe", type=Path)
     universe.add_argument("--limit", type=int)
 
     us = commands.add_parser("us", help="Build US stock universes with CRSP and FactSet mappings.")
@@ -91,30 +93,49 @@ def parse_args() -> argparse.Namespace:
 
     us_current = us_commands.add_parser("current", help="Build active US universe for one date.")
     us_current.add_argument("--date", default="latest")
-    us_current.add_argument("--output", default="wrds/output/us/current", type=Path)
+    us_current.add_argument("--output", default="wrds/output/datas/us/current", type=Path)
     us_current.add_argument("--limit", type=int)
 
     us_history = us_commands.add_parser("history", help="Build historical US universe and latest representative rows.")
-    us_history.add_argument("--output", default="wrds/output/us/history", type=Path)
+    us_history.add_argument("--output", default="wrds/output/datas/us/history", type=Path)
     us_history.add_argument("--limit", type=int)
 
     us_at = us_commands.add_parser("at", help="Build one date's membership from a historical universe file.")
     us_at.add_argument("date")
-    us_at.add_argument("--history", default="wrds/output/us/history/history.csv", type=Path)
-    us_at.add_argument("--output", default="wrds/output/us/at.csv", type=Path)
+    us_at.add_argument("--history", default="wrds/output/datas/us/history/history.csv", type=Path)
+    us_at.add_argument("--output", default="wrds/output/datas/us/at.csv", type=Path)
 
     us_latest = us_commands.add_parser("latest", help="Build latest representative rows from a historical universe file.")
-    us_latest.add_argument("--history", default="wrds/output/us/history/history.csv", type=Path)
-    us_latest.add_argument("--output", default="wrds/output/us/history/latest.csv", type=Path)
+    us_latest.add_argument("--history", default="wrds/output/datas/us/history/history.csv", type=Path)
+    us_latest.add_argument("--output", default="wrds/output/datas/us/history/latest.csv", type=Path)
 
     options = commands.add_parser("options", help="Download OptionMetrics raw data.")
     options_commands = options.add_subparsers(dest="options_command", required=True)
 
     option_raw = options_commands.add_parser("raw", help="Download raw OptionMetrics tables for one date.")
     option_raw.add_argument("date")
-    option_raw.add_argument("--output", default="wrds/output/options/raw", type=Path)
+    option_raw.add_argument("--output", default="wrds/output/datas/options/raw", type=Path)
     option_raw.add_argument("--limit", type=int, default=1000)
+
+    data = commands.add_parser("data", help="Download selected high-value WRDS source data.")
+    data.add_argument(
+        "selections",
+        nargs="+",
+        help="Rank numbers or library names, for example: 1 2 4 12 or crsp comp ibes crsp_a_indexes.",
+    )
+    data.add_argument("--output", default="wrds/output/datas", type=Path)
+    data.add_argument("--limit", type=int, help="Optional row limit for tests/samples. Omit for full history.")
+    data.add_argument("--chunksize", type=int, default=500_000, help="Rows per WRDS chunk for full downloads.")
+    data.add_argument("--retries", type=int, default=2, help="Reconnect and retry each table/partition on failure.")
+    data.add_argument("--tables", help="Optional comma-separated table filter across selected libraries.")
+    data.add_argument("--overwrite", action="store_true", help="Overwrite existing CSV files.")
     return parser.parse_args()
+
+
+def split_csv(value: str | None) -> list[str] | None:
+    if value is None:
+        return None
+    return [part.strip() for part in value.split(",") if part.strip()]
 
 
 if __name__ == "__main__":

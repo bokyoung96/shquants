@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Iterable, Protocol
+
 import pandas as pd
 
 
@@ -36,7 +38,47 @@ UNIVERSE_COLS = (
 )
 
 
-class Universe:
+def _limit(sql: str, value: int | None) -> str:
+    if value is None:
+        return sql
+    return f"{sql} limit {int(value)}"
+
+
+class LinkSource(Protocol):
+    def latest(self) -> str:
+        ...
+
+    def links(self, *, date: str = "latest", limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class BuildStrategy(Protocol):
+    def build(self, links: pd.DataFrame) -> pd.DataFrame:
+        ...
+
+
+class Named(Protocol):
+    name: str
+
+
+class UniverseRegistry:
+    def __init__(self, items: Iterable[Named]) -> None:
+        self._items = {item.name: item for item in items}
+
+    @classmethod
+    def default(cls, client) -> "UniverseRegistry":
+        return cls((FactSetSource(client), LatestLinkStrategy()))
+
+    def get(self, name: str):
+        try:
+            return self._items[name]
+        except KeyError as exc:
+            raise ValueError(f"unknown universe component: {name}") from exc
+
+
+class FactSetSource:
+    name = "links"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -61,9 +103,16 @@ class Universe:
             "and fsym_id_kind = 'R' "
             "order by permno, link_bdate"
         )
-        if limit is not None:
-            sql += f" limit {int(limit)}"
+        sql = _limit(sql, limit)
         return self.clean(self.client.query(sql))
+
+    @staticmethod
+    def clean(frame: pd.DataFrame) -> pd.DataFrame:
+        return clean(frame)
+
+
+class LatestLinkStrategy:
+    name = "latest"
 
     def build(self, links: pd.DataFrame) -> pd.DataFrame:
         if links.empty:
@@ -72,13 +121,39 @@ class Universe:
         frame = frame.drop_duplicates("permno", keep="first")
         return frame.loc[:, [col for col in UNIVERSE_COLS if col in frame.columns]].reset_index(drop=True)
 
-    @staticmethod
-    def clean(frame: pd.DataFrame) -> pd.DataFrame:
-        frame = frame.copy()
-        for col in ("link_bdate", "link_edate"):
-            if col in frame:
-                frame[col] = pd.to_datetime(frame[col]).dt.normalize()
-        for col in ("permno", "permco"):
-            if col in frame:
-                frame[col] = frame[col].astype("Int64")
-        return frame
+
+class Universe:
+    def __init__(
+        self,
+        client=None,
+        *,
+        source: LinkSource | None = None,
+        strategy: BuildStrategy | None = None,
+    ) -> None:
+        registry = UniverseRegistry.default(client) if source is None or strategy is None else None
+        self.source = source or registry.get("links")
+        self.strategy = strategy or registry.get("latest")
+
+    @classmethod
+    def from_registry(cls, registry: UniverseRegistry) -> "Universe":
+        return cls(source=registry.get("links"), strategy=registry.get("latest"))
+
+    def latest(self) -> str:
+        return self.source.latest()
+
+    def links(self, *, date: str = "latest", limit: int | None = None) -> pd.DataFrame:
+        return self.source.links(date=date, limit=limit)
+
+    def build(self, links: pd.DataFrame) -> pd.DataFrame:
+        return self.strategy.build(links)
+
+
+def clean(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.copy()
+    for col in ("link_bdate", "link_edate"):
+        if col in frame:
+            frame[col] = pd.to_datetime(frame[col]).dt.normalize()
+    for col in ("permno", "permco"):
+        if col in frame:
+            frame[col] = frame[col].astype("Int64")
+    return frame

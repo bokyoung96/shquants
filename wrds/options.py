@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable, Protocol
 
 import pandas as pd
 from tqdm import tqdm
@@ -26,7 +27,58 @@ def _limit(sql: str, value: int | None) -> str:
     return f"{sql} limit {int(value)}"
 
 
+class Links(Protocol):
+    def history(self, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def at(self, date: str, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class Meta(Protocol):
+    def securities(self, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def names(self, *, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class Prices(Protocol):
+    def quotes(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def stocks(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def standard(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+    def surface(self, *, date: str, limit: int | None = None) -> pd.DataFrame:
+        ...
+
+
+class Named(Protocol):
+    name: str
+
+
+class OptionRegistry:
+    def __init__(self, items: Iterable[Named]) -> None:
+        self._items = {item.name: item for item in items}
+
+    @classmethod
+    def default(cls, client) -> "OptionRegistry":
+        return cls((OptionLinks(client), OptionMeta(client), OptionPrices(client)))
+
+    def get(self, name: str):
+        try:
+            return self._items[name]
+        except KeyError as exc:
+            raise ValueError(f"unknown option component: {name}") from exc
+
+
 class OptionLinks:
+    name = "links"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -51,6 +103,8 @@ class OptionLinks:
 
 
 class OptionMeta:
+    name = "meta"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -72,6 +126,8 @@ class OptionMeta:
 
 
 class OptionPrices:
+    name = "prices"
+
     def __init__(self, client) -> None:
         self.client = client
 
@@ -120,11 +176,26 @@ class OptionPrices:
 
 
 class Options:
-    def __init__(self, client) -> None:
-        self.client = client
-        self.links = OptionLinks(client)
-        self.meta = OptionMeta(client)
-        self.prices = OptionPrices(client)
+    def __init__(
+        self,
+        client=None,
+        *,
+        links: Links | None = None,
+        meta: Meta | None = None,
+        prices: Prices | None = None,
+    ) -> None:
+        registry = OptionRegistry.default(client) if links is None or meta is None or prices is None else None
+        self.links = links or registry.get("links")
+        self.meta = meta or registry.get("meta")
+        self.prices = prices or registry.get("prices")
+
+    @classmethod
+    def from_registry(cls, registry: OptionRegistry) -> "Options":
+        return cls(
+            links=registry.get("links"),
+            meta=registry.get("meta"),
+            prices=registry.get("prices"),
+        )
 
     def save_raw(self, *, date: str, output: str | Path, limit: int | None = 1000) -> None:
         output = Path(output)

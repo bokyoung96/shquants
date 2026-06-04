@@ -9,7 +9,8 @@ import sys
 
 from backtesting.data import BrokerRegistry, StrategyRegistry
 from wrds.derivatives.options.service import Options
-from wrds.provider import flow_registry, source_registry
+from wrds.marketdata.catalog import source_registry
+from wrds.provider import flow_registry
 from wrds.run import command_handlers, parse_args, split_csv
 from wrds.universes.factset.service import Universe
 from wrds.universes.us.service import US
@@ -185,6 +186,7 @@ def test_wrds_package_imports_work_from_repo_root() -> None:
             "import wrds.derivatives.options.registry; "
             "import wrds.universes.us.service; "
             "import wrds.derivatives.options.service; "
+            "import wrds.core.mapping; "
             "import wrds.marketdata.catalog"
         ),
     ]

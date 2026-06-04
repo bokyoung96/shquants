@@ -36,7 +36,7 @@ def command_handlers() -> dict[str, Command]:
         "universe": workflow,
         "us": workflow,
         "options": workflow,
-        "data": data,
+        "data": workflow,
     }
 
 
@@ -56,10 +56,6 @@ def table(wrds, args) -> None:
 
 
 def workflow(wrds, args) -> None:
-    flow_registry().get(args.command).run(wrds, args)
-
-
-def data(wrds, args) -> None:
     flow_registry().get(args.command).run(wrds, args)
 
 

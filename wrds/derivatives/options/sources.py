@@ -5,9 +5,9 @@ from typing import Protocol
 import pandas as pd
 
 try:
-    from ...mapping import Cleaner, Columns
+    from ...core.mapping import Cleaner, Columns
 except ImportError:  # pragma: no cover - direct script compatibility
-    from mapping import Cleaner, Columns
+    from core.mapping import Cleaner, Columns
 
 
 LINK_TABLE = "wrdsapps.opcrsphist"

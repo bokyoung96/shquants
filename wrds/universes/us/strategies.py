@@ -5,9 +5,9 @@ from typing import Protocol
 import pandas as pd
 
 try:
-    from ...mapping import Linker
+    from ...core.mapping import Linker
 except ImportError:  # pragma: no cover - direct script compatibility
-    from mapping import Linker
+    from core.mapping import Linker
 
 
 class Builder(Protocol):

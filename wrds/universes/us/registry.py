@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-from typing import Iterable, Protocol
+from typing import Iterable
 
 from .sources import FactSetLinks, StockNames
 from .strategies import UniverseBuilder
 
 try:
-    from ...core.registry import NamedRegistry
+    from ...core.registry import Named, NamedRegistry
 except ImportError:  # pragma: no cover - direct script compatibility
-    from core.registry import NamedRegistry
-
-
-class Named(Protocol):
-    name: str
+    from core.registry import Named, NamedRegistry
 
 
 class USRegistry:

@@ -179,9 +179,9 @@ def test_wrds_package_imports_work_from_repo_root() -> None:
         sys.executable,
         "-c",
         (
-            "import wrds.download; "
             "import wrds.provider; "
             "import wrds.run; "
+            "import wrds.downloads.service; "
             "import wrds.derivatives.options.registry; "
             "import wrds.universes.us.service; "
             "import wrds.derivatives.options.service; "

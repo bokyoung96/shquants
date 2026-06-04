@@ -6,11 +6,11 @@ from typing import Callable
 
 try:
     from .client import Client
-    from .download import Downloader
+    from .downloads.service import Downloader
     from .provider import flow_registry
 except ImportError:  # pragma: no cover - direct script compatibility
     from client import Client
-    from download import Downloader
+    from downloads.service import Downloader
     from provider import flow_registry
 
 

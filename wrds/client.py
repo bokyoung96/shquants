@@ -89,17 +89,17 @@ class Client:
 
     def download(self, sql: str, output: str | Path) -> Path:
         try:
-            from .download import Downloader
+            from .downloads.service import Downloader
         except ImportError:  # pragma: no cover - direct script compatibility
-            from download import Downloader
+            from downloads.service import Downloader
 
         return Downloader(self).query(sql, output)
 
     def table(self, name: str, output: str | Path, *, limit: int | None = None) -> Path:
         try:
-            from .download import Downloader
+            from .downloads.service import Downloader
         except ImportError:  # pragma: no cover - direct script compatibility
-            from download import Downloader
+            from downloads.service import Downloader
 
         return Downloader(self).table(name, output, limit=limit)
 

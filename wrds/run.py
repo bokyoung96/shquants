@@ -4,10 +4,14 @@ import argparse
 from pathlib import Path
 from typing import Callable
 
-from backtesting.data import Pipeline
-from client import Client
-from download import Downloader
-from provider import flow_registry, source_registry
+try:
+    from .client import Client
+    from .download import Downloader
+    from .provider import flow_registry
+except ImportError:  # pragma: no cover - direct script compatibility
+    from client import Client
+    from download import Downloader
+    from provider import flow_registry
 
 
 def main() -> None:
@@ -56,16 +60,7 @@ def workflow(wrds, args) -> None:
 
 
 def data(wrds, args) -> None:
-    tables = split_csv(args.tables)
-    plan = source_registry().plan(args.selections, tables=tables)
-    Pipeline(wrds).save(
-        plan,
-        output=args.output,
-        limit=args.limit,
-        chunksize=args.chunksize,
-        retries=args.retries,
-        overwrite=args.overwrite,
-    )
+    flow_registry().get(args.command).run(wrds, args)
 
 
 def parse_args() -> argparse.Namespace:

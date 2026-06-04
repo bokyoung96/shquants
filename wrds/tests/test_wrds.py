@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 from pathlib import Path
 
 import pandas as pd
@@ -711,3 +712,134 @@ def test_run_command_handlers_include_data_workflows() -> None:
     handlers = command_handlers()
 
     assert {"check", "query", "table", "data", "us", "universe", "options"} <= set(handlers)
+
+
+def test_wrds_package_structure_exposes_data_domains() -> None:
+    from derivatives.options.service import Options as PackagedOptions
+    from downloads.batch import BatchCsvWriter, OutputFile
+    from marketdata.catalog import source_registry as marketdata_source_registry
+    from marketdata.consensus import sources as consensus_sources
+    from marketdata.fundamentals import sources as fundamental_sources
+    from marketdata.indexes import sources as index_sources
+    from marketdata.prices import sources as price_sources
+    from universes.factset.sources import FactSetSource
+    from universes.factset.strategies import LatestLinkStrategy
+    from universes.factset.service import Universe as PackagedUniverse
+    from universes.us.sources import FactSetLinks, StockNames
+    from universes.us.strategies import UniverseBuilder
+    from universes.us.service import US as PackagedUS
+    from derivatives.options.sources import OptionLinks, OptionMeta, OptionPrices
+
+    assert BatchCsvWriter is not None
+    assert OutputFile is not None
+    assert PackagedOptions is Options
+    assert PackagedUniverse is Universe
+    assert PackagedUS is US
+    assert FactSetSource is not None
+    assert LatestLinkStrategy is not None
+    assert FactSetLinks is not None
+    assert StockNames is not None
+    assert UniverseBuilder is not None
+    assert OptionLinks is not None
+    assert OptionMeta is not None
+    assert OptionPrices is not None
+
+    assert [source.name for source in price_sources()] == ["crsp"]
+    assert [source.name for source in consensus_sources()] == ["ibes"]
+    assert [source.name for source in fundamental_sources()] == ["comp"]
+    assert [source.name for source in index_sources()] == ["crsp_a_indexes"]
+    assert [source.name for source in marketdata_source_registry().sources] == [
+        "crsp",
+        "comp",
+        "ibes",
+        "crsp_a_indexes",
+    ]
+
+
+def test_batch_writer_saves_named_dataframes(tmp_path: Path) -> None:
+    from downloads.batch import BatchCsvWriter, OutputFile
+
+    writer = BatchCsvWriter()
+    results = writer.write(
+        tmp_path,
+        (
+            OutputFile("names", "names.csv", pd.DataFrame({"permno": [1]})),
+            OutputFile("universe", "universe.csv", pd.DataFrame({"permno": [1]})),
+        ),
+    )
+
+    assert [result.name for result in results] == ["names", "universe"]
+    assert [result.rows for result in results] == [1, 1]
+    assert (tmp_path / "names.csv").exists()
+    assert (tmp_path / "universe.csv").exists()
+    assert pd.read_csv(tmp_path / "names.csv").to_dict("list") == {"permno": [1]}
+
+
+def test_domain_workflows_use_shared_batch_writer_for_csv_outputs() -> None:
+    root = Path(__file__).resolve().parents[1]
+    files = [
+        root / "provider.py",
+        root / "derivatives" / "options" / "service.py",
+        root / "universes" / "factset" / "service.py",
+        root / "universes" / "us" / "service.py",
+    ]
+
+    for path in files:
+        assert ".to_csv(" not in path.read_text(encoding="utf-8")
+
+
+def test_provider_is_thin_workflow_assembler() -> None:
+    from derivatives.options.workflow import OptionsWorkflow
+    from marketdata.workflow import DataWorkflow
+    from universes.factset.workflow import UniverseWorkflow
+    from universes.us.workflow import USWorkflow
+
+    provider_source = (Path(__file__).resolve().parents[1] / "provider.py").read_text(encoding="utf-8")
+
+    assert "class UniverseFlow" not in provider_source
+    assert "class USFlow" not in provider_source
+    assert "class OptionsFlow" not in provider_source
+    assert flow_registry().get("universe").__class__ is UniverseWorkflow
+    assert flow_registry().get("us").__class__ is USWorkflow
+    assert flow_registry().get("options").__class__ is OptionsWorkflow
+    assert flow_registry().get("data").__class__ is DataWorkflow
+
+
+def test_run_delegates_marketdata_pipeline_to_workflow() -> None:
+    run_source = (Path(__file__).resolve().parents[1] / "run.py").read_text(encoding="utf-8")
+
+    assert "Pipeline(" not in run_source
+    assert "source_registry().plan" not in run_source
+
+
+def test_wrds_package_imports_work_from_repo_root() -> None:
+    project = Path(__file__).resolve().parents[2]
+    command = [
+        sys.executable,
+        "-c",
+        (
+            "import wrds.download; "
+            "import wrds.provider; "
+            "import wrds.run; "
+            "import wrds.universes.us.service; "
+            "import wrds.derivatives.options.service; "
+            "import wrds.marketdata.catalog"
+        ),
+    ]
+
+    result = subprocess.run(command, cwd=project, text=True, capture_output=True)
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_wrds_script_help_still_works_from_repo_root() -> None:
+    project = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "wrds/run.py", "--help"],
+        cwd=project,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "WRDS login, query, and download helper." in result.stdout

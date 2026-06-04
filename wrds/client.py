@@ -45,26 +45,41 @@ class Client:
         return self.db.raw_sql(sql)
 
     def download(self, sql: str, output: str | Path) -> Path:
-        from download import Downloader
+        try:
+            from .download import Downloader
+        except ImportError:  # pragma: no cover - direct script compatibility
+            from download import Downloader
 
         return Downloader(self).query(sql, output)
 
     def table(self, name: str, output: str | Path, *, limit: int | None = None) -> Path:
-        from download import Downloader
+        try:
+            from .download import Downloader
+        except ImportError:  # pragma: no cover - direct script compatibility
+            from download import Downloader
 
         return Downloader(self).table(name, output, limit=limit)
 
     def latest(self) -> str:
-        from universe import Universe
+        try:
+            from .universes.factset.service import Universe
+        except ImportError:  # pragma: no cover - direct script compatibility
+            from universes.factset.service import Universe
 
         return Universe(self).latest()
 
     def links(self, *, date: str = "latest", limit: int | None = None) -> pd.DataFrame:
-        from universe import Universe
+        try:
+            from .universes.factset.service import Universe
+        except ImportError:  # pragma: no cover - direct script compatibility
+            from universes.factset.service import Universe
 
         return Universe(self).links(date=date, limit=limit)
 
     def universe(self, links: pd.DataFrame) -> pd.DataFrame:
-        from universe import Universe
+        try:
+            from .universes.factset.service import Universe
+        except ImportError:  # pragma: no cover - direct script compatibility
+            from universes.factset.service import Universe
 
         return Universe(self).build(links)

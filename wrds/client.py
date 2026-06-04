@@ -65,7 +65,7 @@ class Client:
         self.close()
 
     def login(self) -> None:
-        data = json.loads(self.config.read_text())
+        data = json.loads(self.config.read_text(encoding="utf-8-sig"))
         self.user = str(data.get("id") or data.get("username") or "")
         self.password = str(data.get("pwd") or data.get("password") or "")
         if not self.user or not self.password:

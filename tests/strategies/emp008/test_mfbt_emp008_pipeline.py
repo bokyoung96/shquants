@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pandas as pd
+import pytest
 
 from backtesting.catalog import DatasetId
 from backtesting.data import MarketData
-from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result
+from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result, run_mfbt_emp008_smoke
 from backtesting.strategies.emp008 import mfbt_emp008_data
 from backtesting.strategies.emp008.mfbt_emp008_data import (
     MfbtEmp008Config,
@@ -102,3 +105,20 @@ def test_padded_history_start_covers_warm_risk_window() -> None:
     warmed_month_ends = business_days[config.retail_flow_lookback_days :].to_period("M").nunique()
 
     assert warmed_month_ends >= config.risk_window
+
+
+def test_real_data_smoke_run_produces_weight_rows() -> None:
+    if not Path("parquet/qw_bm_weights.parquet").exists():
+        pytest.skip("local parquet data not available")
+
+    result = run_mfbt_emp008_smoke(
+        parquet_dir=Path("parquet"),
+        start="2025-01-31",
+        end="2025-03-31",
+    )
+
+    assert not result.target_weights.empty
+    assert result.target_weights.index.min() >= pd.Timestamp("2025-01-31")
+    assert result.target_weights.index.max() <= pd.Timestamp("2025-03-31")
+    assert result.target_weights.sum(axis=1).round(8).eq(1.0).all()
+    assert not result.diagnostics.empty

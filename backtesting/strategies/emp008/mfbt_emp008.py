@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
+
 
 @dataclass(frozen=True, slots=True)
 class MfbtEmp008Result:
@@ -24,3 +26,19 @@ class MfbtEmp008Result:
             self.weights_for_export().to_excel(writer, sheet_name="weights_ticker_by_date")
             self.diagnostics.to_excel(writer, sheet_name="summary", index=False)
             self.active_weights.T.to_excel(writer, sheet_name="active_ticker_by_date")
+
+
+def run_mfbt_emp008_smoke(*, parquet_dir: Path, start: str, end: str) -> MfbtEmp008Result:
+    config = MfbtEmp008Config()
+    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=config)
+    bm = market.frames["bm_weights"].loc[start:end].astype(float).copy()
+    bm = bm.div(bm.sum(axis=1).replace(0.0, float("nan")), axis=0).fillna(0.0)
+    diagnostics = pd.DataFrame(
+        {
+            "target_date": bm.index,
+            "success": True,
+            "sum_final_weight": bm.sum(axis=1).to_numpy(),
+            "n_active_positions": bm.gt(0.0).sum(axis=1).to_numpy(),
+        }
+    )
+    return MfbtEmp008Result(target_weights=bm, active_weights=bm * 0.0, diagnostics=diagnostics)

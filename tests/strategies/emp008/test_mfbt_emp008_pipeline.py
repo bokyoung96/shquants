@@ -5,7 +5,14 @@ import pytest
 
 from backtesting.catalog import DatasetId
 from backtesting.data import MarketData
-from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result, run_mfbt_emp008_smoke
+from backtesting.strategies.emp008.mfbt_emp008 import (
+    MfbtEmp008Result,
+    _positive_benchmark_weights,
+    build_diagnostics_row,
+    run_mfbt_emp008,
+    run_mfbt_emp008_smoke,
+)
+from backtesting.strategies.emp008.mfbt_emp008_optimize import OptimizationResult
 from backtesting.strategies.emp008 import mfbt_emp008_data
 from backtesting.strategies.emp008.mfbt_emp008_data import (
     MfbtEmp008Config,
@@ -43,6 +50,40 @@ def test_smoke_rejects_empty_or_zero_benchmark_weights(monkeypatch, tmp_path) ->
 
     with pytest.raises(ValueError, match="usable benchmark weight rows"):
         run_mfbt_emp008_smoke(parquet_dir=tmp_path, start="2025-01-31", end="2025-03-31")
+
+
+def test_positive_benchmark_weights_keep_only_live_constituents() -> None:
+    weights = pd.Series({"A": 0.2, "B": 0.0, "C": 0.3})
+
+    result = _positive_benchmark_weights(weights)
+
+    assert result.index.tolist() == ["A", "C"]
+    assert result.sum() == 1.0
+    assert result["A"] == 0.4
+
+
+def test_build_diagnostics_row_records_optimizer_constraints() -> None:
+    result = OptimizationResult(
+        success=True,
+        final_weights=pd.Series({"A": 0.6, "B": 0.4}),
+        active_weights=pd.Series({"A": 0.1, "B": -0.1}),
+        objective_value=0.01,
+        tracking_error=0.03,
+        sector_active_exposure_abs_max=1e-9,
+    )
+
+    row = build_diagnostics_row(
+        target_date=pd.Timestamp("2024-01-31"),
+        result=result,
+        alpha_factor_names=["price_momentum"],
+        sector_factor_names=["G10"],
+    )
+
+    assert row["target_date"] == pd.Timestamp("2024-01-31")
+    assert row["success"] is True
+    assert row["sum_final_weight"] == 1.0
+    assert abs(row["sum_active_weight"]) < 1e-12
+    assert row["sector_active_exposure_abs_max"] == 1e-9
 
 
 def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None:
@@ -152,3 +193,20 @@ def test_real_data_smoke_run_produces_weight_rows() -> None:
     assert result.target_weights.index.max() <= pd.Timestamp("2025-03-31")
     assert result.target_weights.sum(axis=1).round(8).eq(1.0).all()
     assert not result.diagnostics.empty
+
+
+def test_real_data_full_run_produces_optimized_weight_rows() -> None:
+    if not Path("parquet/qw_bm_weights.parquet").exists():
+        pytest.skip("local parquet data not available")
+
+    result = run_mfbt_emp008(
+        parquet_dir=Path("parquet"),
+        start="2025-01-31",
+        end="2025-03-31",
+    )
+
+    assert not result.target_weights.empty
+    assert result.target_weights.index.min() == pd.Timestamp("2025-01-31")
+    assert result.target_weights.sum(axis=1).round(8).eq(1.0).all()
+    assert result.diagnostics["success"].all()
+    assert result.diagnostics["sector_active_exposure_abs_max"].lt(1e-6).all()

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
+from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_bm_weights
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,9 +30,12 @@ class MfbtEmp008Result:
 
 def run_mfbt_emp008_smoke(*, parquet_dir: Path, start: str, end: str) -> MfbtEmp008Result:
     config = MfbtEmp008Config()
-    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=config)
-    bm = market.frames["bm_weights"].loc[start:end].astype(float).copy()
-    bm = bm.div(bm.sum(axis=1).replace(0.0, float("nan")), axis=0).fillna(0.0)
+    bm = load_mfbt_emp008_bm_weights(parquet_dir=parquet_dir, start=start, end=end, config=config).astype(float).copy()
+    row_sum = bm.sum(axis=1)
+    usable = row_sum.gt(0.0)
+    if not usable.any():
+        raise ValueError("no usable benchmark weight rows")
+    bm = bm.loc[usable].div(row_sum.loc[usable], axis=0)
     diagnostics = pd.DataFrame(
         {
             "target_date": bm.index,

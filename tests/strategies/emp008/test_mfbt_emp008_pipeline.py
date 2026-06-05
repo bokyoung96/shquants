@@ -15,6 +15,36 @@ from backtesting.strategies.emp008.mfbt_emp008_data import (
 )
 
 
+def test_smoke_uses_benchmark_only_loader(monkeypatch, tmp_path) -> None:
+    captured = {}
+
+    def fake_load_bm_weights(*, parquet_dir, start, end, config):
+        captured["parquet_dir"] = parquet_dir
+        captured["start"] = start
+        captured["end"] = end
+        captured["config"] = config
+        return pd.DataFrame({"A": [0.6], "B": [0.4]}, index=pd.to_datetime([start]))
+
+    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008.load_mfbt_emp008_bm_weights", fake_load_bm_weights)
+
+    result = run_mfbt_emp008_smoke(parquet_dir=tmp_path, start="2025-01-31", end="2025-03-31")
+
+    assert captured["parquet_dir"] == tmp_path
+    assert captured["start"] == "2025-01-31"
+    assert captured["end"] == "2025-03-31"
+    assert result.target_weights.index.tolist() == list(pd.to_datetime(["2025-01-31"]))
+
+
+def test_smoke_rejects_empty_or_zero_benchmark_weights(monkeypatch, tmp_path) -> None:
+    def fake_load_bm_weights(*, parquet_dir, start, end, config):
+        return pd.DataFrame({"A": [0.0], "B": [0.0]}, index=pd.to_datetime([start]))
+
+    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008.load_mfbt_emp008_bm_weights", fake_load_bm_weights)
+
+    with pytest.raises(ValueError, match="usable benchmark weight rows"):
+        run_mfbt_emp008_smoke(parquet_dir=tmp_path, start="2025-01-31", end="2025-03-31")
+
+
 def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None:
     config = MfbtEmp008Config()
 

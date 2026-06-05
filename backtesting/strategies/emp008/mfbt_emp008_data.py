@@ -57,6 +57,18 @@ def load_mfbt_emp008_market(
     return loader.load(LoadRequest(datasets=list(required_datasets(config)), start=load_start, end=end))
 
 
+def load_mfbt_emp008_bm_weights(
+    *,
+    parquet_dir: Path,
+    start: str,
+    end: str,
+    config: MfbtEmp008Config,
+) -> pd.DataFrame:
+    loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
+    market = loader.load(LoadRequest(datasets=[config.bm_weights_dataset], start=start, end=end))
+    return market.frames["bm_weights"]
+
+
 def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
     buffer_days = config.retail_flow_lookback_days * 2 + config.risk_window * 31
     return (pd.Timestamp(start) - pd.Timedelta(days=buffer_days)).strftime("%Y-%m-%d")

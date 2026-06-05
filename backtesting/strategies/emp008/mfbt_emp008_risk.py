@@ -17,7 +17,11 @@ def fit_cross_sectional_factor_returns(
     returns: pd.Series,
 ) -> CrossSectionalRegressionResult:
     common = exposures.index.intersection(returns.dropna().index)
-    x = exposures.loc[common].dropna(how="all", axis=1).astype(float)
+    x = exposures.loc[common].astype(float)
+    unestimable = x.columns[x.isna().all(axis=0)]
+    if len(unestimable) > 0:
+        names = ", ".join(str(name) for name in unestimable)
+        raise ValueError(f"unestimable exposure columns: {names}")
     y = returns.loc[common].astype(float)
     valid = x.notna().all(axis=1) & y.notna()
     x = x.loc[valid]
@@ -38,7 +42,7 @@ def factor_covariance(factor_returns: pd.DataFrame, window: int) -> pd.DataFrame
 
 def residual_variance(residuals: pd.DataFrame, window: int) -> pd.Series:
     recent = residuals.tail(window).astype(float)
-    return recent.pow(2).sum(axis=0).div(len(recent))
+    return recent.pow(2).mean(axis=0)
 
 
 def compute_expected_alpha(

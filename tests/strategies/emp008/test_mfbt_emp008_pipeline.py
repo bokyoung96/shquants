@@ -92,3 +92,13 @@ def test_loader_requests_padded_history_for_rolling_factors(monkeypatch, tmp_pat
     assert captured["request"].start == padded_history_start("2025-01-31", config)
     assert captured["request"].end == "2025-03-31"
     assert pd.Timestamp(captured["request"].start) < pd.Timestamp("2025-01-31")
+
+
+def test_padded_history_start_covers_warm_risk_window() -> None:
+    config = MfbtEmp008Config()
+    start = "2025-01-31"
+    padded = padded_history_start(start, config)
+    business_days = pd.bdate_range(padded, start)
+    warmed_month_ends = business_days[config.retail_flow_lookback_days :].to_period("M").nunique()
+
+    assert warmed_month_ends >= config.risk_window

@@ -58,8 +58,5 @@ def load_mfbt_emp008_market(
 
 
 def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
-    buffer_days = max(
-        config.retail_flow_lookback_days * 2,
-        config.retail_flow_lookback_days + config.risk_window * 31,
-    )
+    buffer_days = config.retail_flow_lookback_days * 2 + config.risk_window * 31
     return (pd.Timestamp(start) - pd.Timedelta(days=buffer_days)).strftime("%Y-%m-%d")

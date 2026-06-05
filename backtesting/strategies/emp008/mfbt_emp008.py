@@ -136,9 +136,12 @@ def run_mfbt_emp008(
                 run_optimization=should_output,
             )
         except (ValueError, KeyError):
+            if should_output:
+                raise
             continue
         if not should_output or optimization is None:
             continue
+        optimization = _validated_optimization(return_date, optimization)
         target_rows.append(optimization.final_weights.rename(return_date))
         active_rows.append(optimization.active_weights.rename(return_date))
         diagnostics.append(
@@ -218,6 +221,12 @@ def _common_month_end_dates(factors: dict[str, pd.DataFrame]) -> list[pd.Timesta
     if not non_empty:
         return []
     return sorted(set.intersection(*non_empty))
+
+
+def _validated_optimization(target_date: pd.Timestamp, result: OptimizationResult) -> OptimizationResult:
+    if not result.success:
+        raise RuntimeError(f"optimization failed for {target_date:%Y-%m-%d}")
+    return result
 
 
 def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:

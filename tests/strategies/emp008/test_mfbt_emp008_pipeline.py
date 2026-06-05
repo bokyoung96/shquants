@@ -8,6 +8,7 @@ from backtesting.data import MarketData
 from backtesting.strategies.emp008.mfbt_emp008 import (
     MfbtEmp008Result,
     _positive_benchmark_weights,
+    _validated_optimization,
     build_diagnostics_row,
     run_mfbt_emp008,
     run_mfbt_emp008_smoke,
@@ -84,6 +85,20 @@ def test_build_diagnostics_row_records_optimizer_constraints() -> None:
     assert row["sum_final_weight"] == 1.0
     assert abs(row["sum_active_weight"]) < 1e-12
     assert row["sector_active_exposure_abs_max"] == 1e-9
+
+
+def test_validated_optimization_rejects_failed_solver_result() -> None:
+    result = OptimizationResult(
+        success=False,
+        final_weights=pd.Series({"A": 0.6, "B": 0.4}),
+        active_weights=pd.Series({"A": 0.1, "B": -0.1}),
+        objective_value=0.01,
+        tracking_error=0.03,
+        sector_active_exposure_abs_max=1e-9,
+    )
+
+    with pytest.raises(RuntimeError, match="optimization failed"):
+        _validated_optimization(pd.Timestamp("2024-01-31"), result)
 
 
 def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None:

@@ -19,7 +19,7 @@ class MfbtEmp008Config:
     low_op_threshold: float = 100_000_000_000.0
     extreme_growth_threshold: float = 0.50
     risk_window: int = 36
-    tracking_error: float = 0.5 / (12**0.5)
+    tracking_error: float = 0.007 / (12**0.5)
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:

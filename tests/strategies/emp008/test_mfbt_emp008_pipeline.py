@@ -109,6 +109,7 @@ def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None
     assert config.universe_dataset is DatasetId.QW_K200_YN
     assert config.float_market_cap_dataset is DatasetId.QW_MKTCAP_FLT
     assert pd.Timedelta(days=config.retail_flow_lookback_days) == pd.Timedelta(days=252)
+    assert abs(config.tracking_error - 0.007 / (12**0.5)) < 1e-12
 
 
 def test_required_datasets_include_all_mfbt_emp008_inputs() -> None:

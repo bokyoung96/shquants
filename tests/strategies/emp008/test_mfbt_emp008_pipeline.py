@@ -2,6 +2,7 @@ import pandas as pd
 
 from backtesting.catalog import DatasetId
 from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
+from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result
 
 
 def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None:
@@ -30,3 +31,15 @@ def test_required_datasets_include_all_mfbt_emp008_inputs() -> None:
     assert DatasetId.QW_INT_BEARING_LIAB_NFQ0 in datasets
     assert DatasetId.QW_QUICK_ASSETS_NFQ0 in datasets
     assert DatasetId.QW_K200_YN in datasets
+
+
+def test_result_exports_date_by_ticker_and_ticker_by_date() -> None:
+    target = pd.DataFrame(
+        {"A": [0.6, 0.5], "B": [0.4, 0.5]},
+        index=pd.to_datetime(["2024-01-31", "2024-02-29"]),
+    )
+    result = MfbtEmp008Result(target_weights=target, active_weights=target * 0.0, diagnostics=pd.DataFrame())
+
+    assert result.target_weights.index.tolist() == list(pd.to_datetime(["2024-01-31", "2024-02-29"]))
+    assert result.weights_for_export().index.tolist() == ["A", "B"]
+    assert result.weights_for_export().columns.tolist() == list(pd.to_datetime(["2024-01-31", "2024-02-29"]))

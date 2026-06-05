@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
-from backtesting.catalog import DatasetId
+from backtesting.catalog import DataCatalog, DatasetId
+from backtesting.data import DataLoader, LoadRequest, MarketData, ParquetStore
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,3 +41,14 @@ def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
         if dataset not in deduped:
             deduped.append(dataset)
     return tuple(deduped)
+
+
+def load_mfbt_emp008_market(
+    *,
+    parquet_dir: Path,
+    start: str,
+    end: str,
+    config: MfbtEmp008Config,
+) -> MarketData:
+    loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
+    return loader.load(LoadRequest(datasets=list(required_datasets(config)), start=start, end=end))

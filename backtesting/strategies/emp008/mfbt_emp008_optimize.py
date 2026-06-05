@@ -27,12 +27,22 @@ def optimize_active_weights(
     sector_factor_names: list[str],
     tracking_error: float,
 ) -> OptimizationResult:
-    common_tickers = exposures.index.intersection(residual_var.index).intersection(bm_weights.index)
-    common_factors = exposures.columns.intersection(factor_cov.index).intersection(expected_alpha.index)
+    common_tickers = bm_weights.index
+    missing_exposures = common_tickers.difference(exposures.index)
+    missing_residuals = common_tickers.difference(residual_var.index)
+    if len(missing_exposures) > 0 or len(missing_residuals) > 0:
+        missing = sorted({*(str(name) for name in missing_exposures), *(str(name) for name in missing_residuals)})
+        raise ValueError(f"missing optimizer inputs for benchmark constituents: {', '.join(missing)}")
+
+    common_factors = exposures.columns.intersection(factor_cov.index).intersection(factor_cov.columns)
+    missing_sector_factors = [name for name in sector_factor_names if name not in common_factors]
+    if missing_sector_factors:
+        raise ValueError(f"missing sector factors: {', '.join(missing_sector_factors)}")
+
     z = exposures.loc[common_tickers, common_factors].astype(float)
     cov = factor_cov.loc[common_factors, common_factors].astype(float)
     resid = residual_var.loc[common_tickers].astype(float)
-    alpha = expected_alpha.loc[common_factors].astype(float)
+    alpha = expected_alpha.reindex(common_factors).fillna(0.0).astype(float)
     bm = bm_weights.loc[common_tickers].astype(float)
 
     m = _full_covariance(z, cov, resid)

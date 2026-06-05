@@ -8,6 +8,7 @@ import pandas as pd
 from backtesting.catalog import DatasetId
 from backtesting.construction.base import ConstructionResult
 from backtesting.data import MarketData
+from backtesting.data.benchmarks import benchmark_price_series
 from backtesting.signals.base import SignalBundle
 
 from .composable import ComposableStrategy
@@ -79,7 +80,7 @@ class _BenchmarkOverlaySignal:
         sector = market.frames["sector_big"].ffill()
         market_cap = market.frames["market_cap"].reindex_like(close).ffill()
 
-        benchmark = benchmark_frame["IKS200"] if "IKS200" in benchmark_frame.columns else benchmark_frame.iloc[:, 0]
+        benchmark = benchmark_price_series(benchmark_frame, "IKS200")
         benchmark = benchmark.reindex(close.index).ffill()
         bench_ret = benchmark.pct_change(fill_method=None)
         stock_ret = close.pct_change(fill_method=None)

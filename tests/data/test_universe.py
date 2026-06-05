@@ -47,11 +47,12 @@ def test_registry_returns_legacy_k200_defaults() -> None:
 
 def test_registry_default_benchmark_codes_exist_in_qw_bm_parquet() -> None:
     registry = UniverseRegistry.default()
-    columns = set(pd.read_parquet(ROOT.parquet_path / "qw_BM.parquet").columns.astype(str))
+    columns = pd.read_parquet(ROOT.parquet_path / "qw_BM.parquet").columns
+    codes = set(columns.get_level_values("code") if isinstance(columns, pd.MultiIndex) else columns.astype(str))
 
     for universe_id in ("legacy_k200", "kosdaq150"):
         spec = registry.get(universe_id)
-        assert spec.default_benchmark_code in columns
+        assert spec.default_benchmark_code in codes
 
 
 def test_registry_remaps_generic_dataset_ids_to_universe_specific_ids() -> None:

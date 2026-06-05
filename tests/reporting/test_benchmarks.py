@@ -46,6 +46,41 @@ def test_benchmark_repository_load_returns_uses_kospi200_price_path() -> None:
     assert_series_equal(returns, expected)
 
 
+def test_benchmark_repository_load_returns_uses_close_from_ohlc_frame() -> None:
+    index = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+    columns = pd.MultiIndex.from_tuples(
+        [
+            ("IKS200", "open"),
+            ("IKS200", "high"),
+            ("IKS200", "low"),
+            ("IKS200", "close"),
+        ],
+        names=["code", "field"],
+    )
+    frame = pd.DataFrame(
+        [
+            [99.0, 101.0, 98.0, 100.0],
+            [100.0, 102.0, 99.0, 101.0],
+            [101.0, 103.0, 100.0, 102.0],
+        ],
+        index=index,
+        columns=columns,
+    )
+
+    series = BenchmarkRepository.from_frame(frame).load_series(
+        BenchmarkConfig.default_kospi200(),
+        start="2024-01-02",
+        end="2024-01-04",
+    )
+
+    expected_prices = pd.Series([100.0, 101.0, 102.0], index=index, name="KOSPI200")
+    expected_prices.index.name = "date"
+    expected_returns = expected_prices.pct_change().fillna(0.0)
+
+    assert_series_equal(series.prices, expected_prices)
+    assert_series_equal(series.returns, expected_returns)
+
+
 def test_sector_repository_latest_sector_weights_maps_latest_date() -> None:
     sector_index = pd.to_datetime(["2024-02-29", "2024-01-31"])
     sector_frame = pd.DataFrame(
@@ -192,6 +227,43 @@ def test_read_quantwise_benchmark_frame_extracts_codes_and_dates(tmp_path) -> No
             "IKS001": [200.0, 201.0],
         },
         index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+    )
+    expected.index.name = "date"
+
+    assert_frame_equal(frame, expected, check_dtype=False)
+
+
+def test_read_quantwise_benchmark_frame_extracts_ohlc_multiindex(tmp_path) -> None:
+    raw = pd.DataFrame(
+        [
+            ["Refresh", "Last Update", None, None, None],
+            ["Code", "IKS200", "IKS200", "IKS200", "IKS200"],
+            ["Name", "KOSPI200", "KOSPI200", "KOSPI200", "KOSPI200"],
+            ["Item Code", "I100110", "I100120", "I100130", "I100100"],
+            ["Unit", "P", "P", "P", "P"],
+            ["D A T E", "시가지수", "고가지수", "저가지수", "종가지수"],
+            [pd.Timestamp("2024-01-02"), 99.0, 101.0, 98.0, 100.0],
+            [pd.Timestamp("2024-01-03"), 100.0, 102.0, 99.0, 101.0],
+        ]
+    )
+    path = tmp_path / "qw_BM.xlsx"
+    raw.to_excel(path, index=False, header=False)
+
+    frame = _read_quantwise_benchmark_frame(path)
+
+    expected_columns = pd.MultiIndex.from_tuples(
+        [
+            ("IKS200", "open"),
+            ("IKS200", "high"),
+            ("IKS200", "low"),
+            ("IKS200", "close"),
+        ],
+        names=["code", "field"],
+    )
+    expected = pd.DataFrame(
+        [[99.0, 101.0, 98.0, 100.0], [100.0, 102.0, 99.0, 101.0]],
+        index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        columns=expected_columns,
     )
     expected.index.name = "date"
 

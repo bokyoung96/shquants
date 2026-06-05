@@ -7,6 +7,7 @@ import pandas as pd
 from backtesting.catalog import DatasetId
 from backtesting.construction.base import ConstructionResult
 from backtesting.data import MarketData
+from backtesting.data.benchmarks import benchmark_price_series
 from backtesting.signals.base import SignalBundle
 
 from .composable import ComposableStrategy
@@ -67,9 +68,7 @@ class _RevisionSignalProducer:
 
     @staticmethod
     def _benchmark(frame: pd.DataFrame) -> pd.Series:
-        if "IKS200" in frame.columns:
-            return frame["IKS200"]
-        return frame.iloc[:, 0]
+        return benchmark_price_series(frame, "IKS200")
 
 
 @dataclass(slots=True)

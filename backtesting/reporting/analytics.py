@@ -92,6 +92,7 @@ class ResearchSnapshot:
     sector_contribution: pd.DataFrame = field(default_factory=pd.DataFrame)
     sector_weights: pd.DataFrame = field(default_factory=pd.DataFrame)
     drawdown_episodes: pd.DataFrame = field(default_factory=pd.DataFrame)
+    benchmark_ohlc: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def annualized_sharpe(returns: pd.Series, periods: int = _TRADING_PERIODS) -> float:

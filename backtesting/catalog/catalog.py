@@ -18,6 +18,7 @@ def _spec(
     validity: str | None = None,
     lag: int = 0,
     dtype: str = "float64",
+    axis: str = "date_symbol",
 ) -> DatasetSpec:
     return DatasetSpec(
         id=dataset_id,
@@ -29,6 +30,7 @@ def _spec(
         validity=validity or ("month_only" if freq == "M" else "daily"),
         lag=lag,
         dtype=dtype,
+        axis=axis,
     )
 
 
@@ -44,7 +46,13 @@ class DataCatalog:
             DatasetId.QW_ADJ_H: _spec(DatasetId.QW_ADJ_H, group=DatasetGroup.PRICE, freq="D", kind="price"),
             DatasetId.QW_ADJ_L: _spec(DatasetId.QW_ADJ_L, group=DatasetGroup.PRICE, freq="D", kind="price"),
             DatasetId.QW_ASSET_LFQ0: _spec(DatasetId.QW_ASSET_LFQ0, group=DatasetGroup.FUNDAMENTAL, freq="M", kind="asset"),
-            DatasetId.QW_BM: _spec(DatasetId.QW_BM, group=DatasetGroup.BENCHMARK, freq="D", kind="benchmark"),
+            DatasetId.QW_BM: _spec(
+                DatasetId.QW_BM,
+                group=DatasetGroup.BENCHMARK,
+                freq="D",
+                kind="benchmark",
+                axis="date_code_field",
+            ),
             DatasetId.QW_C: _spec(DatasetId.QW_C, group=DatasetGroup.PRICE, freq="D", kind="price"),
             DatasetId.QW_DIVIDEND_CASH: _spec(
                 DatasetId.QW_DIVIDEND_CASH,

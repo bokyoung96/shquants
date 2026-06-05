@@ -27,7 +27,7 @@ class IngestResult:
             date_end=frame.index.max().date(),
             missing=int(frame.isna().sum().sum()),
             shape=[len(frame), len(frame.columns)],
-            dtypes={column: str(dtype) for column, dtype in frame.dtypes.items()},
+            dtypes={_column_key(column): str(dtype) for column, dtype in frame.dtypes.items()},
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -45,3 +45,9 @@ class IngestResult:
     def write_json(self, path: Path) -> Path:
         path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
         return path
+
+
+def _column_key(column: object) -> str:
+    if isinstance(column, tuple):
+        return "/".join(str(part) for part in column)
+    return str(column)

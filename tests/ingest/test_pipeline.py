@@ -88,6 +88,43 @@ def test_ingest_reads_xlsx_sources(tmp_path: Path) -> None:
     assert stored.index.tolist() == list(pd.to_datetime(["2024-01-02", "2024-01-03"]))
 
 
+def test_ingest_reads_quantwise_benchmark_ohlc_xlsx_sources(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    parquet_dir = tmp_path / "parquet"
+    raw_dir.mkdir()
+    parquet_dir.mkdir()
+
+    raw = pd.DataFrame(
+        [
+            ["Refresh", "Last Update", None, None, None],
+            ["Code", "IKS200", "IKS200", "IKS200", "IKS200"],
+            ["Name", "KOSPI200", "KOSPI200", "KOSPI200", "KOSPI200"],
+            ["Item Code", "I100110", "I100120", "I100130", "I100100"],
+            ["Unit", "P", "P", "P", "P"],
+            ["D A T E", "시가지수", "고가지수", "저가지수", "종가지수"],
+            [pd.Timestamp("2024-01-02"), 99.0, 101.0, 98.0, 100.0],
+            [pd.Timestamp("2024-01-03"), 100.0, 102.0, 99.0, 101.0],
+        ]
+    )
+    raw.to_excel(raw_dir / "qw_BM.xlsx", index=False, header=False)
+
+    job = IngestJob(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+    )
+
+    result = job.run(DatasetId.QW_BM)
+
+    stored = pd.read_parquet(parquet_dir / "qw_BM.parquet", engine="pyarrow")
+
+    assert result.rows == 2
+    assert result.columns == 4
+    assert stored.columns.names == ["code", "field"]
+    assert ("IKS200", "close") in stored.columns
+    assert stored.loc[pd.Timestamp("2024-01-03"), ("IKS200", "close")] == 101.0
+
+
 def test_ingest_reads_cp949_csv_sources(tmp_path: Path) -> None:
     raw_dir = tmp_path / "raw"
     parquet_dir = tmp_path / "parquet"

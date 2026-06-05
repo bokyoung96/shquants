@@ -8,6 +8,7 @@ import pandas as pd
 from backtesting.catalog import DatasetId
 from backtesting.construction.base import ConstructionResult
 from backtesting.data import MarketData
+from backtesting.data.benchmarks import benchmark_price_series
 from backtesting.signals.base import SignalBundle
 from backtesting.strategy.base import validate_positive
 
@@ -166,7 +167,7 @@ class _RrgFwdFlow1Signal:
         market_cap_source = market.frames.get("float_market_cap", market.frames["market_cap"])
         market_cap = market_cap_source.reindex(index=close.index, columns=close.columns).ffill().astype(float)
         benchmark_frame = market.frames["benchmark"]
-        benchmark = benchmark_frame["IKS200"] if "IKS200" in benchmark_frame.columns else benchmark_frame.iloc[:, 0]
+        benchmark = benchmark_price_series(benchmark_frame, "IKS200")
         benchmark = benchmark.reindex(close.index).ffill().astype(float)
 
         rrg_state, _long_sector, _short_sector = _build_rrg_context(

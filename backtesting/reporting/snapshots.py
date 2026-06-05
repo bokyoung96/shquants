@@ -48,6 +48,10 @@ def _empty_series(name: str) -> pd.Series:
     return pd.Series(dtype=float, name=name)
 
 
+def _empty_frame() -> pd.DataFrame:
+    return pd.DataFrame()
+
+
 @dataclass(frozen=True, slots=True)
 class PerformanceSnapshot:
     run_id: str
@@ -81,7 +85,11 @@ class PerformanceSnapshotFactory:
     ) -> PerformanceSnapshot:
         strategy_returns = run.returns.astype(float).sort_index()
         strategy_equity = run.equity.astype(float).sort_index()
-        benchmark_config, benchmark_returns, benchmark_equity = self._load_benchmark(strategy_returns, strategy_equity, benchmark)
+        benchmark_config, benchmark_returns, benchmark_equity, benchmark_ohlc = self._load_benchmark(
+            strategy_returns,
+            strategy_equity,
+            benchmark,
+        )
         has_benchmark = not benchmark_returns.empty
         resolved_profile = self._resolve_profile(run, benchmark_config, profile)
         if not has_benchmark:
@@ -91,7 +99,7 @@ class PerformanceSnapshotFactory:
         drawdowns = self._build_drawdowns(strategy_equity)
         exposure = self._build_exposure(run)
         sectors = self._build_sectors(run.weights)
-        research = self._build_research(run, strategy_returns, benchmark_returns, drawdowns, has_benchmark)
+        research = self._build_research(run, strategy_returns, benchmark_returns, benchmark_ohlc, drawdowns, has_benchmark)
         metrics = self._build_metrics(
             run,
             strategy_returns,
@@ -126,9 +134,9 @@ class PerformanceSnapshotFactory:
         strategy_returns: pd.Series,
         strategy_equity: pd.Series,
         benchmark: BenchmarkConfig | None,
-    ) -> tuple[BenchmarkConfig | None, pd.Series, pd.Series]:
+    ) -> tuple[BenchmarkConfig | None, pd.Series, pd.Series, pd.DataFrame]:
         if benchmark is None or strategy_returns.empty:
-            return None, _empty_series("benchmark_returns"), _empty_series("benchmark_equity")
+            return None, _empty_series("benchmark_returns"), _empty_series("benchmark_equity"), _empty_frame()
 
         try:
             benchmark_series = self.benchmark_repo.load_series(
@@ -137,14 +145,22 @@ class PerformanceSnapshotFactory:
                 end=str(strategy_returns.index.max().date()),
             )
         except Exception:
-            return None, _empty_series("benchmark_returns"), _empty_series("benchmark_equity")
+            return None, _empty_series("benchmark_returns"), _empty_series("benchmark_equity"), _empty_frame()
 
         benchmark_returns = benchmark_series.returns.reindex(strategy_returns.index).fillna(0.0).astype(float)
+        benchmark_returns.index.name = strategy_returns.index.name
+        benchmark_ohlc = benchmark_series.ohlc.reindex(strategy_returns.index).astype(float)
+        benchmark_ohlc.index = pd.Index(benchmark_ohlc.index, name="date")
         benchmark_equity = self._equity_from_returns(
             benchmark_returns,
             starting_value=float(strategy_equity.iloc[0]),
         )
-        return benchmark, benchmark_returns.rename("benchmark_returns"), benchmark_equity.rename("benchmark_equity")
+        return (
+            benchmark,
+            benchmark_returns.rename("benchmark_returns"),
+            benchmark_equity.rename("benchmark_equity"),
+            benchmark_ohlc,
+        )
 
     def _resolve_profile(
         self,
@@ -382,6 +398,7 @@ class PerformanceSnapshotFactory:
         run: SavedRun,
         strategy_returns: pd.Series,
         benchmark_returns: pd.Series,
+        benchmark_ohlc: pd.DataFrame,
         drawdowns: DrawdownStats,
         has_benchmark: bool,
     ) -> ResearchSnapshot:
@@ -402,6 +419,7 @@ class PerformanceSnapshotFactory:
             sector_contribution=sector_contribution,
             sector_weights=sector_weights,
             drawdown_episodes=drawdown_episodes,
+            benchmark_ohlc=benchmark_ohlc if has_benchmark else pd.DataFrame(),
         )
 
     def _latest_holdings_relative_performance(self, run: SavedRun, latest_holdings: pd.DataFrame) -> pd.DataFrame:

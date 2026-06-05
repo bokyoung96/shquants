@@ -7,6 +7,7 @@ import pandas as pd
 
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import ParquetStore
+from backtesting.data.benchmarks import benchmark_ohlc_frame, benchmark_price_series, read_quantwise_benchmark_frame
 from backtesting.ingest import IngestJob
 from backtesting.ingest.io import find_raw_path
 from root import ROOT
@@ -18,6 +19,7 @@ class BenchmarkSeries:
     name: str
     prices: pd.Series
     returns: pd.Series
+    ohlc: pd.DataFrame
 
 
 class BenchmarkRepository:
@@ -33,9 +35,11 @@ class BenchmarkRepository:
         return cls(prices=_load_default_frame(DatasetId.QW_BM))
 
     def load_series(self, config: BenchmarkConfig, start: str, end: str) -> BenchmarkSeries:
-        prices = self.prices.loc[start:end, config.code].astype(float).rename(config.name).rename_axis("date")
+        frame = self.prices.loc[start:end]
+        ohlc = benchmark_ohlc_frame(frame, config.code)
+        prices = benchmark_price_series(frame, config.code, field="close").rename(config.name).rename_axis("date")
         returns = prices.pct_change().fillna(0.0).rename(config.name).rename_axis("date")
-        return BenchmarkSeries(name=config.name, prices=prices, returns=returns)
+        return BenchmarkSeries(name=config.name, prices=prices, returns=returns, ohlc=ohlc)
 
     def load_returns(self, config: BenchmarkConfig, start: str, end: str) -> pd.Series:
         return self.load_series(config, start, end).returns
@@ -315,27 +319,7 @@ def _load_default_frame(dataset_id: DatasetId) -> pd.DataFrame:
 
 
 def _read_quantwise_benchmark_frame(path: Path) -> pd.DataFrame:
-    raw = pd.read_excel(path, header=None)
-    leading = raw.iloc[:, 0].astype(str).str.strip().str.upper()
-
-    code_rows = leading[leading.eq("CODE")]
-    date_rows = leading[leading.eq("D A T E")]
-    if code_rows.empty or date_rows.empty:
-        raise KeyError(f"unable to locate QuantWise benchmark headers in {path.name}")
-
-    code_row = int(code_rows.index[0])
-    date_row = int(date_rows.index[0])
-    codes = raw.iloc[code_row, 1:]
-    valid_columns = [int(column) for column, value in codes.items() if pd.notna(value)]
-
-    frame = raw.loc[date_row + 1 :, [0, *valid_columns]].copy()
-    frame.columns = ["date", *[str(codes[column]).strip() for column in valid_columns]]
-    frame = frame.dropna(subset=["date"])
-    frame["date"] = pd.to_datetime(frame["date"]).dt.normalize()
-    frame = frame.sort_values("date").set_index("date")
-    frame = frame.apply(pd.to_numeric, errors="coerce")
-    frame.index.name = "date"
-    return frame
+    return read_quantwise_benchmark_frame(path)
 
 
 def _read_historical_sector_frame(

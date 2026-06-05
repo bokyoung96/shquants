@@ -56,6 +56,32 @@ def test_performance_snapshot_factory_builds_analytics_snapshot() -> None:
     assert snapshot.metrics.sortino == expected_sortino
 
 
+def test_performance_snapshot_factory_exposes_benchmark_ohlc_for_research() -> None:
+    run = _toy_run()
+    factory = PerformanceSnapshotFactory(
+        benchmark_repo=BenchmarkRepository.from_frame(_benchmark_ohlc_prices()),
+        sector_repo=SectorRepository.from_frame(_sector_map(), prices=_asset_prices()),
+    )
+
+    snapshot = factory.build(run, BenchmarkConfig.default_kospi200())
+
+    expected = pd.DataFrame(
+        {
+            "open": [199.0, 200.0, 200.0, 201.0, 200.5, 201.0, 202.0, 203.0],
+            "high": [201.0, 202.0, 201.0, 203.0, 202.0, 203.0, 204.0, 205.0],
+            "low": [198.0, 199.5, 199.0, 200.0, 200.0, 200.5, 201.5, 202.0],
+            "close": [200.0, 201.0, 200.5, 202.0, 201.0, 202.5, 203.0, 204.0],
+        },
+        index=run.returns.index.copy(),
+    )
+    expected.index.name = "date"
+
+    assert_frame_equal(snapshot.research.benchmark_ohlc, expected)
+    expected_returns = expected["close"].pct_change().fillna(0.0).rename("benchmark_returns")
+    expected_returns.index.name = run.returns.index.name
+    assert_series_equal(snapshot.benchmark_returns, expected_returns)
+
+
 def test_performance_snapshot_factory_derives_latest_holdings_when_optional_table_missing() -> None:
     run = _toy_run(latest_weights=None)
     factory = PerformanceSnapshotFactory(
@@ -180,6 +206,33 @@ def _benchmark_prices() -> pd.DataFrame:
             "IKS200": [200.0, 201.0, 200.5, 202.0, 201.0, 202.5, 203.0, 204.0],
         },
         index=index,
+    )
+
+
+def _benchmark_ohlc_prices() -> pd.DataFrame:
+    index = pd.date_range("2024-01-02", periods=8, freq="D")
+    columns = pd.MultiIndex.from_tuples(
+        [
+            ("IKS200", "open"),
+            ("IKS200", "high"),
+            ("IKS200", "low"),
+            ("IKS200", "close"),
+        ],
+        names=["code", "field"],
+    )
+    return pd.DataFrame(
+        [
+            [199.0, 201.0, 198.0, 200.0],
+            [200.0, 202.0, 199.5, 201.0],
+            [200.0, 201.0, 199.0, 200.5],
+            [201.0, 203.0, 200.0, 202.0],
+            [200.5, 202.0, 200.0, 201.0],
+            [201.0, 203.0, 200.5, 202.5],
+            [202.0, 204.0, 201.5, 203.0],
+            [203.0, 205.0, 202.0, 204.0],
+        ],
+        index=index,
+        columns=columns,
     )
 
 

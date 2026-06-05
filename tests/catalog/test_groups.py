@@ -8,6 +8,7 @@ EXPECTED_RAW_STEMS = {
     "qw_adj_o",
     "qw_asset_lfq0",
     "qw_BM",
+    "qw_bm_weights",
     "qw_c",
     "qw_dividend_cash",
     "qw_dividend_cash_ttm",
@@ -78,6 +79,7 @@ def test_catalog_groups_cover_known_datasets() -> None:
     assert DatasetId.QW_OP_NFY1 in catalog.ids(DatasetGroup.ESTIMATE)
     assert DatasetId.QW_FOREIGN in catalog.ids(DatasetGroup.FLOW)
     assert DatasetId.QW_K200_YN in catalog.ids(DatasetGroup.FLAG)
+    assert DatasetId.QW_BM_WEIGHTS in catalog.ids(DatasetGroup.BENCHMARK)
     assert DatasetId.QW_DPS_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)

@@ -125,6 +125,47 @@ def test_ingest_reads_quantwise_benchmark_ohlc_xlsx_sources(tmp_path: Path) -> N
     assert stored.loc[pd.Timestamp("2024-01-03"), ("IKS200", "close")] == 101.0
 
 
+def test_ingest_builds_kospi200_bm_weights_from_krx_sheet2_and_raw_close(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    parquet_dir = tmp_path / "parquet"
+    raw_dir.mkdir()
+    parquet_dir.mkdir()
+
+    pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03"]),
+            "A000001": [10.0, 20.0],
+            "A000002": [20.0, 10.0],
+        }
+    ).to_csv(raw_dir / "qw_c.csv", index=False)
+    pd.DataFrame(
+        {
+            "Work_Dt": pd.to_datetime(["2024-01-02", "2024-01-02", "2024-01-03", "2024-01-03"]),
+            "Index_Isin": ["KRD020020016"] * 4,
+            "Constituent_Code": ["A000001", "A000002", "A000001", "A000002"],
+            "Index_Share": [100.0, 100.0, 100.0, 100.0],
+            "Free_Float_Factor": [1.0, 1.0, 1.0, 1.0],
+        }
+    ).to_excel(raw_dir / "krx_ks200_weight.xlsx", sheet_name="Sheet2", index=False)
+
+    job = IngestJob(
+        catalog=DataCatalog.default(),
+        raw_dir=raw_dir,
+        parquet_dir=parquet_dir,
+    )
+
+    result = job.run(DatasetId.QW_BM_WEIGHTS)
+    frame = pd.read_parquet(parquet_dir / "qw_bm_weights.parquet", engine="pyarrow")
+
+    assert result.shape == [2, 2]
+    assert frame.index.name == "date"
+    assert frame.loc[pd.Timestamp("2024-01-02"), "A000001"] == 1.0 / 3.0
+    assert frame.loc[pd.Timestamp("2024-01-02"), "A000002"] == 2.0 / 3.0
+    assert frame.loc[pd.Timestamp("2024-01-03"), "A000001"] == 2.0 / 3.0
+    assert frame.loc[pd.Timestamp("2024-01-03"), "A000002"] == 1.0 / 3.0
+    assert frame.sum(axis=1).round(12).eq(1.0).all()
+
+
 def test_ingest_reads_cp949_csv_sources(tmp_path: Path) -> None:
     raw_dir = tmp_path / "raw"
     parquet_dir = tmp_path / "parquet"

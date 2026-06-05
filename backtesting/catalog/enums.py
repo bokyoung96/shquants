@@ -20,6 +20,7 @@ class DatasetId(str, Enum):
     QW_ADJ_O = "qw_adj_o"
     QW_ASSET_LFQ0 = "qw_asset_lfq0"
     QW_BM = "qw_BM"
+    QW_BM_WEIGHTS = "qw_bm_weights"
     QW_C = "qw_c"
     QW_DIVIDEND_CASH = "qw_dividend_cash"
     QW_DIVIDEND_CASH_TTM = "qw_dividend_cash_ttm"

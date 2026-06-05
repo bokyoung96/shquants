@@ -53,6 +53,12 @@ class DataCatalog:
                 kind="benchmark",
                 axis="date_code_field",
             ),
+            DatasetId.QW_BM_WEIGHTS: _spec(
+                DatasetId.QW_BM_WEIGHTS,
+                group=DatasetGroup.BENCHMARK,
+                freq="D",
+                kind="benchmark_weights",
+            ),
             DatasetId.QW_C: _spec(DatasetId.QW_C, group=DatasetGroup.PRICE, freq="D", kind="price"),
             DatasetId.QW_DIVIDEND_CASH: _spec(
                 DatasetId.QW_DIVIDEND_CASH,

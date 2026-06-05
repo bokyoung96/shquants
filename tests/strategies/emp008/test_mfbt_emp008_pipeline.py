@@ -1,8 +1,15 @@
 import pandas as pd
 
 from backtesting.catalog import DatasetId
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
+from backtesting.data import MarketData
 from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result
+from backtesting.strategies.emp008 import mfbt_emp008_data
+from backtesting.strategies.emp008.mfbt_emp008_data import (
+    MfbtEmp008Config,
+    load_mfbt_emp008_market,
+    padded_history_start,
+    required_datasets,
+)
 
 
 def test_mfbt_emp008_config_defaults_to_wi26_big_sector_and_bm_weights() -> None:
@@ -43,3 +50,45 @@ def test_result_exports_date_by_ticker_and_ticker_by_date() -> None:
     assert result.target_weights.index.tolist() == list(pd.to_datetime(["2024-01-31", "2024-02-29"]))
     assert result.weights_for_export().index.tolist() == ["A", "B"]
     assert result.weights_for_export().columns.tolist() == list(pd.to_datetime(["2024-01-31", "2024-02-29"]))
+
+
+def test_result_write_outputs_preserves_weight_orientations(tmp_path) -> None:
+    target = pd.DataFrame(
+        {"A": [0.6, 0.5], "B": [0.4, 0.5]},
+        index=pd.to_datetime(["2024-01-31", "2024-02-29"]),
+    )
+    result = MfbtEmp008Result(target_weights=target, active_weights=target * 0.0, diagnostics=pd.DataFrame())
+
+    result.write_outputs(tmp_path)
+
+    pd.testing.assert_frame_equal(pd.read_parquet(tmp_path / "target_weights.parquet"), target)
+    export = pd.read_excel(tmp_path / "weights_export.xlsx", sheet_name="weights_ticker_by_date", index_col=0)
+    export.columns = pd.to_datetime(export.columns)
+    pd.testing.assert_frame_equal(export, target.T)
+
+
+def test_loader_requests_padded_history_for_rolling_factors(monkeypatch, tmp_path) -> None:
+    captured = {}
+
+    class CapturingLoader:
+        def __init__(self, catalog, store) -> None:
+            self.catalog = catalog
+            self.store = store
+
+        def load(self, request):
+            captured["request"] = request
+            return MarketData(frames={}, universe=None, benchmark=None)
+
+    monkeypatch.setattr(mfbt_emp008_data, "DataLoader", CapturingLoader)
+    config = MfbtEmp008Config()
+
+    load_mfbt_emp008_market(
+        parquet_dir=tmp_path,
+        start="2025-01-31",
+        end="2025-03-31",
+        config=config,
+    )
+
+    assert captured["request"].start == padded_history_start("2025-01-31", config)
+    assert captured["request"].end == "2025-03-31"
+    assert pd.Timestamp(captured["request"].start) < pd.Timestamp("2025-01-31")

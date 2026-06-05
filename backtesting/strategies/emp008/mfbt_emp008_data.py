@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import pandas as pd
+
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import DataLoader, LoadRequest, MarketData, ParquetStore
 
@@ -51,4 +53,13 @@ def load_mfbt_emp008_market(
     config: MfbtEmp008Config,
 ) -> MarketData:
     loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
-    return loader.load(LoadRequest(datasets=list(required_datasets(config)), start=start, end=end))
+    load_start = padded_history_start(start, config)
+    return loader.load(LoadRequest(datasets=list(required_datasets(config)), start=load_start, end=end))
+
+
+def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
+    buffer_days = max(
+        config.retail_flow_lookback_days * 2,
+        config.retail_flow_lookback_days + config.risk_window * 31,
+    )
+    return (pd.Timestamp(start) - pd.Timedelta(days=buffer_days)).strftime("%Y-%m-%d")

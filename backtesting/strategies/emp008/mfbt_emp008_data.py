@@ -18,8 +18,12 @@ class MfbtEmp008Config:
     retail_flow_lookback_days: int = 252
     low_op_threshold: float = 100_000_000_000.0
     extreme_growth_threshold: float = 0.50
+    rank_transform_factors: tuple[str, ...] = ("ln_market_cap",)
+    large_bm_neutral_factor_names: tuple[str, ...] = ("ln_market_cap",)
+    large_bm_neutral_weight_threshold: float = 0.10
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
+    risk_model: str = "factor_idio"
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:

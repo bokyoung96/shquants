@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from backtesting.data import MarketData
@@ -25,6 +26,7 @@ def build_raw_mfbt_factors(market: MarketData, config: MfbtEmp008Config) -> dict
         "dividend_yield": _dividend_yield(market),
         "retail_flow": _retail_flow(market, config),
         "value": _value(market),
+        "ln_market_cap": _ln_market_cap(market),
     }
 
 
@@ -79,8 +81,13 @@ def _retail_flow(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
     ).sum()
     monthly_flow = month_end_observations(rolling_flow)
     monthly_sector = month_end_observations(sector).reindex(index=monthly_flow.index, columns=monthly_flow.columns)
-    monthly_metric = pd.DataFrame(float("nan"), index=monthly_flow.index, columns=monthly_flow.columns, dtype=float)
+    monthly_metric = _sector_relative_retail_flow(monthly_flow, monthly_sector)
 
+    return _monthly_output(close, monthly_metric)
+
+
+def _sector_relative_retail_flow(monthly_flow: pd.DataFrame, monthly_sector: pd.DataFrame) -> pd.DataFrame:
+    monthly_metric = pd.DataFrame(float("nan"), index=monthly_flow.index, columns=monthly_flow.columns, dtype=float)
     for date in monthly_flow.index:
         flows = monthly_flow.loc[date]
         sectors = monthly_sector.loc[date]
@@ -88,10 +95,9 @@ def _retail_flow(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
         if not valid.any():
             continue
 
-        sector_metric = -flows.loc[valid].groupby(sectors.loc[valid]).mean()
-        monthly_metric.loc[date] = sectors.map(sector_metric).astype(float)
-
-    return _monthly_output(close, monthly_metric)
+        sector_average = flows.loc[valid].groupby(sectors.loc[valid]).transform("mean")
+        monthly_metric.loc[date, valid] = -(flows.loc[valid] - sector_average).astype(float)
+    return monthly_metric
 
 
 def _value(market: MarketData) -> pd.DataFrame:
@@ -123,6 +129,14 @@ def _value(market: MarketData) -> pd.DataFrame:
     value = monthly_fcf.divide(tev.where(tev.gt(0.0))).where(required)
 
     return _monthly_output(close, value)
+
+
+def _ln_market_cap(market: MarketData) -> pd.DataFrame:
+    close = market.frames["close"].astype(float)
+    market_cap = align_like_close(market, "market_cap").astype(float)
+    monthly_market_cap = month_end_observations(market_cap)
+    ln_market_cap = np.log(monthly_market_cap.where(monthly_market_cap.gt(0.0)))
+    return _monthly_output(close, ln_market_cap)
 
 
 __all__ = ["align_like_close", "build_raw_mfbt_factors", "month_end_observations"]

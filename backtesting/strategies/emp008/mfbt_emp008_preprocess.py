@@ -7,6 +7,8 @@ def preprocess_factor_frame(
     raw: pd.DataFrame,
     float_mktcap: pd.DataFrame,
     universe: pd.DataFrame,
+    *,
+    rank_transform: bool = False,
 ) -> pd.DataFrame:
     raw = raw.reindex(index=float_mktcap.index, columns=float_mktcap.columns).astype(float)
     universe = universe.reindex(index=raw.index, columns=raw.columns).fillna(False).astype(bool)
@@ -16,6 +18,8 @@ def preprocess_factor_frame(
     observed_weights = observed_weights.div(observed_weights.sum(axis=1).replace(0.0, float("nan")), axis=0).fillna(0.0)
     mean = (masked * observed_weights).sum(axis=1)
     filled = masked.T.fillna(mean).T.where(universe)
+    if rank_transform:
+        filled = filled.rank(axis=1, method="min", ascending=True).where(universe)
     centered = filled.sub((filled * weights).sum(axis=1), axis=0)
     std = centered.pow(2).mul(weights).sum(axis=1).pow(0.5).replace(0.0, float("nan"))
     return centered.div(std, axis=0).fillna(0.0).where(universe, 0.0).astype(float)

@@ -222,6 +222,7 @@ def _optimize_month(
         sector_factor_names=sector_factor_names,
         window=config.risk_window,
     )
+    expected_alpha = _apply_expected_alpha_policy(expected_alpha, config)
     target_exposures = combine_exposures(alpha_factors, sector_factors, return_date)
     target_bm = _positive_benchmark_weights(
         bm_weights.reindex(index=[return_date], columns=target_exposures.index).iloc[0]
@@ -273,6 +274,21 @@ def _validated_optimization(target_date: pd.Timestamp, result: OptimizationResul
 
 def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: MfbtEmp008Config) -> bool:
     return len(factor_returns) >= config.risk_window
+
+
+def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: MfbtEmp008Config) -> pd.Series:
+    if config.expected_alpha_policy == "mean":
+        return expected_alpha
+    if config.expected_alpha_policy != "origin_sign":
+        raise ValueError(f"unsupported expected_alpha_policy: {config.expected_alpha_policy}")
+
+    adjusted = expected_alpha.copy()
+    for factor in ("DY", "Momentum_12M"):
+        if factor in adjusted and adjusted.loc[factor] < 0.0:
+            adjusted.loc[factor] = 0.0
+    if "LnMktcap" in adjusted and adjusted.loc["LnMktcap"] > 0.0:
+        adjusted.loc["LnMktcap"] = 0.0
+    return adjusted
 
 
 def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:

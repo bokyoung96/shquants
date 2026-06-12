@@ -1,0 +1,274 @@
+{
+  "name": "origin_emp008",
+  "start": "2020-01-31",
+  "end": "2026-05-28",
+  "created_at": "2026-06-12T15:21:45",
+  "log_file": "results\\emp008_runs\\origin_emp008\\logs\\run_20260612_152145.log",
+  "tracking_error_monthly": 0.0020207259421636905,
+  "tracking_error_annual": 0.007,
+  "risk_model": "factor_idio",
+  "factor_set": "origin",
+  "weights": {
+    "target_weights_parquet": "results\\emp008_runs\\origin_emp008\\weights\\target_weights.parquet",
+    "target_weights_csv": "results\\emp008_runs\\origin_emp008\\weights\\target_weights.csv",
+    "active_weights_parquet": "results\\emp008_runs\\origin_emp008\\weights\\active_weights.parquet",
+    "diagnostics_parquet": "results\\emp008_runs\\origin_emp008\\weights\\diagnostics.parquet",
+    "weights_export_xlsx": "results\\emp008_runs\\origin_emp008\\weights\\weights_export.xlsx",
+    "shape": [
+      41,
+      241
+    ],
+    "date_start": "2022-12-29",
+    "date_end": "2026-04-30",
+    "row_sum_min": 0.9999999999999993,
+    "row_sum_max": 1.0000000000000036,
+    "diagnostics_rows": 41,
+    "diagnostics_success_all": true
+  },
+  "active_share": {
+    "active_share_parquet": "results\\emp008_runs\\origin_emp008\\weights\\active_share.parquet",
+    "active_share_csv": "results\\emp008_runs\\origin_emp008\\weights\\active_share.csv",
+    "summary": {
+      "rows": 41,
+      "date_start": "2022-12-29",
+      "date_end": "2026-04-30",
+      "mean_pct": 7.832825616922702,
+      "median_pct": 7.982548214572679,
+      "min_pct": 5.896883745693127,
+      "max_pct": 10.433239871993678
+    },
+    "backtest_active_share_parquet": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_20260612_153334\\series\\active_share.parquet",
+    "backtest_active_share_csv": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_20260612_153334\\series\\active_share.csv"
+  },
+  "backtest": {
+    "output_dir": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_20260612_153334",
+    "plan_source": "target_weights",
+    "summary": {
+      "cagr": 0.579948780045733,
+      "mdd": -0.24129392143597994,
+      "sharpe": 1.802482903855595,
+      "final_equity": 451087404.457603,
+      "avg_turnover": 0.005670472456250084
+    },
+    "config": {
+      "start": "2022-12-29",
+      "end": "2026-05-28",
+      "capital": 100000000.0,
+      "strategy": "trend_rank",
+      "strategy_params": {},
+      "name": "origin_emp008",
+      "top_n": 20,
+      "lookback": 20,
+      "flow_lookback": 20,
+      "momentum_lookback": 60,
+      "liquidity_lookback": 20,
+      "momentum_weight": 0.5,
+      "schedule": "custom",
+      "fill_mode": "close",
+      "fee": 0.0,
+      "sell_tax": 0.0,
+      "slippage": 0.0,
+      "borrow_fee_annual": 0.0,
+      "short_cash_collateral_ratio": 1.0,
+      "use_k200": true,
+      "allow_fractional": true,
+      "universe_id": null,
+      "benchmark_code": "IKS200",
+      "benchmark_name": "KOSPI200",
+      "benchmark_dataset": "qw_BM",
+      "warmup_days": 0
+    },
+    "rows": 830,
+    "date_start": "2022-12-29",
+    "date_end": "2026-05-28",
+    "timing": {
+      "data_load": 0.21751940000103787,
+      "plan_build": 0.2934038000239525,
+      "engine_run": 0.06872859998838976,
+      "write_artifacts": 0.36095139998360537,
+      "total": 0.9455261999974027
+    }
+  },
+  "report": {
+    "report_name": "origin_emp008",
+    "run_ids": [
+      "origin_emp008_20260612_153334"
+    ],
+    "kind": "tearsheet",
+    "profile": null,
+    "benchmark_code": "IKS200",
+    "benchmark_name": "KOSPI200",
+    "output_dir": "results\\emp008_runs\\origin_emp008\\reports\\origin_emp008",
+    "html_path": "results\\emp008_runs\\origin_emp008\\reports\\origin_emp008\\report.html"
+  },
+  "costed_backtest": {
+    "output_dir": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_costed_20260612_153349",
+    "plan_source": "target_weights",
+    "summary": {
+      "cagr": 0.5774087520773448,
+      "mdd": -0.24242419530884873,
+      "sharpe": 1.7963224864761551,
+      "final_equity": 448389385.8904956,
+      "avg_turnover": 0.005660890058254338
+    },
+    "config": {
+      "start": "2022-12-29",
+      "end": "2026-05-28",
+      "capital": 100000000.0,
+      "strategy": "trend_rank",
+      "strategy_params": {},
+      "name": "origin_emp008_costed",
+      "top_n": 20,
+      "lookback": 20,
+      "flow_lookback": 20,
+      "momentum_lookback": 60,
+      "liquidity_lookback": 20,
+      "momentum_weight": 0.5,
+      "schedule": "custom",
+      "fill_mode": "close",
+      "fee": 0.0002,
+      "sell_tax": 0.0015,
+      "slippage": 0.0005,
+      "borrow_fee_annual": 0.0,
+      "short_cash_collateral_ratio": 1.0,
+      "use_k200": true,
+      "allow_fractional": true,
+      "universe_id": null,
+      "benchmark_code": "IKS200",
+      "benchmark_name": "KOSPI200",
+      "benchmark_dataset": "qw_BM",
+      "warmup_days": 0
+    },
+    "rows": 830,
+    "date_start": "2022-12-29",
+    "date_end": "2026-05-28",
+    "timing": {
+      "data_load": 0.19919949999894015,
+      "plan_build": 0.20784010001807474,
+      "engine_run": 0.12127390000387095,
+      "write_artifacts": 0.3041388000128791,
+      "total": 0.8371324999898206
+    }
+  },
+  "costed_active_share": {
+    "active_share_parquet": "results\\emp008_runs\\origin_emp008\\weights\\active_share.parquet",
+    "active_share_csv": "results\\emp008_runs\\origin_emp008\\weights\\active_share.csv",
+    "summary": {
+      "rows": 41,
+      "date_start": "2022-12-29",
+      "date_end": "2026-04-30",
+      "mean_pct": 7.832825616922702,
+      "median_pct": 7.982548214572679,
+      "min_pct": 5.896883745693127,
+      "max_pct": 10.433239871993678
+    },
+    "backtest_active_share_parquet": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_costed_20260612_153349\\series\\active_share.parquet",
+    "backtest_active_share_csv": "results\\emp008_runs\\origin_emp008\\backtests\\origin_emp008_costed_20260612_153349\\series\\active_share.csv"
+  },
+  "comparison": {
+    "performance_xlsx": "results\\emp008_runs\\origin_emp008\\comparison\\performance.xlsx",
+    "cumulative_png": "results\\emp008_runs\\origin_emp008\\comparison\\cumulative_excess_drawdown.png",
+    "monthly_excess_heatmap_png": "results\\emp008_runs\\origin_emp008\\comparison\\monthly_excess_heatmap.png",
+    "active_weight_sum_png": "results\\emp008_runs\\origin_emp008\\comparison\\active_weight_sum.png",
+    "active_weight_sum_csv": "results\\emp008_runs\\origin_emp008\\comparison\\active_weight_sum.csv",
+    "active_weight_sum_xlsx": "results\\emp008_runs\\origin_emp008\\comparison\\active_weight_sum.xlsx",
+    "metrics": {
+      "Gross": {
+        "cagr_pct": 57.9948780046,
+        "annual_vol_pct": 27.4975005461,
+        "sharpe": 1.8024829039,
+        "max_drawdown_pct": -24.1293921436,
+        "total_return_pct": 351.0874044576,
+        "best_month_pct": 9.9427512916,
+        "worst_month_pct": -11.9797454992,
+        "positive_month_rate_pct": 56.265060241
+      },
+      "Costed": {
+        "cagr_pct": 57.7408752077,
+        "annual_vol_pct": 27.5029010795,
+        "sharpe": 1.7963224865,
+        "max_drawdown_pct": -24.2424195309,
+        "total_return_pct": 348.7032584606,
+        "best_month_pct": 9.9430282616,
+        "worst_month_pct": -11.9797663262,
+        "positive_month_rate_pct": 56.265060241
+      },
+      "KOSPI200 BM": {
+        "cagr_pct": 56.2708165559,
+        "annual_vol_pct": 27.4290117102,
+        "sharpe": 1.76624883,
+        "max_drawdown_pct": -23.5847636254,
+        "total_return_pct": 335.0769127201,
+        "best_month_pct": 9.8349608214,
+        "worst_month_pct": -11.9397253898,
+        "positive_month_rate_pct": 55.6626506024
+      }
+    },
+    "active_metrics": {
+      "Gross excess": {
+        "cagr_pct": 1.1142674585,
+        "annual_vol_pct": 1.3613641316,
+        "sharpe": 0.8207317689,
+        "max_drawdown_pct": -1.3512801618,
+        "total_return_pct": 3.7171313614,
+        "best_month_pct": 2.0162240399,
+        "worst_month_pct": -0.279853092,
+        "positive_month_rate_pct": 51.4457831325
+      },
+      "Costed excess": {
+        "cagr_pct": 0.9529285064,
+        "annual_vol_pct": 1.361363631,
+        "sharpe": 0.7034269091,
+        "max_drawdown_pct": -1.500670972,
+        "total_return_pct": 3.1730548838,
+        "best_month_pct": 2.0162240399,
+        "worst_month_pct": -0.2796465367,
+        "positive_month_rate_pct": 51.2048192771
+      }
+    },
+    "excess_summary_bps": {
+      "Gross excess": {
+        "total_excess_bp": 371.7131361416,
+        "annualized_excess_bp": 111.4267458487,
+        "monthly_mean_excess_bp": 8.770386779,
+        "monthly_median_excess_bp": 2.6736951828,
+        "best_month_excess_bp": 201.6224039853,
+        "worst_month_excess_bp": -46.0158662157,
+        "positive_month_rate_pct": 54.7619047619,
+        "annualized_tracking_error_bp": 136.1364131552,
+        "information_ratio": 0.8184933279
+      },
+      "Costed excess": {
+        "total_excess_bp": 317.3054883759,
+        "annualized_excess_bp": 95.2928506389,
+        "monthly_mean_excess_bp": 7.5179921319,
+        "monthly_median_excess_bp": 1.3959530454,
+        "best_month_excess_bp": 201.6224039853,
+        "worst_month_excess_bp": -46.9502128585,
+        "positive_month_rate_pct": 54.7619047619,
+        "annualized_tracking_error_bp": 136.136363105,
+        "information_ratio": 0.6999808755
+      }
+    },
+    "active_weight_sum": {
+      "rows": 41,
+      "sum_abs_active_weight_mean_pct": 15.665651233845404,
+      "sum_abs_active_weight_median_pct": 15.965096429145358,
+      "sum_abs_active_weight_min_pct": 11.793767491386253,
+      "sum_abs_active_weight_max_pct": 20.866479743987355,
+      "active_share_mean_pct": 7.832825616922702,
+      "active_share_median_pct": 7.982548214572679,
+      "active_share_min_pct": 5.896883745693127,
+      "active_share_max_pct": 10.433239871993678
+    }
+  },
+  "factor_attribution": {
+    "excel": "results\\emp008_runs\\origin_emp008\\factor_attribution\\factor_attribution.xlsx",
+    "cumulative_factor_contribution_png": "results\\emp008_runs\\origin_emp008\\factor_attribution\\cumulative_factor_contribution.png",
+    "monthly_factor_heatmap_png": "results\\emp008_runs\\origin_emp008\\factor_attribution\\monthly_factor_heatmap.png",
+    "yearly_factor_contribution_png": "results\\emp008_runs\\origin_emp008\\factor_attribution\\yearly_factor_contribution.png",
+    "periods": 40,
+    "date_start": "2023-01-31",
+    "date_end": "2026-04-30"
+  }
+}

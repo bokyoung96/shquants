@@ -31,7 +31,11 @@ DEFAULT_NAME = "mfbt_emp008"
 
 def main(argv: list[str] | None = None) -> None:
     args = _parser().parse_args(argv)
-    config = build_emp008_config(tracking_error_annual=args.tracking_error_annual, risk_model=args.risk_model)
+    config = build_emp008_config(
+        tracking_error_annual=args.tracking_error_annual,
+        risk_model=args.risk_model,
+        factor_set=args.factor_set,
+    )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root, backtests_root, reports_root = resolve_run_output_dirs(
         output_root=args.output_root,
@@ -48,10 +52,11 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("MFBT EMP008 full run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
-        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s",
+        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s",
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
+        config.factor_set,
     )
     logger.info("output_root=%s backtests_root=%s reports_root=%s", args.output_root, backtests_root, reports_root)
     logger.info("log_file=%s", log_path)
@@ -65,6 +70,7 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_monthly": config.tracking_error,
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
+        "factor_set": config.factor_set,
     }
 
     try:
@@ -211,6 +217,11 @@ def _parser() -> argparse.ArgumentParser:
         "--risk-model",
         choices=("factor_idio", "direct_covariance"),
         help="Risk matrix used in TE constraint. Default: factor_idio.",
+    )
+    parser.add_argument(
+        "--factor-set",
+        choices=("mfbt", "origin"),
+        help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
     )
     parser.add_argument("--no-comparison", action="store_true", help="Skip costed backtest and comparison artifacts.")
     parser.add_argument("--comparison-fee", type=float, default=0.0002)

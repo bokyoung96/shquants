@@ -72,6 +72,12 @@ class DataCatalog:
                 freq="D",
                 kind="dividend_cash_ttm",
             ),
+            DatasetId.QW_DIVIDEND_YLD_FY0: _spec(
+                DatasetId.QW_DIVIDEND_YLD_FY0,
+                group=DatasetGroup.FUNDAMENTAL,
+                freq="D",
+                kind="dividend_yld_fy0",
+            ),
             DatasetId.QW_DPS_TTM: _spec(DatasetId.QW_DPS_TTM, group=DatasetGroup.FUNDAMENTAL, freq="D", kind="dps_ttm"),
             DatasetId.QW_EPS_NFQ1: _spec(
                 DatasetId.QW_EPS_NFQ1,

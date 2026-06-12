@@ -1,0 +1,153 @@
+{
+  "output_dir": "results\\emp008_runs\\mfbt_vs_origin_emp008",
+  "excel": "results\\emp008_runs\\mfbt_vs_origin_emp008\\emp008_pair_comparison.xlsx",
+  "cumulative_png": "results\\emp008_runs\\mfbt_vs_origin_emp008\\cumulative_excess_drawdown.png",
+  "monthly_excess_heatmap_png": "results\\emp008_runs\\mfbt_vs_origin_emp008\\monthly_excess_heatmap.png",
+  "active_weight_sum_png": "results\\emp008_runs\\mfbt_vs_origin_emp008\\active_weight_sum.png",
+  "active_weight_sum_csv": "results\\emp008_runs\\mfbt_vs_origin_emp008\\active_weight_sum.csv",
+  "monthly_excess_csv": "results\\emp008_runs\\mfbt_vs_origin_emp008\\monthly_excess_returns.csv",
+  "common_start": "2022-12-29",
+  "common_end": "2026-05-28",
+  "metrics": {
+    "mfbt_emp008_70bp_36m gross": {
+      "cagr_pct": 57.4485194284,
+      "annual_vol_pct": 27.477934514,
+      "sharpe": 1.7909494598,
+      "max_drawdown_pct": -23.9664695715,
+      "total_return_pct": 345.9699989465,
+      "best_month_pct": 9.8935000755,
+      "worst_month_pct": -11.9393729566,
+      "positive_month_rate_pct": 55.6626506024
+    },
+    "mfbt_emp008_70bp_36m costed": {
+      "cagr_pct": 57.0125964594,
+      "annual_vol_pct": 27.4837667625,
+      "sharpe": 1.7805215972,
+      "max_drawdown_pct": -24.1006832395,
+      "total_return_pct": 341.916081867,
+      "best_month_pct": 9.8937463072,
+      "worst_month_pct": -11.9393255475,
+      "positive_month_rate_pct": 55.6626506024
+    },
+    "origin_emp008 gross": {
+      "cagr_pct": 57.9948780046,
+      "annual_vol_pct": 27.4975005461,
+      "sharpe": 1.8024829039,
+      "max_drawdown_pct": -24.1293921436,
+      "total_return_pct": 351.0874044576,
+      "best_month_pct": 9.9427512916,
+      "worst_month_pct": -11.9797454992,
+      "positive_month_rate_pct": 56.265060241
+    },
+    "origin_emp008 costed": {
+      "cagr_pct": 57.7408752077,
+      "annual_vol_pct": 27.5029010795,
+      "sharpe": 1.7963224865,
+      "max_drawdown_pct": -24.2424195309,
+      "total_return_pct": 348.7032584606,
+      "best_month_pct": 9.9430282616,
+      "worst_month_pct": -11.9797663262,
+      "positive_month_rate_pct": 56.265060241
+    },
+    "KOSPI200 BM": {
+      "cagr_pct": 56.2708165559,
+      "annual_vol_pct": 27.4290117102,
+      "sharpe": 1.76624883,
+      "max_drawdown_pct": -23.5847636254,
+      "total_return_pct": 335.0769127201,
+      "best_month_pct": 9.8349608214,
+      "worst_month_pct": -11.9397253898,
+      "positive_month_rate_pct": 55.6626506024
+    }
+  },
+  "excess_summary_bps": {
+    "mfbt gross excess": {
+      "total_excess_bp": 252.5000445709,
+      "annualized_excess_bp": 75.9981186613,
+      "monthly_mean_excess_bp": 6.0026743209,
+      "monthly_median_excess_bp": 5.3410202485,
+      "best_month_excess_bp": 201.6224039853,
+      "worst_month_excess_bp": -36.7866992162,
+      "positive_month_rate_pct": 64.2857142857,
+      "annualized_tracking_error_bp": 127.2342264664,
+      "information_ratio": 0.5973087649
+    },
+    "mfbt costed excess": {
+      "total_excess_bp": 159.6674975679,
+      "annualized_excess_bp": 48.2102579009,
+      "monthly_mean_excess_bp": 3.8373064494,
+      "monthly_median_excess_bp": 3.0219637353,
+      "best_month_excess_bp": 201.6224039853,
+      "worst_month_excess_bp": -40.2723171265,
+      "positive_month_rate_pct": 54.7619047619,
+      "annualized_tracking_error_bp": 127.3822330885,
+      "information_ratio": 0.3784692475
+    },
+    "origin gross excess": {
+      "total_excess_bp": 371.7131361416,
+      "annualized_excess_bp": 111.4267458487,
+      "monthly_mean_excess_bp": 8.770386779,
+      "monthly_median_excess_bp": 2.6736951828,
+      "best_month_excess_bp": 201.6224039853,
+      "worst_month_excess_bp": -46.0158662157,
+      "positive_month_rate_pct": 54.7619047619,
+      "annualized_tracking_error_bp": 136.1364131552,
+      "information_ratio": 0.8184933279
+    },
+    "origin costed excess": {
+      "total_excess_bp": 317.3054883759,
+      "annualized_excess_bp": 95.2928506389,
+      "monthly_mean_excess_bp": 7.5179921319,
+      "monthly_median_excess_bp": 1.3959530454,
+      "best_month_excess_bp": 201.6224039853,
+      "worst_month_excess_bp": -46.9502128585,
+      "positive_month_rate_pct": 54.7619047619,
+      "annualized_tracking_error_bp": 136.136363105,
+      "information_ratio": 0.6999808755
+    },
+    "origin minus mfbt gross": {
+      "total_excess_bp": 115.5688945081,
+      "annualized_excess_bp": 34.9481062772,
+      "monthly_mean_excess_bp": 2.7553426959,
+      "monthly_median_excess_bp": 4.8528632556,
+      "best_month_excess_bp": 36.7874857904,
+      "worst_month_excess_bp": -47.3080603932,
+      "positive_month_rate_pct": 59.5238095238,
+      "annualized_tracking_error_bp": 81.3458909773,
+      "information_ratio": 0.4296234986
+    },
+    "origin minus mfbt costed": {
+      "total_excess_bp": 154.4379634039,
+      "annualized_excess_bp": 46.6396328311,
+      "monthly_mean_excess_bp": 3.6687513509,
+      "monthly_median_excess_bp": 5.9848193962,
+      "best_month_excess_bp": 36.6245667279,
+      "worst_month_excess_bp": -47.7219294521,
+      "positive_month_rate_pct": 61.9047619048,
+      "annualized_tracking_error_bp": 81.5247522354,
+      "information_ratio": 0.5720916845
+    }
+  },
+  "run_config": {
+    "mfbt_emp008_70bp_36m": {
+      "factor_set": "mfbt",
+      "risk_model": "factor_idio",
+      "tracking_error_annual": 0.007,
+      "weights_start": "2022-12-29",
+      "weights_end": "2026-05-28",
+      "diagnostics_success_all": true,
+      "active_share_mean_pct": 7.5248178738,
+      "active_share_max_pct": 10.7613517336
+    },
+    "origin_emp008": {
+      "factor_set": "origin",
+      "risk_model": "factor_idio",
+      "tracking_error_annual": 0.007,
+      "weights_start": "2022-12-29",
+      "weights_end": "2026-04-30",
+      "diagnostics_success_all": true,
+      "active_share_mean_pct": 7.8328256169,
+      "active_share_max_pct": 10.433239872
+    }
+  }
+}

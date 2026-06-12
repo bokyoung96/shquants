@@ -363,6 +363,31 @@ def test_loader_uses_semantic_key_for_dividend_cash_ttm_data(tmp_path: Path) -> 
     assert "qw_dividend_cash_ttm" not in data.frames
 
 
+def test_loader_uses_semantic_key_for_dividend_yld_fy0_data(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_dividend_yld_fy0",
+        pd.DataFrame(
+            {"005930": [0.025, 0.026]},
+            index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_DIVIDEND_YLD_FY0],
+            start="2024-01-02",
+            end="2024-01-03",
+        )
+    )
+
+    assert "dividend_yld_fy0" in data.frames
+    assert "qw_dividend_yld_fy0" not in data.frames
+
+
 def test_loader_uses_semantic_key_for_wi26_sector_data(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     parquet_dir.mkdir()

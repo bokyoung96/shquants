@@ -12,6 +12,7 @@ EXPECTED_RAW_STEMS = {
     "qw_c",
     "qw_dividend_cash",
     "qw_dividend_cash_ttm",
+    "qw_dividend_yld_fy0",
     "qw_dps_ttm",
     "qw_eps_nfq1",
     "qw_eps_nfq2",
@@ -83,6 +84,7 @@ def test_catalog_groups_cover_known_datasets() -> None:
     assert DatasetId.QW_DPS_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_FCF in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_INT_BEARING_LIAB_NFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_QUICK_ASSETS_NFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
@@ -153,6 +155,7 @@ def test_catalog_exposes_group_view() -> None:
     assert DatasetId.QW_DPS_TTM in groups.fundamental
     assert DatasetId.QW_DIVIDEND_CASH in groups.fundamental
     assert DatasetId.QW_DIVIDEND_CASH_TTM in groups.fundamental
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 in groups.fundamental
     assert DatasetId.QW_EQUITY_LFQ0 in groups.fundamental
     assert DatasetId.QW_FCF in groups.fundamental
     assert DatasetId.QW_INT_BEARING_LIAB_NFQ0 in groups.fundamental

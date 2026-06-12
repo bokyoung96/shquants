@@ -37,6 +37,7 @@ class DataLoader:
         DatasetId.QW_C: "close_raw",
         DatasetId.QW_DIVIDEND_CASH: "dividend_cash",
         DatasetId.QW_DIVIDEND_CASH_TTM: "dividend_cash_ttm",
+        DatasetId.QW_DIVIDEND_YLD_FY0: "dividend_yld_fy0",
         DatasetId.QW_DPS_TTM: "dps_ttm",
         DatasetId.QW_EPS_NFQ1: "eps_fwd_q1",
         DatasetId.QW_EPS_NFQ2: "eps_fwd_q2",

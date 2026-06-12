@@ -20,6 +20,12 @@ def align_like_close(market: MarketData, key: str) -> pd.DataFrame:
 
 def build_raw_mfbt_factors(market: MarketData, config: MfbtEmp008Config) -> dict[str, pd.DataFrame]:
     close = market.frames["close"].astype(float)
+    if config.factor_set == "origin":
+        return {
+            "LnMktcap": _ln_market_cap(market),
+            "Momentum_12M": _origin_momentum_12m(close),
+            "DY": _origin_dividend_yield(market),
+        }
     return {
         "price_momentum": _price_momentum(close),
         "earnings_momentum": _earnings_momentum(market, config),
@@ -41,6 +47,19 @@ def _price_momentum(close: pd.DataFrame) -> pd.DataFrame:
     ratio = close.divide(trailing_high.where(trailing_high.gt(0.0)))
     monthly_ratio = month_end_observations(ratio)
     return _monthly_output(close, monthly_ratio)
+
+
+def _origin_momentum_12m(close: pd.DataFrame) -> pd.DataFrame:
+    monthly_close = month_end_observations(close)
+    momentum = monthly_close.divide(monthly_close.shift(12).where(monthly_close.shift(12).gt(0.0))).sub(1.0)
+    return _monthly_output(close, momentum)
+
+
+def _origin_dividend_yield(market: MarketData) -> pd.DataFrame:
+    close = market.frames["close"].astype(float)
+    dividend_yld = align_like_close(market, "dividend_yld_fy0").astype(float)
+    monthly_dividend_yld = month_end_observations(dividend_yld)
+    return _monthly_output(close, monthly_dividend_yld)
 
 
 def _earnings_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:

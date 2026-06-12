@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 import pandas as pd
 
-from backtesting.catalog import DataCatalog
+from backtesting.catalog import DataCatalog, DatasetId
+from backtesting.data import MarketData
 from backtesting.strategies.emp008.run_backtest import (
     active_share_payload,
     active_share_summary,
@@ -28,8 +29,9 @@ from backtesting.strategies.emp008.comparison import (
     performance_metrics,
 )
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
-from backtesting.strategies.emp008.mfbt_emp008_factors import _sector_relative_retail_flow
+from backtesting.strategies.emp008.mfbt_emp008_factors import _sector_relative_retail_flow, build_raw_mfbt_factors
 from backtesting.strategies.emp008.mfbt_emp008 import (
+    _apply_expected_alpha_policy,
     _has_sufficient_risk_history,
     _stock_excess_covariance_for_target_universe,
 )
@@ -222,6 +224,67 @@ def test_build_emp008_config_rejects_negative_tracking_error() -> None:
 def test_build_emp008_config_rejects_unknown_risk_model() -> None:
     with pytest.raises(ValueError, match="risk_model"):
         build_emp008_config(risk_model="raw_cov")
+
+
+def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
+    config = build_emp008_config(tracking_error_annual=0.007, factor_set="origin")
+
+    assert config.factor_set == "origin"
+    assert config.expected_alpha_policy == "origin_sign"
+    assert config.rank_transform_factors == ("LnMktcap",)
+    assert config.large_bm_neutral_factor_names == ()
+    assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 in required_datasets(config)
+
+
+def test_build_emp008_config_rejects_unknown_factor_set() -> None:
+    with pytest.raises(ValueError, match="factor_set"):
+        build_emp008_config(factor_set="legacy")
+
+
+def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend_yield() -> None:
+    dates = pd.date_range("2023-01-31", "2024-02-29", freq="ME")
+    close = pd.DataFrame({"A": [100.0, *([101.0] * 11), 120.0, 99.0]}, index=dates)
+    market_cap = pd.DataFrame({"A": [1000.0, *([1100.0] * 11), 1300.0, 1500.0]}, index=dates)
+    dividend_yld = pd.DataFrame({"A": [0.50, *([0.55] * 11), 0.60, 0.65]}, index=dates)
+    market = MarketData(
+        frames={
+            "close": close,
+            "market_cap": market_cap,
+            "dividend_yld_fy0": dividend_yld,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    factors = build_raw_mfbt_factors(market, MfbtEmp008Config(factor_set="origin"))
+
+    assert list(factors) == ["LnMktcap", "Momentum_12M", "DY"]
+    assert factors["LnMktcap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
+    assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
+    assert factors["Momentum_12M"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
+    assert factors["DY"].loc["2024-02-29", "A"] == pytest.approx(0.65)
+
+
+def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
+    expected_alpha = pd.Series(
+        {
+            "LnMktcap": 0.01,
+            "Momentum_12M": -0.02,
+            "DY": 0.03,
+            "sector_tech": 0.0,
+        }
+    )
+
+    result = _apply_expected_alpha_policy(
+        expected_alpha,
+        MfbtEmp008Config(factor_set="origin", expected_alpha_policy="origin_sign"),
+    )
+
+    assert result["LnMktcap"] == 0.0
+    assert result["Momentum_12M"] == 0.0
+    assert result["DY"] == pytest.approx(0.03)
+    assert result["sector_tech"] == 0.0
 
 
 def test_direct_covariance_optimizer_uses_stock_covariance_risk_budget() -> None:

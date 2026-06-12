@@ -19,12 +19,30 @@ DEFAULT_START = "2020-01-31"
 DEFAULT_NAME = "mfbt_emp008"
 
 
-def build_emp008_config(*, tracking_error_annual: float | None = None, risk_model: str | None = None) -> MfbtEmp008Config:
+def build_emp008_config(
+    *,
+    tracking_error_annual: float | None = None,
+    risk_model: str | None = None,
+    factor_set: str | None = None,
+) -> MfbtEmp008Config:
     config = MfbtEmp008Config()
     if risk_model is not None:
         if risk_model not in {"factor_idio", "direct_covariance"}:
             raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
         config = replace(config, risk_model=risk_model)
+    if factor_set is not None:
+        if factor_set not in {"mfbt", "origin"}:
+            raise ValueError("factor_set must be 'mfbt' or 'origin'")
+        if factor_set == "origin":
+            config = replace(
+                config,
+                factor_set=factor_set,
+                expected_alpha_policy="origin_sign",
+                rank_transform_factors=("LnMktcap",),
+                large_bm_neutral_factor_names=(),
+            )
+        else:
+            config = replace(config, factor_set=factor_set)
     if tracking_error_annual is None:
         return config
     if tracking_error_annual < 0.0:
@@ -115,7 +133,11 @@ def timestamp() -> str:
 
 def main(argv: list[str] | None = None) -> None:
     args = _parser().parse_args(argv)
-    config = build_emp008_config(tracking_error_annual=args.tracking_error_annual, risk_model=args.risk_model)
+    config = build_emp008_config(
+        tracking_error_annual=args.tracking_error_annual,
+        risk_model=args.risk_model,
+        factor_set=args.factor_set,
+    )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root = args.output_root / args.name
     weights_dir = run_root / "weights"
@@ -127,10 +149,11 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("MFBT EMP008 weights run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
-        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s",
+        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s",
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
+        config.factor_set,
     )
     logger.info("weights_dir=%s log_file=%s", weights_dir, log_path)
 
@@ -143,6 +166,7 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_monthly": config.tracking_error,
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
+        "factor_set": config.factor_set,
     }
     try:
         with timed(logger, "weights"):
@@ -180,6 +204,11 @@ def _parser() -> argparse.ArgumentParser:
         "--risk-model",
         choices=("factor_idio", "direct_covariance"),
         help="Risk matrix used in TE constraint. Default: factor_idio.",
+    )
+    parser.add_argument(
+        "--factor-set",
+        choices=("mfbt", "origin"),
+        help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
     )
     return parser
 

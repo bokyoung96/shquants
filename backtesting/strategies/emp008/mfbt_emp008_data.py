@@ -24,6 +24,8 @@ class MfbtEmp008Config:
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
     risk_model: str = "factor_idio"
+    factor_set: str = "mfbt"
+    expected_alpha_policy: str = "mean"
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
@@ -42,6 +44,8 @@ def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
         DatasetId.QW_QUICK_ASSETS_NFQ0,
         config.universe_dataset,
     ]
+    if config.factor_set == "origin":
+        ordered.append(DatasetId.QW_DIVIDEND_YLD_FY0)
     deduped: list[DatasetId] = []
     for dataset in ordered:
         if dataset not in deduped:

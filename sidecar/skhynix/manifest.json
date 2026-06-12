@@ -1,0 +1,65 @@
+{
+  "source_workbook": "sidecar/skhynix/SK Hynix analysis.xlsx",
+  "tables": [
+    {
+      "file": "intraday_spot_etf.parquet",
+      "source_sheet": "data",
+      "source_range": "A:C, rows 3+",
+      "rows": 4290,
+      "columns": [
+        "timestamp",
+        "sk_hynix_intraday_close",
+        "kodex_sk_hynix_single_stock_leverage_intraday_close"
+      ],
+      "original_headers": {
+        "timestamp": "시간/항목",
+        "sk_hynix_intraday_close": "SK하이닉스 / Intra종가",
+        "kodex_sk_hynix_single_stock_leverage_intraday_close": "KODEX SK하이닉스단일종목레버리지 / Intra종가"
+      }
+    },
+    {
+      "file": "intraday_futures_2607.parquet",
+      "source_sheet": "data",
+      "source_range": "E:G, rows 3+",
+      "rows": 4595,
+      "columns": [
+        "timestamp",
+        "sk_hynix_futures_2607_intraday_close",
+        "sk_hynix_futures_2607_intraday_cumulative_volume"
+      ],
+      "original_headers": {
+        "timestamp": "시간/항목",
+        "sk_hynix_futures_2607_intraday_close": "SK하이닉스 선물 2607 / Intra종가",
+        "sk_hynix_futures_2607_intraday_cumulative_volume": "SK하이닉스 선물 2607 / Intra누적거래량"
+      }
+    },
+    {
+      "file": "futures_investor_net_buy.parquet",
+      "source_sheet": "data2",
+      "source_range": "A:I, rows 3+",
+      "rows": 100,
+      "columns": [
+        "date",
+        "institutional_net_buy_qty_ex_spread",
+        "foreign_net_buy_qty_ex_spread",
+        "individual_net_buy_qty_ex_spread",
+        "securities_net_buy_qty_ex_spread",
+        "investment_trust_net_buy_qty_ex_spread",
+        "insurance_net_buy_qty_ex_spread",
+        "pension_fund_net_buy_qty_ex_spread",
+        "other_corporation_net_buy_qty_ex_spread"
+      ],
+      "original_headers": {
+        "date": "시간/항목",
+        "institutional_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 기관계",
+        "foreign_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 외국인",
+        "individual_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 개인",
+        "securities_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 금융투자(증권)",
+        "investment_trust_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 투신",
+        "insurance_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 보험",
+        "pension_fund_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 연기금",
+        "other_corporation_net_buy_qty_ex_spread": "종목투자자별SPREAD제외순매수수량 - 기타법인"
+      }
+    }
+  ]
+}

@@ -82,3 +82,7 @@ def _validate_report_args(parser: argparse.ArgumentParser, args: argparse.Namesp
         parser.error("--kind tearsheet requires exactly one run id")
     if args.kind == "comparison" and len(args.runs) < 2:
         parser.error("--kind comparison requires at least two run ids")
+
+
+if __name__ == "__main__":
+    main()

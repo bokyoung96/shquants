@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build an `emp008`-internal MFBT Barra pipeline that converts the five MFBT factor ideas into continuous Barra-style factor exposures and produces rolling KOSPI200 benchmark-relative target weights.
+Build an `emp008`-internal MFBT Barra pipeline that converts the MFBT factor ideas into continuous Barra-style factor exposures and produces rolling KOSPI200 benchmark-relative target weights.
 
 The existing `backtesting/strategies/mfbt.py` remains unchanged. It continues to represent the current score/audit-oriented MFBT strategy. The new work lives inside `backtesting/strategies/emp008/` and treats MFBT factors as raw exposure inputs for regression, risk modeling, and constrained optimization.
 
@@ -78,7 +78,7 @@ Avoid one large all-purpose file.
 
 ## Factor Definitions
 
-All five factors are continuous raw exposures. No score buckets are used.
+All factors are continuous raw exposures. No score buckets are used.
 
 | Factor | Raw exposure |
 | --- | --- |
@@ -87,6 +87,7 @@ All five factors are continuous raw exposures. No score buckets are used.
 | `dividend_yield` | `monthly_dps_ttm / monthly_close` |
 | `retail_flow` | `-sector_avg_252d_retail_flow`, mapped from sector to stock |
 | `value` | `lagged_fcf / (monthly_market_cap + lagged_debt - lagged_quick_asset)` |
+| `ln_market_cap` | `log(monthly_market_cap)` |
 
 Special rules:
 
@@ -94,6 +95,8 @@ Special rules:
 - `dividend_yield` removes the existing three-year dividend-growth bonus.
 - `retail_flow` uses negative sector average flow so larger retail net selling maps to higher exposure, matching current MFBT intent.
 - `value` treats `TEV <= 0` as missing (`NaN`) for Barra exposure. Do not use `-inf`; that was only suitable for score ranking.
+- `ln_market_cap` follows the legacy EMP008 treatment: fill missing log market cap using the float-market-cap weighted mean, rank cross-sectionally, then center and z-score.
+- After preprocessing, `ln_market_cap` is neutralized to exposure `0.0` for stocks whose `QW_BM_WEIGHTS` weight is at least `10%` on that date, so very large benchmark names are not pushed by the size score.
 
 All factor outputs use `date x ticker` monthly panels.
 
@@ -105,8 +108,10 @@ For each date and factor:
 raw exposure
 -> apply KOSPI200 universe mask
 -> fill missing values with QW_MKTCAP_FLT weighted mean
+-> optionally rank-transform selected factors such as `ln_market_cap`
 -> subtract QW_MKTCAP_FLT weighted mean
 -> z-score standardize
+-> optionally set selected factor exposures to `0.0` for benchmark weights above configured large-name thresholds
 ```
 
 `QW_MKTCAP_FLT` is the preprocessing weight source. It is separate from `QW_BM_WEIGHTS`, which is the final benchmark weight source for optimization.
@@ -131,6 +136,7 @@ earnings_momentum
 dividend_yield
 retail_flow
 value
+ln_market_cap
 ```
 
 `sector_factor_names` are derived from sector dummy columns.
@@ -204,6 +210,23 @@ sheet3: active weights
 sheet4: diagnostics
 ```
 
+Run artifacts are grouped under `results/emp008_runs/<name>/` by default:
+
+```text
+weights/target_weights.parquet
+weights/target_weights.csv
+weights/active_weights.parquet
+weights/active_share.csv
+weights/active_share.parquet
+weights/diagnostics.parquet
+backtests/<run_id>/
+backtests/<run_id>/series/active_share.csv
+reports/<name>/report.html
+run_summary.json
+```
+
+`active_share` is computed monthly as `0.5 * sum(abs(active_weight))`.
+
 Diagnostics should include:
 
 - `success`
@@ -254,6 +277,7 @@ Factor tests:
 - `dividend_yield` emits `DPS_TTM / close` and does not include dividend-growth bonus.
 - `retail_flow` emits negative sector average 252-day retail flow mapped to stocks.
 - `value` emits `FCF / TEV` and uses `NaN` for `TEV <= 0`.
+- `ln_market_cap` emits `log(monthly_market_cap)`.
 
 Preprocess tests:
 
@@ -291,7 +315,6 @@ Integration smoke test:
 Minimum verification commands after implementation:
 
 ```powershell
-uv run pytest tests/strategies/emp008 -q
+uv run pytest tests/scripts/test_run_mfbt_emp008_full.py -q
 uv run pytest tests/ingest/test_pipeline.py tests/catalog/test_groups.py tests/data/test_loader.py -q
 ```
-

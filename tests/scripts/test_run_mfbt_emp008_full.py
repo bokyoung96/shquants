@@ -35,7 +35,11 @@ from backtesting.strategies.emp008.mfbt_emp008 import (
     _has_sufficient_risk_history,
     _stock_excess_covariance_for_target_universe,
 )
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
+from backtesting.strategies.emp008.mfbt_emp008_data import (
+    MfbtEmp008Config,
+    _trim_non_forward_snapshot_frames,
+    required_datasets,
+)
 from backtesting.strategies.emp008.mfbt_emp008_optimize import optimize_active_weights_with_covariance
 
 
@@ -233,6 +237,7 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
     assert config.expected_alpha_policy == "origin_sign"
     assert config.rank_transform_factors == ("LnMktcap",)
     assert config.large_bm_neutral_factor_names == ()
+    assert config.monthly_snapshot_forward_days == 7
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in required_datasets(config)
 
@@ -264,6 +269,50 @@ def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend
     assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
     assert factors["Momentum_12M"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
     assert factors["DY"].loc["2024-02-29", "A"] == pytest.approx(0.65)
+
+
+def test_origin_dividend_yield_maps_later_month_snapshot_to_close_month_end() -> None:
+    close_dates = pd.to_datetime(["2026-04-30", "2026-05-28"])
+    close = pd.DataFrame({"A": [100.0, 110.0]}, index=close_dates)
+    market_cap = pd.DataFrame({"A": [1000.0, 1200.0]}, index=close_dates)
+    dividend_yld = pd.DataFrame(
+        {"A": [0.60, 0.70]},
+        index=pd.to_datetime(["2026-04-30", "2026-05-29"]),
+    )
+    market = MarketData(
+        frames={
+            "close": close,
+            "market_cap": market_cap,
+            "dividend_yld_fy0": dividend_yld,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    factors = build_raw_mfbt_factors(market, MfbtEmp008Config(factor_set="origin"))
+
+    assert factors["DY"].loc["2026-05-28", "A"] == pytest.approx(0.70)
+
+
+def test_origin_market_load_keeps_forward_snapshot_but_trims_price_frames_to_requested_end() -> None:
+    dates = pd.to_datetime(["2026-05-28", "2026-05-29"])
+    market = MarketData(
+        frames={
+            "close": pd.DataFrame({"A": [100.0, 101.0]}, index=dates),
+            "dividend_yld_fy0": pd.DataFrame({"A": [0.60, 0.70]}, index=dates),
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    result = _trim_non_forward_snapshot_frames(
+        market,
+        end="2026-05-28",
+        config=MfbtEmp008Config(factor_set="origin", monthly_snapshot_forward_days=7),
+    )
+
+    assert result.frames["close"].index.max() == pd.Timestamp("2026-05-28")
+    assert result.frames["dividend_yld_fy0"].index.max() == pd.Timestamp("2026-05-29")
 
 
 def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:

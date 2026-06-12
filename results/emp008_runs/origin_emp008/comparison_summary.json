@@ -17,11 +17,11 @@
       "positive_month_rate_pct": 56.265060241
     },
     "Costed": {
-      "cagr_pct": 57.7408752077,
-      "annual_vol_pct": 27.5029010795,
-      "sharpe": 1.7963224865,
+      "cagr_pct": 57.7346726627,
+      "annual_vol_pct": 27.5029968709,
+      "sharpe": 1.7961739392,
       "max_drawdown_pct": -24.2424195309,
-      "total_return_pct": 348.7032584606,
+      "total_return_pct": 348.6451495316,
       "best_month_pct": 9.9430282616,
       "worst_month_pct": -11.9797663262,
       "positive_month_rate_pct": 56.265060241
@@ -49,11 +49,11 @@
       "positive_month_rate_pct": 51.4457831325
     },
     "Costed excess": {
-      "cagr_pct": 0.9529285064,
-      "annual_vol_pct": 1.361363631,
-      "sharpe": 0.7034269091,
+      "cagr_pct": 0.9489781478,
+      "annual_vol_pct": 1.361354111,
+      "sharpe": 0.7005571725,
       "max_drawdown_pct": -1.500670972,
-      "total_return_pct": 3.1730548838,
+      "total_return_pct": 3.1597582425,
       "best_month_pct": 2.0162240399,
       "worst_month_pct": -0.2796465367,
       "positive_month_rate_pct": 51.2048192771
@@ -72,25 +72,25 @@
       "information_ratio": 0.8184933279
     },
     "Costed excess": {
-      "total_excess_bp": 317.3054883759,
-      "annualized_excess_bp": 95.2928506389,
-      "monthly_mean_excess_bp": 7.5179921319,
+      "total_excess_bp": 315.975824245,
+      "annualized_excess_bp": 94.8978147772,
+      "monthly_mean_excess_bp": 7.4871429026,
       "monthly_median_excess_bp": 1.3959530454,
       "best_month_excess_bp": 201.6224039853,
       "worst_month_excess_bp": -46.9502128585,
       "positive_month_rate_pct": 54.7619047619,
-      "annualized_tracking_error_bp": 136.136363105,
-      "information_ratio": 0.6999808755
+      "annualized_tracking_error_bp": 136.1354110965,
+      "information_ratio": 0.6970839843
     }
   },
   "active_weight_sum": {
-    "rows": 41,
-    "sum_abs_active_weight_mean_pct": 15.665651233845404,
-    "sum_abs_active_weight_median_pct": 15.965096429145358,
+    "rows": 42,
+    "sum_abs_active_weight_mean_pct": 15.61620132971926,
+    "sum_abs_active_weight_median_pct": 15.964400373410678,
     "sum_abs_active_weight_min_pct": 11.793767491386253,
     "sum_abs_active_weight_max_pct": 20.866479743987355,
-    "active_share_mean_pct": 7.832825616922702,
-    "active_share_median_pct": 7.982548214572679,
+    "active_share_mean_pct": 7.80810066485963,
+    "active_share_median_pct": 7.982200186705339,
     "active_share_min_pct": 5.896883745693127,
     "active_share_max_pct": 10.433239871993678
   }

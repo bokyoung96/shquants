@@ -40,11 +40,11 @@
       "positive_month_rate_pct": 56.265060241
     },
     "origin_emp008 costed": {
-      "cagr_pct": 57.7408752077,
-      "annual_vol_pct": 27.5029010795,
-      "sharpe": 1.7963224865,
+      "cagr_pct": 57.7346726627,
+      "annual_vol_pct": 27.5029968709,
+      "sharpe": 1.7961739392,
       "max_drawdown_pct": -24.2424195309,
-      "total_return_pct": 348.7032584606,
+      "total_return_pct": 348.6451495316,
       "best_month_pct": 9.9430282616,
       "worst_month_pct": -11.9797663262,
       "positive_month_rate_pct": 56.265060241
@@ -95,15 +95,15 @@
       "information_ratio": 0.8184933279
     },
     "origin costed excess": {
-      "total_excess_bp": 317.3054883759,
-      "annualized_excess_bp": 95.2928506389,
-      "monthly_mean_excess_bp": 7.5179921319,
+      "total_excess_bp": 315.975824245,
+      "annualized_excess_bp": 94.8978147772,
+      "monthly_mean_excess_bp": 7.4871429026,
       "monthly_median_excess_bp": 1.3959530454,
       "best_month_excess_bp": 201.6224039853,
       "worst_month_excess_bp": -46.9502128585,
       "positive_month_rate_pct": 54.7619047619,
-      "annualized_tracking_error_bp": 136.136363105,
-      "information_ratio": 0.6999808755
+      "annualized_tracking_error_bp": 136.1354110965,
+      "information_ratio": 0.6970839843
     },
     "origin minus mfbt gross": {
       "total_excess_bp": 115.5688945081,
@@ -117,15 +117,15 @@
       "information_ratio": 0.4296234986
     },
     "origin minus mfbt costed": {
-      "total_excess_bp": 154.4379634039,
-      "annualized_excess_bp": 46.6396328311,
-      "monthly_mean_excess_bp": 3.6687513509,
+      "total_excess_bp": 153.1292237381,
+      "annualized_excess_bp": 46.2464811489,
+      "monthly_mean_excess_bp": 3.6380158395,
       "monthly_median_excess_bp": 5.9848193962,
       "best_month_excess_bp": 36.6245667279,
       "worst_month_excess_bp": -47.7219294521,
       "positive_month_rate_pct": 61.9047619048,
-      "annualized_tracking_error_bp": 81.5247522354,
-      "information_ratio": 0.5720916845
+      "annualized_tracking_error_bp": 81.5246310837,
+      "information_ratio": 0.5672700451
     }
   },
   "run_config": {
@@ -144,9 +144,9 @@
       "risk_model": "factor_idio",
       "tracking_error_annual": 0.007,
       "weights_start": "2022-12-29",
-      "weights_end": "2026-04-30",
+      "weights_end": "2026-05-28",
       "diagnostics_success_all": true,
-      "active_share_mean_pct": 7.8328256169,
+      "active_share_mean_pct": 7.8081006649,
       "active_share_max_pct": 10.433239872
     }
   }

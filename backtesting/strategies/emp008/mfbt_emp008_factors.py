@@ -57,9 +57,19 @@ def _origin_momentum_12m(close: pd.DataFrame) -> pd.DataFrame:
 
 def _origin_dividend_yield(market: MarketData) -> pd.DataFrame:
     close = market.frames["close"].astype(float)
-    dividend_yld = align_like_close(market, "dividend_yld_fy0").astype(float)
-    monthly_dividend_yld = month_end_observations(dividend_yld)
+    dividend_yld = market.frames["dividend_yld_fy0"].reindex(columns=close.columns).astype(float)
+    monthly_dividend_yld = _align_monthly_snapshot_to_close_month_end(dividend_yld, close)
     return _monthly_output(close, monthly_dividend_yld)
+
+
+def _align_monthly_snapshot_to_close_month_end(snapshot: pd.DataFrame, close: pd.DataFrame) -> pd.DataFrame:
+    close_month_end = month_end_observations(close)
+    snapshot_month_end = month_end_observations(snapshot)
+    snapshot_by_month = snapshot_month_end.copy()
+    snapshot_by_month.index = snapshot_by_month.index.to_period("M")
+    aligned = snapshot_by_month.reindex(close_month_end.index.to_period("M"))
+    aligned.index = close_month_end.index
+    return aligned
 
 
 def _earnings_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:

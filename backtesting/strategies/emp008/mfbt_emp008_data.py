@@ -8,6 +8,8 @@ import pandas as pd
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import DataLoader, LoadRequest, MarketData, ParquetStore
 
+FORWARD_SNAPSHOT_FRAME_KEYS = frozenset({"dividend_yld_fy0"})
+
 
 @dataclass(frozen=True, slots=True)
 class MfbtEmp008Config:
@@ -26,6 +28,7 @@ class MfbtEmp008Config:
     risk_model: str = "factor_idio"
     factor_set: str = "mfbt"
     expected_alpha_policy: str = "mean"
+    monthly_snapshot_forward_days: int = 0
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
@@ -62,7 +65,9 @@ def load_mfbt_emp008_market(
 ) -> MarketData:
     loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
     load_start = padded_history_start(start, config)
-    return loader.load(LoadRequest(datasets=list(required_datasets(config)), start=load_start, end=end))
+    load_end = padded_snapshot_end(end, config)
+    market = loader.load(LoadRequest(datasets=list(required_datasets(config)), start=load_start, end=load_end))
+    return _trim_non_forward_snapshot_frames(market, end=end, config=config)
 
 
 def load_mfbt_emp008_bm_weights(
@@ -80,3 +85,19 @@ def load_mfbt_emp008_bm_weights(
 def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
     buffer_days = config.retail_flow_lookback_days * 2 + config.risk_window * 31
     return (pd.Timestamp(start) - pd.Timedelta(days=buffer_days)).strftime("%Y-%m-%d")
+
+
+def padded_snapshot_end(end: str, config: MfbtEmp008Config) -> str:
+    return (pd.Timestamp(end) + pd.Timedelta(days=max(config.monthly_snapshot_forward_days, 0))).strftime("%Y-%m-%d")
+
+
+def _trim_non_forward_snapshot_frames(market: MarketData, *, end: str, config: MfbtEmp008Config) -> MarketData:
+    if config.monthly_snapshot_forward_days <= 0:
+        return market
+
+    requested_end = pd.Timestamp(end)
+    frames = {
+        key: frame if key in FORWARD_SNAPSHOT_FRAME_KEYS else frame.loc[:requested_end]
+        for key, frame in market.frames.items()
+    }
+    return MarketData(frames=frames, universe=market.universe, benchmark=market.benchmark)

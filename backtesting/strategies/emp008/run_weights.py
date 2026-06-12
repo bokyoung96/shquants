@@ -40,6 +40,7 @@ def build_emp008_config(
                 expected_alpha_policy="origin_sign",
                 rank_transform_factors=("LnMktcap",),
                 large_bm_neutral_factor_names=(),
+                monthly_snapshot_forward_days=7,
             )
         else:
             config = replace(config, factor_set=factor_set)

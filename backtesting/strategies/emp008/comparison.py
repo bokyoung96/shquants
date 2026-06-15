@@ -56,6 +56,34 @@ def monthly_compounded_returns(returns: pd.DataFrame) -> pd.DataFrame:
     return (1.0 + returns.astype(float)).resample("ME").prod().sub(1.0)
 
 
+def yearly_compounded_returns(returns: pd.DataFrame) -> pd.DataFrame:
+    yearly = (1.0 + returns.astype(float)).groupby(returns.index.year).prod().sub(1.0)
+    yearly.index.name = "year"
+    return yearly
+
+
+def pair_return_display_frame(returns: pd.DataFrame) -> pd.DataFrame:
+    columns = {
+        "MFBT": _find_pair_column(returns, "mfbt", "gross"),
+        "Origin": _find_pair_column(returns, "origin", "gross"),
+        "KOSPI200 BM": "KOSPI200 BM",
+    }
+    return pd.DataFrame({name: returns[column].astype(float) for name, column in columns.items()}, index=returns.index)
+
+
+def _find_pair_column(frame: pd.DataFrame, strategy: str, variant: str) -> str:
+    matches = [
+        column
+        for column in frame.columns
+        if strategy in str(column).lower()
+        and variant in str(column).lower()
+        and "excess" not in str(column).lower()
+    ]
+    if not matches:
+        raise KeyError(f"missing {strategy} {variant} return column")
+    return str(matches[0])
+
+
 def excess_summary_bps(
     active_returns: pd.DataFrame,
     *,
@@ -113,7 +141,7 @@ def build_emp008_comparison(
 
     gross_returns = _read_series(gross_run_dir / "series" / "returns.csv", "returns")
     costed_returns = _read_series(costed_run_dir / "series" / "returns.csv", "returns")
-    bm_returns = _benchmark_returns(benchmark_parquet, benchmark_code).reindex(gross_returns.index).fillna(0.0)
+    bm_returns = _benchmark_returns(benchmark_parquet, benchmark_code, gross_returns.index)
     returns = pd.concat(
         [
             gross_returns.rename("Gross"),
@@ -205,12 +233,121 @@ def build_emp008_comparison(
     return payload
 
 
+def rebuild_emp008_pair_comparison_from_excel(
+    *,
+    excel_path: Path,
+    output_dir: Path,
+    benchmark_parquet: Path | None = None,
+    benchmark_code: str = "IKS200",
+) -> dict[str, object]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    run_config = pd.read_excel(excel_path, sheet_name="run_config", index_col=0)
+    returns = pd.read_excel(excel_path, sheet_name="daily_returns", index_col=0, parse_dates=True).astype(float)
+    active_weight_sum = pd.read_excel(excel_path, sheet_name="active_weight_sum", index_col=0, parse_dates=True)
+    if benchmark_parquet is not None:
+        returns["KOSPI200 BM"] = _benchmark_returns(benchmark_parquet, benchmark_code, returns.index)
+
+    cumulative = (1.0 + returns).cumprod().sub(1.0)
+    drawdowns = (1.0 + returns).cumprod().div((1.0 + returns).cumprod().cummax()).sub(1.0)
+    monthly_returns = monthly_compounded_returns(returns)
+    yearly_returns = yearly_compounded_returns(pair_return_display_frame(returns))
+
+    active_returns = _pair_active_returns(returns)
+    cumulative_active = (1.0 + active_returns).cumprod().sub(1.0)
+    monthly_active = monthly_compounded_returns(active_returns)
+    yearly_active = yearly_compounded_returns(_pair_excess_display_frame(active_returns))
+
+    metrics = pd.DataFrame({name: performance_metrics(returns[name], periods_per_year=252) for name in returns}).T
+    excess_metrics = pd.DataFrame(
+        {name: performance_metrics(active_returns[name], periods_per_year=252) for name in active_returns}
+    ).T
+    excess_bps = excess_summary_bps(active_returns, periods_per_year=252)
+
+    with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+        run_config.to_excel(writer, sheet_name="run_config")
+        metrics.to_excel(writer, sheet_name="performance_metrics")
+        excess_metrics.to_excel(writer, sheet_name="excess_metrics")
+        excess_bps.to_excel(writer, sheet_name="excess_summary_bps")
+        returns.to_excel(writer, sheet_name="daily_returns")
+        cumulative.to_excel(writer, sheet_name="cumulative_returns")
+        drawdowns.to_excel(writer, sheet_name="drawdowns")
+        monthly_returns.to_excel(writer, sheet_name="monthly_returns")
+        yearly_returns.to_excel(writer, sheet_name="yearly_returns")
+        active_returns.to_excel(writer, sheet_name="daily_excess_returns")
+        cumulative_active.to_excel(writer, sheet_name="cumulative_excess")
+        monthly_active.to_excel(writer, sheet_name="monthly_excess")
+        yearly_active.to_excel(writer, sheet_name="yearly_excess")
+        active_weight_sum.to_excel(writer, sheet_name="active_weight_sum")
+
+    monthly_excess_csv = output_dir / "monthly_excess_returns.csv"
+    active_weight_csv = output_dir / "active_weight_sum.csv"
+    monthly_active.to_csv(monthly_excess_csv)
+    active_weight_sum.to_csv(active_weight_csv)
+
+    paths = {
+        "excel": excel_path,
+        "cumulative_png": output_dir / "cumulative_excess_drawdown.png",
+        "yearly_performance_png": output_dir / "yearly_performance.png",
+        "monthly_excess_heatmap_png": output_dir / "monthly_excess_heatmap.png",
+        "active_weight_sum_png": output_dir / "active_weight_sum.png",
+        "active_weight_sum_csv": active_weight_csv,
+        "monthly_excess_csv": monthly_excess_csv,
+    }
+    _plot_pair_cumulative_with_excess_and_drawdown(returns, active_returns, drawdowns, paths["cumulative_png"])
+    _plot_pair_yearly_performance(yearly_returns, yearly_active, paths["yearly_performance_png"])
+    _plot_pair_monthly_excess_heatmap(monthly_active, paths["monthly_excess_heatmap_png"])
+    _plot_pair_active_weight_sum(active_weight_sum, paths["active_weight_sum_png"])
+
+    payload = {
+        "output_dir": str(output_dir),
+        **{name: str(path) for name, path in paths.items()},
+        "common_start": returns.index.min().date().isoformat(),
+        "common_end": returns.index.max().date().isoformat(),
+        "metrics": json.loads(metrics.to_json(orient="index")),
+        "excess_summary_bps": json.loads(excess_bps.to_json(orient="index")),
+        "run_config": json.loads(run_config.to_json(orient="index")),
+    }
+    (output_dir / "comparison_summary.json").write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return payload
+
+
+def _pair_active_returns(returns: pd.DataFrame) -> pd.DataFrame:
+    mfbt = _find_pair_column(returns, "mfbt", "gross")
+    mfbt_costed = _find_pair_column(returns, "mfbt", "costed")
+    origin = _find_pair_column(returns, "origin", "gross")
+    origin_costed = _find_pair_column(returns, "origin", "costed")
+    return pd.DataFrame(
+        {
+            "mfbt gross excess": returns[mfbt].sub(returns["KOSPI200 BM"]),
+            "mfbt costed excess": returns[mfbt_costed].sub(returns["KOSPI200 BM"]),
+            "origin gross excess": returns[origin].sub(returns["KOSPI200 BM"]),
+            "origin costed excess": returns[origin_costed].sub(returns["KOSPI200 BM"]),
+            "origin minus mfbt gross": returns[origin].sub(returns[mfbt]),
+            "origin minus mfbt costed": returns[origin_costed].sub(returns[mfbt_costed]),
+        },
+        index=returns.index,
+    )
+
+
+def _pair_excess_display_frame(active_returns: pd.DataFrame) -> pd.DataFrame:
+    return active_returns[["mfbt gross excess", "origin gross excess", "origin minus mfbt gross"]].rename(
+        columns={
+            "mfbt gross excess": "MFBT excess",
+            "origin gross excess": "Origin excess",
+            "origin minus mfbt gross": "Origin - MFBT",
+        }
+    )
+
+
 def _read_series(path: Path, column: str) -> pd.Series:
     frame = pd.read_csv(path, parse_dates=["date"]).set_index("date")
     return frame[column].astype(float).sort_index()
 
 
-def _benchmark_returns(path: Path, code: str) -> pd.Series:
+def _benchmark_returns(path: Path, code: str, comparison_index: pd.Index | None = None) -> pd.Series:
     frame = pd.read_parquet(path)
     if isinstance(frame.columns, pd.MultiIndex):
         close = frame[(code, "close")]
@@ -219,7 +356,185 @@ def _benchmark_returns(path: Path, code: str) -> pd.Series:
     else:
         close = frame["close"]
     close = close.astype(float).replace(0.0, pd.NA).dropna().sort_index()
-    return close.pct_change().fillna(0.0)
+    if comparison_index is not None:
+        close = close.reindex(pd.to_datetime(comparison_index))
+    return close.pct_change(fill_method=None).fillna(0.0)
+
+
+def _plot_pair_cumulative_with_excess_and_drawdown(
+    returns: pd.DataFrame,
+    active_returns: pd.DataFrame,
+    drawdowns: pd.DataFrame,
+    path: Path,
+) -> None:
+    display_returns = pair_return_display_frame(returns)
+    cumulative = (1.0 + display_returns).cumprod().sub(1.0).mul(100.0)
+    display_drawdowns = drawdowns[
+        [
+            _find_pair_column(returns, "mfbt", "gross"),
+            _find_pair_column(returns, "origin", "gross"),
+            "KOSPI200 BM",
+        ]
+    ].copy()
+    display_drawdowns.columns = ["MFBT", "Origin", "KOSPI200 BM"]
+    excess = (1.0 + _pair_excess_display_frame(active_returns)[["MFBT excess", "Origin excess"]]).cumprod().sub(1.0).mul(100.0)
+
+    fig, axes = plt.subplots(
+        2,
+        1,
+        figsize=(13, 8.2),
+        sharex=True,
+        gridspec_kw={"height_ratios": [2.3, 1.0]},
+    )
+    ax = axes[0]
+    ax_excess = ax.twinx()
+    colors = {"MFBT": "#1f77b4", "Origin": "#d55e00", "KOSPI200 BM": "#4d4d4d"}
+    fill_colors = {"MFBT excess": "#8ecae6", "Origin excess": "#ffb703"}
+
+    for column in excess.columns:
+        values = excess[column].astype(float)
+        ax_excess.fill_between(
+            values.index,
+            0.0,
+            values.to_numpy(),
+            color=fill_colors[column],
+            alpha=0.16,
+            linewidth=0,
+            label=column,
+            zorder=1,
+        )
+    ax_excess.axhline(0.0, color="#7f8c8d", linewidth=0.8, alpha=0.8)
+    ax_excess.set_ylabel("Cumulative excess (%)")
+    ax_excess.grid(False)
+
+    for column in cumulative.columns:
+        ax.plot(
+            cumulative.index,
+            cumulative[column],
+            color=colors[column],
+            linewidth=2.1 if column != "KOSPI200 BM" else 1.8,
+            label=column,
+            zorder=3,
+        )
+    ax.set_title("Cumulative return with excess return background")
+    ax.set_ylabel("Cumulative return (%)")
+    ax.grid(axis="y", alpha=0.25)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax_excess.spines["top"].set_visible(False)
+    handles, labels = ax.get_legend_handles_labels()
+    excess_handles, excess_labels = ax_excess.get_legend_handles_labels()
+    ax.legend(handles + excess_handles, labels + excess_labels, loc="upper left", ncol=3, frameon=False)
+
+    bottom = axes[1]
+    for column in display_drawdowns.columns:
+        bottom.plot(
+            display_drawdowns.index,
+            display_drawdowns[column].mul(100.0),
+            color=colors[column],
+            linewidth=1.4,
+            label=column,
+        )
+    bottom.set_ylabel("Drawdown (%)")
+    bottom.set_xlabel("Date")
+    bottom.grid(axis="y", alpha=0.25)
+    bottom.spines[["top", "right"]].set_visible(False)
+    bottom.legend(loc="lower left", ncol=3, frameon=False)
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
+
+
+def _plot_pair_yearly_performance(
+    yearly_returns: pd.DataFrame,
+    yearly_active: pd.DataFrame,
+    path: Path,
+) -> None:
+    nonzero_years = yearly_returns.abs().sum(axis=1).gt(0.0)
+    yearly_returns = yearly_returns.loc[nonzero_years]
+    yearly_active = yearly_active.reindex(yearly_returns.index)
+    fig, axes = plt.subplots(2, 1, figsize=(12.5, 7.4), sharex=True, gridspec_kw={"height_ratios": [1.35, 1.0]})
+    colors = {"MFBT": "#1f77b4", "Origin": "#d55e00", "KOSPI200 BM": "#4d4d4d"}
+    yearly_returns.mul(100.0).plot.bar(ax=axes[0], color=[colors[column] for column in yearly_returns.columns], width=0.74)
+    axes[0].set_title("Yearly performance")
+    axes[0].set_ylabel("Return (%)")
+    axes[0].axhline(0.0, color="#7f8c8d", linewidth=0.8)
+    axes[0].grid(axis="y", alpha=0.24)
+    axes[0].legend(loc="upper left", ncol=3, frameon=False)
+    axes[0].spines[["top", "right"]].set_visible(False)
+
+    excess_colors = ["#8ecae6", "#ffb703", "#6c757d"]
+    yearly_active.mul(100.0).plot.bar(ax=axes[1], color=excess_colors, width=0.74)
+    axes[1].set_ylabel("Excess return (%)")
+    axes[1].set_xlabel("Year")
+    axes[1].axhline(0.0, color="#7f8c8d", linewidth=0.8)
+    axes[1].grid(axis="y", alpha=0.24)
+    axes[1].legend(loc="upper left", ncol=3, frameon=False)
+    axes[1].spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
+
+
+def _plot_pair_monthly_excess_heatmap(monthly_active: pd.DataFrame, path: Path) -> None:
+    display = _pair_excess_display_frame(monthly_active).mul(100.0)
+    limit = float(display.abs().max().max()) if not display.empty else 1.0
+    if limit == 0.0:
+        limit = 1.0
+    fig, ax = plt.subplots(figsize=(13, 4.6))
+    image = ax.imshow(display.T.to_numpy(dtype=float), aspect="auto", cmap="RdBu_r", vmin=-limit, vmax=limit)
+    ax.set_title("Monthly excess returns")
+    ax.set_yticks(range(len(display.columns)))
+    ax.set_yticklabels(display.columns)
+    step = max(1, len(display.index) // 12)
+    ticks = list(range(0, len(display.index), step))
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([display.index[idx].strftime("%Y-%m") for idx in ticks], rotation=45, ha="right")
+    for row, column in enumerate(display.columns):
+        for col, value in enumerate(display[column].to_numpy(dtype=float)):
+            if pd.notna(value) and abs(value) >= max(limit * 0.35, 0.15):
+                ax.text(
+                    col,
+                    row,
+                    f"{value:.2f}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="white" if abs(value) > limit * 0.55 else "#202020",
+                )
+    ax.tick_params(axis="both", length=0)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    fig.colorbar(image, ax=ax, pad=0.02, label="Monthly excess return (%)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
+
+
+def _plot_pair_active_weight_sum(frame: pd.DataFrame, path: Path) -> None:
+    pct_columns = [column for column in frame.columns if str(column).endswith("_sum_abs_active_weight_pct")]
+    display = pd.DataFrame(index=frame.index)
+    for column in pct_columns:
+        label = "MFBT" if "mfbt" in str(column).lower() else "Origin"
+        display[label] = frame[column].astype(float)
+    if not display.empty:
+        display = display.loc[display.gt(1.0).all(axis=1)]
+
+    fig, ax = plt.subplots(figsize=(12.5, 5.4))
+    colors = {"MFBT": "#1f77b4", "Origin": "#d55e00"}
+    for column in display.columns:
+        ax.plot(display.index, display[column], linewidth=1.9, color=colors[column], label=column)
+        ax.scatter(display.index, display[column], s=18, color=colors[column], alpha=0.8)
+    ax.set_title("Active weight sum")
+    ax.set_ylabel("Sum |active weight| (%)")
+    ax.set_xlabel("Month")
+    ax.grid(axis="y", alpha=0.24)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.legend(loc="upper right", frameon=False)
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
 
 
 def _plot_active_weight_sum(frame: pd.DataFrame, path: Path) -> None:

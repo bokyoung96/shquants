@@ -26,7 +26,9 @@ from backtesting.strategies.emp008.comparison import (
     excess_summary_bps,
     monthly_compounded_returns,
     monthly_excess_heatmap_frame,
+    pair_return_display_frame,
     performance_metrics,
+    yearly_compounded_returns,
 )
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
 from backtesting.strategies.emp008.mfbt_emp008_factors import _sector_relative_retail_flow, build_raw_mfbt_factors
@@ -423,6 +425,36 @@ def test_monthly_compounded_returns_uses_within_month_compounding() -> None:
     assert result["Gross excess"].tolist() == pytest.approx([(1.01 * 1.02) - 1.0, -0.01])
 
 
+def test_yearly_compounded_returns_uses_calendar_year_compounding() -> None:
+    returns = pd.DataFrame(
+        {"MFBT": [0.01, 0.02, -0.01]},
+        index=pd.to_datetime(["2024-01-02", "2024-12-31", "2025-01-02"]),
+    )
+
+    result = yearly_compounded_returns(returns)
+
+    assert result.index.tolist() == [2024, 2025]
+    assert result["MFBT"].tolist() == pytest.approx([(1.01 * 1.02) - 1.0, -0.01])
+
+
+def test_pair_return_display_frame_keeps_only_gross_strategy_and_benchmark_lines() -> None:
+    returns = pd.DataFrame(
+        {
+            "mfbt_emp008_70bp_36m gross": [0.01],
+            "mfbt_emp008_70bp_36m costed": [0.02],
+            "origin_emp008 gross": [0.03],
+            "origin_emp008 costed": [0.04],
+            "KOSPI200 BM": [0.05],
+        },
+        index=pd.to_datetime(["2024-01-02"]),
+    )
+
+    result = pair_return_display_frame(returns)
+
+    assert result.columns.tolist() == ["MFBT", "Origin", "KOSPI200 BM"]
+    assert result.iloc[0].tolist() == pytest.approx([0.01, 0.03, 0.05])
+
+
 def test_excess_summary_bps_reports_total_and_monthly_bps() -> None:
     active_returns = pd.DataFrame(
         {"Gross excess": [0.01, 0.02, -0.01]},
@@ -464,9 +496,10 @@ def test_build_emp008_comparison_writes_core_artifacts(tmp_path: Path) -> None:
         {"date": dates, "returns": [0.0008] * len(dates)},
     ).to_csv(costed_dir / "series" / "returns.csv", index=False)
 
+    benchmark_dates = dates.insert(0, dates[0] - pd.offsets.BDay(1))
     benchmark = pd.DataFrame(
-        {("IKS200", "close"): [100.0 + idx * 0.05 for idx in range(len(dates))]},
-        index=dates,
+        {("IKS200", "close"): [100.0 + idx * 0.05 for idx in range(len(benchmark_dates))]},
+        index=benchmark_dates,
     )
     benchmark.columns = pd.MultiIndex.from_tuples(benchmark.columns, names=["code", "field"])
     benchmark_path = tmp_path / "benchmark.parquet"
@@ -499,6 +532,9 @@ def test_build_emp008_comparison_writes_core_artifacts(tmp_path: Path) -> None:
     assert (tmp_path / "comparison_summary.json").exists()
     assert "excess_summary_bps" in payload
     assert "active_weight_sum" in payload
+
+    daily_returns = pd.read_excel(payload["performance_xlsx"], sheet_name="daily_returns", index_col=0)
+    assert daily_returns.loc[dates[0], "KOSPI200 BM"] == pytest.approx(0.0)
 
 
 def test_factor_attribution_row_reconciles_factor_and_residual_contribution() -> None:

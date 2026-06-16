@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-16T05:11:11.473486+00:00",
+  "generated_at": "2026-06-16T05:13:20.013977+00:00",
   "provider": "fnguide",
   "count": 59,
   "counts": {
@@ -459,7 +459,7 @@
     },
     {
       "schema_version": "1.0",
-      "generated_at": "2026-06-16T05:11:11.473486+00:00",
+      "generated_at": "2026-06-16T05:13:20.013977+00:00",
       "index_code": "FI00.WLT.KSS",
       "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
       "product_names": [

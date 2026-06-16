@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from etfs.fnguide.methodology_engine import MethodologyNotReadyError
 from etfs.fnguide.replication import (
     build_kss_replication,
     build_replication_validation,
@@ -297,8 +298,8 @@ def _snapshot_row(code: str, float_cap: float, momentum: float) -> dict[str, obj
     }
 
 
-def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -> None:
-    rows = [
+def _kss_rows() -> list[dict[str, object]]:
+    return [
         _snapshot_row("A000001", 1000, 1),
         _snapshot_row("A000002", 900, 2),
         _snapshot_row("A000003", 800, 90),
@@ -311,10 +312,12 @@ def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -
         _snapshot_row("A000010", 100, 40),
     ]
 
+
+def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -> None:
     result = build_kss_replication(
         as_of="2026-05-29",
         effective_date="2026-06-14",
-        snapshot_rows=rows,
+        snapshot_rows=_kss_rows(),
         validation_weights=[],
         validation_source_type="missing",
     )
@@ -428,14 +431,105 @@ def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -
     assert result["full_replication_status"] == "not_proven"
 
 
-def test_write_kss_replication_artifacts_outputs_selected_weights_and_validation(
+def test_build_kss_replication_raises_controlled_error_when_kss_spec_is_missing(
     tmp_path: Path,
 ) -> None:
-    rows = [_snapshot_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    specs_path = tmp_path / "methodology_specs.json"
+    specs_path.write_text(
+        json.dumps({"indices": []}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match="FI00.WLT.KSS is missing or not engine-ready",
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match=str(specs_path).replace("\\", "\\\\"),
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+
+def test_build_kss_replication_etf_holdings_validation_does_not_mark_proven() -> None:
+    base_result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=_kss_rows(),
+        validation_weights=[],
+        validation_source_type="missing",
+    )
+    validation_weights = [
+        {
+            "security_code": item["security_code"],
+            "holding_weight": item["target_weight"],
+        }
+        for item in base_result["target_weight_result"]["target_weights"]
+    ]
+
     result = build_kss_replication(
         as_of="2026-05-29",
         effective_date="2026-06-14",
-        snapshot_rows=rows,
+        snapshot_rows=_kss_rows(),
+        validation_weights=validation_weights,
+        validation_source_type="etf_holdings_snapshot",
+    )
+
+    assert result["validation"]["status"] == "passed"
+    assert result["full_replication_status"] == "not_proven"
+
+
+def test_build_kss_replication_official_validation_marks_proven() -> None:
+    base_result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=_kss_rows(),
+        validation_weights=[],
+        validation_source_type="missing",
+    )
+    validation_weights = [
+        {
+            "security_code": item["security_code"],
+            "official_weight": item["target_weight"],
+        }
+        for item in base_result["target_weight_result"]["target_weights"]
+    ]
+
+    result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=_kss_rows(),
+        validation_weights=validation_weights,
+        validation_source_type="official_target_weights",
+    )
+
+    assert result["validation"]["status"] == "passed"
+    assert result["full_replication_status"] == "proven"
+
+
+def test_write_kss_replication_artifacts_outputs_selected_weights_and_validation(
+    tmp_path: Path,
+) -> None:
+    result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=_kss_rows(),
         validation_weights=[],
         validation_source_type="missing",
     )
@@ -448,3 +542,15 @@ def test_write_kss_replication_artifacts_outputs_selected_weights_and_validation
         "replication_validation": (tmp_path / "kss_replication_validation.json").as_posix(),
         "replication_validation_md": (tmp_path / "kss_replication_validation.md").as_posix(),
     }
+
+    selected_payload = json.loads((tmp_path / "kss_selected_buckets.json").read_text(encoding="utf-8"))
+    target_payload = json.loads((tmp_path / "kss_target_weights.json").read_text(encoding="utf-8"))
+    validation_payload = json.loads(
+        (tmp_path / "kss_replication_validation.json").read_text(encoding="utf-8")
+    )
+
+    assert selected_payload["effective_date"] == "2026-06-14"
+    assert selected_payload["selected_buckets"] == result["selected_buckets"]
+    assert target_payload["result"] == result["target_weight_result"]
+    assert target_payload["result"]["effective_date"] == "2026-06-14"
+    assert validation_payload["result"]["status"] == "not_proven"

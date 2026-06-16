@@ -8,6 +8,7 @@ from typing import Iterable, Mapping
 
 from etfs import paths
 from etfs.fnguide.methodology_engine import (
+    MethodologyNotReadyError,
     calculate_top2_plus_target_weights,
     load_engine_ready_specs,
 )
@@ -144,7 +145,11 @@ def build_kss_replication(
     weight_tolerance: float = 0.0,
 ) -> dict[str, object]:
     ready_specs = load_engine_ready_specs(specs_path)
-    spec = ready_specs[KSS_INDEX_CODE]
+    spec = ready_specs.get(KSS_INDEX_CODE)
+    if spec is None:
+        raise MethodologyNotReadyError(
+            f"{KSS_INDEX_CODE} is missing or not engine-ready in {specs_path}"
+        )
     selected_buckets = select_kss_buckets(snapshot_rows)
     weights = calculate_top2_plus_target_weights(spec, selected_buckets)
     target_weights = [
@@ -187,6 +192,7 @@ def build_kss_replication(
         "validation": validation,
         "full_replication_status": "proven"
         if validation["status"] == "passed"
+        and validation_source_type == "official_target_weights"
         else "not_proven",
     }
 

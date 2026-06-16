@@ -4,6 +4,8 @@ from pathlib import Path
 from etfs.fnguide.data_inventory import (
     build_fnguide_data_inventory,
     build_kss_data_inventory,
+    write_fnguide_data_inventory,
+    write_kss_data_inventory,
 )
 
 
@@ -160,6 +162,86 @@ def test_build_kss_data_inventory_resolves_relative_paths_from_specs_directory_a
     assert requirements["price_snapshot"]["status"] == "available"
     assert requirements["price_momentum"]["status"] == "derivable"
     assert requirements["float_market_cap_snapshot"]["status"] == "missing"
+
+
+def test_write_kss_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+    output_dir = tmp_path / "artifacts" / "replication"
+
+    json_path, markdown_path = write_kss_data_inventory(output_dir, specs_path=specs_path)
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+
+    assert json_path == output_dir / "kss_data_inventory.json"
+    assert markdown_path == output_dir / "kss_data_inventory.md"
+    assert payload["index_code"] == "FI00.WLT.KSS"
+    assert payload["replication_readiness"] == "missing_required_data"
+    assert "FI00.WLT.KSS" in markdown
+    assert "missing_required_data" in markdown
+    assert "official_target_weights" in markdown
+    assert "issuer_holdings_snapshot" in markdown
+
+
+def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+            {
+                "index_code": "FI00.OTHER",
+                "index_name": "FnGuide Other Index",
+                "provider": "fnguide",
+                "products": [{"etf_code": "000001", "etf_name": "Other ETF"}],
+                "status": "draft_extracted",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+    output_dir = tmp_path / "artifacts" / "provider"
+
+    json_path, markdown_path = write_fnguide_data_inventory(output_dir, specs_path=specs_path)
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+
+    assert json_path == output_dir / "data_inventory.json"
+    assert markdown_path == output_dir / "data_inventory.md"
+    assert payload["counts"]["by_readiness"] == {"inventory_required": 1, "missing_required_data": 1}
+    assert "FnGuide" in markdown
+    assert "missing_required_data" in markdown
+    assert "FI00.WLT.KSS" in markdown
 
 
 def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:

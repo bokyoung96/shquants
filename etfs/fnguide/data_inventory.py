@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
 
+from etfs import paths
 from etfs.fnguide.replication_data import KSS_INDEX_CODE, KSS_INDEX_NAME
 
 
@@ -109,6 +110,36 @@ def build_fnguide_data_inventory(
         },
         "indices": items,
     }
+
+
+def write_kss_data_inventory(
+    output_dir: Path,
+    *,
+    specs_path: Path = paths.FNGUIDE_METHODOLOGY_SPECS_JSON,
+    local_paths: Mapping[str, Path] | None = None,
+) -> tuple[Path, Path]:
+    payload = build_kss_data_inventory(specs_path=specs_path, local_paths=local_paths)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / paths.FNGUIDE_KSS_DATA_INVENTORY_JSON.name
+    markdown_path = output_dir / paths.FNGUIDE_KSS_DATA_INVENTORY_MD.name
+    _write_json(json_path, payload)
+    markdown_path.write_text(_render_kss_data_inventory_markdown(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
+def write_fnguide_data_inventory(
+    output_dir: Path,
+    *,
+    specs_path: Path = paths.FNGUIDE_METHODOLOGY_SPECS_JSON,
+    local_paths: Mapping[str, Path] | None = None,
+) -> tuple[Path, Path]:
+    payload = build_fnguide_data_inventory(specs_path=specs_path, local_paths=local_paths)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / paths.FNGUIDE_DATA_INVENTORY_JSON.name
+    markdown_path = output_dir / paths.FNGUIDE_DATA_INVENTORY_MD.name
+    _write_json(json_path, payload)
+    markdown_path.write_text(_render_fnguide_data_inventory_markdown(payload), encoding="utf-8")
+    return json_path, markdown_path
 
 
 def _require_index_spec(specs_path: Path, *, index_code: str) -> Mapping[str, object]:
@@ -237,3 +268,79 @@ def _replication_readiness(requirements: list[dict[str, object]]) -> str:
     if any(str(item.get("status", "")) not in {"available", "derivable"} for item in requirements):
         return "missing_required_data"
     return "ready"
+
+
+def _write_json(path: Path, payload: Mapping[str, object]) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _render_kss_data_inventory_markdown(payload: Mapping[str, object]) -> str:
+    title = str(payload.get("index_name", KSS_INDEX_NAME))
+    index_code = str(payload.get("index_code", KSS_INDEX_CODE))
+    readiness = str(payload.get("replication_readiness", ""))
+    methodology_status = str(payload.get("methodology_status", ""))
+    requirements = payload.get("requirements", [])
+    lines = [
+        f"# {title} data inventory",
+        "",
+        f"- Index: {index_code}",
+        f"- Replication readiness: {readiness}",
+        f"- Methodology status: {methodology_status}",
+        "",
+        "## Requirements",
+        "",
+        "| Requirement | Status | Notes |",
+        "| --- | --- | --- |",
+    ]
+    if isinstance(requirements, list):
+        for requirement in requirements:
+            if not isinstance(requirement, Mapping):
+                continue
+            lines.append(
+                "| {name} | {status} | {note} |".format(
+                    name=str(requirement.get("name", "")),
+                    status=str(requirement.get("status", "")),
+                    note=str(requirement.get("note", "")).replace("\n", " "),
+                )
+            )
+    return "\n".join(lines) + "\n"
+
+
+def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> str:
+    counts = payload.get("counts", {})
+    by_readiness = counts.get("by_readiness", {}) if isinstance(counts, Mapping) else {}
+    indices = payload.get("indices", [])
+    lines = [
+        "# FnGuide data inventory",
+        "",
+        f"- Provider: {str(payload.get('provider', ''))}",
+        f"- Index count: {counts.get('indices', payload.get('count', 0)) if isinstance(counts, Mapping) else payload.get('count', 0)}",
+        "",
+        "## Readiness summary",
+        "",
+    ]
+    if isinstance(by_readiness, Mapping):
+        for readiness, count in by_readiness.items():
+            lines.append(f"- {readiness}: {count}")
+    lines.extend(
+        [
+            "",
+            "## Indices",
+            "",
+            "| Index code | Index name | Readiness | Status |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    if isinstance(indices, list):
+        for item in indices:
+            if not isinstance(item, Mapping):
+                continue
+            lines.append(
+                "| {code} | {name} | {readiness} | {status} |".format(
+                    code=str(item.get("index_code", "")),
+                    name=str(item.get("index_name", "")),
+                    readiness=str(item.get("replication_readiness", "")),
+                    status=str(item.get("status", item.get("methodology_status", ""))),
+                )
+            )
+    return "\n".join(lines) + "\n"

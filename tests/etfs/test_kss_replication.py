@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import json
 
 import pytest
 
 from etfs.fnguide.replication import (
+    build_kss_replication,
     build_replication_validation,
+    write_kss_replication_artifacts,
     write_replication_validation,
 )
 
@@ -279,3 +283,73 @@ def test_write_replication_validation_rejects_nan_report_payload(tmp_path) -> No
             },
             tmp_path,
         )
+
+
+def _snapshot_row(code: str, float_cap: float, momentum: float) -> dict[str, object]:
+    return {
+        "as_of": "2026-05-29",
+        "security_code": code,
+        "name": code,
+        "is_eligible": True,
+        "is_semiconductor_theme": True,
+        "float_market_cap": float_cap,
+        "composite_momentum_score": momentum,
+    }
+
+
+def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -> None:
+    rows = [
+        _snapshot_row("A000001", 1000, 1),
+        _snapshot_row("A000002", 900, 2),
+        _snapshot_row("A000003", 800, 90),
+        _snapshot_row("A000004", 700, 80),
+        _snapshot_row("A000005", 600, 70),
+        _snapshot_row("A000006", 500, 60),
+        _snapshot_row("A000007", 400, 10),
+        _snapshot_row("A000008", 300, 20),
+        _snapshot_row("A000009", 200, 30),
+        _snapshot_row("A000010", 100, 40),
+    ]
+
+    result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=rows,
+        validation_weights=[],
+        validation_source_type="missing",
+    )
+
+    assert result["index_code"] == "FI00.WLT.KSS"
+    assert result["target_weight_result"]["checks"] == {
+        "constituent_count": "passed",
+        "weight_sum": "passed",
+    }
+    weights = {
+        item["security_code"]: item["target_weight"]
+        for item in result["target_weight_result"]["target_weights"]
+    }
+    assert weights["A000001"] == 0.25
+    assert weights["A000002"] == 0.25
+    assert result["validation"]["status"] == "not_proven"
+
+
+def test_write_kss_replication_artifacts_outputs_selected_weights_and_validation(
+    tmp_path: Path,
+) -> None:
+    rows = [_snapshot_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    result = build_kss_replication(
+        as_of="2026-05-29",
+        effective_date="2026-06-14",
+        snapshot_rows=rows,
+        validation_weights=[],
+        validation_source_type="missing",
+    )
+
+    outputs = write_kss_replication_artifacts(result, tmp_path)
+
+    assert outputs == {
+        "selected_buckets": (tmp_path / "kss_selected_buckets.json").as_posix(),
+        "target_weights": (tmp_path / "kss_target_weights.json").as_posix(),
+        "replication_validation": (tmp_path / "kss_replication_validation.json").as_posix(),
+        "replication_validation_md": (tmp_path / "kss_replication_validation.md").as_posix(),
+    }

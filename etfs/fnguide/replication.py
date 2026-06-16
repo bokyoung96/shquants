@@ -6,6 +6,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Mapping
 
+from etfs import paths
+from etfs.fnguide.methodology_engine import (
+    calculate_top2_plus_target_weights,
+    load_engine_ready_specs,
+)
+from etfs.fnguide.replication_data import KSS_INDEX_CODE
+from etfs.fnguide.selection import select_kss_buckets
+
 
 def build_replication_validation(
     *,
@@ -123,6 +131,112 @@ def write_replication_validation(
     )
     md_path.write_text(_validation_markdown(report), encoding="utf-8")
     return json_path, md_path
+
+
+def build_kss_replication(
+    *,
+    as_of: str,
+    effective_date: str,
+    snapshot_rows: Iterable[Mapping[str, object]],
+    validation_weights: Iterable[Mapping[str, object]],
+    validation_source_type: str,
+    specs_path: Path = paths.FNGUIDE_METHODOLOGY_SPECS_JSON,
+    weight_tolerance: float = 0.0,
+) -> dict[str, object]:
+    ready_specs = load_engine_ready_specs(specs_path)
+    spec = ready_specs[KSS_INDEX_CODE]
+    selected_buckets = select_kss_buckets(snapshot_rows)
+    weights = calculate_top2_plus_target_weights(spec, selected_buckets)
+    target_weights = [
+        {"security_code": code, "target_weight": round(weight, 12)}
+        for code, weight in weights.items()
+    ]
+    target_result = {
+        "index_code": KSS_INDEX_CODE,
+        "as_of": as_of,
+        "effective_date": effective_date,
+        "methodology": "top2_plus",
+        "checks": {
+            "constituent_count": "passed" if len(target_weights) == 10 else "failed",
+            "weight_sum": "passed"
+            if abs(round(sum(weights.values()), 12) - 1.0) <= 1e-10
+            else "failed",
+        },
+        "metrics": {
+            "constituent_count": len(target_weights),
+            "weight_sum": round(sum(weights.values()), 12),
+        },
+        "target_weights": target_weights,
+    }
+    validation = build_replication_validation(
+        index_code=KSS_INDEX_CODE,
+        as_of=as_of,
+        validation_source_type=validation_source_type,
+        calculated_target_weights=target_weights,
+        validation_weights=validation_weights,
+        weight_tolerance=weight_tolerance,
+    )
+    return {
+        "schema_version": "1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "index_code": KSS_INDEX_CODE,
+        "as_of": as_of,
+        "effective_date": effective_date,
+        "selected_buckets": selected_buckets,
+        "target_weight_result": target_result,
+        "validation": validation,
+        "full_replication_status": "proven"
+        if validation["status"] == "passed"
+        else "not_proven",
+    }
+
+
+def write_kss_replication_artifacts(
+    result: Mapping[str, object],
+    output_dir: Path,
+) -> dict[str, str]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    selected_path = output_dir / "kss_selected_buckets.json"
+    target_path = output_dir / "kss_target_weights.json"
+    selected_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "index_code": result.get("index_code", ""),
+                "as_of": result.get("as_of", ""),
+                "effective_date": result.get("effective_date", ""),
+                "selected_buckets": result.get("selected_buckets", {}),
+            },
+            ensure_ascii=False,
+            indent=2,
+            allow_nan=False,
+        ),
+        encoding="utf-8",
+    )
+    target_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "result": result.get("target_weight_result", {}),
+            },
+            ensure_ascii=False,
+            indent=2,
+            allow_nan=False,
+        ),
+        encoding="utf-8",
+    )
+    validation_json, validation_md = write_replication_validation(
+        dict(result.get("validation", {})),
+        output_dir,
+    )
+    return {
+        "selected_buckets": selected_path.as_posix(),
+        "target_weights": target_path.as_posix(),
+        "replication_validation": validation_json.as_posix(),
+        "replication_validation_md": validation_md.as_posix(),
+    }
 
 
 def _weights_by_security(

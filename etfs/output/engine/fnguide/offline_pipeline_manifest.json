@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-16T03:06:25.820955+00:00",
+  "generated_at": "2026-06-16T03:15:45.431643+00:00",
   "outputs": {
     "methodology_extractions": "etfs/output/extractions/fnguide/methodology_extractions.json",
     "methodology_extractions_md": "etfs/output/extractions/fnguide/methodology_extractions.md",
@@ -16,9 +16,9 @@
     "engine_support_matrix_md": "etfs/output/engine/fnguide/engine_support_matrix.md",
     "engine_promotion_candidates": "etfs/output/engine/fnguide/engine_promotion_candidates.json",
     "engine_promotion_candidates_md": "etfs/output/engine/fnguide/engine_promotion_candidates.md",
+    "kss_data_requirements": "etfs/output/replication/fnguide/kss_data_requirements.json",
     "methodology_replication_report": "etfs/output/engine/fnguide/methodology_replication_report.json",
-    "methodology_replication_report_md": "etfs/output/engine/fnguide/methodology_replication_report.md",
-    "kss_data_requirements": "etfs/output/replication/fnguide/kss_data_requirements.json"
+    "methodology_replication_report_md": "etfs/output/engine/fnguide/methodology_replication_report.md"
   },
   "skipped": [
     "kss_replication: kss_snapshot not found",

@@ -199,6 +199,31 @@ def test_write_kss_data_inventory_writes_json_and_markdown(tmp_path: Path) -> No
     assert "issuer_holdings_snapshot" in markdown
 
 
+def test_write_kss_data_inventory_escapes_markdown_table_cells(tmp_path: Path) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI | Semiconductor\nTOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+
+    _, markdown_path = write_kss_data_inventory(tmp_path / "artifacts", specs_path=specs_path)
+
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "FnGuide AI \\| Semiconductor TOP2 Plus Index" in markdown
+
+
 def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
     specs_path = _write_specs(
         tmp_path / "methodology_specs.json",
@@ -242,6 +267,33 @@ def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -
     assert "FnGuide" in markdown
     assert "missing_required_data" in markdown
     assert "FI00.WLT.KSS" in markdown
+    assert "466920 SOL AI Semiconductor ETF" in markdown
+
+
+def test_write_fnguide_data_inventory_escapes_markdown_cells_and_tracks_etfs(tmp_path: Path) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI | Semiconductor\nTOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [{"etf_code": "466920", "etf_name": "SOL | AI\nSemiconductor ETF"}],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+
+    _, markdown_path = write_fnguide_data_inventory(tmp_path / "artifacts", specs_path=specs_path)
+
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "FnGuide AI \\| Semiconductor TOP2 Plus Index" in markdown
+    assert "466920 SOL \\| AI Semiconductor ETF" in markdown
 
 
 def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:

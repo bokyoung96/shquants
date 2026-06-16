@@ -275,10 +275,10 @@ def _write_json(path: Path, payload: Mapping[str, object]) -> None:
 
 
 def _render_kss_data_inventory_markdown(payload: Mapping[str, object]) -> str:
-    title = str(payload.get("index_name", KSS_INDEX_NAME))
-    index_code = str(payload.get("index_code", KSS_INDEX_CODE))
-    readiness = str(payload.get("replication_readiness", ""))
-    methodology_status = str(payload.get("methodology_status", ""))
+    title = _markdown_cell(payload.get("index_name", KSS_INDEX_NAME))
+    index_code = _markdown_cell(payload.get("index_code", KSS_INDEX_CODE))
+    readiness = _markdown_cell(payload.get("replication_readiness", ""))
+    methodology_status = _markdown_cell(payload.get("methodology_status", ""))
     requirements = payload.get("requirements", [])
     lines = [
         f"# {title} data inventory",
@@ -298,9 +298,9 @@ def _render_kss_data_inventory_markdown(payload: Mapping[str, object]) -> str:
                 continue
             lines.append(
                 "| {name} | {status} | {note} |".format(
-                    name=str(requirement.get("name", "")),
-                    status=str(requirement.get("status", "")),
-                    note=str(requirement.get("note", "")).replace("\n", " "),
+                    name=_markdown_cell(requirement.get("name", "")),
+                    status=_markdown_cell(requirement.get("status", "")),
+                    note=_markdown_cell(requirement.get("note", "")),
                 )
             )
     return "\n".join(lines) + "\n"
@@ -327,8 +327,8 @@ def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> st
             "",
             "## Indices",
             "",
-            "| Index code | Index name | Readiness | Status |",
-            "| --- | --- | --- | --- |",
+            "| Index code | Index name | Tracked ETFs | Readiness | Status |",
+            "| --- | --- | --- | --- | --- |",
         ]
     )
     if isinstance(indices, list):
@@ -336,11 +336,30 @@ def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> st
             if not isinstance(item, Mapping):
                 continue
             lines.append(
-                "| {code} | {name} | {readiness} | {status} |".format(
-                    code=str(item.get("index_code", "")),
-                    name=str(item.get("index_name", "")),
-                    readiness=str(item.get("replication_readiness", "")),
-                    status=str(item.get("status", item.get("methodology_status", ""))),
+                "| {code} | {name} | {tracked_etfs} | {readiness} | {status} |".format(
+                    code=_markdown_cell(item.get("index_code", "")),
+                    name=_markdown_cell(item.get("index_name", "")),
+                    tracked_etfs=_markdown_cell(_tracked_etfs_markdown(item)),
+                    readiness=_markdown_cell(item.get("replication_readiness", "")),
+                    status=_markdown_cell(item.get("status", item.get("methodology_status", ""))),
                 )
             )
     return "\n".join(lines) + "\n"
+
+
+def _tracked_etfs_markdown(item: Mapping[str, object]) -> str:
+    tracked_etfs = item.get("tracked_etfs", [])
+    if not isinstance(tracked_etfs, list):
+        return ""
+    values = []
+    for tracked_etf in tracked_etfs:
+        if not isinstance(tracked_etf, Mapping):
+            continue
+        etf_code = str(tracked_etf.get("etf_code", "")).strip()
+        etf_name = str(tracked_etf.get("etf_name", "")).strip()
+        values.append(" ".join(value for value in [etf_code, etf_name] if value))
+    return "; ".join(values)
+
+
+def _markdown_cell(value: object) -> str:
+    return str(value).replace("\r", " ").replace("\n", " ").replace("|", "\\|")

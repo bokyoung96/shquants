@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from collections import Counter
 from datetime import datetime, timezone
@@ -140,6 +141,23 @@ def write_fnguide_data_inventory(
     _write_json(json_path, payload)
     markdown_path.write_text(_render_fnguide_data_inventory_markdown(payload), encoding="utf-8")
     return json_path, markdown_path
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Write FnGuide full-replication data inventory reports.")
+    parser.add_argument("--specs", default=paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix())
+    parser.add_argument("--output-dir", default=paths.FNGUIDE_REPLICATION_OUTPUT_DIR.as_posix())
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    output_dir = Path(args.output_dir)
+    provider_json, _provider_md = write_fnguide_data_inventory(output_dir, specs_path=Path(args.specs))
+    kss_json, _kss_md = write_kss_data_inventory(output_dir, specs_path=Path(args.specs))
+    print(f"wrote {provider_json}")
+    print(f"wrote {kss_json}")
+    return 0
 
 
 def _require_index_spec(specs_path: Path, *, index_code: str) -> Mapping[str, object]:
@@ -363,3 +381,7 @@ def _tracked_etfs_markdown(item: Mapping[str, object]) -> str:
 
 def _markdown_cell(value: object) -> str:
     return str(value).replace("\r", " ").replace("\n", " ").replace("|", "\\|")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

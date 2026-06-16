@@ -78,6 +78,22 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
         md_path.write_text("", encoding="utf-8")
         return json_path, md_path
 
+    def fake_write_fnguide_data_inventory(output_dir: Path, *, specs_path: Path) -> tuple[Path, Path]:
+        calls.append(f"provider_inventory:{specs_path.name}")
+        json_path = output_dir / "data_inventory.json"
+        md_path = output_dir / "data_inventory.md"
+        json_path.write_text("{}", encoding="utf-8")
+        md_path.write_text("", encoding="utf-8")
+        return json_path, md_path
+
+    def fake_write_kss_data_inventory(output_dir: Path, *, specs_path: Path) -> tuple[Path, Path]:
+        calls.append(f"kss_inventory:{specs_path.name}")
+        json_path = output_dir / "kss_data_inventory.json"
+        md_path = output_dir / "kss_data_inventory.md"
+        json_path.write_text("{}", encoding="utf-8")
+        md_path.write_text("", encoding="utf-8")
+        return json_path, md_path
+
     def fake_write_methodology_replication_report(
         specs_path: Path,
         output_dir: Path,
@@ -119,6 +135,8 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
     monkeypatch.setattr(pipeline, "write_engine_input_template", fake_write_engine_input_template)
     monkeypatch.setattr(pipeline, "write_engine_support_matrix", fake_write_engine_support_matrix)
     monkeypatch.setattr(pipeline, "write_engine_promotion_candidates", fake_write_engine_promotion_candidates)
+    monkeypatch.setattr(pipeline, "write_fnguide_data_inventory", fake_write_fnguide_data_inventory)
+    monkeypatch.setattr(pipeline, "write_kss_data_inventory", fake_write_kss_data_inventory)
     monkeypatch.setattr(pipeline, "write_methodology_replication_report", fake_write_methodology_replication_report)
     monkeypatch.setattr(pipeline, "write_target_weights", fake_write_target_weights)
     monkeypatch.setattr(pipeline, "write_target_weight_validation_results", fake_write_target_weight_validation_results)
@@ -154,6 +172,8 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
         "input_template:methodology_specs.json",
         "support:methodology_specs.json",
         "promotion:methodology_specs.json",
+        "provider_inventory:methodology_specs.json",
+        "kss_inventory:methodology_specs.json",
         "replication:methodology_specs.json",
         "targets:engine_inputs.json:methodology_specs.json",
         "target_validation:validation_fixtures.json:target_weights.json:0.0",
@@ -163,6 +183,10 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
     assert manifest["outputs"]["engine_input_template"].endswith("engine_inputs.template.json")
     assert manifest["outputs"]["engine_support_matrix"].endswith("engine_support_matrix.json")
     assert manifest["outputs"]["engine_promotion_candidates"].endswith("engine_promotion_candidates.json")
+    assert manifest["outputs"]["data_inventory"].endswith("data_inventory.json")
+    assert manifest["outputs"]["data_inventory_md"].endswith("data_inventory.md")
+    assert manifest["outputs"]["kss_data_inventory"].endswith("kss_data_inventory.json")
+    assert manifest["outputs"]["kss_data_inventory_md"].endswith("kss_data_inventory.md")
     assert manifest["outputs"]["methodology_replication_report"].endswith("methodology_replication_report.json")
     assert manifest["outputs"]["kss_data_requirements"].endswith("kss_data_requirements.json")
     assert manifest["outputs"]["target_weights"].endswith("target_weights.json")
@@ -195,6 +219,22 @@ def test_run_offline_pipeline_skips_target_validation_when_engine_inputs_are_mis
         lambda specs_path, output_dir: (
             _touch(output_dir / "engine_promotion_candidates.json"),
             _touch(output_dir / "engine_promotion_candidates.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_fnguide_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "data_inventory.json"),
+            _touch(output_dir / "data_inventory.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_kss_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "kss_data_inventory.json"),
+            _touch(output_dir / "kss_data_inventory.md"),
         ),
     )
     monkeypatch.setattr(
@@ -245,6 +285,10 @@ def test_offline_pipeline_writes_kss_data_requirements_and_skips_missing_snapsho
     assert manifest["outputs"]["kss_data_requirements"] == (
         tmp_path / "replication" / "kss_data_requirements.json"
     ).as_posix()
+    assert manifest["outputs"]["data_inventory"] == (tmp_path / "replication" / "data_inventory.json").as_posix()
+    assert manifest["outputs"]["data_inventory_md"] == (tmp_path / "replication" / "data_inventory.md").as_posix()
+    assert manifest["outputs"]["kss_data_inventory"] == (tmp_path / "replication" / "kss_data_inventory.json").as_posix()
+    assert manifest["outputs"]["kss_data_inventory_md"] == (tmp_path / "replication" / "kss_data_inventory.md").as_posix()
     assert "kss_replication: kss_snapshot not found" in manifest["skipped"]
 
 
@@ -273,6 +317,22 @@ def test_offline_pipeline_keeps_kss_and_engine_target_weight_outputs_separate(
         lambda specs_path, output_dir: (
             _touch(output_dir / "engine_promotion_candidates.json"),
             _touch(output_dir / "engine_promotion_candidates.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_fnguide_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "data_inventory.json"),
+            _touch(output_dir / "data_inventory.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_kss_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "kss_data_inventory.json"),
+            _touch(output_dir / "kss_data_inventory.md"),
         ),
     )
     monkeypatch.setattr(
@@ -369,6 +429,22 @@ def test_offline_pipeline_replication_report_uses_current_run_kss_validation(
         lambda specs_path, output_dir: (
             _touch(output_dir / "engine_promotion_candidates.json"),
             _touch(output_dir / "engine_promotion_candidates.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_fnguide_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "data_inventory.json"),
+            _touch(output_dir / "data_inventory.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_kss_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "kss_data_inventory.json"),
+            _touch(output_dir / "kss_data_inventory.md"),
         ),
     )
 

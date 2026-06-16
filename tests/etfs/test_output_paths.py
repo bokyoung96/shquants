@@ -1,6 +1,7 @@
 from etfs import paths
 from etfs.families import build_parser as build_families_parser
 from etfs.fnguide.coverage import build_parser as build_fnguide_coverage_parser
+from etfs.fnguide.data_inventory import build_parser as build_fnguide_data_inventory_parser
 from etfs.fnguide.data_requirements import build_parser as build_data_requirements_parser
 from etfs.fnguide.index_methodology import build_parser as build_index_methodology_parser
 from etfs.fnguide.methodology import build_parser as build_fnguide_methodology_parser
@@ -76,6 +77,7 @@ def test_cli_defaults_write_to_grouped_output_folders() -> None:
     assert build_methodology_specs_parser().parse_args([]).output_dir == paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     assert build_methodology_audit_parser().parse_args([]).output_dir == paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     assert build_methodology_engine_parser().parse_args([]).output_dir == paths.FNGUIDE_ENGINE_OUTPUT_DIR.as_posix()
+    assert build_fnguide_data_inventory_parser().parse_args([]).output_dir == paths.FNGUIDE_REPLICATION_OUTPUT_DIR.as_posix()
     assert build_fnguide_pipeline_parser().parse_args([]).extraction_output_dir == (
         paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     )
@@ -99,6 +101,7 @@ def test_cli_defaults_read_from_grouped_output_inputs() -> None:
     assert build_methodology_audit_parser().parse_args([]).specs == paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix()
     assert build_methodology_engine_parser().parse_args([]).inputs == paths.FNGUIDE_ENGINE_INPUTS_JSON.as_posix()
     assert build_methodology_engine_parser().parse_args([]).specs == paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix()
+    assert build_fnguide_data_inventory_parser().parse_args([]).specs == paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix()
     assert build_fnguide_pipeline_parser().parse_args([]).rules == paths.FNGUIDE_RULES_JSON.as_posix()
     assert build_fnguide_pipeline_parser().parse_args([]).overrides == paths.FNGUIDE_SPEC_OVERRIDES_JSON.as_posix()
     assert build_krx_parser().parse_args([]).sources == paths.SOURCES_JSON.as_posix()

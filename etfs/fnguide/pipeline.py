@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from etfs import paths
+from etfs.fnguide.data_inventory import write_fnguide_data_inventory, write_kss_data_inventory
 from etfs.fnguide.methodology_audit import write_methodology_audit
 from etfs.fnguide.methodology_engine import (
     write_engine_input_requirements,
@@ -95,6 +96,18 @@ def run_offline_pipeline(
         available_datasets={"methodology_spec"} | ({"etf_holdings_snapshot"} if fixtures is not None else set()),
     )
     outputs["kss_data_requirements"] = kss_requirements.as_posix()
+    data_inventory_json, data_inventory_md = write_fnguide_data_inventory(
+        replication_output_dir,
+        specs_path=methodology_specs,
+    )
+    outputs["data_inventory"] = data_inventory_json.as_posix()
+    outputs["data_inventory_md"] = data_inventory_md.as_posix()
+    kss_data_inventory_json, kss_data_inventory_md = write_kss_data_inventory(
+        replication_output_dir,
+        specs_path=methodology_specs,
+    )
+    outputs["kss_data_inventory"] = kss_data_inventory_json.as_posix()
+    outputs["kss_data_inventory_md"] = kss_data_inventory_md.as_posix()
 
     kss_replication_validation_path = replication_output_dir / "kss_replication_validation.json"
     if kss_snapshot_path.exists():

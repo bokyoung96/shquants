@@ -320,6 +320,94 @@ def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -
     )
 
     assert result["index_code"] == "FI00.WLT.KSS"
+    assert result["selected_buckets"] == {
+        "top2": [
+            {
+                "bucket": "top2",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000001",
+                "name": "A000001",
+                "float_market_cap": 1000.0,
+                "composite_momentum_score": 1.0,
+            },
+            {
+                "bucket": "top2",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000002",
+                "name": "A000002",
+                "float_market_cap": 900.0,
+                "composite_momentum_score": 2.0,
+            },
+        ],
+        "momentum": [
+            {
+                "bucket": "momentum",
+                "rank_metric": "composite_momentum_score",
+                "security_code": "A000003",
+                "name": "A000003",
+                "float_market_cap": 800.0,
+                "composite_momentum_score": 90.0,
+            },
+            {
+                "bucket": "momentum",
+                "rank_metric": "composite_momentum_score",
+                "security_code": "A000004",
+                "name": "A000004",
+                "float_market_cap": 700.0,
+                "composite_momentum_score": 80.0,
+            },
+            {
+                "bucket": "momentum",
+                "rank_metric": "composite_momentum_score",
+                "security_code": "A000005",
+                "name": "A000005",
+                "float_market_cap": 600.0,
+                "composite_momentum_score": 70.0,
+            },
+            {
+                "bucket": "momentum",
+                "rank_metric": "composite_momentum_score",
+                "security_code": "A000006",
+                "name": "A000006",
+                "float_market_cap": 500.0,
+                "composite_momentum_score": 60.0,
+            },
+        ],
+        "market_cap_fill": [
+            {
+                "bucket": "market_cap_fill",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000007",
+                "name": "A000007",
+                "float_market_cap": 400.0,
+                "composite_momentum_score": 10.0,
+            },
+            {
+                "bucket": "market_cap_fill",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000008",
+                "name": "A000008",
+                "float_market_cap": 300.0,
+                "composite_momentum_score": 20.0,
+            },
+            {
+                "bucket": "market_cap_fill",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000009",
+                "name": "A000009",
+                "float_market_cap": 200.0,
+                "composite_momentum_score": 30.0,
+            },
+            {
+                "bucket": "market_cap_fill",
+                "rank_metric": "float_market_cap",
+                "security_code": "A000010",
+                "name": "A000010",
+                "float_market_cap": 100.0,
+                "composite_momentum_score": 40.0,
+            },
+        ],
+    }
     assert result["target_weight_result"]["checks"] == {
         "constituent_count": "passed",
         "weight_sum": "passed",
@@ -328,9 +416,16 @@ def test_build_kss_replication_selects_buckets_and_calculates_target_weights() -
         item["security_code"]: item["target_weight"]
         for item in result["target_weight_result"]["target_weights"]
     }
+    selected_security_codes = {
+        item["security_code"]
+        for bucket in result["selected_buckets"].values()
+        for item in bucket
+    }
+    assert set(weights) == selected_security_codes
     assert weights["A000001"] == 0.25
     assert weights["A000002"] == 0.25
     assert result["validation"]["status"] == "not_proven"
+    assert result["full_replication_status"] == "not_proven"
 
 
 def test_write_kss_replication_artifacts_outputs_selected_weights_and_validation(

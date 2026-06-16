@@ -29,7 +29,7 @@ def _kss_candidate(row: Mapping[str, object]) -> dict[str, object]:
     if not code:
         raise ValueError("KSS candidate security_code is required")
     for metric in ["float_market_cap", "composite_momentum_score"]:
-        if row.get(metric) in {None, ""}:
+        if _is_missing_metric(row.get(metric)):
             raise ValueError(f"{code} missing {metric}")
         if float(row[metric]) <= 0:
             raise ValueError(f"{code} {metric} must be positive")
@@ -68,4 +68,8 @@ def _bucket_row(row: Mapping[str, object], bucket: str, rank_metric: str) -> dic
 
 
 def _truthy(value: object) -> bool:
-    return value is True or str(value).strip().lower() in {"true", "1", "yes", "y"}
+    return bool(value)
+
+
+def _is_missing_metric(value: object) -> bool:
+    return value is None or (isinstance(value, str) and value.strip() == "")

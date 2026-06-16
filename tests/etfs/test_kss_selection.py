@@ -89,6 +89,33 @@ def test_select_kss_buckets_rejects_missing_metric() -> None:
         select_kss_buckets(rows)
 
 
+def test_select_kss_buckets_accepts_truthy_non_boolean_flags() -> None:
+    rows = [
+        _row("A000001", 1000, 1, eligible=2, theme=3),
+        _row("A000002", 900, 2),
+        _row("A000003", 800, 90),
+        _row("A000004", 700, 80),
+        _row("A000005", 600, 70),
+        _row("A000006", 500, 60),
+        _row("A000007", 400, 10),
+        _row("A000008", 300, 20),
+        _row("A000009", 200, 30),
+        _row("A000010", 100, 40),
+    ]
+
+    buckets = select_kss_buckets(rows)
+
+    assert [item["security_code"] for item in buckets["top2"]] == ["A000001", "A000002"]
+
+
+def test_select_kss_buckets_treats_whitespace_metric_as_missing() -> None:
+    rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    rows[3]["composite_momentum_score"] = "   "
+
+    with pytest.raises(ValueError, match="A000003 missing composite_momentum_score"):
+        select_kss_buckets(rows)
+
+
 def test_select_kss_buckets_rejects_insufficient_candidates() -> None:
     rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(9)]
 

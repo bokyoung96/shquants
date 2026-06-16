@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T05:11:11.481162+00:00",
+  "index_code": "FI00.WLT.KSS",
+  "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+  "product_names": [
+    "DAISHIN343 오피스리츠플러스",
+    "KODEX AI반도체TOP2플러스",
+    "SOL AI반도체TOP2플러스"
+  ],
+  "tracked_etfs": [
+    {
+      "etf_code": "0174J0",
+      "etf_name": "DAISHIN343 오피스리츠플러스"
+    },
+    {
+      "etf_code": "395160",
+      "etf_name": "KODEX AI반도체TOP2플러스"
+    },
+    {
+      "etf_code": "0167A0",
+      "etf_name": "SOL AI반도체TOP2플러스"
+    }
+  ],
+  "methodology_status": "methodology_verified",
+  "replication_readiness": "missing_required_data",
+  "methodology_summary": {
+    "total_constituents": 10,
+    "buckets": [
+      {
+        "name": "top2",
+        "count": 2
+      },
+      {
+        "name": "momentum",
+        "count": 4
+      },
+      {
+        "name": "market_cap_fill",
+        "count": 4
+      }
+    ],
+    "weighting": {
+      "base": "float_market_cap_weighted",
+      "residual": {
+        "applies_to_buckets": [
+          "momentum",
+          "market_cap_fill"
+        ],
+        "total_weight": 0.5,
+        "base": "float_market_cap",
+        "cap": 0.15,
+        "redistribution": "iterative_pro_rata"
+      }
+    },
+    "rebalance": {
+      "frequency": "quarterly",
+      "implementation_months": [
+        1,
+        4,
+        7,
+        10
+      ],
+      "implementation_timing": "2영업일째(D+2)에 정기변경을 수행합니다"
+    }
+  },
+  "requirements": [
+    {
+      "name": "price_snapshot",
+      "status": "available",
+      "note": "Local price history supports direct price-momentum derivation."
+    },
+    {
+      "name": "price_momentum",
+      "status": "derivable",
+      "note": "Derive price momentum from the local price snapshot once the rebalance window is fixed."
+    },
+    {
+      "name": "float_market_cap_snapshot",
+      "status": "available",
+      "note": "Free-float market cap is needed for top-2 ranking and residual weighting."
+    },
+    {
+      "name": "sector_classification",
+      "status": "available",
+      "note": "Local sector labels can support semiconductor screening, but not provider theme confirmation."
+    },
+    {
+      "name": "theme_membership",
+      "status": "external_required",
+      "note": "Full replication still needs FnGuide or provider-confirmed theme membership evidence."
+    },
+    {
+      "name": "sales_momentum",
+      "status": "external_required",
+      "note": "The methodology depends on official sales-momentum inputs that are not inferable from current local files."
+    },
+    {
+      "name": "composite_score",
+      "status": "external_required",
+      "note": "Composite ranking inputs remain provider-controlled unless the official scoring formula and values are supplied."
+    },
+    {
+      "name": "issuer_holdings_snapshot",
+      "status": "available",
+      "note": "ETF issuer holdings are useful proxy evidence but cannot prove full index replication on their own.",
+      "satisfies_full_replication": false
+    },
+    {
+      "name": "corporate_actions",
+      "status": "missing",
+      "note": "Corporate action history is needed to keep the security universe and weights aligned through rebalance dates."
+    },
+    {
+      "name": "official_bucket_assignments",
+      "status": "external_required",
+      "note": "Official bucket assignments are required to confirm which names land in top-2, momentum, and fill buckets."
+    },
+    {
+      "name": "official_target_weights",
+      "status": "external_required",
+      "note": "Official target weights remain the primary replication and validation evidence for full fidelity."
+    }
+  ]
+}

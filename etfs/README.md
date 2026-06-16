@@ -55,6 +55,8 @@ Outputs:
 - `output/engine/fnguide/engine_promotion_candidates.json`, `output/engine/fnguide/engine_promotion_candidates.md`: specs whose methodology is engine-supported but still needs PDF evidence/status review before promotion
 - `output/engine/fnguide/methodology_replication_report.json`, `output/engine/fnguide/methodology_replication_report.md`: smoke-tested target-weight replication status for engine-ready specs and explicit full-methodology replication limits
 - `output/replication/fnguide/kss_data_requirements.json`: KSS full-replication data contract and currently available datasets
+- `output/replication/fnguide/data_inventory.json`, `output/replication/fnguide/data_inventory.md`: provider-wide full-replication data inventory and readiness report
+- `output/replication/fnguide/kss_data_inventory.json`, `output/replication/fnguide/kss_data_inventory.md`: focused SOL/KSS data inventory showing available local inputs and missing official evidence
 - `output/replication/fnguide/kss_selected_buckets.json`: selected KSS top2, momentum, and market-cap-fill buckets when a source snapshot is supplied
 - `output/replication/fnguide/kss_target_weights.json`: KSS target weights generated from selected buckets
 - `output/replication/fnguide/kss_replication_validation.json`, `output/replication/fnguide/kss_replication_validation.md`: KSS validation diff against official targets or secondary ETF holdings
@@ -71,6 +73,8 @@ Outputs:
 The replication report is intentionally scoped. It proves that engine-ready methodology specs can execute target-weight formulas from explicit calculation inputs. It does not claim full provider methodology replication until issuer universe construction, bucket selection, and official rebalance target comparisons are also available.
 
 KSS replication is the first full-methodology tracer bullet. The pipeline always writes its data-requirement artifact and only calculates selected buckets and target weights when `output/replication/fnguide/kss_snapshot.json` supplies a dated source snapshot. Missing snapshots are reported as a skip, not as a successful replication.
+
+Full replication work is gated by the data inventory. KSS/SOL remains `missing_required_data` until official semiconductor theme membership, sales/composite score inputs, bucket assignments, and target weights are available. Local price, float-market-cap, sector, and ETF holdings data can be reported as evidence, but proxy classifications or ETF holdings do not upgrade a run to full replication.
 
 `families` is provider-agnostic. It separates the current FnGuide domestic-sector reference lane from future product-family lanes such as foreign/global equity, domestic broad-market, and fixed-income/cash/commodity/derivative products.
 

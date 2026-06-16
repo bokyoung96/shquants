@@ -201,6 +201,28 @@ def test_build_replication_validation_rejects_negative_tolerance() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "weight_tolerance",
+    [float("nan"), float("inf"), float("-inf")],
+)
+def test_build_replication_validation_rejects_non_finite_tolerance(
+    weight_tolerance: float,
+) -> None:
+    with pytest.raises(ValueError, match="weight_tolerance must be finite"):
+        build_replication_validation(
+            index_code="FI00.WLT.KSS",
+            as_of="2026-05-29",
+            validation_source_type="official_target_weights",
+            calculated_target_weights=[
+                {"security_code": "A000001", "target_weight": 1.0},
+            ],
+            validation_weights=[
+                {"security_code": "A000001", "official_weight": 0.9},
+            ],
+            weight_tolerance=weight_tolerance,
+        )
+
+
 def test_write_replication_validation_writes_stable_json_and_markdown(
     tmp_path,
 ) -> None:
@@ -241,3 +263,19 @@ def test_write_replication_validation_writes_stable_json_and_markdown(
         "| extra_in_validation | A000003 |  | 0.3 |  |  |  |\n"
         "| weight_difference | A000001 | 0.25 | 0.2 | 0.05 |  |  |\n"
     )
+
+
+def test_write_replication_validation_rejects_nan_report_payload(tmp_path) -> None:
+    with pytest.raises(ValueError, match="Out of range float values are not JSON compliant"):
+        write_replication_validation(
+            {
+                "index_code": "FI00.WLT.KSS",
+                "as_of": "2026-05-29",
+                "validation_source_type": "official_target_weights",
+                "status": "failed",
+                "checks": {"weight_tolerance": "failed"},
+                "metrics": {"max_abs_weight_difference": float("nan")},
+                "differences": [],
+            },
+            tmp_path,
+        )

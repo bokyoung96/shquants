@@ -16,6 +16,8 @@ def build_replication_validation(
     validation_weights: Iterable[Mapping[str, object]],
     weight_tolerance: float,
 ) -> dict[str, object]:
+    if not math.isfinite(weight_tolerance):
+        raise ValueError("weight_tolerance must be finite")
     if weight_tolerance < 0:
         raise ValueError("weight_tolerance must be >= 0")
 

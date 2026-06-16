@@ -14,6 +14,7 @@ FORWARD_SNAPSHOT_FRAME_KEYS = frozenset({"dividend_yld_fy0"})
 @dataclass(frozen=True, slots=True)
 class MfbtEmp008Config:
     sector_dataset: DatasetId = DatasetId.QW_WI_SEC_26_BIG
+    sector_neutral_dataset: DatasetId | None = None
     bm_weights_dataset: DatasetId = DatasetId.QW_BM_WEIGHTS
     universe_dataset: DatasetId = DatasetId.QW_K200_YN
     float_market_cap_dataset: DatasetId = DatasetId.QW_MKTCAP_FLT
@@ -29,6 +30,8 @@ class MfbtEmp008Config:
     factor_set: str = "mfbt"
     expected_alpha_policy: str = "mean"
     monthly_snapshot_forward_days: int = 0
+    value_raw_winsor_quantile: float | None = None
+    value_zscore_cap: float | None = None
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
@@ -40,6 +43,7 @@ def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
         DatasetId.QW_DPS_TTM,
         DatasetId.QW_RETAIL,
         config.sector_dataset,
+        config.sector_neutral_dataset or config.sector_dataset,
         DatasetId.QW_MKTCAP,
         config.float_market_cap_dataset,
         DatasetId.QW_FCF,
@@ -66,7 +70,24 @@ def load_mfbt_emp008_market(
     loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
     load_start = padded_history_start(start, config)
     load_end = padded_snapshot_end(end, config)
-    market = loader.load(LoadRequest(datasets=list(required_datasets(config)), start=load_start, end=load_end))
+    neutral_dataset = config.sector_neutral_dataset or config.sector_dataset
+    datasets = list(required_datasets(config))
+    if neutral_dataset != config.sector_dataset:
+        base_datasets = [dataset for dataset in datasets if dataset != neutral_dataset]
+        market = loader.load(LoadRequest(datasets=base_datasets, start=load_start, end=load_end))
+        neutral_market = loader.load(LoadRequest(datasets=[neutral_dataset], start=load_start, end=load_end))
+        market = MarketData(
+            frames={**market.frames, "sector_neutral_big": neutral_market.frames["sector_big"]},
+            universe=market.universe,
+            benchmark=market.benchmark,
+        )
+    else:
+        market = loader.load(LoadRequest(datasets=datasets, start=load_start, end=load_end))
+        market = MarketData(
+            frames={**market.frames, "sector_neutral_big": market.frames["sector_big"]},
+            universe=market.universe,
+            benchmark=market.benchmark,
+        )
     return _trim_non_forward_snapshot_frames(market, end=end, config=config)
 
 

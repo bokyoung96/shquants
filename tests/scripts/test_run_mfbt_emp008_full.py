@@ -21,6 +21,7 @@ from backtesting.strategies.emp008.run_weights import (
     write_target_weights_csv,
 )
 from backtesting.strategies.emp008.comparison import (
+    _pair_active_weight_display_frame,
     active_weight_abs_sum_frame,
     build_emp008_comparison,
     excess_summary_bps,
@@ -40,9 +41,11 @@ from backtesting.strategies.emp008.mfbt_emp008 import (
 from backtesting.strategies.emp008.mfbt_emp008_data import (
     MfbtEmp008Config,
     _trim_non_forward_snapshot_frames,
+    load_mfbt_emp008_market,
     required_datasets,
 )
 from backtesting.strategies.emp008.mfbt_emp008_optimize import optimize_active_weights_with_covariance
+from backtesting.strategies.emp008.mfbt_emp008_preprocess import preprocess_factor_frame
 
 
 def test_latest_common_end_uses_required_dataset_minimum_end_date(tmp_path: Path) -> None:
@@ -57,6 +60,42 @@ def test_latest_common_end_uses_required_dataset_minimum_end_date(tmp_path: Path
         pd.DataFrame({"A": range(len(index))}, index=index).to_parquet(tmp_path / f"{spec.stem}.parquet")
 
     assert latest_common_end(tmp_path, config) == "2024-01-02"
+
+
+def test_required_datasets_includes_distinct_sector_neutral_dataset() -> None:
+    config = MfbtEmp008Config(sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG)
+
+    datasets = required_datasets(config)
+
+    assert DatasetId.QW_WI_SEC_26_BIG in datasets
+    assert DatasetId.QW_WICS_SEC_BIG in datasets
+    assert len(datasets) == len(set(datasets))
+
+
+def test_load_market_keeps_retail_and_sector_neutral_frames_separate(tmp_path: Path) -> None:
+    catalog = DataCatalog.default()
+    config = MfbtEmp008Config(sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG)
+    index = pd.to_datetime(["2024-01-02", "2024-01-03"])
+
+    for dataset_id in required_datasets(config):
+        spec = catalog.get(dataset_id)
+        if dataset_id is config.sector_dataset:
+            frame = pd.DataFrame({"A": ["WI100", "WI100"]}, index=index)
+        elif dataset_id is config.sector_neutral_dataset:
+            frame = pd.DataFrame({"A": ["G45", "G45"]}, index=index)
+        else:
+            frame = pd.DataFrame({"A": [1.0, 1.0]}, index=index)
+        frame.to_parquet(tmp_path / f"{spec.stem}.parquet")
+
+    market = load_mfbt_emp008_market(
+        parquet_dir=tmp_path,
+        start="2024-01-02",
+        end="2024-01-03",
+        config=config,
+    )
+
+    assert market.frames["sector_big"].loc["2024-01-03", "A"] == "WI100"
+    assert market.frames["sector_neutral_big"].loc["2024-01-03", "A"] == "G45"
 
 
 def test_write_target_weights_csv_uses_iso_date_index(tmp_path: Path) -> None:
@@ -244,9 +283,51 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in required_datasets(config)
 
 
+def test_build_emp008_config_sets_wics_sector_neutral_dataset() -> None:
+    config = build_emp008_config(tracking_error_annual=0.007, sector_neutral_dataset="wics")
+
+    assert config.sector_dataset == DatasetId.QW_WI_SEC_26_BIG
+    assert config.sector_neutral_dataset == DatasetId.QW_WICS_SEC_BIG
+    assert DatasetId.QW_WI_SEC_26_BIG in required_datasets(config)
+    assert DatasetId.QW_WICS_SEC_BIG in required_datasets(config)
+
+
 def test_build_emp008_config_rejects_unknown_factor_set() -> None:
     with pytest.raises(ValueError, match="factor_set"):
         build_emp008_config(factor_set="legacy")
+
+
+def test_preprocess_factor_frame_caps_final_zscore_exposure() -> None:
+    raw = pd.DataFrame(
+        {"A": [0.0], "B": [1.0], "C": [100.0]},
+        index=pd.to_datetime(["2024-01-31"]),
+    )
+    float_mktcap = pd.DataFrame(
+        {"A": [1.0], "B": [1.0], "C": [0.01]},
+        index=raw.index,
+    )
+    universe = pd.DataFrame(True, index=raw.index, columns=raw.columns)
+
+    result = preprocess_factor_frame(raw, float_mktcap, universe, zscore_cap=2.0)
+
+    assert result.abs().max(axis=1).iloc[0] <= 2.0
+
+
+def test_preprocess_factor_frame_winsorizes_raw_cross_section_before_zscore() -> None:
+    raw = pd.DataFrame(
+        {"A": [0.0], "B": [1.0], "C": [10.0], "D": [100.0]},
+        index=pd.to_datetime(["2024-01-31"]),
+    )
+    float_mktcap = pd.DataFrame(
+        {"A": [1.0], "B": [1.0], "C": [1.0], "D": [0.01]},
+        index=raw.index,
+    )
+    universe = pd.DataFrame(True, index=raw.index, columns=raw.columns)
+
+    baseline = preprocess_factor_frame(raw, float_mktcap, universe)
+    winsorized = preprocess_factor_frame(raw, float_mktcap, universe, winsor_quantile=0.20)
+
+    assert winsorized.loc["2024-01-31", "D"] < baseline.loc["2024-01-31", "D"]
 
 
 def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend_yield() -> None:
@@ -480,6 +561,19 @@ def test_monthly_excess_heatmap_frame_pivots_year_by_month() -> None:
     assert result.loc[2024, 1] == pytest.approx(1.0)
     assert result.loc[2025, 3] == pytest.approx(-2.0)
     assert pd.isna(result.loc[2024, 2])
+
+
+def test_pair_active_weight_display_frame_accepts_single_strategy_schema() -> None:
+    frame = pd.DataFrame(
+        {"sum_abs_active_weight_pct": [14.0, 0.5]},
+        index=pd.to_datetime(["2023-01-31", "2023-02-28"]),
+    )
+
+    result = _pair_active_weight_display_frame(frame)
+
+    assert result.columns.tolist() == ["MFBT"]
+    assert result.index.tolist() == [pd.Timestamp("2023-01-31")]
+    assert result.loc[pd.Timestamp("2023-01-31"), "MFBT"] == pytest.approx(14.0)
 
 
 def test_build_emp008_comparison_writes_core_artifacts(tmp_path: Path) -> None:

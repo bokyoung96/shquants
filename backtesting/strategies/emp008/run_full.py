@@ -35,6 +35,7 @@ def main(argv: list[str] | None = None) -> None:
         tracking_error_annual=args.tracking_error_annual,
         risk_model=args.risk_model,
         factor_set=args.factor_set,
+        sector_neutral_dataset=args.sector_neutral_dataset,
     )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root, backtests_root, reports_root = resolve_run_output_dirs(
@@ -71,6 +72,7 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
         "factor_set": config.factor_set,
+        "sector_neutral_dataset": None if config.sector_neutral_dataset is None else config.sector_neutral_dataset.value,
     }
 
     try:
@@ -222,6 +224,11 @@ def _parser() -> argparse.ArgumentParser:
         "--factor-set",
         choices=("mfbt", "origin"),
         help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
+    )
+    parser.add_argument(
+        "--sector-neutral-dataset",
+        choices=("default", "wi26", "wics"),
+        help="Sector taxonomy for optimizer neutrality. Default keeps WI26; wics uses QW_WICS_SEC_BIG.",
     )
     parser.add_argument("--no-comparison", action="store_true", help="Skip costed backtest and comparison artifacts.")
     parser.add_argument("--comparison-fee", type=float, default=0.0002)

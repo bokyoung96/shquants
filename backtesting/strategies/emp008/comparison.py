@@ -511,15 +511,21 @@ def _plot_pair_monthly_excess_heatmap(monthly_active: pd.DataFrame, path: Path) 
     plt.close(fig)
 
 
-def _plot_pair_active_weight_sum(frame: pd.DataFrame, path: Path) -> None:
+def _pair_active_weight_display_frame(frame: pd.DataFrame) -> pd.DataFrame:
     pct_columns = [column for column in frame.columns if str(column).endswith("_sum_abs_active_weight_pct")]
     display = pd.DataFrame(index=frame.index)
     for column in pct_columns:
         label = "MFBT" if "mfbt" in str(column).lower() else "Origin"
         display[label] = frame[column].astype(float)
+    if display.empty and "sum_abs_active_weight_pct" in frame.columns:
+        display["MFBT"] = frame["sum_abs_active_weight_pct"].astype(float)
     if not display.empty:
         display = display.loc[display.gt(1.0).all(axis=1)]
+    return display
 
+
+def _plot_pair_active_weight_sum(frame: pd.DataFrame, path: Path) -> None:
+    display = _pair_active_weight_display_frame(frame)
     fig, ax = plt.subplots(figsize=(12.5, 5.4))
     colors = {"MFBT": "#1f77b4", "Origin": "#d55e00"}
     for column in display.columns:

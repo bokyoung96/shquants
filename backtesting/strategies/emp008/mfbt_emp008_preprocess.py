@@ -9,9 +9,13 @@ def preprocess_factor_frame(
     universe: pd.DataFrame,
     *,
     rank_transform: bool = False,
+    winsor_quantile: float | None = None,
+    zscore_cap: float | None = None,
 ) -> pd.DataFrame:
     raw = raw.reindex(index=float_mktcap.index, columns=float_mktcap.columns).astype(float)
     universe = universe.reindex(index=raw.index, columns=raw.columns).fillna(False).astype(bool)
+    if winsor_quantile is not None:
+        raw = _winsorize_by_row(raw, universe, winsor_quantile)
     weights = _normalized_weights(float_mktcap.reindex(index=raw.index, columns=raw.columns), universe)
     masked = raw.where(universe)
     observed_weights = weights.where(masked.notna(), 0.0)
@@ -22,7 +26,12 @@ def preprocess_factor_frame(
         filled = filled.rank(axis=1, method="min", ascending=True).where(universe)
     centered = filled.sub((filled * weights).sum(axis=1), axis=0)
     std = centered.pow(2).mul(weights).sum(axis=1).pow(0.5).replace(0.0, float("nan"))
-    return centered.div(std, axis=0).fillna(0.0).where(universe, 0.0).astype(float)
+    zscore = centered.div(std, axis=0).fillna(0.0)
+    if zscore_cap is not None:
+        if zscore_cap <= 0.0:
+            raise ValueError("zscore_cap must be positive")
+        zscore = zscore.clip(lower=-zscore_cap, upper=zscore_cap)
+    return zscore.where(universe, 0.0).astype(float)
 
 
 def build_sector_active_exposures(
@@ -57,3 +66,12 @@ def _normalized_weights(float_mktcap: pd.DataFrame, universe: pd.DataFrame) -> p
     values = float_mktcap.astype(float).where(universe).clip(lower=0.0)
     total = values.sum(axis=1).replace(0.0, float("nan"))
     return values.div(total, axis=0).fillna(0.0)
+
+
+def _winsorize_by_row(raw: pd.DataFrame, universe: pd.DataFrame, quantile: float) -> pd.DataFrame:
+    if quantile <= 0.0 or quantile >= 0.5:
+        raise ValueError("winsor_quantile must be between 0 and 0.5")
+    masked = raw.where(universe)
+    lower = masked.quantile(quantile, axis=1)
+    upper = masked.quantile(1.0 - quantile, axis=1)
+    return raw.clip(lower=lower, upper=upper, axis=0)

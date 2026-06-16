@@ -79,7 +79,7 @@ def build_emp008_factor_attribution(
     close = market.frames["close"].astype(float)
     float_mktcap = market.frames["float_market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
     universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
-    sector = market.frames["sector_big"].reindex(index=close.index, columns=close.columns).ffill()
+    sector = market.frames["sector_neutral_big"].reindex(index=close.index, columns=close.columns).ffill()
     bm_weights = market.frames["bm_weights"].reindex(index=close.index, columns=close.columns).astype(float)
 
     alpha_factors = {
@@ -88,6 +88,8 @@ def build_emp008_factor_attribution(
             float_mktcap,
             universe,
             rank_transform=name in active_config.rank_transform_factors,
+            winsor_quantile=active_config.value_raw_winsor_quantile if name == "value" else None,
+            zscore_cap=active_config.value_zscore_cap if name == "value" else None,
         )
         for name, frame in raw_factors.items()
     }

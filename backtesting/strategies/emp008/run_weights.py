@@ -11,6 +11,7 @@ from time import perf_counter
 import pandas as pd
 
 from backtesting.catalog import DataCatalog
+from backtesting.catalog import DatasetId
 from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result, run_mfbt_emp008
 from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
 
@@ -24,6 +25,7 @@ def build_emp008_config(
     tracking_error_annual: float | None = None,
     risk_model: str | None = None,
     factor_set: str | None = None,
+    sector_neutral_dataset: str | None = None,
 ) -> MfbtEmp008Config:
     config = MfbtEmp008Config()
     if risk_model is not None:
@@ -44,11 +46,22 @@ def build_emp008_config(
             )
         else:
             config = replace(config, factor_set=factor_set)
+    if sector_neutral_dataset is not None:
+        config = replace(config, sector_neutral_dataset=_resolve_sector_neutral_dataset(sector_neutral_dataset))
     if tracking_error_annual is None:
         return config
     if tracking_error_annual < 0.0:
         raise ValueError("tracking error must be non-negative")
     return replace(config, tracking_error=tracking_error_annual / (12**0.5))
+
+
+def _resolve_sector_neutral_dataset(value: str) -> DatasetId | None:
+    normalized = value.strip().lower()
+    if normalized in {"default", "wi26", "wi_sec_26_big", "qw_wi_sec_26_big"}:
+        return None
+    if normalized in {"wics", "wics_sec_big", "qw_wics_sec_big"}:
+        return DatasetId.QW_WICS_SEC_BIG
+    raise ValueError("sector_neutral_dataset must be 'default'/'wi26' or 'wics'")
 
 
 def latest_common_end(parquet_dir: Path, config: MfbtEmp008Config) -> str:
@@ -138,6 +151,7 @@ def main(argv: list[str] | None = None) -> None:
         tracking_error_annual=args.tracking_error_annual,
         risk_model=args.risk_model,
         factor_set=args.factor_set,
+        sector_neutral_dataset=args.sector_neutral_dataset,
     )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root = args.output_root / args.name
@@ -210,6 +224,11 @@ def _parser() -> argparse.ArgumentParser:
         "--factor-set",
         choices=("mfbt", "origin"),
         help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
+    )
+    parser.add_argument(
+        "--sector-neutral-dataset",
+        choices=("default", "wi26", "wics"),
+        help="Sector taxonomy for optimizer neutrality. Default keeps WI26; wics uses QW_WICS_SEC_BIG.",
     )
     return parser
 

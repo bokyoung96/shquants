@@ -165,6 +165,41 @@ def test_build_kss_data_inventory_resolves_relative_paths_from_specs_directory_a
     assert requirements["float_market_cap_snapshot"]["status"] == "missing"
 
 
+def test_build_kss_data_inventory_uses_default_local_paths_when_not_overridden(tmp_path: Path, monkeypatch) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+    _touch(tmp_path / "parquet" / "qw_adj_c.parquet")
+    _touch(tmp_path / "parquet" / "qw_mktcap_flt.parquet")
+    _touch(tmp_path / "parquet" / "qw_wics_sec_big.parquet")
+    _touch(tmp_path / "etfs" / "validation_A0167A0.xlsx")
+    monkeypatch.chdir(tmp_path)
+
+    inventory = build_kss_data_inventory(specs_path=specs_path)
+    requirements = {item["name"]: item for item in inventory["requirements"]}
+
+    assert requirements["price_snapshot"]["status"] == "available"
+    assert requirements["price_momentum"]["status"] == "derivable"
+    assert requirements["float_market_cap_snapshot"]["status"] == "available"
+    assert requirements["sector_classification"]["status"] == "available"
+    assert requirements["issuer_holdings_snapshot"]["status"] == "available"
+    assert requirements["issuer_holdings_snapshot"]["satisfies_full_replication"] is False
+
+
 def test_write_kss_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
     specs_path = _write_specs(
         tmp_path / "methodology_specs.json",
@@ -344,5 +379,6 @@ def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:
 
 
 def _touch(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("", encoding="utf-8")
     return path

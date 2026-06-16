@@ -17,7 +17,11 @@ def build_kss_data_inventory(
     local_paths: Mapping[str, Path] | None = None,
 ) -> dict[str, object]:
     spec = _require_index_spec(specs_path, index_code=KSS_INDEX_CODE)
-    paths = _normalize_local_paths(local_paths or {}, base_dir=specs_path.parent)
+    paths = (
+        _normalize_local_paths(local_paths, base_dir=specs_path.parent)
+        if local_paths is not None
+        else _default_local_paths()
+    )
     requirements = [
         _local_requirement(
             "price_snapshot",
@@ -247,6 +251,15 @@ def _normalize_local_paths(local_paths: Mapping[str, Path], *, base_dir: Path) -
     return {
         name: path if path.is_absolute() else base_dir / path
         for name, path in local_paths.items()
+    }
+
+
+def _default_local_paths() -> dict[str, Path]:
+    return {
+        "price_snapshot": Path("parquet/qw_adj_c.parquet"),
+        "float_market_cap_snapshot": Path("parquet/qw_mktcap_flt.parquet"),
+        "sector_classification": Path("parquet/qw_wics_sec_big.parquet"),
+        "issuer_holdings_snapshot": Path("etfs/validation_A0167A0.xlsx"),
     }
 
 

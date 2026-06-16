@@ -4,6 +4,7 @@ from pathlib import Path
 from etfs.fnguide.data_inventory import (
     build_fnguide_data_inventory,
     build_kss_data_inventory,
+    main,
     write_fnguide_data_inventory,
     write_kss_data_inventory,
 )
@@ -294,6 +295,35 @@ def test_write_fnguide_data_inventory_escapes_markdown_cells_and_tracks_etfs(tmp
     markdown = markdown_path.read_text(encoding="utf-8")
     assert "FnGuide AI \\| Semiconductor TOP2 Plus Index" in markdown
     assert "466920 SOL \\| AI Semiconductor ETF" in markdown
+
+
+def test_data_inventory_cli_writes_provider_and_kss_outputs(tmp_path: Path) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+    output_dir = tmp_path / "cli-output"
+
+    result = main(["--specs", specs_path.as_posix(), "--output-dir", output_dir.as_posix()])
+
+    assert result == 0
+    assert (output_dir / "data_inventory.json").is_file()
+    assert (output_dir / "data_inventory.md").is_file()
+    assert (output_dir / "kss_data_inventory.json").is_file()
+    assert (output_dir / "kss_data_inventory.md").is_file()
 
 
 def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:

@@ -221,22 +221,7 @@ def test_run_offline_pipeline_skips_target_validation_when_engine_inputs_are_mis
             _touch(output_dir / "engine_promotion_candidates.md"),
         ),
     )
-    monkeypatch.setattr(
-        pipeline,
-        "write_fnguide_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "data_inventory.json"),
-            _touch(output_dir / "data_inventory.md"),
-        ),
-    )
-    monkeypatch.setattr(
-        pipeline,
-        "write_kss_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "kss_data_inventory.json"),
-            _touch(output_dir / "kss_data_inventory.md"),
-        ),
-    )
+    _patch_inventory_writers(monkeypatch)
     monkeypatch.setattr(
         pipeline,
         "write_methodology_replication_report",
@@ -319,22 +304,7 @@ def test_offline_pipeline_keeps_kss_and_engine_target_weight_outputs_separate(
             _touch(output_dir / "engine_promotion_candidates.md"),
         ),
     )
-    monkeypatch.setattr(
-        pipeline,
-        "write_fnguide_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "data_inventory.json"),
-            _touch(output_dir / "data_inventory.md"),
-        ),
-    )
-    monkeypatch.setattr(
-        pipeline,
-        "write_kss_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "kss_data_inventory.json"),
-            _touch(output_dir / "kss_data_inventory.md"),
-        ),
-    )
+    _patch_inventory_writers(monkeypatch)
     monkeypatch.setattr(
         pipeline,
         "write_methodology_replication_report",
@@ -431,22 +401,7 @@ def test_offline_pipeline_replication_report_uses_current_run_kss_validation(
             _touch(output_dir / "engine_promotion_candidates.md"),
         ),
     )
-    monkeypatch.setattr(
-        pipeline,
-        "write_fnguide_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "data_inventory.json"),
-            _touch(output_dir / "data_inventory.md"),
-        ),
-    )
-    monkeypatch.setattr(
-        pipeline,
-        "write_kss_data_inventory",
-        lambda output_dir, *, specs_path: (
-            _touch(output_dir / "kss_data_inventory.json"),
-            _touch(output_dir / "kss_data_inventory.md"),
-        ),
-    )
+    _patch_inventory_writers(monkeypatch)
 
     def fake_write_methodology_replication_report(
         specs_path: Path,
@@ -518,6 +473,25 @@ def _touch(path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("{}", encoding="utf-8")
     return path
+
+
+def _patch_inventory_writers(monkeypatch) -> None:
+    monkeypatch.setattr(
+        pipeline,
+        "write_fnguide_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "data_inventory.json"),
+            _touch(output_dir / "data_inventory.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_kss_data_inventory",
+        lambda output_dir, *, specs_path: (
+            _touch(output_dir / "kss_data_inventory.json"),
+            _touch(output_dir / "kss_data_inventory.md"),
+        ),
+    )
 
 
 def _touch_pair(output_dir: Path) -> tuple[Path, Path]:

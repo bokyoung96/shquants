@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T03:06:25.818878+00:00",
+  "index_code": "FI00.WLT.KSS",
+  "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+  "replication_stage": "data_contract",
+  "required_datasets": [
+    {
+      "name": "methodology_spec",
+      "required_fields": [
+        "index_code",
+        "index_name",
+        "selection",
+        "weighting",
+        "status"
+      ],
+      "purpose": "Executable KSS methodology rules and PDF-backed status."
+    },
+    {
+      "name": "rebalance_calendar",
+      "required_fields": [
+        "index_code",
+        "review_date",
+        "data_cutoff_date",
+        "effective_date"
+      ],
+      "purpose": "Date alignment for universe, selection metrics, and target weights."
+    },
+    {
+      "name": "security_master",
+      "required_fields": [
+        "as_of",
+        "security_code",
+        "name",
+        "market",
+        "listing_status",
+        "stock_type"
+      ],
+      "purpose": "Base Korean listed-security universe."
+    },
+    {
+      "name": "eligibility_flags",
+      "required_fields": [
+        "as_of",
+        "security_code",
+        "is_eligible"
+      ],
+      "purpose": "Methodology exclusions such as non-common shares, suspended names, and managed issues."
+    },
+    {
+      "name": "market_snapshot",
+      "required_fields": [
+        "as_of",
+        "security_code",
+        "float_market_cap"
+      ],
+      "purpose": "Top2 and fill-bucket ranking plus residual weighting."
+    },
+    {
+      "name": "classification_snapshot",
+      "required_fields": [
+        "as_of",
+        "security_code",
+        "is_semiconductor_theme"
+      ],
+      "purpose": "KSS semiconductor or provider-theme membership."
+    },
+    {
+      "name": "selection_metrics",
+      "required_fields": [
+        "as_of",
+        "security_code",
+        "composite_momentum_score"
+      ],
+      "purpose": "Momentum bucket ranking after top2 exclusion."
+    },
+    {
+      "name": "official_target_weights",
+      "required_fields": [
+        "index_code",
+        "effective_date",
+        "security_code",
+        "official_weight"
+      ],
+      "purpose": "Primary full-replication validation evidence."
+    },
+    {
+      "name": "etf_holdings_snapshot",
+      "required_fields": [
+        "etf_code",
+        "as_of",
+        "security_code",
+        "holding_weight"
+      ],
+      "purpose": "Secondary validation evidence when official targets are absent."
+    }
+  ],
+  "available_datasets": [
+    "etf_holdings_snapshot",
+    "methodology_spec"
+  ],
+  "missing_datasets": [
+    "rebalance_calendar",
+    "security_master",
+    "eligibility_flags",
+    "market_snapshot",
+    "classification_snapshot",
+    "selection_metrics",
+    "official_target_weights"
+  ],
+  "full_replication_ready": false
+}

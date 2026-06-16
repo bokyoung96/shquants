@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T03:06:25.820955+00:00",
+  "outputs": {
+    "methodology_extractions": "etfs/output/extractions/fnguide/methodology_extractions.json",
+    "methodology_extractions_md": "etfs/output/extractions/fnguide/methodology_extractions.md",
+    "draft_specs": "etfs/output/extractions/fnguide/draft_specs.json",
+    "methodology_specs": "etfs/output/extractions/fnguide/methodology_specs.json",
+    "methodology_audit": "etfs/output/extractions/fnguide/methodology_audit.json",
+    "methodology_audit_md": "etfs/output/extractions/fnguide/methodology_audit.md",
+    "validation_fixtures": "etfs/output/validation/validation_fixtures.json",
+    "validation_results": "etfs/output/validation/validation_results.json",
+    "engine_input_requirements": "etfs/output/engine/fnguide/engine_input_requirements.json",
+    "engine_input_template": "etfs/output/engine/fnguide/engine_inputs.template.json",
+    "engine_support_matrix": "etfs/output/engine/fnguide/engine_support_matrix.json",
+    "engine_support_matrix_md": "etfs/output/engine/fnguide/engine_support_matrix.md",
+    "engine_promotion_candidates": "etfs/output/engine/fnguide/engine_promotion_candidates.json",
+    "engine_promotion_candidates_md": "etfs/output/engine/fnguide/engine_promotion_candidates.md",
+    "methodology_replication_report": "etfs/output/engine/fnguide/methodology_replication_report.json",
+    "methodology_replication_report_md": "etfs/output/engine/fnguide/methodology_replication_report.md",
+    "kss_data_requirements": "etfs/output/replication/fnguide/kss_data_requirements.json"
+  },
+  "skipped": [
+    "kss_replication: kss_snapshot not found",
+    "target_weights: engine_inputs not found; fill engine_inputs.template.json"
+  ]
+}

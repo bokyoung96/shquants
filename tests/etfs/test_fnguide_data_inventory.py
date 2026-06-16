@@ -52,7 +52,8 @@ def test_build_kss_data_inventory_marks_local_and_external_requirements(tmp_path
 
     assert inventory["schema_version"] == "1.0"
     assert inventory["index_code"] == "FI00.WLT.KSS"
-    assert inventory["replication_readiness"] == "missing_required_data"
+    assert inventory["replication_calculation_readiness"] == "missing_calculation_inputs"
+    assert inventory["replication_proven"] is False
     assert inventory["product_names"] == ["SOL AI Semiconductor ETF"]
     assert inventory["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
     assert inventory["methodology_status"] == "methodology_verified"
@@ -64,14 +65,18 @@ def test_build_kss_data_inventory_marks_local_and_external_requirements(tmp_path
     }
     assert requirements["price_snapshot"]["status"] == "available"
     assert requirements["float_market_cap_snapshot"]["status"] == "available"
-    assert requirements["sector_classification"]["status"] == "available"
+    assert requirements["semiconductor_classification_snapshot"]["status"] == "available"
     assert requirements["issuer_holdings_snapshot"]["status"] == "available"
     assert requirements["price_momentum"]["status"] == "derivable"
-    assert requirements["theme_membership"]["status"] == "external_required"
-    assert requirements["sales_momentum"]["status"] == "external_required"
-    assert requirements["composite_score"]["status"] == "external_required"
-    assert requirements["official_bucket_assignments"]["status"] == "external_required"
-    assert requirements["official_target_weights"]["status"] == "external_required"
+    assert requirements["semiconductor_classification_snapshot"]["usage"] == "calculation_input"
+    assert requirements["sales_momentum"]["usage"] == "calculation_input"
+    assert requirements["composite_score"]["usage"] == "calculation_input"
+    assert requirements["sales_momentum"]["status"] == "missing"
+    assert requirements["composite_score"]["status"] == "missing"
+    assert requirements["official_bucket_assignments"]["usage"] == "validation_evidence"
+    assert requirements["official_target_weights"]["usage"] == "validation_evidence"
+    assert requirements["official_bucket_assignments"]["status"] == "missing"
+    assert requirements["official_target_weights"]["status"] == "missing"
     assert requirements["corporate_actions"]["status"] == "missing"
     assert requirements["issuer_holdings_snapshot"]["satisfies_full_replication"] is False
 
@@ -112,15 +117,15 @@ def test_build_fnguide_data_inventory_includes_kss_and_other_indices(tmp_path: P
 
     assert inventory["provider"] == "fnguide"
     assert inventory["schema_version"] == "1.0"
-    assert inventory["counts"] == {"indices": 2, "by_readiness": {"inventory_required": 1, "missing_required_data": 1}}
-    assert items["FI00.WLT.KSS"]["replication_readiness"] == "missing_required_data"
+    assert inventory["counts"] == {"indices": 2, "by_calculation_readiness": {"inventory_required": 1, "missing_calculation_inputs": 1}}
+    assert items["FI00.WLT.KSS"]["replication_calculation_readiness"] == "missing_calculation_inputs"
     assert items["FI00.WLT.KSS"]["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
     assert "requirements" in items["FI00.WLT.KSS"]
     assert items["FI00.OTHER"]["index_name"] == "FnGuide Other Index"
     assert items["FI00.OTHER"]["product_names"] == ["Other ETF"]
     assert items["FI00.OTHER"]["tracked_etfs"] == [{"etf_code": "000001", "etf_name": "Other ETF"}]
     assert items["FI00.OTHER"]["status"] == "draft_extracted"
-    assert items["FI00.OTHER"]["replication_readiness"] == "inventory_required"
+    assert items["FI00.OTHER"]["replication_calculation_readiness"] == "inventory_required"
     assert items["FI00.OTHER"]["requirements"] == []
 
 
@@ -195,7 +200,7 @@ def test_build_kss_data_inventory_uses_default_local_paths_when_not_overridden(t
     assert requirements["price_snapshot"]["status"] == "available"
     assert requirements["price_momentum"]["status"] == "derivable"
     assert requirements["float_market_cap_snapshot"]["status"] == "available"
-    assert requirements["sector_classification"]["status"] == "available"
+    assert requirements["semiconductor_classification_snapshot"]["status"] == "available"
     assert requirements["issuer_holdings_snapshot"]["status"] == "available"
     assert requirements["issuer_holdings_snapshot"]["satisfies_full_replication"] is False
 
@@ -228,9 +233,10 @@ def test_write_kss_data_inventory_writes_json_and_markdown(tmp_path: Path) -> No
     assert json_path == output_dir / "kss_data_inventory.json"
     assert markdown_path == output_dir / "kss_data_inventory.md"
     assert payload["index_code"] == "FI00.WLT.KSS"
-    assert payload["replication_readiness"] == "missing_required_data"
+    assert payload["replication_calculation_readiness"] == "missing_calculation_inputs"
+    assert payload["replication_proven"] is False
     assert "FI00.WLT.KSS" in markdown
-    assert "missing_required_data" in markdown
+    assert "missing_calculation_inputs" in markdown
     assert "official_target_weights" in markdown
     assert "issuer_holdings_snapshot" in markdown
 
@@ -299,9 +305,9 @@ def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -
 
     assert json_path == output_dir / "data_inventory.json"
     assert markdown_path == output_dir / "data_inventory.md"
-    assert payload["counts"]["by_readiness"] == {"inventory_required": 1, "missing_required_data": 1}
+    assert payload["counts"]["by_calculation_readiness"] == {"inventory_required": 1, "missing_calculation_inputs": 1}
     assert "FnGuide" in markdown
-    assert "missing_required_data" in markdown
+    assert "missing_calculation_inputs" in markdown
     assert "FI00.WLT.KSS" in markdown
     assert "466920 SOL AI Semiconductor ETF" in markdown
 

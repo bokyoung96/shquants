@@ -26,55 +26,62 @@ def build_kss_data_inventory(
         _local_requirement(
             "price_snapshot",
             path=paths.get("price_snapshot"),
+            usage="calculation_input",
             note="Local price history supports direct price-momentum derivation.",
         ),
         _derivable_requirement(
             "price_momentum",
             source_path=paths.get("price_snapshot"),
+            usage="calculation_input",
             note="Derive price momentum from the local price snapshot once the rebalance window is fixed.",
         ),
         _local_requirement(
             "float_market_cap_snapshot",
             path=paths.get("float_market_cap_snapshot"),
+            usage="calculation_input",
             note="Free-float market cap is needed for top-2 ranking and residual weighting.",
         ),
         _local_requirement(
-            "sector_classification",
+            "semiconductor_classification_snapshot",
             path=paths.get("sector_classification"),
-            note="Local sector labels can support semiconductor screening, but not provider theme confirmation.",
+            usage="calculation_input",
+            note="Classification snapshot used to build the semiconductor selection universe; this is not an official constituent list.",
         ),
-        _external_requirement(
-            "theme_membership",
-            note="Full replication still needs FnGuide or provider-confirmed theme membership evidence.",
-        ),
-        _external_requirement(
+        _missing_requirement(
             "sales_momentum",
-            note="The methodology depends on official sales-momentum inputs that are not inferable from current local files.",
+            usage="calculation_input",
+            note="Sales momentum input required by the KSS momentum bucket selection.",
         ),
-        _external_requirement(
+        _missing_requirement(
             "composite_score",
-            note="Composite ranking inputs remain provider-controlled unless the official scoring formula and values are supplied.",
+            usage="calculation_input",
+            note="Composite score or enough component inputs to calculate it are required for ranking.",
         ),
         _local_requirement(
             "issuer_holdings_snapshot",
             path=paths.get("issuer_holdings_snapshot"),
+            usage="validation_evidence",
             note="ETF issuer holdings are useful proxy evidence but cannot prove full index replication on their own.",
             satisfies_full_replication=False,
         ),
         _local_requirement(
             "corporate_actions",
             path=paths.get("corporate_actions"),
+            usage="calculation_input",
             note="Corporate action history is needed to keep the security universe and weights aligned through rebalance dates.",
         ),
-        _external_requirement(
+        _missing_requirement(
             "official_bucket_assignments",
-            note="Official bucket assignments are required to confirm which names land in top-2, momentum, and fill buckets.",
+            usage="validation_evidence",
+            note="Official bucket assignments validate the calculated bucket output; they are not calculation inputs.",
         ),
-        _external_requirement(
+        _missing_requirement(
             "official_target_weights",
-            note="Official target weights remain the primary replication and validation evidence for full fidelity.",
+            usage="validation_evidence",
+            note="Official target weights validate calculated weights; they are not required to calculate unknown constituents.",
         ),
     ]
+    calculation_readiness = _calculation_readiness(requirements)
     return {
         "schema_version": "1.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -83,7 +90,8 @@ def build_kss_data_inventory(
         "product_names": _product_names(spec),
         "tracked_etfs": _tracked_etfs(spec),
         "methodology_status": str(spec.get("status", "")),
-        "replication_readiness": _replication_readiness(requirements),
+        "replication_calculation_readiness": calculation_readiness,
+        "replication_proven": False,
         "methodology_summary": _methodology_summary(spec),
         "requirements": requirements,
     }
@@ -103,7 +111,7 @@ def build_fnguide_data_inventory(
             items.append({**kss_inventory, "status": str(spec.get("status", ""))})
             continue
         items.append(_generic_index_inventory(spec))
-    readiness_counts = Counter(str(item["replication_readiness"]) for item in items)
+    readiness_counts = Counter(str(item["replication_calculation_readiness"]) for item in items)
     return {
         "schema_version": "1.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -111,7 +119,7 @@ def build_fnguide_data_inventory(
         "count": len(items),
         "counts": {
             "indices": len(items),
-            "by_readiness": dict(sorted(readiness_counts.items())),
+            "by_calculation_readiness": dict(sorted(readiness_counts.items())),
         },
         "indices": items,
     }
@@ -207,7 +215,8 @@ def _generic_index_inventory(spec: Mapping[str, object]) -> dict[str, object]:
         "tracked_etfs": _tracked_etfs(spec),
         "status": str(spec.get("status", "")),
         "methodology_status": str(spec.get("status", "")),
-        "replication_readiness": "inventory_required",
+        "replication_calculation_readiness": "inventory_required",
+        "replication_proven": False,
         "methodology_summary": _methodology_summary(spec),
         "requirements": [],
     }
@@ -267,11 +276,13 @@ def _local_requirement(
     name: str,
     *,
     path: Path | None,
+    usage: str,
     note: str,
     satisfies_full_replication: bool | None = None,
 ) -> dict[str, object]:
     requirement: dict[str, object] = {
         "name": name,
+        "usage": usage,
         "status": "available" if path and path.is_file() else "missing",
         "note": note,
     }
@@ -280,24 +291,25 @@ def _local_requirement(
     return requirement
 
 
-def _derivable_requirement(name: str, *, source_path: Path | None, note: str) -> dict[str, object]:
+def _derivable_requirement(name: str, *, source_path: Path | None, usage: str, note: str) -> dict[str, object]:
     return {
         "name": name,
+        "usage": usage,
         "status": "derivable" if source_path and source_path.is_file() else "missing",
         "note": note,
     }
 
 
-def _external_requirement(name: str, *, note: str) -> dict[str, object]:
-    return {"name": name, "status": "external_required", "note": note}
+def _missing_requirement(name: str, *, usage: str, note: str) -> dict[str, object]:
+    return {"name": name, "usage": usage, "status": "missing", "note": note}
 
 
-def _replication_readiness(requirements: list[dict[str, object]]) -> str:
-    blocking_statuses = {"missing", "external_required"}
-    if any(str(item.get("status", "")) in blocking_statuses for item in requirements):
-        return "missing_required_data"
-    if any(str(item.get("status", "")) not in {"available", "derivable"} for item in requirements):
-        return "missing_required_data"
+def _calculation_readiness(requirements: list[dict[str, object]]) -> str:
+    calculation_inputs = [item for item in requirements if item.get("usage") == "calculation_input"]
+    if any(str(item.get("status", "")) == "missing" for item in calculation_inputs):
+        return "missing_calculation_inputs"
+    if any(str(item.get("status", "")) not in {"available", "derivable"} for item in calculation_inputs):
+        return "missing_calculation_inputs"
     return "ready"
 
 
@@ -308,28 +320,31 @@ def _write_json(path: Path, payload: Mapping[str, object]) -> None:
 def _render_kss_data_inventory_markdown(payload: Mapping[str, object]) -> str:
     title = _markdown_cell(payload.get("index_name", KSS_INDEX_NAME))
     index_code = _markdown_cell(payload.get("index_code", KSS_INDEX_CODE))
-    readiness = _markdown_cell(payload.get("replication_readiness", ""))
+    readiness = _markdown_cell(payload.get("replication_calculation_readiness", ""))
+    proven = _markdown_cell(payload.get("replication_proven", False))
     methodology_status = _markdown_cell(payload.get("methodology_status", ""))
     requirements = payload.get("requirements", [])
     lines = [
         f"# {title} data inventory",
         "",
         f"- Index: {index_code}",
-        f"- Replication readiness: {readiness}",
+        f"- Calculation readiness: {readiness}",
+        f"- Replication proven: {proven}",
         f"- Methodology status: {methodology_status}",
         "",
         "## Requirements",
         "",
-        "| Requirement | Status | Notes |",
-        "| --- | --- | --- |",
+        "| Requirement | Usage | Status | Notes |",
+        "| --- | --- | --- | --- |",
     ]
     if isinstance(requirements, list):
         for requirement in requirements:
             if not isinstance(requirement, Mapping):
                 continue
             lines.append(
-                "| {name} | {status} | {note} |".format(
+                "| {name} | {usage} | {status} | {note} |".format(
                     name=_markdown_cell(requirement.get("name", "")),
+                    usage=_markdown_cell(requirement.get("usage", "")),
                     status=_markdown_cell(requirement.get("status", "")),
                     note=_markdown_cell(requirement.get("note", "")),
                 )
@@ -339,7 +354,7 @@ def _render_kss_data_inventory_markdown(payload: Mapping[str, object]) -> str:
 
 def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> str:
     counts = payload.get("counts", {})
-    by_readiness = counts.get("by_readiness", {}) if isinstance(counts, Mapping) else {}
+    by_calculation_readiness = counts.get("by_calculation_readiness", {}) if isinstance(counts, Mapping) else {}
     indices = payload.get("indices", [])
     lines = [
         "# FnGuide data inventory",
@@ -350,16 +365,16 @@ def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> st
         "## Readiness summary",
         "",
     ]
-    if isinstance(by_readiness, Mapping):
-        for readiness, count in by_readiness.items():
+    if isinstance(by_calculation_readiness, Mapping):
+        for readiness, count in by_calculation_readiness.items():
             lines.append(f"- {readiness}: {count}")
     lines.extend(
         [
             "",
             "## Indices",
             "",
-            "| Index code | Index name | Tracked ETFs | Readiness | Status |",
-            "| --- | --- | --- | --- | --- |",
+            "| Index code | Index name | Tracked ETFs | Calculation readiness | Proven | Status |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     if isinstance(indices, list):
@@ -367,11 +382,12 @@ def _render_fnguide_data_inventory_markdown(payload: Mapping[str, object]) -> st
             if not isinstance(item, Mapping):
                 continue
             lines.append(
-                "| {code} | {name} | {tracked_etfs} | {readiness} | {status} |".format(
+                "| {code} | {name} | {tracked_etfs} | {readiness} | {proven} | {status} |".format(
                     code=_markdown_cell(item.get("index_code", "")),
                     name=_markdown_cell(item.get("index_name", "")),
                     tracked_etfs=_markdown_cell(_tracked_etfs_markdown(item)),
-                    readiness=_markdown_cell(item.get("replication_readiness", "")),
+                    readiness=_markdown_cell(item.get("replication_calculation_readiness", "")),
+                    proven=_markdown_cell(item.get("replication_proven", False)),
                     status=_markdown_cell(item.get("status", item.get("methodology_status", ""))),
                 )
             )

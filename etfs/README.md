@@ -74,7 +74,7 @@ The replication report is intentionally scoped. It proves that engine-ready meth
 
 KSS replication is the first full-methodology tracer bullet. The pipeline always writes its data-requirement artifact and only calculates selected buckets and target weights when `output/replication/fnguide/kss_snapshot.json` supplies a dated source snapshot. Missing snapshots are reported as a skip, not as a successful replication.
 
-Full replication work is gated by the data inventory. KSS/SOL remains `missing_required_data` until official semiconductor theme membership, sales/composite score inputs, bucket assignments, and target weights are available. Local price, float-market-cap, sector, and ETF holdings data can be reported as evidence, but proxy classifications or ETF holdings do not upgrade a run to full replication.
+Full replication work is gated by the data inventory. KSS/SOL calculation remains `missing_calculation_inputs` until the missing calculation inputs, such as sales momentum, composite score inputs, and corporate-action history, are available. Official bucket assignments, official target weights, and ETF holdings are validation evidence only: they can prove or challenge the calculated result, but they are not inputs for constructing unknown index constituents.
 
 `families` is provider-agnostic. It separates the current FnGuide domestic-sector reference lane from future product-family lanes such as foreign/global equity, domestic broad-market, and fixed-income/cash/commodity/derivative products.
 

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from etfs.fnguide import pipeline
@@ -240,6 +241,100 @@ def test_offline_pipeline_writes_kss_data_requirements_and_skips_missing_snapsho
         tmp_path / "replication" / "kss_data_requirements.json"
     ).as_posix()
     assert "kss_replication: kss_snapshot not found" in manifest["skipped"]
+
+
+def test_offline_pipeline_keeps_kss_and_engine_target_weight_outputs_separate(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(pipeline, "write_methodology_extractions", lambda rules_path, output_dir: _touch_pair(output_dir))
+    monkeypatch.setattr(pipeline, "write_draft_specs", lambda extractions_path, output_dir: _touch(output_dir / "draft_specs.json"))
+    monkeypatch.setattr(
+        pipeline,
+        "write_methodology_specs",
+        lambda draft_path, output_dir, *, overrides_path: _touch(output_dir / "methodology_specs.json"),
+    )
+    monkeypatch.setattr(pipeline, "write_methodology_audit", lambda specs_path, output_dir: _touch_pair(output_dir))
+    monkeypatch.setattr(pipeline, "write_engine_input_requirements", lambda specs_path, output_dir: _touch(output_dir / "engine_input_requirements.json"))
+    monkeypatch.setattr(pipeline, "write_engine_input_template", lambda specs_path, output_dir: _touch(output_dir / "engine_inputs.template.json"))
+    monkeypatch.setattr(
+        pipeline,
+        "write_engine_support_matrix",
+        lambda specs_path, output_dir: (_touch(output_dir / "engine_support_matrix.json"), _touch(output_dir / "engine_support_matrix.md")),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_engine_promotion_candidates",
+        lambda specs_path, output_dir: (
+            _touch(output_dir / "engine_promotion_candidates.json"),
+            _touch(output_dir / "engine_promotion_candidates.md"),
+        ),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_methodology_replication_report",
+        lambda specs_path, output_dir: (
+            _touch(output_dir / "methodology_replication_report.json"),
+            _touch(output_dir / "methodology_replication_report.md"),
+        ),
+    )
+    monkeypatch.setattr(pipeline, "write_target_weights", lambda inputs_path, specs_path, output_dir: _touch(output_dir / "target_weights.json"))
+    monkeypatch.setattr(
+        pipeline,
+        "build_kss_replication",
+        lambda **kwargs: {
+            "kwargs": kwargs,
+            "target_weight_result": {"target_weights": []},
+            "validation": {},
+        },
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_kss_replication_artifacts",
+        lambda result, output_dir: {
+            "selected_buckets": (output_dir / "kss_selected_buckets.json").as_posix(),
+            "target_weights": (output_dir / "kss_target_weights.json").as_posix(),
+            "replication_validation": (output_dir / "kss_replication_validation.json").as_posix(),
+            "replication_validation_md": (output_dir / "kss_replication_validation.md").as_posix(),
+        },
+    )
+
+    rules_path = _touch(tmp_path / "rules.json")
+    overrides_path = _touch(tmp_path / "spec_overrides.json")
+    engine_inputs_path = _touch(tmp_path / "engine" / "engine_inputs.json")
+    snapshot_path = tmp_path / "replication" / "kss_snapshot.json"
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_path.write_text(
+        json.dumps(
+            {
+                "as_of": "2026-05-29",
+                "effective_date": "2026-06-14",
+                "rows": [{"security_code": "A000001"}],
+                "validation_weights": [{"security_code": "A000001", "official_weight": 1.0}],
+                "validation_source_type": "official_target_weights",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    manifest = pipeline.run_offline_pipeline(
+        rules_path=rules_path,
+        extraction_output_dir=tmp_path / "extractions",
+        overrides_path=overrides_path,
+        validation_inputs=[],
+        validation_output_dir=tmp_path / "validation",
+        engine_output_dir=tmp_path / "engine",
+        engine_inputs_path=engine_inputs_path,
+        replication_output_dir=tmp_path / "replication",
+        kss_snapshot_path=snapshot_path,
+    )
+
+    assert manifest["outputs"]["kss_selected_buckets"] == (tmp_path / "replication" / "kss_selected_buckets.json").as_posix()
+    assert manifest["outputs"]["kss_target_weights"] == (tmp_path / "replication" / "kss_target_weights.json").as_posix()
+    assert manifest["outputs"]["kss_replication_validation"] == (tmp_path / "replication" / "kss_replication_validation.json").as_posix()
+    assert manifest["outputs"]["kss_replication_validation_md"] == (tmp_path / "replication" / "kss_replication_validation.md").as_posix()
+    assert manifest["outputs"]["target_weights"] == (tmp_path / "engine" / "target_weights.json").as_posix()
+    assert "kss_replication: kss_snapshot not found" not in manifest["skipped"]
 
 
 def test_pipeline_parser_defaults_to_offline_artifacts() -> None:

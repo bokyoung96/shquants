@@ -109,7 +109,15 @@ def run_offline_pipeline(
             validation_source_type=str(snapshot_payload.get("validation_source_type", "missing")),
             specs_path=methodology_specs,
         )
-        outputs.update(write_kss_replication_artifacts(kss_result, replication_output_dir))
+        kss_artifacts = write_kss_replication_artifacts(kss_result, replication_output_dir)
+        outputs.update(
+            {
+                "kss_selected_buckets": kss_artifacts["selected_buckets"],
+                "kss_target_weights": kss_artifacts["target_weights"],
+                "kss_replication_validation": kss_artifacts["replication_validation"],
+                "kss_replication_validation_md": kss_artifacts["replication_validation_md"],
+            }
+        )
     else:
         skipped.append("kss_replication: kss_snapshot not found")
 

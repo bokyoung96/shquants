@@ -1,1 +1,131 @@
-{}
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T06:01:33.188973+00:00",
+  "index_code": "FI00.WLT.KSS",
+  "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+  "product_names": [
+    "DAISHIN343 오피스리츠플러스",
+    "KODEX AI반도체TOP2플러스",
+    "SOL AI반도체TOP2플러스"
+  ],
+  "tracked_etfs": [
+    {
+      "etf_code": "0174J0",
+      "etf_name": "DAISHIN343 오피스리츠플러스"
+    },
+    {
+      "etf_code": "395160",
+      "etf_name": "KODEX AI반도체TOP2플러스"
+    },
+    {
+      "etf_code": "0167A0",
+      "etf_name": "SOL AI반도체TOP2플러스"
+    }
+  ],
+  "methodology_status": "methodology_verified",
+  "replication_calculation_readiness": "missing_calculation_inputs",
+  "replication_proven": false,
+  "methodology_summary": {
+    "total_constituents": 10,
+    "buckets": [
+      {
+        "name": "top2",
+        "count": 2
+      },
+      {
+        "name": "momentum",
+        "count": 4
+      },
+      {
+        "name": "market_cap_fill",
+        "count": 4
+      }
+    ],
+    "weighting": {
+      "base": "float_market_cap_weighted",
+      "residual": {
+        "applies_to_buckets": [
+          "momentum",
+          "market_cap_fill"
+        ],
+        "total_weight": 0.5,
+        "base": "float_market_cap",
+        "cap": 0.15,
+        "redistribution": "iterative_pro_rata"
+      }
+    },
+    "rebalance": {
+      "frequency": "quarterly",
+      "implementation_months": [
+        1,
+        4,
+        7,
+        10
+      ],
+      "implementation_timing": "2영업일째(D+2)에 정기변경을 수행합니다"
+    }
+  },
+  "requirements": [
+    {
+      "name": "price_snapshot",
+      "usage": "calculation_input",
+      "status": "available",
+      "note": "Local price history supports direct price-momentum derivation."
+    },
+    {
+      "name": "price_momentum",
+      "usage": "calculation_input",
+      "status": "derivable",
+      "note": "Derive price momentum from the local price snapshot once the rebalance window is fixed."
+    },
+    {
+      "name": "float_market_cap_snapshot",
+      "usage": "calculation_input",
+      "status": "available",
+      "note": "Free-float market cap is needed for top-2 ranking and residual weighting."
+    },
+    {
+      "name": "semiconductor_classification_snapshot",
+      "usage": "calculation_input",
+      "status": "available",
+      "note": "Classification snapshot used to build the semiconductor selection universe; this is not an official constituent list."
+    },
+    {
+      "name": "sales_momentum",
+      "usage": "calculation_input",
+      "status": "missing",
+      "note": "Sales momentum input required by the KSS momentum bucket selection."
+    },
+    {
+      "name": "composite_score",
+      "usage": "calculation_input",
+      "status": "missing",
+      "note": "Composite score or enough component inputs to calculate it are required for ranking."
+    },
+    {
+      "name": "issuer_holdings_snapshot",
+      "usage": "validation_evidence",
+      "status": "available",
+      "note": "ETF issuer holdings are useful proxy evidence but cannot prove full index replication on their own.",
+      "satisfies_full_replication": false
+    },
+    {
+      "name": "corporate_actions",
+      "usage": "calculation_input",
+      "status": "missing",
+      "note": "Corporate action history is needed to keep the security universe and weights aligned through rebalance dates."
+    },
+    {
+      "name": "official_bucket_assignments",
+      "usage": "validation_evidence",
+      "status": "missing",
+      "note": "Official bucket assignments validate the calculated bucket output; they are not calculation inputs."
+    },
+    {
+      "name": "official_target_weights",
+      "usage": "validation_evidence",
+      "status": "missing",
+      "note": "Official target weights validate calculated weights; they are not required to calculate unknown constituents."
+    }
+  ]
+}

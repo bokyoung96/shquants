@@ -159,6 +159,7 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
         validation_output_dir=tmp_path / "validation",
         engine_output_dir=tmp_path / "engine",
         engine_inputs_path=engine_inputs_path,
+        replication_output_dir=tmp_path / "replication",
     )
 
     assert calls == [
@@ -242,6 +243,7 @@ def test_run_offline_pipeline_skips_target_validation_when_engine_inputs_are_mis
         validation_output_dir=tmp_path / "validation",
         engine_output_dir=tmp_path / "engine",
         engine_inputs_path=tmp_path / "engine" / "engine_inputs.json",
+        replication_output_dir=tmp_path / "replication",
     )
 
     assert manifest["outputs"]["engine_input_template"].endswith("engine_inputs.template.json")

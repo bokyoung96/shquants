@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-16T05:59:39.425581+00:00",
+  "generated_at": "2026-06-16T06:01:33.205583+00:00",
   "outputs": {
     "methodology_extractions": "etfs/output/extractions/fnguide/methodology_extractions.json",
     "methodology_extractions_md": "etfs/output/extractions/fnguide/methodology_extractions.md",

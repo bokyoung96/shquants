@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-16T06:00:08.068149+00:00",
+  "generated_at": "2026-06-16T06:01:33.172259+00:00",
   "index_code": "FI00.WLT.KSS",
   "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
   "replication_stage": "data_contract",
@@ -96,6 +96,7 @@
     }
   ],
   "available_datasets": [
+    "etf_holdings_snapshot",
     "methodology_spec"
   ],
   "missing_datasets": [
@@ -105,8 +106,7 @@
     "market_snapshot",
     "classification_snapshot",
     "selection_metrics",
-    "official_target_weights",
-    "etf_holdings_snapshot"
+    "official_target_weights"
   ],
   "full_replication_ready": false
 }

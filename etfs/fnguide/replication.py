@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Mapping
@@ -15,6 +16,9 @@ def build_replication_validation(
     validation_weights: Iterable[Mapping[str, object]],
     weight_tolerance: float,
 ) -> dict[str, object]:
+    if weight_tolerance < 0:
+        raise ValueError("weight_tolerance must be >= 0")
+
     if validation_source_type == "missing":
         return {
             "index_code": index_code,
@@ -112,7 +116,7 @@ def write_replication_validation(
         "result": dict(report),
     }
     json_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
+        json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False),
         encoding="utf-8",
     )
     md_path.write_text(_validation_markdown(report), encoding="utf-8")
@@ -129,7 +133,23 @@ def _weights_by_security(
         code = str(row.get("security_code", "")).strip()
         if not code:
             raise ValueError("validation weight security_code is required")
-        weights[code] = float(row.get(weight_key, 0.0) or 0.0)
+        if code in weights:
+            raise ValueError(f"duplicate security_code: {code}")
+
+        if weight_key not in row:
+            raise ValueError(f"{weight_key} is required for security_code {code}")
+
+        raw_weight = row[weight_key]
+        if raw_weight is None:
+            raise ValueError(f"{weight_key} is required for security_code {code}")
+        if isinstance(raw_weight, str) and not raw_weight.strip():
+            raise ValueError(f"{weight_key} is required for security_code {code}")
+
+        weight = float(raw_weight)
+        if not math.isfinite(weight):
+            raise ValueError(f"{weight_key} must be finite for security_code {code}")
+
+        weights[code] = weight
     return weights
 
 
@@ -158,6 +178,36 @@ def _validation_markdown(report: Mapping[str, object]) -> str:
     differences = report.get("differences", [])
     if not differences:
         lines.append("- none")
+        return "\n".join(lines) + "\n"
+
+    lines.extend(
+        [
+            "| type | security_code | target_weight | validation_weight | difference | index_code | as_of |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
     for difference in differences:
-        lines.append(f"- {difference}")
+        if not isinstance(difference, Mapping):
+            raise ValueError("difference entries must be mappings")
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    _markdown_cell(difference.get("type")),
+                    _markdown_cell(difference.get("security_code")),
+                    _markdown_cell(difference.get("target_weight")),
+                    _markdown_cell(difference.get("validation_weight")),
+                    _markdown_cell(difference.get("difference")),
+                    _markdown_cell(difference.get("index_code")),
+                    _markdown_cell(difference.get("as_of")),
+                ]
+            )
+            + " |"
+        )
     return "\n".join(lines) + "\n"
+
+
+def _markdown_cell(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value)

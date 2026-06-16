@@ -58,6 +58,10 @@ def test_fnguide_replication_paths_are_grouped_under_replication_output() -> Non
     assert paths.FNGUIDE_KSS_TARGET_WEIGHTS_JSON.as_posix() == "etfs/output/replication/fnguide/kss_target_weights.json"
     assert paths.FNGUIDE_KSS_VALIDATION_JSON.as_posix() == "etfs/output/replication/fnguide/kss_replication_validation.json"
     assert paths.FNGUIDE_KSS_VALIDATION_MD.as_posix() == "etfs/output/replication/fnguide/kss_replication_validation.md"
+    assert paths.FNGUIDE_DATA_INVENTORY_JSON.as_posix() == "etfs/output/replication/fnguide/data_inventory.json"
+    assert paths.FNGUIDE_DATA_INVENTORY_MD.as_posix() == "etfs/output/replication/fnguide/data_inventory.md"
+    assert paths.FNGUIDE_KSS_DATA_INVENTORY_JSON.as_posix() == "etfs/output/replication/fnguide/kss_data_inventory.json"
+    assert paths.FNGUIDE_KSS_DATA_INVENTORY_MD.as_posix() == "etfs/output/replication/fnguide/kss_data_inventory.md"
 
 
 def test_cli_defaults_write_to_grouped_output_folders() -> None:

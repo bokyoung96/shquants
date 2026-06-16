@@ -282,8 +282,16 @@ def build_methodology_replication_report(
     }
 
 
-def write_methodology_replication_report(specs_path: Path, output_dir: Path) -> tuple[Path, Path]:
-    report = build_methodology_replication_report(specs_path)
+def write_methodology_replication_report(
+    specs_path: Path,
+    output_dir: Path,
+    *,
+    kss_replication_validation_path: Path = paths.FNGUIDE_KSS_VALIDATION_JSON,
+) -> tuple[Path, Path]:
+    report = build_methodology_replication_report(
+        specs_path,
+        kss_replication_validation_path=kss_replication_validation_path,
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "methodology_replication_report.json"
     md_path = output_dir / "methodology_replication_report.md"

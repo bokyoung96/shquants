@@ -90,15 +90,13 @@ def run_offline_pipeline(
     promotion_json, promotion_md = write_engine_promotion_candidates(methodology_specs, engine_output_dir)
     outputs["engine_promotion_candidates"] = promotion_json.as_posix()
     outputs["engine_promotion_candidates_md"] = promotion_md.as_posix()
-    replication_json, replication_md = write_methodology_replication_report(methodology_specs, engine_output_dir)
-    outputs["methodology_replication_report"] = replication_json.as_posix()
-    outputs["methodology_replication_report_md"] = replication_md.as_posix()
     kss_requirements = write_kss_data_requirements(
         replication_output_dir,
         available_datasets={"methodology_spec"} | ({"etf_holdings_snapshot"} if fixtures is not None else set()),
     )
     outputs["kss_data_requirements"] = kss_requirements.as_posix()
 
+    kss_replication_validation_path = replication_output_dir / "kss_replication_validation.json"
     if kss_snapshot_path.exists():
         snapshot_payload = json.loads(kss_snapshot_path.read_text(encoding="utf-8"))
         kss_result = build_kss_replication(
@@ -120,6 +118,14 @@ def run_offline_pipeline(
         )
     else:
         skipped.append("kss_replication: kss_snapshot not found")
+
+    replication_json, replication_md = write_methodology_replication_report(
+        methodology_specs,
+        engine_output_dir,
+        kss_replication_validation_path=kss_replication_validation_path,
+    )
+    outputs["methodology_replication_report"] = replication_json.as_posix()
+    outputs["methodology_replication_report_md"] = replication_md.as_posix()
 
     if engine_inputs_path.exists():
         target_weights = write_target_weights(engine_inputs_path, methodology_specs, engine_output_dir)

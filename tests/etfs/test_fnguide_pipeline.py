@@ -78,7 +78,12 @@ def test_run_offline_pipeline_sequences_verified_artifacts_and_skips_missing_eng
         md_path.write_text("", encoding="utf-8")
         return json_path, md_path
 
-    def fake_write_methodology_replication_report(specs_path: Path, output_dir: Path) -> tuple[Path, Path]:
+    def fake_write_methodology_replication_report(
+        specs_path: Path,
+        output_dir: Path,
+        *,
+        kss_replication_validation_path: Path,
+    ) -> tuple[Path, Path]:
         calls.append(f"replication:{specs_path.name}")
         json_path = output_dir / "methodology_replication_report.json"
         md_path = output_dir / "methodology_replication_report.md"
@@ -195,7 +200,7 @@ def test_run_offline_pipeline_skips_target_validation_when_engine_inputs_are_mis
     monkeypatch.setattr(
         pipeline,
         "write_methodology_replication_report",
-        lambda specs_path, output_dir: (
+        lambda specs_path, output_dir, *, kss_replication_validation_path: (
             _touch(output_dir / "methodology_replication_report.json"),
             _touch(output_dir / "methodology_replication_report.md"),
         ),
@@ -273,7 +278,7 @@ def test_offline_pipeline_keeps_kss_and_engine_target_weight_outputs_separate(
     monkeypatch.setattr(
         pipeline,
         "write_methodology_replication_report",
-        lambda specs_path, output_dir: (
+        lambda specs_path, output_dir, *, kss_replication_validation_path: (
             _touch(output_dir / "methodology_replication_report.json"),
             _touch(output_dir / "methodology_replication_report.md"),
         ),
@@ -335,6 +340,91 @@ def test_offline_pipeline_keeps_kss_and_engine_target_weight_outputs_separate(
     assert manifest["outputs"]["kss_replication_validation_md"] == (tmp_path / "replication" / "kss_replication_validation.md").as_posix()
     assert manifest["outputs"]["target_weights"] == (tmp_path / "engine" / "target_weights.json").as_posix()
     assert "kss_replication: kss_snapshot not found" not in manifest["skipped"]
+
+
+def test_offline_pipeline_replication_report_uses_current_run_kss_validation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    observed_validation_paths: list[Path] = []
+
+    monkeypatch.setattr(pipeline, "write_methodology_extractions", lambda rules_path, output_dir: _touch_pair(output_dir))
+    monkeypatch.setattr(pipeline, "write_draft_specs", lambda extractions_path, output_dir: _touch(output_dir / "draft_specs.json"))
+    monkeypatch.setattr(
+        pipeline,
+        "write_methodology_specs",
+        lambda draft_path, output_dir, *, overrides_path: _touch(output_dir / "methodology_specs.json"),
+    )
+    monkeypatch.setattr(pipeline, "write_methodology_audit", lambda specs_path, output_dir: _touch_pair(output_dir))
+    monkeypatch.setattr(pipeline, "write_engine_input_requirements", lambda specs_path, output_dir: _touch(output_dir / "engine_input_requirements.json"))
+    monkeypatch.setattr(pipeline, "write_engine_input_template", lambda specs_path, output_dir: _touch(output_dir / "engine_inputs.template.json"))
+    monkeypatch.setattr(
+        pipeline,
+        "write_engine_support_matrix",
+        lambda specs_path, output_dir: (_touch(output_dir / "engine_support_matrix.json"), _touch(output_dir / "engine_support_matrix.md")),
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "write_engine_promotion_candidates",
+        lambda specs_path, output_dir: (
+            _touch(output_dir / "engine_promotion_candidates.json"),
+            _touch(output_dir / "engine_promotion_candidates.md"),
+        ),
+    )
+
+    def fake_write_methodology_replication_report(
+        specs_path: Path,
+        output_dir: Path,
+        *,
+        kss_replication_validation_path: Path,
+    ) -> tuple[Path, Path]:
+        observed_validation_paths.append(kss_replication_validation_path)
+        assert kss_replication_validation_path == tmp_path / "replication" / "kss_replication_validation.json"
+        assert kss_replication_validation_path.exists()
+        return _touch(output_dir / "methodology_replication_report.json"), _touch(output_dir / "methodology_replication_report.md")
+
+    def fake_write_kss_replication_artifacts(result, output_dir: Path) -> dict[str, str]:
+        return {
+            "selected_buckets": _touch(output_dir / "kss_selected_buckets.json").as_posix(),
+            "target_weights": _touch(output_dir / "kss_target_weights.json").as_posix(),
+            "replication_validation": _touch(output_dir / "kss_replication_validation.json").as_posix(),
+            "replication_validation_md": _touch(output_dir / "kss_replication_validation.md").as_posix(),
+        }
+
+    monkeypatch.setattr(pipeline, "write_methodology_replication_report", fake_write_methodology_replication_report)
+    monkeypatch.setattr(pipeline, "build_kss_replication", lambda **kwargs: {"validation": {}})
+    monkeypatch.setattr(pipeline, "write_kss_replication_artifacts", fake_write_kss_replication_artifacts)
+
+    rules_path = _touch(tmp_path / "rules.json")
+    overrides_path = _touch(tmp_path / "spec_overrides.json")
+    snapshot_path = tmp_path / "replication" / "kss_snapshot.json"
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_path.write_text(
+        json.dumps(
+            {
+                "as_of": "2026-05-29",
+                "effective_date": "2026-06-14",
+                "rows": [],
+                "validation_weights": [],
+                "validation_source_type": "official_target_weights",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    pipeline.run_offline_pipeline(
+        rules_path=rules_path,
+        extraction_output_dir=tmp_path / "extractions",
+        overrides_path=overrides_path,
+        validation_inputs=[],
+        validation_output_dir=tmp_path / "validation",
+        engine_output_dir=tmp_path / "engine",
+        engine_inputs_path=tmp_path / "engine" / "engine_inputs.json",
+        replication_output_dir=tmp_path / "replication",
+        kss_snapshot_path=snapshot_path,
+    )
+
+    assert observed_validation_paths == [tmp_path / "replication" / "kss_replication_validation.json"]
 
 
 def test_pipeline_parser_defaults_to_offline_artifacts() -> None:

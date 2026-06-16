@@ -51,6 +51,14 @@ def test_build_kss_data_inventory_marks_local_and_external_requirements(tmp_path
     assert inventory["index_code"] == "FI00.WLT.KSS"
     assert inventory["replication_readiness"] == "missing_required_data"
     assert inventory["product_names"] == ["SOL AI Semiconductor ETF"]
+    assert inventory["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
+    assert inventory["methodology_status"] == "methodology_verified"
+    assert inventory["methodology_summary"] == {
+        "total_constituents": None,
+        "buckets": [],
+        "weighting": {},
+        "rebalance": {},
+    }
     assert requirements["price_snapshot"]["status"] == "available"
     assert requirements["float_market_cap_snapshot"]["status"] == "available"
     assert requirements["sector_classification"]["status"] == "available"
@@ -101,12 +109,57 @@ def test_build_fnguide_data_inventory_includes_kss_and_other_indices(tmp_path: P
 
     assert inventory["provider"] == "fnguide"
     assert inventory["schema_version"] == "1.0"
-    assert inventory["count"] == 2
+    assert inventory["counts"] == {"indices": 2, "by_readiness": {"inventory_required": 1, "missing_required_data": 1}}
     assert items["FI00.WLT.KSS"]["replication_readiness"] == "missing_required_data"
+    assert items["FI00.WLT.KSS"]["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
+    assert "requirements" in items["FI00.WLT.KSS"]
     assert items["FI00.OTHER"]["index_name"] == "FnGuide Other Index"
     assert items["FI00.OTHER"]["product_names"] == ["Other ETF"]
+    assert items["FI00.OTHER"]["tracked_etfs"] == [{"etf_code": "000001", "etf_name": "Other ETF"}]
     assert items["FI00.OTHER"]["status"] == "draft_extracted"
-    assert items["FI00.OTHER"]["replication_readiness"] in {"inventory_required", "not_audited"}
+    assert items["FI00.OTHER"]["replication_readiness"] == "inventory_required"
+    assert items["FI00.OTHER"]["requirements"] == []
+
+
+def test_build_kss_data_inventory_resolves_relative_paths_from_specs_directory_and_ignores_directories(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    specs_path = _write_specs(
+        tmp_path / "methodology_specs.json",
+        indices=[
+            {
+                "index_code": "FI00.WLT.KSS",
+                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+                "provider": "fnguide",
+                "products": [],
+                "status": "methodology_verified",
+                "source": {},
+                "rebalance": {},
+                "selection": {},
+                "weighting": {},
+                "validation": {},
+            },
+        ],
+    )
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    _touch(data_dir / "price_snapshot.csv")
+    (data_dir / "float_market_cap_snapshot.csv").mkdir()
+    monkeypatch.chdir(tmp_path.parent)
+
+    inventory = build_kss_data_inventory(
+        specs_path=specs_path,
+        local_paths={
+            "price_snapshot": Path("data/price_snapshot.csv"),
+            "float_market_cap_snapshot": Path("data/float_market_cap_snapshot.csv"),
+        },
+    )
+    requirements = {item["name"]: item for item in inventory["requirements"]}
+
+    assert requirements["price_snapshot"]["status"] == "available"
+    assert requirements["price_momentum"]["status"] == "derivable"
+    assert requirements["float_market_cap_snapshot"]["status"] == "missing"
 
 
 def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:

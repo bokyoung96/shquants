@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
 
@@ -13,7 +15,7 @@ def build_kss_data_inventory(
     local_paths: Mapping[str, Path] | None = None,
 ) -> dict[str, object]:
     spec = _require_index_spec(specs_path, index_code=KSS_INDEX_CODE)
-    paths = local_paths or {}
+    paths = _normalize_local_paths(local_paths or {}, base_dir=specs_path.parent)
     requirements = [
         _local_requirement(
             "price_snapshot",
@@ -69,10 +71,14 @@ def build_kss_data_inventory(
     ]
     return {
         "schema_version": "1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "index_code": KSS_INDEX_CODE,
         "index_name": str(spec.get("index_name") or KSS_INDEX_NAME),
         "product_names": _product_names(spec),
+        "tracked_etfs": _tracked_etfs(spec),
+        "methodology_status": str(spec.get("status", "")),
         "replication_readiness": _replication_readiness(requirements),
+        "methodology_summary": _methodology_summary(spec),
         "requirements": requirements,
     }
 
@@ -88,30 +94,19 @@ def build_fnguide_data_inventory(
         index_code = str(spec.get("index_code", ""))
         if index_code == KSS_INDEX_CODE:
             kss_inventory = build_kss_data_inventory(specs_path=specs_path, local_paths=local_paths)
-            items.append(
-                {
-                    "index_code": kss_inventory["index_code"],
-                    "index_name": kss_inventory["index_name"],
-                    "product_names": kss_inventory["product_names"],
-                    "status": str(spec.get("status", "")),
-                    "replication_readiness": kss_inventory["replication_readiness"],
-                    "requirements": kss_inventory["requirements"],
-                }
-            )
+            items.append({**kss_inventory, "status": str(spec.get("status", ""))})
             continue
-        items.append(
-            {
-                "index_code": index_code,
-                "index_name": str(spec.get("index_name", "")),
-                "product_names": _product_names(spec),
-                "status": str(spec.get("status", "")),
-                "replication_readiness": "inventory_required",
-            }
-        )
+        items.append(_generic_index_inventory(spec))
+    readiness_counts = Counter(str(item["replication_readiness"]) for item in items)
     return {
         "schema_version": "1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "provider": "fnguide",
         "count": len(items),
+        "counts": {
+            "indices": len(items),
+            "by_readiness": dict(sorted(readiness_counts.items())),
+        },
         "indices": items,
     }
 
@@ -137,6 +132,75 @@ def _product_names(spec: Mapping[str, object]) -> list[str]:
     return [str(product.get("etf_name", "")) for product in products if isinstance(product, Mapping)]
 
 
+def _tracked_etfs(spec: Mapping[str, object]) -> list[dict[str, str]]:
+    products = spec.get("products", [])
+    if not isinstance(products, list):
+        return []
+    return [
+        {
+            "etf_code": str(product.get("etf_code", "")),
+            "etf_name": str(product.get("etf_name", "")),
+        }
+        for product in products
+        if isinstance(product, Mapping)
+    ]
+
+
+def _generic_index_inventory(spec: Mapping[str, object]) -> dict[str, object]:
+    return {
+        "index_code": str(spec.get("index_code", "")),
+        "index_name": str(spec.get("index_name", "")),
+        "product_names": _product_names(spec),
+        "tracked_etfs": _tracked_etfs(spec),
+        "status": str(spec.get("status", "")),
+        "methodology_status": str(spec.get("status", "")),
+        "replication_readiness": "inventory_required",
+        "methodology_summary": _methodology_summary(spec),
+        "requirements": [],
+    }
+
+
+def _methodology_summary(spec: Mapping[str, object]) -> dict[str, object]:
+    return {
+        "total_constituents": _selection_total(spec),
+        "buckets": _selection_buckets(spec),
+        "weighting": spec.get("weighting", {}),
+        "rebalance": spec.get("rebalance", {}),
+    }
+
+
+def _selection_total(spec: Mapping[str, object]) -> int | None:
+    selection = spec.get("selection")
+    if not isinstance(selection, Mapping):
+        return None
+    value = selection.get("total_constituents")
+    return int(value) if value is not None else None
+
+
+def _selection_buckets(spec: Mapping[str, object]) -> list[dict[str, object]]:
+    selection = spec.get("selection")
+    if not isinstance(selection, Mapping):
+        return []
+    buckets = selection.get("buckets") or []
+    if not isinstance(buckets, list):
+        return []
+    return [
+        {
+            "name": str(bucket.get("name", "")),
+            "count": bucket.get("count"),
+        }
+        for bucket in buckets
+        if isinstance(bucket, Mapping)
+    ]
+
+
+def _normalize_local_paths(local_paths: Mapping[str, Path], *, base_dir: Path) -> dict[str, Path]:
+    return {
+        name: path if path.is_absolute() else base_dir / path
+        for name, path in local_paths.items()
+    }
+
+
 def _local_requirement(
     name: str,
     *,
@@ -146,7 +210,7 @@ def _local_requirement(
 ) -> dict[str, object]:
     requirement: dict[str, object] = {
         "name": name,
-        "status": "available" if path and path.exists() else "missing",
+        "status": "available" if path and path.is_file() else "missing",
         "note": note,
     }
     if satisfies_full_replication is not None:
@@ -157,7 +221,7 @@ def _local_requirement(
 def _derivable_requirement(name: str, *, source_path: Path | None, note: str) -> dict[str, object]:
     return {
         "name": name,
-        "status": "derivable" if source_path and source_path.exists() else "missing",
+        "status": "derivable" if source_path and source_path.is_file() else "missing",
         "note": note,
     }
 

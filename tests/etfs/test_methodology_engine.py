@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import etfs.fnguide.methodology_engine as methodology_engine
 from etfs.fnguide.methodology_engine import (
     MethodologyNotReadyError,
     build_methodology_replication_report,
@@ -700,6 +701,152 @@ def test_build_methodology_replication_report_marks_kss_proven_when_artifact_pro
     assert kss["full_methodology_replication_status"] == "proven"
     assert kss["full_methodology_replication_evidence"] == replication_path.as_posix()
     assert report["counts"]["full_methodology_replication_proven"] == 1
+
+
+def test_build_methodology_replication_report_does_not_crash_on_malformed_kss_validation_artifact(tmp_path: Path) -> None:
+    replication_path = tmp_path / "kss_replication_validation.json"
+    replication_path.write_text("{not-json", encoding="utf-8")
+
+    report = build_methodology_replication_report(
+        Path("etfs/output/extractions/fnguide/methodology_specs.json"),
+        kss_replication_validation_path=replication_path,
+    )
+
+    kss = next(item for item in report["items"] if item["index_code"] == "FI00.WLT.KSS")
+    assert kss["full_methodology_replication_status"] == "not_proven"
+    assert any("unusable KSS validation artifact" in blocker for blocker in kss["full_methodology_replication_blockers"])
+    assert report["counts"]["full_methodology_replication_proven"] == 0
+
+
+@pytest.mark.parametrize(
+    ("artifact_result", "case_name"),
+    [
+        (
+            {
+                "index_code": "FI00.WLT.KSS",
+                "as_of": "2026-05-29",
+                "validation_source_type": "etf_holdings",
+                "status": "passed",
+                "checks": {"constituent_membership": "passed", "weight_tolerance": "passed"},
+                "metrics": {},
+                "differences": [],
+            },
+            "wrong source type",
+        ),
+        (
+            {
+                "index_code": "FI00.NOT.KSS",
+                "as_of": "2026-05-29",
+                "validation_source_type": "official_target_weights",
+                "status": "passed",
+                "checks": {"constituent_membership": "passed", "weight_tolerance": "passed"},
+                "metrics": {},
+                "differences": [],
+            },
+            "wrong index code",
+        ),
+        (
+            {
+                "index_code": "FI00.WLT.KSS",
+                "as_of": "2026-05-29",
+                "validation_source_type": "official_target_weights",
+                "status": "failed",
+                "checks": {"constituent_membership": "passed", "weight_tolerance": "failed"},
+                "metrics": {},
+                "differences": [{"security_code": "A000001"}],
+            },
+            "failed status",
+        ),
+    ],
+)
+def test_build_methodology_replication_report_requires_official_kss_validation_pass(
+    tmp_path: Path,
+    artifact_result: dict[str, object],
+    case_name: str,
+) -> None:
+    replication_path = tmp_path / f"kss_replication_validation_{case_name.replace(' ', '_')}.json"
+    replication_path.write_text(json.dumps({"schema_version": "1.0", "result": artifact_result}), encoding="utf-8")
+
+    report = build_methodology_replication_report(
+        Path("etfs/output/extractions/fnguide/methodology_specs.json"),
+        kss_replication_validation_path=replication_path,
+    )
+
+    kss = next(item for item in report["items"] if item["index_code"] == "FI00.WLT.KSS")
+    assert kss["full_methodology_replication_status"] == "not_proven"
+    assert report["counts"]["full_methodology_replication_proven"] == 0
+
+
+def test_build_methodology_replication_report_keeps_kss_not_proven_when_target_weight_not_run(tmp_path: Path) -> None:
+    specs_path = tmp_path / "methodology_specs.json"
+    specs_path.write_text(json.dumps({"indices": [{**_kss_spec(), "status": "draft_extracted"}]}), encoding="utf-8")
+    replication_path = tmp_path / "kss_replication_validation.json"
+    replication_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "result": {
+                    "index_code": "FI00.WLT.KSS",
+                    "as_of": "2026-05-29",
+                    "validation_source_type": "official_target_weights",
+                    "status": "passed",
+                    "checks": {"constituent_membership": "passed", "weight_tolerance": "passed"},
+                    "metrics": {},
+                    "differences": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_methodology_replication_report(
+        specs_path,
+        kss_replication_validation_path=replication_path,
+    )
+
+    kss = next(item for item in report["items"] if item["index_code"] == "FI00.WLT.KSS")
+    assert kss["target_weight_replication_status"] == "not_run"
+    assert kss["full_methodology_replication_status"] == "not_proven"
+    assert report["counts"]["full_methodology_replication_proven"] == 0
+
+
+def test_build_methodology_replication_report_keeps_kss_not_proven_when_target_weight_failed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    replication_path = tmp_path / "kss_replication_validation.json"
+    replication_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "result": {
+                    "index_code": "FI00.WLT.KSS",
+                    "as_of": "2026-05-29",
+                    "validation_source_type": "official_target_weights",
+                    "status": "passed",
+                    "checks": {"constituent_membership": "passed", "weight_tolerance": "passed"},
+                    "metrics": {},
+                    "differences": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        methodology_engine,
+        "_target_weight_result",
+        lambda request, ready_specs: {"checks": {"weight_tolerance": "failed"}, "metrics": {}},
+    )
+
+    report = build_methodology_replication_report(
+        Path("etfs/output/extractions/fnguide/methodology_specs.json"),
+        kss_replication_validation_path=replication_path,
+    )
+
+    kss = next(item for item in report["items"] if item["index_code"] == "FI00.WLT.KSS")
+    assert kss["target_weight_replication_status"] == "failed"
+    assert kss["full_methodology_replication_status"] == "not_proven"
+    assert report["counts"]["full_methodology_replication_proven"] == 0
 
 
 def test_write_methodology_replication_report_outputs_json_and_markdown(tmp_path: Path) -> None:

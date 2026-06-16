@@ -604,8 +604,19 @@ def _placeholder_constituent(fields: list[str]) -> dict[str, object]:
 def _load_kss_full_replication_status(path: Path) -> dict[str, object]:
     if not path.exists():
         return {"proven": False, "path": path.as_posix()}
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    result = _mapping(payload.get("result"))
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, Mapping):
+            raise ValueError("validation artifact payload must be a mapping")
+        result = _mapping(payload.get("result"))
+        if not result:
+            raise ValueError("validation artifact result must be a mapping")
+    except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        return {
+            "proven": False,
+            "path": path.as_posix(),
+            "error": f"unusable KSS validation artifact: {exc}",
+        }
     return {
         "proven": result.get("index_code") == "FI00.WLT.KSS"
         and result.get("validation_source_type") == "official_target_weights"
@@ -621,8 +632,15 @@ def _methodology_replication_item(
     kss_full_replication: Mapping[str, object],
 ) -> dict[str, object]:
     index_code = str(spec.get("index_code", ""))
-    proven = index_code == "FI00.WLT.KSS" and bool(kss_full_replication.get("proven"))
+    artifact_proven = index_code == "FI00.WLT.KSS" and bool(kss_full_replication.get("proven"))
     methodology = str(support_item.get("methodology", ""))
+    full_replication_blockers = [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison",
+    ]
+    artifact_error = str(kss_full_replication.get("error", "")).strip()
+    if index_code == "FI00.WLT.KSS" and artifact_error:
+        full_replication_blockers.append(artifact_error)
     base = {
         "index_code": index_code,
         "index_name": str(spec.get("index_name", "")),
@@ -630,14 +648,9 @@ def _methodology_replication_item(
         "engine_support_status": str(support_item.get("engine_support_status", "")),
         "engine_blockers": [str(blocker) for blocker in support_item.get("engine_blockers", [])],
         "methodology_blockers": [str(blocker) for blocker in support_item.get("blockers", [])],
-        "full_methodology_replication_status": "proven" if proven else "not_proven",
-        "full_methodology_replication_evidence": str(kss_full_replication.get("path", "")) if proven else "",
-        "full_methodology_replication_blockers": []
-        if proven
-        else [
-            "constituent universe and bucket selection are supplied as explicit engine inputs",
-            "official rebalance target weights are not available for direct comparison",
-        ],
+        "full_methodology_replication_status": "not_proven",
+        "full_methodology_replication_evidence": "",
+        "full_methodology_replication_blockers": full_replication_blockers,
     }
     if index_code not in ready_specs:
         return {
@@ -660,11 +673,15 @@ def _methodology_replication_item(
         }
     checks = _mapping(result.get("checks"))
     status = "passed" if checks and all(value == "passed" for value in checks.values()) else "failed"
+    proven = artifact_proven and status == "passed"
     return {
         **base,
         "target_weight_replication_status": status,
         "target_weight_checks": dict(checks),
         "target_weight_metrics": dict(_mapping(result.get("metrics"))),
+        "full_methodology_replication_status": "proven" if proven else "not_proven",
+        "full_methodology_replication_evidence": str(kss_full_replication.get("path", "")) if proven else "",
+        "full_methodology_replication_blockers": [] if proven else full_replication_blockers,
         "error": "" if status == "passed" else "target-weight checks failed",
     }
 

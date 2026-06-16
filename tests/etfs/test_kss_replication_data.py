@@ -35,6 +35,17 @@ def test_build_kss_data_requirements_marks_missing_datasets() -> None:
     assert requirements["full_replication_ready"] is False
 
 
+def test_build_kss_data_requirements_returns_defensive_dataset_copies() -> None:
+    requirements = build_kss_data_requirements()
+
+    returned_datasets = requirements["required_datasets"]
+    assert returned_datasets is not KSS_REQUIRED_DATASETS
+
+    returned_datasets[0]["name"] = "mutated"
+
+    assert KSS_REQUIRED_DATASETS[0]["name"] == "methodology_spec"
+
+
 def test_require_kss_snapshot_fields_rejects_missing_required_fields() -> None:
     rows = [{"security_code": "A000001", "float_market_cap": 100.0}]
 
@@ -47,6 +58,34 @@ def test_require_kss_snapshot_fields_rejects_missing_required_fields() -> None:
             "missing_fields": [
                 "as_of",
                 "is_eligible",
+                "is_semiconductor_theme",
+                "composite_momentum_score",
+            ],
+        }
+    ]
+
+
+def test_require_kss_snapshot_fields_rejects_whitespace_only_required_fields() -> None:
+    rows = [
+        {
+            "as_of": "   ",
+            "security_code": "   ",
+            "is_eligible": "Y",
+            "is_semiconductor_theme": "   ",
+            "float_market_cap": 100.0,
+            "composite_momentum_score": "   ",
+        }
+    ]
+
+    errors = require_kss_snapshot_fields(rows)
+
+    assert errors == [
+        {
+            "row": 0,
+            "security_code": "",
+            "missing_fields": [
+                "as_of",
+                "security_code",
                 "is_semiconductor_theme",
                 "composite_momentum_score",
             ],

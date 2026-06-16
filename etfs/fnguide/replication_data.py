@@ -77,7 +77,14 @@ def build_kss_data_requirements(*, available_datasets: Iterable[str] = ()) -> di
         "index_code": KSS_INDEX_CODE,
         "index_name": KSS_INDEX_NAME,
         "replication_stage": "data_contract",
-        "required_datasets": KSS_REQUIRED_DATASETS,
+        "required_datasets": [
+            {
+                "name": str(item["name"]),
+                "required_fields": list(item["required_fields"]),
+                "purpose": str(item["purpose"]),
+            }
+            for item in KSS_REQUIRED_DATASETS
+        ],
         "available_datasets": available,
         "missing_datasets": missing,
         "full_replication_ready": not missing,
@@ -87,12 +94,12 @@ def build_kss_data_requirements(*, available_datasets: Iterable[str] = ()) -> di
 def require_kss_snapshot_fields(rows: Iterable[Mapping[str, object]]) -> list[dict[str, object]]:
     errors: list[dict[str, object]] = []
     for row_index, row in enumerate(rows):
-        missing = [field for field in KSS_SNAPSHOT_REQUIRED_FIELDS if row.get(field) in {None, ""}]
+        missing = [field for field in KSS_SNAPSHOT_REQUIRED_FIELDS if _is_missing_value(row.get(field))]
         if missing:
             errors.append(
                 {
                     "row": row_index,
-                    "security_code": str(row.get("security_code", "")),
+                    "security_code": _normalized_string(row.get("security_code")),
                     "missing_fields": missing,
                 }
             )
@@ -107,3 +114,15 @@ def write_kss_data_requirements(output_dir: Path, *, available_datasets: Iterabl
         encoding="utf-8",
     )
     return output_path
+
+
+def _is_missing_value(value: object) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.strip() == ""
+    return False
+
+
+def _normalized_string(value: object) -> str:
+    return value.strip() if isinstance(value, str) else str(value or "")

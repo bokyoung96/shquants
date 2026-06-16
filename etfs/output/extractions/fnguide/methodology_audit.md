@@ -1,0 +1,57 @@
+# FnGuide Methodology Audit
+
+- Total specs: 59
+- Engine ready: 12
+- Blocked: 47
+
+## Blocked Specs
+
+| index_code | index_name | status | blockers |
+| --- | --- | --- | --- |
+| FI00.WLT.NMS | FnGuide AI Semiconductor TOP2+ Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SBI | FnGuide Secondary Battery Industry Index | draft_extracted | status=draft_extracted<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.HST | FnGuide Growth and Consumption-Driven Stock Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.HTN | FnGuide Korea AI Tech Core Industry Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.BOA | FnGuide On-Device AI Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.NSH | FnGuide Shipbuilding & Shipping Industry Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.HDB | FnGuide K-Bio Balanced Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.NSP | FnGuide Semiconductor Core Process Tech Leaders Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.IAI | FnGuide K-AI Semiconductor Core Technology Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.KAT | FnGuide AI medical technology Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.200 | FnGuide-RAFI Korea Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.SBC | FnGuide Secondary Battery Core Materials 10 Index | draft_extracted | status=draft_extracted<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.KIT | FnGuide IT PLUS Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.20.10.30 | Maekyung FnGuide Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.GMS | FnGuide Game Industry Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.25 | Maekyung FnGuide Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.T10 | FnGuide Size/Style Index Series | draft_extracted | status=draft_extracted<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.40.30 | Maekyung FnGuide Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.10 | Maekyung FnGuide Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.BDP | FnGuide Bank High Dividend Plus TOP 10 Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.IAM | FnGuide Sector Coverage Index Series | draft_extracted | status=draft_extracted |
+| FI00.WLT.ISC | FnGuide Sector Coverage Index Series | draft_extracted | status=draft_extracted |
+| FI00.30 | Maekyung FnGuide Index Series | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.KBM | FnGuide Healthcare Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.KBA | FnGuide AI Semiconductor TOP10 Index | draft_extracted | status=draft_extracted<br>rules.selection_count differs from PDF total constituents<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.KPC | FnGuide AI Platform Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.KBC | FnGuide K-Entertainment & Travel Leisure Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SBP | FnGuide All-Solid-State Battery & Silicon Anode Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.KRD | FnGuide KOREA High Dividend | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SSB | FnGuide Secondary Battery Materials & Equipment Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.SSC | FnGuide AI Semiconductor Materials & Equipment Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.FHV | FnGuide Financial Group Plus High Dividend Index(PR) | draft_extracted | status=draft_extracted |
+| FI00.WLT.SFE | FnGuide Semiconductor Front-End Process Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SBE | FnGuide Semiconductor Back-End Process Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SME | FnGuide Medical Device Materials & Equipment Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.ATP | FnGuide Automobile TOP3 Plus Index | draft_extracted | status=draft_extracted<br>rules.selection_count differs from PDF total constituents<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.SAE | FnGuide Automobile Materials & Equipment Index | draft_extracted | status=draft_extracted<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.STP | FnGuide Shipbuilding TOP3 Plus Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.SSE | FnGuide Shipbuilding Equipment Index | draft_extracted | status=draft_extracted<br>rules.selection_count differs from PDF total constituents<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |
+| FI00.WLT.ISW | FnGuide Sector Coverage Index Series | draft_extracted | status=draft_extracted |
+| FI00.WLT.SBM | FnGuide Secondary Battery Material Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.MHE | FnGuide Healthcare Equipment Index | draft_extracted | status=draft_extracted |
+| FI00.WLT.HDS | FnGuide Holdings Company Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.MHC | FnGuide Fuel Cell Electric Future Mobility Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.ESG.ESG | FnGuide ESGM ESG 지수 | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.WAV | FnGuide Semiconductor Value Chain Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence |
+| FI00.WLT.DBO | FnGuide Bio Similar & CDMO Index | draft_extracted | status=draft_extracted<br>selection.total_constituents not extracted with evidence<br>weight cap exists in rules but residual/fixed bucket scope is unresolved |

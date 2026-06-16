@@ -1,0 +1,971 @@
+{
+  "provider": "sp_global",
+  "generated_at": "2026-06-15T07:12:23.658575+00:00",
+  "count": 63,
+  "mapped_count": 63,
+  "index_candidate_counts": {
+    "S&P 500": 39,
+    "S&P Global Luxury": 1,
+    "S&P Korea Low Volatility": 1,
+    "S&P Global Infrastructure": 3,
+    "S&P 500 Sector": 10,
+    "S&P 500 Dividend Aristocrats": 2,
+    "S&P Biotechnology Select Industry": 1,
+    "S&P Kensho Smart Transportation": 1,
+    "S&P 500 Growth": 1,
+    "S&P Dividend Kings": 1,
+    "S&P Oil & Gas Exploration & Production Select Industry": 1,
+    "S&P GSCI Carbon Emission Allowances": 1,
+    "S&P 500 Equal Weight": 1
+  },
+  "methodology_library_url": "https://www.spglobal.com/spdji/en/governance/methodologies/",
+  "items": [
+    {
+      "code": "0026S0",
+      "name": "1Q 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0052S0",
+      "name": "1Q 미국S&P500미국채혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "360200",
+      "name": "ACE 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "438080",
+      "name": "ACE 미국S&P500미국채혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "354350",
+      "name": "HANARO 글로벌럭셔리S&P(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Global Luxury"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-thematic-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "432840",
+      "name": "HANARO 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "215620",
+      "name": "HK S&P코리아로우볼",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Korea Low Volatility"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-500-low-volatility-index.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "483570",
+      "name": "KCGI 미국S&P500 TOP10",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "449770",
+      "name": "KIWOOM 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0127V0",
+      "name": "KIWOOM 미국S&P500 TOP10&배당다우비중전환",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0137W0",
+      "name": "KIWOOM 미국S&P500&GOLD",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0127T0",
+      "name": "KIWOOM 미국S&P500&배당다우존스비중전환",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "449780",
+      "name": "KIWOOM 미국S&P500(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0137V0",
+      "name": "KIWOOM 미국S&P500모멘텀",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "269420",
+      "name": "KODEX S&P글로벌인프라(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Global Infrastructure"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-thematic-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "379800",
+      "name": "KODEX 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "449180",
+      "name": "KODEX 미국S&P500(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "453660",
+      "name": "KODEX 미국S&P500경기소비재",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "453650",
+      "name": "KODEX 미국S&P500금융",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0005A0",
+      "name": "KODEX 미국S&P500데일리커버드콜OTM",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "276970",
+      "name": "KODEX 미국S&P500배당귀족커버드콜(합성 H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Dividend Aristocrats"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0026E0",
+      "name": "KODEX 미국S&P500버퍼3월액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0068M0",
+      "name": "KODEX 미국S&P500버퍼6월액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0089C0",
+      "name": "KODEX 미국S&P500변동성확대시커버드콜",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "200030",
+      "name": "KODEX 미국S&P500산업재(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "219480",
+      "name": "KODEX 미국S&P500선물(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0041E0",
+      "name": "KODEX 미국S&P500액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "218420",
+      "name": "KODEX 미국S&P500에너지(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "463640",
+      "name": "KODEX 미국S&P500유틸리티",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "463690",
+      "name": "KODEX 미국S&P500커뮤니케이션",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "463680",
+      "name": "KODEX 미국S&P500테크놀로지",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "453630",
+      "name": "KODEX 미국S&P500필수소비재",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "453640",
+      "name": "KODEX 미국S&P500헬스케어",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "185680",
+      "name": "KODEX 미국S&P바이오(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Biotechnology Select Industry"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-select-industry-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "390400",
+      "name": "KODEX 미국스마트모빌리티S&P",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Kensho Smart Transportation"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-kensho-new-economies.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "269530",
+      "name": "PLUS S&P글로벌인프라",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Global Infrastructure"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-thematic-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "429760",
+      "name": "PLUS 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "269540",
+      "name": "PLUS 미국S&P500(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0057H0",
+      "name": "PLUS 미국S&P500미국채혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "494410",
+      "name": "PLUS 미국S&P500성장주",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Growth"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-style.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "379780",
+      "name": "RISE 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "453330",
+      "name": "RISE 미국S&P500(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0138T0",
+      "name": "RISE 미국S&P500데일리고정커버드콜",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0005C0",
+      "name": "RISE 미국S&P500엔화노출(합성 H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "460660",
+      "name": "RISE 미국S&P배당킹",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Dividend Kings"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-dividend-kings-index.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "219390",
+      "name": "RISE 미국S&P원유생산기업(합성 H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Oil & Gas Exploration & Production Select Industry"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-select-industry-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "433330",
+      "name": "SOL 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "399110",
+      "name": "SOL 미국S&P500ESG",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "0080X0",
+      "name": "SOL 미국S&P500미국채혼합50",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "499150",
+      "name": "SOL 미국S&P500엔화노출(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "400580",
+      "name": "SOL 유럽탄소배출권선물S&P(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P GSCI Carbon Emission Allowances"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-gsci.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "269370",
+      "name": "TIGER S&P글로벌인프라(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P Global Infrastructure"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-thematic-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "248270",
+      "name": "TIGER S&P글로벌헬스케어(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Sector"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "360750",
+      "name": "TIGER 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "448290",
+      "name": "TIGER 미국S&P500(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "488500",
+      "name": "TIGER 미국S&P500동일가중",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Equal Weight"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spice-indices.com/idpfiles/spice-assets/resources/public/documents/methodology-sp-500-equal-weight-index.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "225040",
+      "name": "TIGER 미국S&P500레버리지(합성 H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "429000",
+      "name": "TIGER 미국S&P500배당귀족",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500 Dividend Aristocrats"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "143850",
+      "name": "TIGER 미국S&P500선물(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "225030",
+      "name": "TIGER 미국S&P500선물인버스(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "482730",
+      "name": "TIGER 미국S&P500타겟데일리커버드콜",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "426020",
+      "name": "TIME 미국S&P500액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    },
+    {
+      "code": "444490",
+      "name": "WON 미국S&P500",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "S&P 500"
+      ],
+      "methodology_probe": "spglobal_methodology_library",
+      "methodology_url_candidates": [
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+        "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-index-math.pdf"
+      ],
+      "next_action": "probe_spglobal_methodology_library"
+    }
+  ]
+}

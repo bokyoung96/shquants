@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T06:01:33.130784+00:00",
+  "count": 3,
+  "results": [
+    {
+      "validation_type": "etf_holdings_constituents",
+      "etf_code": "0167A0",
+      "index_code": "FI00.WLT.KSS",
+      "as_of": "2026-03-31",
+      "status": "passed",
+      "checks": {
+        "constituent_count": "passed",
+        "cash_excluded": "passed"
+      },
+      "metrics": {
+        "expected_constituent_count": 10,
+        "official_equity_count": 10,
+        "official_weight_sum": 0.9998
+      },
+      "differences": []
+    },
+    {
+      "validation_type": "etf_holdings_constituents",
+      "etf_code": "0167A0",
+      "index_code": "FI00.WLT.KSS",
+      "as_of": "2026-04-30",
+      "status": "passed",
+      "checks": {
+        "constituent_count": "passed",
+        "cash_excluded": "passed"
+      },
+      "metrics": {
+        "expected_constituent_count": 10,
+        "official_equity_count": 10,
+        "official_weight_sum": 0.9999999999999999
+      },
+      "differences": []
+    },
+    {
+      "validation_type": "etf_holdings_constituents",
+      "etf_code": "0167A0",
+      "index_code": "FI00.WLT.KSS",
+      "as_of": "2026-05-29",
+      "status": "passed",
+      "checks": {
+        "constituent_count": "passed",
+        "cash_excluded": "passed"
+      },
+      "metrics": {
+        "expected_constituent_count": 10,
+        "official_equity_count": 10,
+        "official_weight_sum": 1.0
+      },
+      "differences": []
+    }
+  ]
+}

@@ -1,0 +1,1387 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T06:01:33.197537+00:00",
+  "scope": "target-weight calculation from verified methodology specs and explicit engine inputs",
+  "limitations": [
+    "Does not prove issuer universe construction or provider-level constituent selection.",
+    "Does not compare calculated targets to official rebalance target files.",
+    "ETF holdings workbooks remain validation evidence, not methodology calculation inputs."
+  ],
+  "counts": {
+    "total_specs": 59,
+    "engine_ready": 12,
+    "target_weight_replication_passed": 12,
+    "target_weight_replication_failed": 0,
+    "target_weight_replication_not_run": 47,
+    "full_methodology_replication_proven": 0,
+    "full_methodology_replication_not_proven": 59
+  },
+  "items": [
+    {
+      "index_code": "FI00.WLT.NMS",
+      "index_name": "FnGuide AI Semiconductor TOP2+ Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HBM",
+      "index_name": "FnGuide AI Semiconductor TOP3 Plus Price Return Index",
+      "methodology": "fixed_plus_residual",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 20,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SBI",
+      "index_name": "FnGuide Secondary Battery Industry Index",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: score_weighted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HST",
+      "index_name": "FnGuide Growth and Consumption-Driven Stock Index",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HTN",
+      "index_name": "FnGuide Korea AI Tech Core Industry Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.BOA",
+      "index_name": "FnGuide On-Device AI Index",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.DSA",
+      "index_name": "FnGuide AI Semiconductor & Infrastructure Index",
+      "methodology": "fixed_plus_residual",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 24,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "index_name": "FnGuide K High Dividend Index",
+      "methodology": "metric_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 40,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KSS",
+      "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+      "methodology": "top2_plus",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 10,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NHM",
+      "index_name": "FnGuide K-POP & Media Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 20,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NHG",
+      "index_name": "FnGuide K-Game Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 20,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NSH",
+      "index_name": "FnGuide Shipbuilding & Shipping Industry Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NGE",
+      "index_name": "FnGuide Green Energy Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 20,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HDB",
+      "index_name": "FnGuide K-Bio Balanced Index",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NSP",
+      "index_name": "FnGuide Semiconductor Core Process Tech Leaders Index",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: custom_weighted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.NHD",
+      "index_name": "FnGuide High Dividend Securities TOP3 Plus Index",
+      "methodology": "fixed_plus_residual",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 10,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.IAI",
+      "index_name": "FnGuide K-AI Semiconductor Core Technology Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KAT",
+      "index_name": "FnGuide AI medical technology Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.200",
+      "index_name": "FnGuide-RAFI Korea Index Series",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: fundamental_float_adjusted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SBC",
+      "index_name": "FnGuide Secondary Battery Core Materials 10 Index",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: score_weighted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KIT",
+      "index_name": "FnGuide IT PLUS Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.20.10.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.GMS",
+      "index_name": "FnGuide Game Industry Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.25",
+      "index_name": "Maekyung FnGuide Index Series",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.T10",
+      "index_name": "FnGuide Size/Style Index Series",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.40.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.REP",
+      "index_name": "FnGuide K-Renewable Energy Plus Index",
+      "methodology": "metric_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 30,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.10",
+      "index_name": "Maekyung FnGuide Index Series",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.BDP",
+      "index_name": "FnGuide Bank High Dividend Plus TOP 10 Index",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: custom_weighted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.IAM",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.ISC",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KBM",
+      "index_name": "FnGuide Healthcare Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KBA",
+      "index_name": "FnGuide AI Semiconductor TOP10 Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KPC",
+      "index_name": "FnGuide AI Platform Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KBC",
+      "index_name": "FnGuide K-Entertainment & Travel Leisure Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SBP",
+      "index_name": "FnGuide All-Solid-State Battery & Silicon Anode Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.KRD",
+      "index_name": "FnGuide KOREA High Dividend",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SSB",
+      "index_name": "FnGuide Secondary Battery Materials & Equipment Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SSC",
+      "index_name": "FnGuide AI Semiconductor Materials & Equipment Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "index_name": "FnGuide Defense TOP5 Index TR",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 5,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.FHV",
+      "index_name": "FnGuide Financial Group Plus High Dividend Index(PR)",
+      "methodology": "unsupported",
+      "engine_support_status": "unsupported_methodology",
+      "engine_blockers": [
+        "unsupported methodology engine: custom_weighted"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SFE",
+      "index_name": "FnGuide Semiconductor Front-End Process Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SBE",
+      "index_name": "FnGuide Semiconductor Back-End Process Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SME",
+      "index_name": "FnGuide Medical Device Materials & Equipment Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.ATP",
+      "index_name": "FnGuide Automobile TOP3 Plus Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SAE",
+      "index_name": "FnGuide Automobile Materials & Equipment Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.STP",
+      "index_name": "FnGuide Shipbuilding TOP3 Plus Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SSE",
+      "index_name": "FnGuide Shipbuilding Equipment Index",
+      "methodology": "equal_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.ISW",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SCT",
+      "index_name": "FnGuide Cosmetics TOP3 Plus Index",
+      "methodology": "fixed_plus_residual",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 10,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.SBM",
+      "index_name": "FnGuide Secondary Battery Material Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.MHE",
+      "index_name": "FnGuide Healthcare Equipment Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HDS",
+      "index_name": "FnGuide Holdings Company Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.MHC",
+      "index_name": "FnGuide Fuel Cell Electric Future Mobility Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.HMZ",
+      "index_name": "FnGuide MZ Consumption Index",
+      "methodology": "equal_weighted",
+      "engine_support_status": "engine_ready",
+      "engine_blockers": [],
+      "methodology_blockers": [],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "passed",
+      "target_weight_checks": {
+        "constituent_count": "passed",
+        "weight_sum": "passed"
+      },
+      "target_weight_metrics": {
+        "constituent_count": 50,
+        "weight_sum": 1.0
+      },
+      "error": ""
+    },
+    {
+      "index_code": "FI00.ESG.ESG",
+      "index_name": "FnGuide ESGM ESG 지수",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.WAV",
+      "index_name": "FnGuide Semiconductor Value Chain Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    },
+    {
+      "index_code": "FI00.WLT.DBO",
+      "index_name": "FnGuide Bio Similar & CDMO Index",
+      "methodology": "float_market_cap_weighted",
+      "engine_support_status": "blocked_by_methodology_evidence",
+      "engine_blockers": [
+        "methodology spec selection.total_constituents is required"
+      ],
+      "methodology_blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ],
+      "full_methodology_replication_status": "not_proven",
+      "full_methodology_replication_evidence": "",
+      "full_methodology_replication_blockers": [
+        "constituent universe and bucket selection are supplied as explicit engine inputs",
+        "official rebalance target weights are not available for direct comparison"
+      ],
+      "target_weight_replication_status": "not_run",
+      "target_weight_checks": {},
+      "target_weight_metrics": {},
+      "error": ""
+    }
+  ]
+}

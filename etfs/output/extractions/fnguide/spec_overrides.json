@@ -1,0 +1,386 @@
+{
+  "schema_version": "1.0",
+  "indices": [
+    {
+      "index_code": "FI00.WLT.KSS",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide AI Semiconductor TOP2 Plus Index PDF pages 3 and 6 checked against extracted fields"
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 10
+        },
+        "validation": {
+          "required_modes": [
+            "etf_holdings_constituents"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NHM",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide K-POP & Media Index PDF pages 3-4: selects top 20 by float market cap, float-market-cap weighted, 25% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 20
+        },
+        "weighting": {
+          "base": "float_market_cap_weighted",
+          "security_cap": 0.25
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NHG",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide K-Game Index PDF pages 3-4: selects top 20 by float market cap, float-market-cap weighted, 25% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 20
+        },
+        "weighting": {
+          "base": "float_market_cap_weighted",
+          "security_cap": 0.25
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NGE",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide Green Energy Index PDF pages 3-4: selects top 20 by float market cap, float-market-cap weighted, 10% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 20
+        },
+        "weighting": {
+          "base": "float_market_cap_weighted",
+          "security_cap": 0.1
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide Defense TOP5 Index TR PDF page 5: selects top 5 by float market cap from keyword-score universe, float-market-cap weighted, 23% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 5
+        },
+        "weighting": {
+          "base": "float_market_cap_weighted",
+          "security_cap": 0.23
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.HMZ",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide MZ Consumption Index PDF page 5: portfolio is built to 50 constituents and selected constituents are weighted equally."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 50
+        },
+        "weighting": {
+          "base": "equal_weighted"
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.HBM",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide AI Semiconductor TOP3 Plus Index PDF pages 4-5: selects top 20 by financial score; top 3 semiconductor/equipment names receive 25% each and remaining 17 names share the remaining 25% equally."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 20,
+          "buckets": [
+            {
+              "name": "top3",
+              "count": 3,
+              "weight": {
+                "type": "fixed",
+                "value": 0.25
+              }
+            },
+            {
+              "name": "residual",
+              "count": 17
+            }
+          ]
+        },
+        "weighting": {
+          "base": "fixed_plus_residual",
+          "residual": {
+            "applies_to_buckets": [
+              "residual"
+            ],
+            "total_weight": 0.25,
+            "base": "equal_weighted"
+          }
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.DSA",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide AI Semiconductor & Infrastructure Index PDF pages 6-7: final 24 names; four keyword theme winners receive fixed weights of 20%, 10%, 10%, and 10%, and the remaining 20 names share the remaining 50% equally."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 24,
+          "buckets": [
+            {
+              "name": "gpu_leader",
+              "count": 1,
+              "weight": {
+                "type": "fixed",
+                "value": 0.2
+              }
+            },
+            {
+              "name": "hbm_leader",
+              "count": 1,
+              "weight": {
+                "type": "fixed",
+                "value": 0.1
+              }
+            },
+            {
+              "name": "ai_leader",
+              "count": 1,
+              "weight": {
+                "type": "fixed",
+                "value": 0.1
+              }
+            },
+            {
+              "name": "power_leader",
+              "count": 1,
+              "weight": {
+                "type": "fixed",
+                "value": 0.1
+              }
+            },
+            {
+              "name": "residual",
+              "count": 20
+            }
+          ]
+        },
+        "weighting": {
+          "base": "fixed_plus_residual",
+          "residual": {
+            "applies_to_buckets": [
+              "residual"
+            ],
+            "total_weight": 0.5,
+            "base": "equal_weighted"
+          }
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.SCT",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide Cosmetics TOP3 Plus Index PDF pages 8-9: final 10 names; TOP3 names receive 20% each, plus 7 names are float-market-cap weighted within the remaining 40% with a 7% cap and pro-rata redistribution."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 10,
+          "buckets": [
+            {
+              "name": "top3",
+              "count": 3,
+              "weight": {
+                "type": "fixed",
+                "value": 0.2
+              }
+            },
+            {
+              "name": "plus",
+              "count": 7
+            }
+          ]
+        },
+        "weighting": {
+          "base": "fixed_plus_residual",
+          "residual": {
+            "applies_to_buckets": [
+              "plus"
+            ],
+            "total_weight": 0.4,
+            "base": "float_market_cap",
+            "cap": 0.07,
+            "redistribution": "iterative_pro_rata"
+          }
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NHD",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide High Dividend Securities TOP3 Plus Index PDF pages 3-5: final 10 securities; top 3 by six-month average market cap receive 20% each, and the remaining 7 securities are market-cap weighted within the remaining 40% with a 15% cap and pro-rata redistribution."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 10,
+          "buckets": [
+            {
+              "name": "top3",
+              "count": 3,
+              "weight": {
+                "type": "fixed",
+                "value": 0.2
+              }
+            },
+            {
+              "name": "residual",
+              "count": 7
+            }
+          ]
+        },
+        "weighting": {
+          "base": "fixed_plus_residual",
+          "residual": {
+            "applies_to_buckets": [
+              "residual"
+            ],
+            "total_weight": 0.4,
+            "base": "float_market_cap",
+            "cap": 0.15,
+            "redistribution": "iterative_pro_rata"
+          }
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide K High Dividend Index PDF pages 3-5: selects 40 securities by dividend yield with sector/buffer rules, then weights by trailing one-year cash dividend amount with a 10% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 40
+        },
+        "weighting": {
+          "base": "metric_weighted",
+          "metric": "dividend_amount",
+          "security_cap": 0.1
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    },
+    {
+      "index_code": "FI00.WLT.REP",
+      "status": "methodology_verified",
+      "review": {
+        "reviewed_by": "agent",
+        "evidence": "FnGuide K-Renewable Energy Plus Index PDF pages 5-6: selects final 30 securities by keyword relevance and market-cap fallback, then weights by keyword score with an 8% constituent cap."
+      },
+      "open_questions": [],
+      "overrides": {
+        "selection": {
+          "total_constituents": 30
+        },
+        "weighting": {
+          "base": "metric_weighted",
+          "metric": "keyword_score",
+          "security_cap": 0.08
+        },
+        "validation": {
+          "required_modes": [
+            "methodology_pdf_evidence"
+          ]
+        }
+      }
+    }
+  ]
+}

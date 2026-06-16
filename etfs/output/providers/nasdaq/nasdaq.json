@@ -1,0 +1,465 @@
+{
+  "provider": "nasdaq",
+  "generated_at": "2026-06-15T07:12:23.852307+00:00",
+  "count": 32,
+  "mapped_count": 32,
+  "index_candidate_counts": {
+    "Nasdaq-100": 26,
+    "Nasdaq US Dividend Achievers": 1,
+    "Nasdaq Clean Edge Green Energy": 1,
+    "Nasdaq Next Generation 100": 1,
+    "Nasdaq Biotechnology": 1,
+    "PHLX Semiconductor Sector": 2
+  },
+  "methodology_library_url": "https://indexes.nasdaq.com/Resource/Index/Methodology",
+  "items": [
+    {
+      "code": "0069M0",
+      "name": "1Q 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "0111P0",
+      "name": "1Q 미국나스닥100미국채혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "367380",
+      "name": "ACE 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "438100",
+      "name": "ACE 미국나스닥100미국채혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "453080",
+      "name": "KIWOOM 미국나스닥100(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "373790",
+      "name": "KIWOOM 미국방어배당성장나스닥",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq US Dividend Achievers"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaqomx.com/docs/methodology_dvg.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "379810",
+      "name": "KODEX 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "449190",
+      "name": "KODEX 미국나스닥100(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "494300",
+      "name": "KODEX 미국나스닥100데일리커버드콜OTM",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "409820",
+      "name": "KODEX 미국나스닥100레버리지(합성 H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "304940",
+      "name": "KODEX 미국나스닥100선물(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "409810",
+      "name": "KODEX 미국나스닥100선물인버스(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "411420",
+      "name": "KODEX 미국나스닥AI테크액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "419420",
+      "name": "KODEX 미국클린에너지나스닥",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq Clean Edge Green Energy"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaqomx.com/docs/methodology_cels.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "0015B0",
+      "name": "KoAct 미국나스닥성장기업액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "0104H0",
+      "name": "KoAct 미국나스닥채권혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "0089B0",
+      "name": "PLUS 미국나스닥100미국채혼합50",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "287180",
+      "name": "PLUS 미국나스닥테크",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "368590",
+      "name": "RISE 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "476030",
+      "name": "SOL 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "133690",
+      "name": "TIGER 미국나스닥100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "448300",
+      "name": "TIGER 미국나스닥100(H)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "418660",
+      "name": "TIGER 미국나스닥100레버리지(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "435420",
+      "name": "TIGER 미국나스닥100채권혼합50",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "441680",
+      "name": "TIGER 미국나스닥100커버드콜(합성)",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "486290",
+      "name": "TIGER 미국나스닥100타겟데일리커버드콜",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "429010",
+      "name": "TIGER 미국나스닥넥스트100",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq Next Generation 100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NGX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "203780",
+      "name": "TIGER 미국나스닥바이오",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq Biotechnology"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaqomx.com/docs/methodology_nbi.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "497570",
+      "name": "TIGER 미국필라델피아AI반도체나스닥",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "PHLX Semiconductor Sector"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaqomx.com/docs/methodology_sox.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "381180",
+      "name": "TIGER 미국필라델피아반도체나스닥",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "PHLX Semiconductor Sector"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaqomx.com/docs/methodology_sox.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "426030",
+      "name": "TIME 미국나스닥100액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    },
+    {
+      "code": "0019K0",
+      "name": "TIME 미국나스닥100채권혼합50액티브",
+      "product_family": "foreign_or_global",
+      "source_confidence": "medium",
+      "index_name_candidates": [
+        "Nasdaq-100"
+      ],
+      "methodology_probe": "nasdaq_index_methodology_library",
+      "methodology_url_candidates": [
+        "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf"
+      ],
+      "next_action": "probe_nasdaq_methodology_library"
+    }
+  ]
+}

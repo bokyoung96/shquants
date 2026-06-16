@@ -1,0 +1,1063 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T06:01:33.156282+00:00",
+  "template_only": true,
+  "instructions": "Copy this file to engine_inputs.json and replace placeholders with independent calculation inputs.",
+  "count": 12,
+  "requests": [
+    {
+      "index_code": "FI00.WLT.HBM",
+      "as_of": "",
+      "methodology": "fixed_plus_residual",
+      "constituents_by_bucket": {
+        "top3": [
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          }
+        ],
+        "residual": [
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          }
+        ]
+      }
+    },
+    {
+      "index_code": "FI00.WLT.DSA",
+      "as_of": "",
+      "methodology": "fixed_plus_residual",
+      "constituents_by_bucket": {
+        "gpu_leader": [
+          {
+            "security_code": ""
+          }
+        ],
+        "hbm_leader": [
+          {
+            "security_code": ""
+          }
+        ],
+        "ai_leader": [
+          {
+            "security_code": ""
+          }
+        ],
+        "power_leader": [
+          {
+            "security_code": ""
+          }
+        ],
+        "residual": [
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          },
+          {
+            "security_code": ""
+          }
+        ]
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "as_of": "",
+      "methodology": "metric_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        },
+        {
+          "security_code": "",
+          "dividend_amount": null
+        }
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KSS",
+      "as_of": "",
+      "methodology": "top2_plus",
+      "constituents_by_bucket": {
+        "top2": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ],
+        "momentum": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ],
+        "market_cap_fill": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ]
+      }
+    },
+    {
+      "index_code": "FI00.WLT.NHM",
+      "as_of": "",
+      "methodology": "float_market_cap_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        }
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHG",
+      "as_of": "",
+      "methodology": "float_market_cap_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        }
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NGE",
+      "as_of": "",
+      "methodology": "float_market_cap_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        }
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHD",
+      "as_of": "",
+      "methodology": "fixed_plus_residual",
+      "constituents_by_bucket": {
+        "top3": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ],
+        "residual": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ]
+      }
+    },
+    {
+      "index_code": "FI00.WLT.REP",
+      "as_of": "",
+      "methodology": "metric_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        },
+        {
+          "security_code": "",
+          "keyword_score": null
+        }
+      ]
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "as_of": "",
+      "methodology": "float_market_cap_weighted",
+      "constituents": [
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        },
+        {
+          "security_code": "",
+          "float_market_cap": null
+        }
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SCT",
+      "as_of": "",
+      "methodology": "fixed_plus_residual",
+      "constituents_by_bucket": {
+        "top3": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ],
+        "plus": [
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          },
+          {
+            "security_code": "",
+            "float_market_cap": null
+          }
+        ]
+      }
+    },
+    {
+      "index_code": "FI00.WLT.HMZ",
+      "as_of": "",
+      "methodology": "equal_weighted",
+      "constituents": [
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        },
+        {
+          "security_code": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4901 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-16T06:01:33.079473+00:00",
+  "provider": "fnguide",
+  "count": 59,
+  "indices": [
+    {
+      "index_code": "FI00.WLT.NMS",
+      "index_name": "FnGuide AI Semiconductor TOP2+ Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0182R0",
+          "etf_name": "1Q K반도체TOP2+"
+        },
+        {
+          "etf_code": "0177X0",
+          "etf_name": "ACE K휴머노이드로봇산업TOP2+"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0182R0_2dc046e4ab51.pdf",
+        "methodology_pdf_sha256": "2dc046e4ab510c2969d6a3e13f2d8583b7ed46d6c45333cf88d44db7fb553ba4",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Semiconductor_TOP2_Index_Methodology_Book_(20260406)_v2.5.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NMS",
+        "pdf_page_count": 17,
+        "methodology_updated": "April 2026"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 15
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 15,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HBM",
+      "index_name": "FnGuide AI Semiconductor TOP3 Plus Price Return Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0103T0",
+          "etf_name": "1Q K소버린AI"
+        },
+        {
+          "etf_code": "469150",
+          "etf_name": "ACE AI반도체TOP3+"
+        },
+        {
+          "etf_code": "395270",
+          "etf_name": "HANARO Fn K-반도체"
+        },
+        {
+          "etf_code": "488210",
+          "etf_name": "KIWOOM K-반도체북미공급망"
+        },
+        {
+          "etf_code": "471990",
+          "etf_name": "KODEX AI반도체핵심장비"
+        },
+        {
+          "etf_code": "487240",
+          "etf_name": "KODEX AI전력핵심설비"
+        },
+        {
+          "etf_code": "091160",
+          "etf_name": "KODEX 반도체"
+        },
+        {
+          "etf_code": "0190G0",
+          "etf_name": "KODEX 반도체타겟위클리커버드콜"
+        },
+        {
+          "etf_code": "450190",
+          "etf_name": "KODEX 한중반도체(합성)"
+        },
+        {
+          "etf_code": "469070",
+          "etf_name": "RISE AI&로봇"
+        },
+        {
+          "etf_code": "388420",
+          "etf_name": "RISE 비메모리반도체액티브"
+        },
+        {
+          "etf_code": "0190C0",
+          "etf_name": "RISE 현대차고정피지컬AI"
+        },
+        {
+          "etf_code": "471760",
+          "etf_name": "TIGER AI반도체핵심공정"
+        },
+        {
+          "etf_code": "091230",
+          "etf_name": "TIGER 반도체"
+        },
+        {
+          "etf_code": "449690",
+          "etf_name": "TIGER 한중반도체(합성)"
+        },
+        {
+          "etf_code": "470310",
+          "etf_name": "UNICORN 생성형AI강소기업액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0103T0_466c302826ee.pdf",
+        "methodology_pdf_sha256": "466c302826eef2a3e0f92b81ad26848368b2f87a0b9d363a2505eef955df1358",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Semiconductor_TOP3_Plus_Price_Return_Index_Methodology_Book_(20230920)_v1.5.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HBM",
+        "pdf_page_count": 17,
+        "methodology_updated": "September 2023"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          3,
+          6,
+          9,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기 개편을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            3,
+            6,
+            9,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기 개편을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SBI",
+      "index_name": "FnGuide Secondary Battery Industry Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "385600",
+          "etf_name": "ACE 2차전지&친환경차액티브"
+        },
+        {
+          "etf_code": "466810",
+          "etf_name": "BNK 2차전지양극재"
+        },
+        {
+          "etf_code": "488200",
+          "etf_name": "KIWOOM K-2차전지북미공급망"
+        },
+        {
+          "etf_code": "305720",
+          "etf_name": "KODEX 2차전지산업"
+        },
+        {
+          "etf_code": "422420",
+          "etf_name": "RISE 2차전지액티브"
+        },
+        {
+          "etf_code": "305540",
+          "etf_name": "TIGER 2차전지테마"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\385600_8ae0b61a17ae.pdf",
+        "methodology_pdf_sha256": "8ae0b61a17aee707cb3b6f881d17fe24442e30d1529f5b42006f4656169caaff",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Secondary_Battery_Industry_Index_Methodology_Book_삼성_(20230425)_v2.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SBI",
+        "pdf_page_count": 13,
+        "methodology_updated": "April 2023"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          3,
+          6,
+          9,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 번째 영업일부터 세 번째 영업일까지 정기 변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 25,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "score_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            3,
+            6,
+            9,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 번째 영업일부터 세 번째 영업일까지 정기 변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 25,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "score_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HST",
+      "index_name": "FnGuide Growth and Consumption-Driven Stock Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "226380",
+          "etf_name": "ACE Fn성장소비주도주"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\226380_7e2103f24d78.pdf",
+        "methodology_pdf_sha256": "7e2103f24d78dde5726ea81486afb7cd7c926ae4b6f6a0dbe6b3c689bd453694",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_성장소비주도_Index_Methodology_Book_한투_(20200902)_v2.4.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HST",
+        "pdf_page_count": 16,
+        "methodology_updated": "September 2020"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "종목 선정일 및 개편 일정 FnGuide 성장소비주도 지수의 구성 종목 선정은 6월과 12월 (연 2회) KOSPI200 옵션 만기일 다음주 목요일(휴장인 경우 직전 영업일)을 기준으로 하며, 옵션만기일 다음주..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정일 및 개편 일정 FnGuide 성장소비주도 지수의 구성 종목 선정은 6월과 12월 (연 2회) KOSPI200 옵션 만기일 다음주 목요일(휴장인 경우 직전 영업일)을 기준으로 하며, 옵션만기일 다음주...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HTN",
+      "index_name": "FnGuide Korea AI Tech Core Industry Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "380340",
+          "etf_name": "ACE 코리아AI테크핵심산업"
+        },
+        {
+          "etf_code": "0115E0",
+          "etf_name": "KODEX 코리아소버린AI"
+        },
+        {
+          "etf_code": "365040",
+          "etf_name": "TIGER AI코리아그로스액티브"
+        },
+        {
+          "etf_code": "0148J0",
+          "etf_name": "TIGER 코리아휴머노이드로봇산업"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\380340_a0fd547b69bf.pdf",
+        "methodology_pdf_sha256": "a0fd547b69bfa32306908376e3db1633cd2f6f41563c66cc4a1738ec597160b0",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Korea AI Tech Core Industry_Index_Methodology_Book_(20251201)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HTN",
+        "pdf_page_count": 20,
+        "methodology_updated": "December 2025"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 15
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 15,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.BOA",
+      "index_name": "FnGuide On-Device AI Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "487750",
+          "etf_name": "BNK 온디바이스AI"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\487750_d51284e3ed0e.pdf",
+        "methodology_pdf_sha256": "d51284e3ed0e2438e51c0a3d78238a819cdcf9ab4bb0893486f256d754825b60",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_On-Device_AI_Index_Methodology_Book_(20240613)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.BOA",
+        "pdf_page_count": 18,
+        "methodology_updated": "June 2024"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 20
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.DSA",
+      "index_name": "FnGuide AI Semiconductor & Infrastructure Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "486240",
+          "etf_name": "DAISHIN343 AI반도체&인프라액티브"
+        },
+        {
+          "etf_code": "487130",
+          "etf_name": "KoAct AI인프라액티브"
+        },
+        {
+          "etf_code": "0101N0",
+          "etf_name": "RISE AI전력인프라"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\486240_374de20750a1.pdf",
+        "methodology_pdf_sha256": "374de20750a1fbf7820cc761f52d6c98b22229f0ea183c86b350752af66f1b05",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Semiconductor & Infrastructure_Index_Methodology_Book_(20240418)_v2.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.DSA",
+        "pdf_page_count": 20,
+        "methodology_updated": "April 2024"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          3,
+          6,
+          9,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 24,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            3,
+            6,
+            9,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 24,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "index_name": "FnGuide K High Dividend Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0189Z0",
+          "etf_name": "DAISHIN343 금융&지주고배당"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0189Z0_99b6b7ae10f9.pdf",
+        "methodology_pdf_sha256": "99b6b7ae10f989f23958014542105580ecd6ccc437507ce71d4d111a66191776",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K_High_Dividend_Index_Methodology_Book_(20250821)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NDV",
+        "pdf_page_count": 10,
+        "methodology_updated": "August 2025"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 40,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 40,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "custom_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.KSS",
+      "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0174J0",
+          "etf_name": "DAISHIN343 오피스리츠플러스"
+        },
+        {
+          "etf_code": "395160",
+          "etf_name": "KODEX AI반도체TOP2플러스"
+        },
+        {
+          "etf_code": "0167A0",
+          "etf_name": "SOL AI반도체TOP2플러스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0174J0_57c7d80a085d.pdf",
+        "methodology_pdf_sha256": "57c7d80a085dbda0c849eeb8cbbde43a53436f669c8c8e2f88c769f6c0d2cc96",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide AI Semiconductor TOP2 Plus Index_Methodology_Book_(20260102)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KSS",
+        "pdf_page_count": 20,
+        "methodology_updated": "January 2026"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "implementation_timing": "2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": [
+          {
+            "name": "top2",
+            "count": 2,
+            "universe_filter": {
+              "fics_sector": "semiconductor"
+            },
+            "rank": [
+              {
+                "field": "market_cap",
+                "direction": "desc"
+              }
+            ],
+            "weight": {
+              "type": "fixed",
+              "value": 0.25
+            }
+          },
+          {
+            "name": "momentum",
+            "count": 4,
+            "exclude_prior_buckets": true,
+            "score": {
+              "type": "sum",
+              "components": [
+                {
+                  "field": "sales_momentum",
+                  "weight": 1.0
+                },
+                {
+                  "field": "price_momentum",
+                  "weight": 1.0
+                }
+              ]
+            },
+            "rank": [
+              {
+                "field": "composite_score",
+                "direction": "desc"
+              }
+            ]
+          },
+          {
+            "name": "market_cap_fill",
+            "count": 4,
+            "exclude_prior_buckets": true,
+            "rank": [
+              {
+                "field": "market_cap",
+                "direction": "desc"
+              }
+            ]
+          }
+        ]
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {
+          "applies_to_buckets": [
+            "momentum",
+            "market_cap_fill"
+          ],
+          "total_weight": 0.5,
+          "base": "float_market_cap",
+          "cap": 0.15,
+          "redistribution": "iterative_pro_rata"
+        }
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.buckets.market_cap_fill.count": {
+          "value": 4,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.buckets.momentum.count": {
+          "value": 4,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.buckets.top2.count": {
+          "value": 2,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.buckets.top2.weight": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.residual.cap": {
+          "value": 0.15,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.residual.count": {
+          "value": 8,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "15%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count means top2 bucket count, not total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHM",
+      "index_name": "FnGuide K-POP & Media Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "395290",
+          "etf_name": "HANARO Fn K-POP&미디어"
+        },
+        {
+          "etf_code": "228810",
+          "etf_name": "TIGER 미디어컨텐츠"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\395290_48ffa5d26b80.pdf",
+        "methodology_pdf_sha256": "48ffa5d26b80b87bf038ded822a850b0f8896aa0efc7f089e954222b3c77e86f",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-POP_&_Media_Index_Methodology_Book_NHA_(20210225)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NHM",
+        "pdf_page_count": 17,
+        "methodology_updated": "February 2021"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.NHG",
+      "index_name": "FnGuide K-Game Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "395280",
+          "etf_name": "HANARO Fn K-게임"
+        },
+        {
+          "etf_code": "300640",
+          "etf_name": "RISE 게임테마"
+        },
+        {
+          "etf_code": "300610",
+          "etf_name": "TIGER K게임"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\395280_61f80a798567.pdf",
+        "methodology_pdf_sha256": "61f80a7985672329a9ada77a4cebdbd0de5fbc9a4aa3440b7b7f0323aad26f19",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-Game_Index_Methodology_Book_NHA_(20210225)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NHG",
+        "pdf_page_count": 16,
+        "methodology_updated": "February 2021"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.NSH",
+      "index_name": "FnGuide Shipbuilding & Shipping Industry Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "441540",
+          "etf_name": "HANARO Fn조선해운"
+        },
+        {
+          "etf_code": "445150",
+          "etf_name": "KODEX 친환경조선해운액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\441540_15a11657b61c.pdf",
+        "methodology_pdf_sha256": "15a11657b61ce3073d864bf29923d72506c1ae3a638cea61ee070e664ea2a0ee",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Shipbuilding_&_Shipping_Sector_Index_Methodology_Book_NHAmundi_(20220727)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NSH",
+        "pdf_page_count": 14,
+        "methodology_updated": "July 2022"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "min_constituents": 10,
+        "max_constituents": 15
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 15,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.15,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NGE",
+      "index_name": "FnGuide Green Energy Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "381570",
+          "etf_name": "HANARO Fn친환경에너지"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\381570_0ec8d43f2410.pdf",
+        "methodology_pdf_sha256": "0ec8d43f2410191ba34f634977bb217fb581297a1a92b9c4a0adfcb57571e907",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Green Energy_Index_Methodology_Book_NH_(20210102)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NGE",
+        "pdf_page_count": 10,
+        "methodology_updated": "January 2021"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 4영업일(D+4)과 5영업일(D+5)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.HDB",
+      "index_name": "FnGuide K-Bio Balanced Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "498050",
+          "etf_name": "HANARO 바이오코리아액티브"
+        },
+        {
+          "etf_code": "244580",
+          "etf_name": "KODEX 바이오"
+        },
+        {
+          "etf_code": "0168K0",
+          "etf_name": "TIGER 기술이전바이오액티브"
+        },
+        {
+          "etf_code": "463050",
+          "etf_name": "TIME K바이오액티브"
+        },
+        {
+          "etf_code": "0184V0",
+          "etf_name": "UNICORN K바이오액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\498050_e6ad30e3a9d6.pdf",
+        "methodology_pdf_sha256": "e6ad30e3a9d61b8cc24ea15e628c912757134ec76670b5ab65cb59dd0f770e98",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-Bio_Balanced_Index_Methodology_Book_(20260306)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HDB",
+        "pdf_page_count": 21,
+        "methodology_updated": "March 2026"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NSP",
+      "index_name": "FnGuide Semiconductor Core Process Tech Leaders Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "476260",
+          "etf_name": "HANARO 반도체핵심공정주도주"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\476260_ee8565063925.pdf",
+        "methodology_pdf_sha256": "ee85650639254075c05c1cd2e1afdc4f5575613cf73bec8e2662757501a02824",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Semiconductor_Core_Process_Tech_Leaders_Index_Methodology_Book_(20231031)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NSP",
+        "pdf_page_count": 19,
+        "methodology_updated": "October 2023"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          3,
+          6,
+          9,
+          12
+        ],
+        "implementation_timing": "2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 30
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            3,
+            6,
+            9,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 30,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "custom_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "60%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.15,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHD",
+      "index_name": "FnGuide High Dividend Securities TOP3 Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0111J0",
+          "etf_name": "HANARO 증권고배당TOP3플러스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0111J0_94bcf5e1b9ca.pdf",
+        "methodology_pdf_sha256": "94bcf5e1b9ca046a0b5ea0c02bf0c7008c4360d001f0db64398415d999365b90",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_High_Dividend_Securities_TOP3_Plus_Index_Methodology_Book_(20260204)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.NHD",
+        "pdf_page_count": 10,
+        "methodology_updated": "February 2026"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일 째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일 째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.15,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.IAI",
+      "index_name": "FnGuide K-AI Semiconductor Core Technology Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0005G0",
+          "etf_name": "IBK K-AI반도체코어테크"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0005G0_45c63d415bf3.pdf",
+        "methodology_pdf_sha256": "45c63d415bf389cda3874ba7691080b14597372af5f5196002dab1a2deaad45d",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-AI_Semiconductor_Core_Technology_Index_Methodology_Book_(20241128)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.IAI",
+        "pdf_page_count": 20,
+        "methodology_updated": "November 2024"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 20
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KAT",
+      "index_name": "FnGuide AI medical technology Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "483020",
+          "etf_name": "KIWOOM 의료AI"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\483020_99a98d15edd1.pdf",
+        "methodology_pdf_sha256": "99a98d15edd1b1d671f46055ce6a0a835d864341eb6948abe1cb66e6da742127",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_medical_technology_Index_Methodology_Book_(20240320)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KAT",
+        "pdf_page_count": 18,
+        "methodology_updated": "March 2024"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "2영업일째(D+2)와 3영업일째(D+3)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 25
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일째(D+2)와 3영업일째(D+3)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 25,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.200",
+      "index_name": "FnGuide-RAFI Korea Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "363580",
+          "etf_name": "KODEX 200IT TR"
+        },
+        {
+          "etf_code": "284980",
+          "etf_name": "RISE 200금융"
+        },
+        {
+          "etf_code": "315270",
+          "etf_name": "TIGER 200커뮤니케이션서비스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\363580_71da2faa0706.pdf",
+        "methodology_pdf_sha256": "71da2faa0706f3fc2684ce6416bd44c152fae7c8c61d348db52bf1bda1e709db",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide-RAFI_Korea_Index_Series_Methodology_Book_한투_(20190701)_v2.4.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.200",
+        "pdf_page_count": 14,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정일 및 개편 일정 종목 및 편입비중의 정기변경은 매년 6월 KOSPI200 주가지수 선물, 옵션 동시만기일의 다음주 첫 영업일에 실시한다. 수시 변경 및 지수관리의 기본 룰은 MKF지수의 방법을 따른다..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "fundamental_float_adjusted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정일 및 개편 일정 종목 및 편입비중의 정기변경은 매년 6월 KOSPI200 주가지수 선물, 옵션 동시만기일의 다음주 첫 영업일에 실시한다. 수시 변경 및 지수관리의 기본 룰은 MKF지수의 방법을 따른다...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "fundamental_float_adjusted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SBC",
+      "index_name": "FnGuide Secondary Battery Core Materials 10 Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "461950",
+          "etf_name": "KODEX 2차전지핵심소재10"
+        },
+        {
+          "etf_code": "482030",
+          "etf_name": "KoAct 반도체&2차전지핵심소재액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\461950_f13d50e5b8d0.pdf",
+        "methodology_pdf_sha256": "f13d50e5b8d06d99d74f9532ea8f7b206f1d4a0502fe50d28e5bfc99e2de3c37",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Secondary_Battery_Core_Materials_10_Index_Methodology_Book_삼성_(20230518)_v1.5.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SBC",
+        "pdf_page_count": 16,
+        "methodology_updated": "May 2023"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "implementation_timing": "3 영업일 전(D)을 기준으로 합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "score_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "3 영업일 전(D)을 기준으로 합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "score_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KIT",
+      "index_name": "FnGuide IT PLUS Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "266370",
+          "etf_name": "KODEX IT"
+        },
+        {
+          "etf_code": "298770",
+          "etf_name": "KODEX 한국대만IT프리미어"
+        },
+        {
+          "etf_code": "326240",
+          "etf_name": "RISE IT플러스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\266370_bea5dc8cb6b5.pdf",
+        "methodology_pdf_sha256": "bea5dc8cb6b5835f0a1b7ce24f3ac6a98e68059df038a6b52e5397e04e329ff3",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_IT PLUS_Index_Methodology_Book_KB_(20190701)_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KIT",
+        "pdf_page_count": 10,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.20.10.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "117700",
+          "etf_name": "KODEX 건설"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\117700_165a330f5577.pdf",
+        "methodology_pdf_sha256": "165a330f5577e5da11338b203aee7501dae23e22197e4e1c89d0c612632989bd",
+        "source_url": "https://file.fnguide.com/fnindex/files/Maekyung_FnGuide_Index_Series_(20210729)_v2.9.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.20.10.30",
+        "pdf_page_count": 48,
+        "methodology_updated": "August 2021"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.GMS",
+      "index_name": "FnGuide Game Industry Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "300950",
+          "etf_name": "KODEX 게임산업"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\300950_1e987e725fc3.pdf",
+        "methodology_pdf_sha256": "1e987e725fc3e8f89d02c99e4732da0c8491a8839eff2b43b784d2bc23796fb5",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Game_Sector_Index_Methodology_Book_삼성_(20190701)_v1.6.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.GMS",
+        "pdf_page_count": 15,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 번째 영업일에 정기 변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "min_constituents": 15
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 번째 영업일에 정기 변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 15,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.25",
+      "index_name": "Maekyung FnGuide Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "266390",
+          "etf_name": "KODEX 경기소비재"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\266390_165a330f5577.pdf",
+        "methodology_pdf_sha256": "165a330f5577e5da11338b203aee7501dae23e22197e4e1c89d0c612632989bd",
+        "source_url": "https://file.fnguide.com/fnindex/files/Maekyung_FnGuide_Index_Series_(20210729)_v2.9.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.25",
+        "pdf_page_count": 48,
+        "methodology_updated": "August 2021"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.T10",
+      "index_name": "FnGuide Size/Style Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0089D0",
+          "etf_name": "KODEX 금융고배당TOP10"
+        },
+        {
+          "etf_code": "498410",
+          "etf_name": "KODEX 금융고배당TOP10타겟위클리커버드콜"
+        },
+        {
+          "etf_code": "0080G0",
+          "etf_name": "KODEX 방산TOP10"
+        },
+        {
+          "etf_code": "0115D0",
+          "etf_name": "KODEX 조선TOP10"
+        },
+        {
+          "etf_code": "465330",
+          "etf_name": "RISE 2차전지TOP10"
+        },
+        {
+          "etf_code": "0000Z0",
+          "etf_name": "RISE 바이오TOP10액티브"
+        },
+        {
+          "etf_code": "364980",
+          "etf_name": "TIGER 2차전지TOP10"
+        },
+        {
+          "etf_code": "364990",
+          "etf_name": "TIGER 게임TOP10"
+        },
+        {
+          "etf_code": "364970",
+          "etf_name": "TIGER 바이오TOP10"
+        },
+        {
+          "etf_code": "0177R0",
+          "etf_name": "TIGER 반도체TOP10커버드콜액티브"
+        },
+        {
+          "etf_code": "466940",
+          "etf_name": "TIGER 은행고배당플러스TOP10"
+        },
+        {
+          "etf_code": "365000",
+          "etf_name": "TIGER 인터넷TOP10"
+        },
+        {
+          "etf_code": "494670",
+          "etf_name": "TIGER 조선TOP10"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0089D0_60b5df44287f.pdf",
+        "methodology_pdf_sha256": "60b5df44287f33dde98cf9d724b7b6cc49b9161e513b994db9ae305797034944",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_SizeStyle_Index_Series_Methodology_Book_미래_(20260203)_v2.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.T10",
+        "pdf_page_count": 16,
+        "methodology_updated": "February 2026"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.40.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "140700",
+          "etf_name": "KODEX 보험"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\140700_165a330f5577.pdf",
+        "methodology_pdf_sha256": "165a330f5577e5da11338b203aee7501dae23e22197e4e1c89d0c612632989bd",
+        "source_url": "https://file.fnguide.com/fnindex/files/Maekyung_FnGuide_Index_Series_(20210729)_v2.9.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.40.30",
+        "pdf_page_count": 48,
+        "methodology_updated": "August 2021"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.REP",
+      "index_name": "FnGuide K-Renewable Energy Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "385510",
+          "etf_name": "KODEX 신재생에너지액티브"
+        },
+        {
+          "etf_code": "377990",
+          "etf_name": "TIGER Fn신재생에너지"
+        },
+        {
+          "etf_code": "404120",
+          "etf_name": "TIME K신재생에너지액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\385510_d8afbf8c3e96.pdf",
+        "methodology_pdf_sha256": "d8afbf8c3e967de6daebc99a8caf5fce1beec3cbdc33968c2fea1400167752fc",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-Renewable Energy Plus_Index_Methodology_Book_삼성자산운용_(20210122)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.REP",
+        "pdf_page_count": 16,
+        "methodology_updated": "January 2021"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 30,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {},
+        "security_cap": 0.08
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 30,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "custom_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.08,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.10",
+      "index_name": "Maekyung FnGuide Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "117460",
+          "etf_name": "KODEX 에너지화학"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\117460_165a330f5577.pdf",
+        "methodology_pdf_sha256": "165a330f5577e5da11338b203aee7501dae23e22197e4e1c89d0c612632989bd",
+        "source_url": "https://file.fnguide.com/fnindex/files/Maekyung_FnGuide_Index_Series_(20210729)_v2.9.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.10",
+        "pdf_page_count": 48,
+        "methodology_updated": "August 2021"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.BDP",
+      "index_name": "FnGuide Bank High Dividend Plus TOP 10 Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "091170",
+          "etf_name": "KODEX 은행"
+        },
+        {
+          "etf_code": "091220",
+          "etf_name": "TIGER 은행"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\091170_8e6e80515440.pdf",
+        "methodology_pdf_sha256": "8e6e805154403828887873b309294e3fa91ce4d18fa0f9a075dfcdd0dbe8a766",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Bank_High_Dividend_Plus_TOP_10_Index_Methodology_Book_(20230825)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.BDP",
+        "pdf_page_count": 15,
+        "methodology_updated": "August 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D)를 기준으로 2영업일 째(D+2)에 정기 변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D)를 기준으로 2영업일 째(D+2)에 정기 변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "custom_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.IAM",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "091180",
+          "etf_name": "KODEX 자동차"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\091180_bf7dfdb2d9c3.pdf",
+        "methodology_pdf_sha256": "bf7dfdb2d9c3d45600e03f87492ead504cbdcf775f8b9ea3675d967b6a1e4642",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Sector_Coverage_Index_Series_Methology_Book_미래_(20190701)_v2.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.IAM",
+        "pdf_page_count": 22,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "variable_count": {
+          "method": "cumulative_weight_threshold",
+          "threshold": 0.95
+        },
+        "min_constituents": 10
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.method": {
+          "value": "cumulative_weight_threshold",
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.threshold": {
+          "value": 0.95,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.ISC",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "102970",
+          "etf_name": "KODEX 증권"
+        },
+        {
+          "etf_code": "157500",
+          "etf_name": "TIGER 증권"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\102970_bf7dfdb2d9c3.pdf",
+        "methodology_pdf_sha256": "bf7dfdb2d9c3d45600e03f87492ead504cbdcf775f8b9ea3675d967b6a1e4642",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Sector_Coverage_Index_Series_Methology_Book_미래_(20190701)_v2.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.ISC",
+        "pdf_page_count": 22,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "variable_count": {
+          "method": "cumulative_weight_threshold",
+          "threshold": 0.95
+        },
+        "min_constituents": 10
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.method": {
+          "value": "cumulative_weight_threshold",
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.threshold": {
+          "value": 0.95,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.30",
+      "index_name": "Maekyung FnGuide Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "266410",
+          "etf_name": "KODEX 필수소비재"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\266410_165a330f5577.pdf",
+        "methodology_pdf_sha256": "165a330f5577e5da11338b203aee7501dae23e22197e4e1c89d0c612632989bd",
+        "source_url": "https://file.fnguide.com/fnindex/files/Maekyung_FnGuide_Index_Series_(20210729)_v2.9.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.30",
+        "pdf_page_count": 48,
+        "methodology_updated": "August 2021"
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          6
+        ],
+        "implementation_timing": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정 기준일로부터 직전 1년 동안의 일평균 시가총액을 사용합니다. 2Pure Style 지수는 시가총액과 스타일 스코어의 가중 방식을 혼합하여 편입비중을 산정하며, Wealth 지수는 내재가치 가중방식 으...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KBM",
+      "index_name": "FnGuide Healthcare Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "266420",
+          "etf_name": "KODEX 헬스케어"
+        },
+        {
+          "etf_code": "462900",
+          "etf_name": "KoAct 바이오헬스케어액티브"
+        },
+        {
+          "etf_code": "253280",
+          "etf_name": "RISE 헬스케어"
+        },
+        {
+          "etf_code": "143860",
+          "etf_name": "TIGER 헬스케어"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\266420_9855e57bcb28.pdf",
+        "methodology_pdf_sha256": "9855e57bcb28421a4a6790bbbac460f5ce0f435237c9b9174b11572c8ada26a5",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_HealthCare_Index_Methodology_Book_KB_(20190701)_v2.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KBM",
+        "pdf_page_count": 15,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": ".............. 6 3.2 기준시가총액(𝑩𝒕) 산출 방법 .................................................................................."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.1
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": ".............. 6 3.2 기준시가총액(𝑩𝒕) 산출 방법 ..................................................................................",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.1,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KBA",
+      "index_name": "FnGuide AI Semiconductor TOP10 Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0093A0",
+          "etf_name": "RISE AI반도체TOP10"
+        },
+        {
+          "etf_code": "396500",
+          "etf_name": "TIGER 반도체TOP10"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0093A0_582f7c84fdd3.pdf",
+        "methodology_pdf_sha256": "582f7c84fdd3f28062664b3206359680825df45f86a95cd4aa1b7eef1693bd77",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Semiconductor_TOP10_Index_Methodology_Book_(20250602)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KBA",
+        "pdf_page_count": 19,
+        "methodology_updated": "June 2025"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "15%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KPC",
+      "index_name": "FnGuide AI Platform Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "427120",
+          "etf_name": "RISE AI플랫폼"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\427120_880faa2f3829.pdf",
+        "methodology_pdf_sha256": "880faa2f3829c1b2c5b169644e83c42f2a0ad6d9392fcb92969861200e895729",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Platform_Index_Methodology_Book_KB_(20251106)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KPC",
+        "pdf_page_count": 15,
+        "methodology_updated": ""
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.08
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "8%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.08,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KBC",
+      "index_name": "FnGuide K-Entertainment & Travel Leisure Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "388280",
+          "etf_name": "RISE K엔터&여행레저"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\388280_8bf34ee452fc.pdf",
+        "methodology_pdf_sha256": "8bf34ee452fcfbd38ad43a4da74a02a33bd22dd83d6aabbb3ece5882a8a87389",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_K-Entertainment & Travel Leisure_Index_Methodology_Book_KB자산운용_(20251106)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KBC",
+        "pdf_page_count": 14,
+        "methodology_updated": ""
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SBP",
+      "index_name": "FnGuide All-Solid-State Battery & Silicon Anode Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "446700",
+          "etf_name": "RISE 배터리 리사이클링"
+        },
+        {
+          "etf_code": "0005D0",
+          "etf_name": "SOL 전고체배터리&실리콘음극재"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\446700_bf91416fcf36.pdf",
+        "methodology_pdf_sha256": "bf91416fcf36453d1cbdd0d16faad2326556d2de6c130b42609a6ba1e2ba830f",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_All-Soild-State_Battery_&_Silicon_Anode_Index_Methodology_Book_(20241028)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SBP",
+        "pdf_page_count": 22,
+        "methodology_updated": "October 2024"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          3,
+          6,
+          9,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일 째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            3,
+            6,
+            9,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일 째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KRD",
+      "index_name": "FnGuide KOREA High Dividend",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "498860",
+          "etf_name": "RISE 코리아금융고배당"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\498860_e6f5d77736ff.pdf",
+        "methodology_pdf_sha256": "e6f5d77736ffa052d608443d976a286f1800033717e059a592b841a8a9b2f2ad",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_KOREA_High_Dividend_Methodology_Book_(20251201)_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KRD",
+        "pdf_page_count": 13,
+        "methodology_updated": "December 2025"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          5,
+          11
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            11
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "5%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SSB",
+      "index_name": "FnGuide Secondary Battery Materials & Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "455860",
+          "etf_name": "SOL 2차전지소부장Fn"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\455860_2a10ffbf1771.pdf",
+        "methodology_pdf_sha256": "2a10ffbf17712233ca4c1101d2eee02c3921bed3b2b19156dcb34390fd2c9958",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Secondary_Battery_Material_&_Equipment_Index_Methodology_Book_신한자산운용_(20231114)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SSB",
+        "pdf_page_count": 16,
+        "methodology_updated": "November 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SSC",
+      "index_name": "FnGuide AI Semiconductor Materials & Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "455850",
+          "etf_name": "SOL AI반도체소부장"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\455850_9fe7197e9742.pdf",
+        "methodology_pdf_sha256": "9fe7197e9742b68faada89d66f84bb6784dc9bf22f0cf28fa34a21c252d76556",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_AI_Semiconductor_Material_&_Equipment_Index_Methodology_Book_신한자산운용_(20240213)_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SSC",
+        "pdf_page_count": 16,
+        "methodology_updated": "February 2024"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "index_name": "FnGuide Defense TOP5 Index TR",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "490480",
+          "etf_name": "SOL K방산"
+        },
+        {
+          "etf_code": "463250",
+          "etf_name": "TIGER K방산&우주"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\490480_51590a18eb33.pdf",
+        "methodology_pdf_sha256": "51590a18eb335308f464a1c8c3d9a337c3295fceb20a4d6d2d06cd85575f4947",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Defense_TOP5_Index_TR_Methodology_Book_(20250730)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/DIV.FI00.WLT.DF5",
+        "pdf_page_count": 17,
+        "methodology_updated": "July 2025"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 5,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.23
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 5,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "23%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.23,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.FHV",
+      "index_name": "FnGuide Financial Group Plus High Dividend Index(PR)",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "484880",
+          "etf_name": "SOL 금융지주플러스고배당"
+        },
+        {
+          "etf_code": "0154F0",
+          "etf_name": "WON 초대형IB&금융지주"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\484880_22b0543da6f7.pdf",
+        "methodology_pdf_sha256": "22b0543da6f70a11c4de254df4fbd074c72b4fac63f0ed7dffe9f505701c0cfe",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Financial_Group_Plus_High_Dividend_Index_PR_Methodology_Book_(20240430)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.FHV",
+        "pdf_page_count": 16,
+        "methodology_updated": "April 2024"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          4,
+          10
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            4,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "custom_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.SFE",
+      "index_name": "FnGuide Semiconductor Front-End Process Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "475300",
+          "etf_name": "SOL 반도체전공정"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\475300_97d98c3f45ff.pdf",
+        "methodology_pdf_sha256": "97d98c3f45ff28b074109187f7de6a2c188547ab4e701611718a33751ae2126e",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Semiconductor_Front-End_Process_Index_Methodology_Book_(20231130)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SFE",
+        "pdf_page_count": 20,
+        "methodology_updated": "November 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SBE",
+      "index_name": "FnGuide Semiconductor Back-End Process Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "475310",
+          "etf_name": "SOL 반도체후공정"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\475310_af9ebebe872f.pdf",
+        "methodology_pdf_sha256": "af9ebebe872f452a52fa968ca0f94dbbe38d399bbf8a5dd8f2a3c530382b7db1",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Semiconductor_Back-End_Process_Index_Methodology_Book_(20231130)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SBE",
+        "pdf_page_count": 20,
+        "methodology_updated": "November 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SME",
+      "index_name": "FnGuide Medical Device Materials & Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "464610",
+          "etf_name": "SOL 의료기기소부장Fn"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\464610_aca3e09d507b.pdf",
+        "methodology_pdf_sha256": "aca3e09d507bd0427f2903a7c79c4cb1525ef1f81baf2a90a5c0e33fb8b4965d",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Medical_Device_Materials_&_Equipment_Index_Methodology_Book_신한_(20230711)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SME",
+        "pdf_page_count": 18,
+        "methodology_updated": "July 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 20
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.ATP",
+      "index_name": "FnGuide Automobile TOP3 Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "466930",
+          "etf_name": "SOL 자동차TOP3플러스"
+        },
+        {
+          "etf_code": "0117V0",
+          "etf_name": "TIGER 코리아AI전력기기TOP3플러스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\466930_9094f311de0c.pdf",
+        "methodology_pdf_sha256": "9094f311de0cac0d8a1bc4b5899649edd2a8e148ed97fb8b24b3f02b0f22447e",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Automobile_TOP3_Plus_Index_Methodology_Book_(20230817)_v2.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.ATP",
+        "pdf_page_count": 16,
+        "methodology_updated": "August 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 13,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 13,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SAE",
+      "index_name": "FnGuide Automobile Materials & Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "464600",
+          "etf_name": "SOL 자동차소부장Fn"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\464600_c065530b275c.pdf",
+        "methodology_pdf_sha256": "c065530b275c59a730bb896b4596e39f872d6e0ac4b5ed8fc587a2d1f01a4cda",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Automobile_Materials_&_Equipment_Index_Methodology_Book_신한_(20230711)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SAE",
+        "pdf_page_count": 17,
+        "methodology_updated": "July 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 20,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.STP",
+      "index_name": "FnGuide Shipbuilding TOP3 Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "466920",
+          "etf_name": "SOL 조선TOP3플러스"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\466920_b13eb0bc3c86.pdf",
+        "methodology_pdf_sha256": "b13eb0bc3c86ff7a9405776940d4759babbcbe48cb0cf4c5dfabec3950aa8e9f",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Shipbuilding_TOP3_Plus_Index_Methodology_Book_(20250909)_v1.4.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.STP",
+        "pdf_page_count": 17,
+        "methodology_updated": "September 2025"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          2,
+          5,
+          8,
+          11
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 13
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            2,
+            5,
+            8,
+            11
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 13,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.2,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SSE",
+      "index_name": "FnGuide Shipbuilding Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0141S0",
+          "etf_name": "SOL 조선기자재"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0141S0_533567ac0f6b.pdf",
+        "methodology_pdf_sha256": "533567ac0f6b5c7bbc4d61f39ccdefd527d92fdc3850460841f6c1f5c674ab5e",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Shipbuilding_Equipment_Index_Methodology_Book_(20251013)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SSE",
+        "pdf_page_count": 19,
+        "methodology_updated": "October 2025"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          2,
+          5,
+          8,
+          11
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            2,
+            5,
+            8,
+            11
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.ISW",
+      "index_name": "FnGuide Sector Coverage Index Series",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0105D0",
+          "etf_name": "SOL 한국AI소프트웨어"
+        },
+        {
+          "etf_code": "157490",
+          "etf_name": "TIGER 소프트웨어"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0105D0_bf7dfdb2d9c3.pdf",
+        "methodology_pdf_sha256": "bf7dfdb2d9c3d45600e03f87492ead504cbdcf775f8b9ea3675d967b6a1e4642",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Sector_Coverage_Index_Series_Methology_Book_미래_(20190701)_v2.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.ISW",
+        "pdf_page_count": 22,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종..."
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "variable_count": {
+          "method": "cumulative_weight_threshold",
+          "threshold": 0.95
+        },
+        "min_constituents": 10
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "종목 선정일 및 개편 일정 화학 Index 화학 지수는 매년 6월과 12월 KOSPI200 주가지수 선물의 최종거래일이 속하는 주의 다음 주 첫 영업일에 다음을 기준으로 정기변경을 실시한다. 유가증권시장 상장종...",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.method": {
+          "value": "cumulative_weight_threshold",
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.threshold": {
+          "value": 0.95,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.SCT",
+      "index_name": "FnGuide Cosmetics TOP3 Plus Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0008T0",
+          "etf_name": "SOL 화장품TOP3플러스"
+        },
+        {
+          "etf_code": "228790",
+          "etf_name": "TIGER 화장품"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0008T0_75f028f551de.pdf",
+        "methodology_pdf_sha256": "75f028f551de6de8469e545d9874e2392f11f4e2c92a5d41e6aadb5b45530ee7",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Cosmetics_TOP3_Plus_Index_Methodology_Book_(20250903)_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SCT",
+        "pdf_page_count": 17,
+        "methodology_updated": "September 2025"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "implementation_timing": "2영업일 째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.07
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일 째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "20%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.07,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SBM",
+      "index_name": "FnGuide Secondary Battery Material Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "462010",
+          "etf_name": "TIGER 2차전지소재Fn"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\462010_7213faeec355.pdf",
+        "methodology_pdf_sha256": "7213faeec35522e1d5b0b7e30e31b266db1e3f1bc4302f471edf6ef4ee78b0f5",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Secondary_Battery_Material_Index_Methodology_Book_미래_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.SBM",
+        "pdf_page_count": 18,
+        "methodology_updated": "May 2024"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          4,
+          7,
+          10
+        ],
+        "implementation_timing": "2영업일 째(D+2)에 2영업일에 걸쳐 정기 변경을 수행합니"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.3
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            4,
+            7,
+            10
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일 째(D+2)에 2영업일에 걸쳐 정기 변경을 수행합니",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.3,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MHE",
+      "index_name": "FnGuide Healthcare Equipment Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "307510",
+          "etf_name": "TIGER 의료기기"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\307510_bc4f965abc8e.pdf",
+        "methodology_pdf_sha256": "bc4f965abc8e38c5f3f8b32de5e7cd1cf7831c4038213da29acf41d955bbd653",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Healthcare_Equipment_Index_Methodology_Book_미래_(20190701)_v2.6.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.MHE",
+        "pdf_page_count": 15,
+        "methodology_updated": "July 2019"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "마지막 영업일을 평가일로 하여 실시한다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "variable_count": {
+          "method": "cumulative_weight_threshold",
+          "threshold": 0.95
+        },
+        "min_constituents": 10
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "마지막 영업일을 평가일로 하여 실시한다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.min_constituents": {
+          "value": 10,
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.method": {
+          "value": "cumulative_weight_threshold",
+          "confidence": "high",
+          "evidence": []
+        },
+        "selection.variable_count.threshold": {
+          "value": 0.95,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "25%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.25,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": []
+    },
+    {
+      "index_code": "FI00.WLT.HDS",
+      "index_name": "FnGuide Holdings Company Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "307520",
+          "etf_name": "TIGER 지주회사"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\307520_f37b076120b1.pdf",
+        "methodology_pdf_sha256": "f37b076120b17e2424ad57350c52b388e3aad31c45a45b8d5761da0d3747a54f",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Holdings_Company_Methodology_Book_미래_(20250701)_v2.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HDS",
+        "pdf_page_count": 12,
+        "methodology_updated": "July 2025"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          1,
+          2,
+          7,
+          8
+        ],
+        "implementation_timing": "2영업일 전의 종가(D-2)를 이용합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 30
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            1,
+            2,
+            7,
+            8
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "2영업일 전의 종가(D-2)를 이용합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 30,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MHC",
+      "index_name": "FnGuide Fuel Cell Electric Future Mobility Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "387280",
+          "etf_name": "TIGER 퓨처모빌리티액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\387280_03472677893e.pdf",
+        "methodology_pdf_sha256": "03472677893e9733866443a8637a2b188301e8d9decaeda12a744dcfdb06252a",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Fuel Cell Electric Future Mobility_Index_Methodology_Book_MR_(20210224)_v1.2.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.MHC",
+        "pdf_page_count": 10,
+        "methodology_updated": "February 2021"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HMZ",
+      "index_name": "FnGuide MZ Consumption Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "422260",
+          "etf_name": "VITA MZ소비액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\422260_c15b6897fbaf.pdf",
+        "methodology_pdf_sha256": "c15b6897fbafe1706e5d9ce95fd50e49a65947dbb14591beb649618cb55e91fc",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_MZ_Consumption_Index_Methodology_Book_한투밸류_(20210914)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.HMZ",
+        "pdf_page_count": 16,
+        "methodology_updated": "September 2021"
+      },
+      "rebalance": {
+        "frequency": "quarterly",
+        "implementation_months": [
+          5,
+          6,
+          11,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": 50,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "quarterly",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5,
+            6,
+            11,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일 익주 첫 영업일에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.total_constituents": {
+          "value": 50,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "equal_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.ESG.ESG",
+      "index_name": "FnGuide ESGM ESG 지수",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "413930",
+          "etf_name": "WON AI ESG액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\413930_c2380f5c88ae.pdf",
+        "methodology_pdf_sha256": "c2380f5c88aeeb0d612ba99bdbf6b7e9c7f7dbef997dd75cee7dd71ed2d3c7db",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_ESGM_ESG_Indices_Methodology_Book(20231004)_v1.0.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.ESG.ESG",
+        "pdf_page_count": 19,
+        "methodology_updated": ""
+      },
+      "rebalance": {
+        "frequency": "annual",
+        "implementation_months": [
+          5
+        ],
+        "implementation_timing": "마지막 영업일 기준이며, 리밸런싱은"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.1
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "annual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            5
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "마지막 영업일 기준이며, 리밸런싱은",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "10%",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.security_cap": {
+          "value": 0.1,
+          "confidence": "high",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.WAV",
+      "index_name": "FnGuide Semiconductor Value Chain Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "474590",
+          "etf_name": "WON 반도체밸류체인액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\474590_3983f6afa006.pdf",
+        "methodology_pdf_sha256": "3983f6afa006171e6935bb3d9efa8c0f31717aabb098f58f93f07cb06214f94e",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Semiconductor_Value_Chain_Index_Methodology_Book_(20231115)_v1.3.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.WAV",
+        "pdf_page_count": 16,
+        "methodology_updated": "November 2023"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기 개편을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 70
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기 개편을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "selection.max_constituents": {
+          "value": 70,
+          "confidence": "high",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.DBO",
+      "index_name": "FnGuide Bio Similar & CDMO Index",
+      "provider": "fnguide",
+      "products": [
+        {
+          "etf_code": "0001P0",
+          "etf_name": "마이티 바이오시밀러&CDMO액티브"
+        }
+      ],
+      "status": "draft_extracted",
+      "source": {
+        "methodology_pdf_path": "etfs\\raw\\methodologies\\0001P0_eb4704aff5f2.pdf",
+        "methodology_pdf_sha256": "eb4704aff5f2e03d1aba33a5ba938ac5eb2a811d4fe8c9ad1a0c2777acdd1820",
+        "source_url": "https://file.fnguide.com/fnindex/files/FnGuide_Bio_Similar_&_CDMO_Index_Methodology_Book_(20241023)_v1.1.pdf",
+        "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.DBO",
+        "pdf_page_count": 21,
+        "methodology_updated": "October 2024"
+      },
+      "rebalance": {
+        "frequency": "semiannual",
+        "implementation_months": [
+          6,
+          12
+        ],
+        "implementation_timing": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다"
+      },
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "evidence_fields": {
+        "rebalance.frequency": {
+          "value": "semiannual",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_months": {
+          "value": [
+            6,
+            12
+          ],
+          "confidence": "medium",
+          "evidence": []
+        },
+        "rebalance.implementation_timing": {
+          "value": "선물옵션 만기일(D) 이후 2영업일째(D+2)에 정기변경을 수행합니다",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.base": {
+          "value": "float_market_cap_weighted",
+          "confidence": "medium",
+          "evidence": []
+        },
+        "weighting.rule_cap": {
+          "value": "22%",
+          "confidence": "medium",
+          "evidence": []
+        }
+      },
+      "open_questions": [
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    }
+  ]
+}

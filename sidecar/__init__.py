@@ -1,0 +1,2 @@
+"""Sidecar event study utilities."""
+

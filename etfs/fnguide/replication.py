@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+from json import JSONDecodeError
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Mapping
@@ -144,7 +145,12 @@ def build_kss_replication(
     specs_path: Path = paths.FNGUIDE_METHODOLOGY_SPECS_JSON,
     weight_tolerance: float = 0.0,
 ) -> dict[str, object]:
-    ready_specs = load_engine_ready_specs(specs_path)
+    try:
+        ready_specs = load_engine_ready_specs(specs_path)
+    except (FileNotFoundError, JSONDecodeError, ValueError) as exc:
+        raise MethodologyNotReadyError(
+            f"{KSS_INDEX_CODE} is missing or not engine-ready in {specs_path}: {exc}"
+        ) from exc
     spec = ready_specs.get(KSS_INDEX_CODE)
     if spec is None:
         raise MethodologyNotReadyError(

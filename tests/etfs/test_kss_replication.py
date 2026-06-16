@@ -467,6 +467,73 @@ def test_build_kss_replication_raises_controlled_error_when_kss_spec_is_missing(
         )
 
 
+def test_build_kss_replication_raises_controlled_error_for_missing_specs_path(
+    tmp_path: Path,
+) -> None:
+    specs_path = tmp_path / "missing_specs.json"
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match="FI00.WLT.KSS",
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match=str(specs_path).replace("\\", "\\\\"),
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+
+@pytest.mark.parametrize("contents", ["", "{"])
+def test_build_kss_replication_raises_controlled_error_for_invalid_specs_file(
+    tmp_path: Path,
+    contents: str,
+) -> None:
+    specs_path = tmp_path / "invalid_specs.json"
+    specs_path.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match="FI00.WLT.KSS",
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+    with pytest.raises(
+        MethodologyNotReadyError,
+        match=str(specs_path).replace("\\", "\\\\"),
+    ):
+        build_kss_replication(
+            as_of="2026-05-29",
+            effective_date="2026-06-14",
+            snapshot_rows=_kss_rows(),
+            validation_weights=[],
+            validation_source_type="missing",
+            specs_path=specs_path,
+        )
+
+
 def test_build_kss_replication_etf_holdings_validation_does_not_mark_proven() -> None:
     base_result = build_kss_replication(
         as_of="2026-05-29",

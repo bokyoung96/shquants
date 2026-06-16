@@ -108,11 +108,60 @@ def test_select_kss_buckets_accepts_truthy_non_boolean_flags() -> None:
     assert [item["security_code"] for item in buckets["top2"]] == ["A000001", "A000002"]
 
 
+def test_select_kss_buckets_excludes_false_like_string_flags() -> None:
+    rows = [
+        _row("A000001", 1000, 1, eligible="False"),
+        _row("A000002", 990, 2, eligible="0"),
+        _row("A000003", 980, 3, theme="N"),
+        _row("A000004", 970, 4, theme="   "),
+        _row("A000005", 960, 5),
+        _row("A000006", 950, 6),
+        _row("A000007", 940, 7),
+        _row("A000008", 930, 8),
+        _row("A000009", 920, 9),
+        _row("A000010", 910, 10),
+        _row("A000011", 900, 11),
+        _row("A000012", 890, 12),
+        _row("A000013", 880, 13),
+        _row("A000014", 870, 14),
+    ]
+
+    buckets = select_kss_buckets(rows)
+    selected_codes = {item["security_code"] for members in buckets.values() for item in members}
+
+    assert {"A000001", "A000002", "A000003", "A000004"}.isdisjoint(selected_codes)
+    assert len(selected_codes) == 10
+
+
 def test_select_kss_buckets_treats_whitespace_metric_as_missing() -> None:
     rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
     rows[3]["composite_momentum_score"] = "   "
 
     with pytest.raises(ValueError, match="A000003 missing composite_momentum_score"):
+        select_kss_buckets(rows)
+
+
+def test_select_kss_buckets_rejects_nan_metric() -> None:
+    rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    rows[3]["composite_momentum_score"] = float("nan")
+
+    with pytest.raises(ValueError, match="A000003 invalid composite_momentum_score"):
+        select_kss_buckets(rows)
+
+
+def test_select_kss_buckets_rejects_nan_string_metric() -> None:
+    rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    rows[3]["composite_momentum_score"] = "nan"
+
+    with pytest.raises(ValueError, match="A000003 invalid composite_momentum_score"):
+        select_kss_buckets(rows)
+
+
+def test_select_kss_buckets_rejects_nonnumeric_metric_text() -> None:
+    rows = [_row(f"A{i:06d}", 1000 - i, 100 - i) for i in range(10)]
+    rows[3]["composite_momentum_score"] = "not-a-number"
+
+    with pytest.raises(ValueError, match="A000003 invalid composite_momentum_score"):
         select_kss_buckets(rows)
 
 

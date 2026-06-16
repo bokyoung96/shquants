@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+from numbers import Real
 from typing import Iterable, Mapping
 
 
@@ -28,17 +30,14 @@ def _kss_candidate(row: Mapping[str, object]) -> dict[str, object]:
     code = str(row.get("security_code", "")).strip()
     if not code:
         raise ValueError("KSS candidate security_code is required")
-    for metric in ["float_market_cap", "composite_momentum_score"]:
-        if _is_missing_metric(row.get(metric)):
-            raise ValueError(f"{code} missing {metric}")
-        if float(row[metric]) <= 0:
-            raise ValueError(f"{code} {metric} must be positive")
+    float_market_cap = _parse_metric(code, "float_market_cap", row.get("float_market_cap"))
+    composite_momentum_score = _parse_metric(code, "composite_momentum_score", row.get("composite_momentum_score"))
     return {
         "as_of": str(row.get("as_of", "")),
         "security_code": code,
         "name": str(row.get("name", "")),
-        "float_market_cap": float(row["float_market_cap"]),
-        "composite_momentum_score": float(row["composite_momentum_score"]),
+        "float_market_cap": float_market_cap,
+        "composite_momentum_score": composite_momentum_score,
     }
 
 
@@ -68,8 +67,33 @@ def _bucket_row(row: Mapping[str, object], bucket: str, rank_metric: str) -> dic
 
 
 def _truthy(value: object) -> bool:
-    return bool(value)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, Real):
+        return math.isfinite(float(value)) and float(value) != 0.0
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y"}:
+            return True
+        if normalized in {"", "false", "0", "no", "n"}:
+            return False
+        return False
+    return False
 
 
 def _is_missing_metric(value: object) -> bool:
     return value is None or (isinstance(value, str) and value.strip() == "")
+
+
+def _parse_metric(code: str, metric: str, value: object) -> float:
+    if _is_missing_metric(value):
+        raise ValueError(f"{code} missing {metric}")
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{code} invalid {metric}") from None
+    if not math.isfinite(parsed):
+        raise ValueError(f"{code} invalid {metric}")
+    if parsed <= 0:
+        raise ValueError(f"{code} {metric} must be positive")
+    return parsed

@@ -1,5 +1,5 @@
 {
-  "source_workbook": "sidecar/skhynix/SK Hynix analysis.xlsx",
+  "source_workbook": "etc/skhynix/SK Hynix analysis.xlsx",
   "tables": [
     {
       "file": "intraday_spot_etf.parquet",

@@ -73,7 +73,7 @@ def prepare_parquet() -> dict:
     investor.to_parquet(BASE_DIR / "futures_investor_net_buy.parquet", index=False, engine="pyarrow")
 
     manifest = {
-        "source_workbook": "sidecar/skhynix/SK Hynix analysis.xlsx",
+        "source_workbook": "etc/skhynix/SK Hynix analysis.xlsx",
         "tables": [
             {
                 "file": "intraday_spot_etf.parquet",

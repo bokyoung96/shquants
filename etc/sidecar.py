@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import shutil
+from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Iterable
@@ -27,6 +29,17 @@ EVENT_COLUMNS = [
     "futures_change",
     "futures_return",
 ]
+DEFAULT_ENTRY_DELAY_MINUTES = 3
+DEFAULT_EXIT_DELAY_MINUTES = 3
+DEFAULT_SOURCE_DIR = Path("etc/data/sidecar")
+DEFAULT_PARQUET_DIR = Path("etc/data/sidecar/parquet")
+DEFAULT_RESULTS_DIR = Path("etc/results/sidecar")
+
+
+@dataclass(frozen=True, slots=True)
+class SidecarRunConfig:
+    entry_delay_minutes: int = DEFAULT_ENTRY_DELAY_MINUTES
+    exit_delay_minutes: int = DEFAULT_EXIT_DELAY_MINUTES
 
 
 def build_parquet_bundle(source_dir: str | Path, output_dir: str | Path) -> dict[str, Path]:
@@ -138,15 +151,18 @@ def load_event_history(path: str | Path, include_cb: bool = False) -> pd.DataFra
 
 def run_event_study(
     parquet_dir: str | Path,
-    horizons: Iterable[int] = (1, 3, 5),
+    *,
+    entry_delay_minutes: int = DEFAULT_ENTRY_DELAY_MINUTES,
+    exit_delay_minutes: int = DEFAULT_EXIT_DELAY_MINUTES,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Calculate ETF returns from sidecar activation to release plus each horizon."""
+    """Calculate ETF returns from activation plus entry delay to release plus exit delay."""
     parquet = Path(parquet_dir)
     events = pd.read_parquet(parquet / "sidecar_events.parquet", engine="pyarrow")
     leverage = pd.read_parquet(parquet / "kodex_leverage_1m.parquet", engine="pyarrow")
     inverse = pd.read_parquet(parquet / "kodex_inverse_1m.parquet", engine="pyarrow")
-    trades = calculate_event_returns(events, leverage, inverse, tuple(horizons))
-    summary = summarize_event_returns(trades, tuple(horizons))
+    config = SidecarRunConfig(entry_delay_minutes=entry_delay_minutes, exit_delay_minutes=exit_delay_minutes)
+    trades = calculate_event_returns(events, leverage, inverse, config=config)
+    summary = summarize_event_returns(trades, config=config)
     return trades, summary
 
 
@@ -154,8 +170,10 @@ def calculate_event_returns(
     events: pd.DataFrame,
     leverage_prices: pd.DataFrame,
     inverse_prices: pd.DataFrame,
-    horizons: tuple[int, ...] = (1, 3, 5),
+    *,
+    config: SidecarRunConfig | None = None,
 ) -> pd.DataFrame:
+    config = config or SidecarRunConfig()
     events = events.copy()
     events["event_dt"] = pd.to_datetime(events["event_dt"])
     events = events.sort_values("event_dt").reset_index(drop=True)
@@ -165,63 +183,71 @@ def calculate_event_returns(
     rows: list[dict[str, object]] = []
     used_release_indices: set[int] = set()
     activations = events[events["action"] == "발동"]
-    for activation_index, activation in activations.iterrows():
+    for _, activation in activations.iterrows():
         release = _next_release(events, activation, used_release_indices)
         if release is None:
-            rows.append(
-                {
-                    "activation_dt": activation["event_dt"],
-                    "release_dt": pd.NaT,
-                    "issue": "missing release",
-                }
-            )
+            rows.append({"activation_dt": activation["event_dt"], "release_dt": pd.NaT, "issue": "missing release"})
             continue
 
         direction = "buy_sidecar" if activation["futures_return"] > 0 else "sell_sidecar"
         prices = leverage if direction == "buy_sidecar" else inverse
         etf = "KODEX leverage" if direction == "buy_sidecar" else "KODEX inverse"
-        entry_dt = _minute_floor(activation["event_dt"])
+        entry_dt = _minute_floor(activation["event_dt"] + timedelta(minutes=config.entry_delay_minutes))
+        exit_dt = _minute_floor(release["event_dt"] + timedelta(minutes=config.exit_delay_minutes))
         entry_price = _close_at(prices, entry_dt)
-        row = {
-            "date": activation["event_dt"].date(),
-            "activation_dt": activation["event_dt"],
-            "release_dt": release["event_dt"],
-            "direction": direction,
-            "etf": etf,
-            "futures_return_at_trigger_pct": activation["futures_return"] * 100,
-            "minutes_to_release": (release["event_dt"] - activation["event_dt"]).total_seconds() / 60,
-            "entry_dt": entry_dt,
-            "entry_price": entry_price,
-            "issue": pd.NA,
-        }
-        for horizon in horizons:
-            exit_dt = _minute_floor(release["event_dt"] + timedelta(minutes=horizon))
-            exit_price = _close_at(prices, exit_dt)
-            row[f"exit_{horizon}m_dt"] = exit_dt
-            row[f"exit_{horizon}m_price"] = exit_price
-            row[f"ret_{horizon}m_pct"] = _pct_return(entry_price, exit_price)
-        rows.append(row)
+        exit_price = _close_at(prices, exit_dt)
+        ret_pct = _pct_return(entry_price, exit_price)
+        rows.append(
+            {
+                "date": activation["event_dt"].date(),
+                "year": activation["event_dt"].year,
+                "activation_dt": activation["event_dt"],
+                "release_dt": release["event_dt"],
+                "direction": direction,
+                "etf": etf,
+                "futures_return_at_trigger_pct": activation["futures_return"] * 100,
+                "minutes_to_release": (release["event_dt"] - activation["event_dt"]).total_seconds() / 60,
+                "entry_delay_m": config.entry_delay_minutes,
+                "entry_dt": entry_dt,
+                "entry_price": entry_price,
+                "exit_delay_m": config.exit_delay_minutes,
+                "exit_dt": exit_dt,
+                "exit_price": exit_price,
+                "ret_pct": ret_pct,
+                "issue": pd.NA,
+            }
+        )
 
     trades = pd.DataFrame(rows)
     if trades.empty:
         return trades
-    required = ["entry_price", *[f"ret_{horizon}m_pct" for horizon in horizons]]
-    return trades.dropna(subset=required).reset_index(drop=True)
+    return trades.dropna(subset=["entry_price", "exit_price", "ret_pct"]).reset_index(drop=True)
 
 
-def summarize_event_returns(trades: pd.DataFrame, horizons: tuple[int, ...] = (1, 3, 5)) -> pd.DataFrame:
-    groups: list[tuple[str, pd.DataFrame]] = [("all", trades)]
-    groups.extend((name, frame) for name, frame in trades.groupby("direction", sort=True))
-
+def summarize_event_returns(
+    trades: pd.DataFrame,
+    *,
+    config: SidecarRunConfig | None = None,
+) -> pd.DataFrame:
+    config = config or SidecarRunConfig()
     rows: list[dict[str, object]] = []
-    for group, frame in groups:
-        for horizon in horizons:
-            returns = frame[f"ret_{horizon}m_pct"].dropna()
+    scopes = [("all_years", trades)]
+    if "year" in trades.columns:
+        scopes.extend((str(year), frame) for year, frame in trades.groupby("year", sort=True))
+    for scope, scope_frame in scopes:
+        groups: list[tuple[str, pd.DataFrame]] = [("all", scope_frame)]
+        groups.extend((name, frame) for name, frame in scope_frame.groupby("direction", sort=True))
+        for group, frame in groups:
+            returns = frame["ret_pct"].dropna()
             rows.append(
                 {
+                    "scope": scope,
                     "group": group,
-                    "horizon": f"{horizon}m",
+                    "entry_delay_m": config.entry_delay_minutes,
+                    "exit_delay_m": config.exit_delay_minutes,
                     "n": int(returns.count()),
+                    "wins": int((returns > 0).sum()),
+                    "losses": int((returns <= 0).sum()),
                     "mean_pct": returns.mean(),
                     "median_pct": returns.median(),
                     "win_rate_pct": (returns > 0).mean() * 100 if not returns.empty else pd.NA,
@@ -233,113 +259,110 @@ def summarize_event_returns(trades: pd.DataFrame, horizons: tuple[int, ...] = (1
     return pd.DataFrame(rows)
 
 
-def run_pipeline(
-    source_dir: str | Path = "sidecar",
-    parquet_dir: str | Path = "sidecar/parquet",
-    results_dir: str | Path = "sidecar/results",
-) -> tuple[dict[str, Path], pd.DataFrame, pd.DataFrame]:
-    paths = build_parquet_bundle(source_dir, parquet_dir)
-    trades, summary = run_event_study(parquet_dir)
+def collect_next_day_reaction_files(source_dir: str | Path, results_dir: str | Path) -> dict[str, Path]:
+    source = Path(source_dir)
+    reaction_source = source / "next_day_reaction"
     results = Path(results_dir)
     results.mkdir(parents=True, exist_ok=True)
-    trades.to_csv(results / "sidecar_event_study_trades.csv", index=False, encoding="utf-8-sig")
-    summary.to_csv(results / "sidecar_event_study_summary.csv", index=False, encoding="utf-8-sig")
-    write_excel_report(trades, results / "sidecar_event_study_report.xlsx")
+    mapping = {
+        "sidecar_only": (
+            [
+                reaction_source / "next_day_reaction_sidecar_only.csv",
+                source / "sidecar_event_summary_no_cb.csv",
+            ],
+            results / "next_day_reaction_sidecar_only.csv",
+        ),
+        "with_cb": (
+            [
+                reaction_source / "next_day_reaction_with_cb.csv",
+                source / "sidecar_event_summary_with_cb.csv",
+            ],
+            results / "next_day_reaction_with_cb.csv",
+        ),
+        "legacy_full": (
+            [
+                reaction_source / "next_day_reaction_legacy_full.csv",
+                source / "sidecar_event_summary.csv",
+            ],
+            results / "next_day_reaction_legacy_full.csv",
+        ),
+    }
+    written: dict[str, Path] = {}
+    for name, (src_candidates, dst) in mapping.items():
+        src = next((candidate for candidate in src_candidates if candidate.exists()), None)
+        if src is not None:
+            shutil.copyfile(src, dst)
+            written[name] = dst
+    summary = summarize_next_day_reactions(written.values())
+    if not summary.empty:
+        summary.to_csv(results / "next_day_reaction_summary.csv", index=False, encoding="utf-8-sig")
+    return written
+
+
+def summarize_next_day_reactions(paths: Iterable[Path]) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    for path in paths:
+        frame = pd.read_csv(path)
+        if "kospi200_next_return_pct" not in frame.columns or "direction" not in frame.columns:
+            continue
+        clean = frame.dropna(subset=["kospi200_next_return_pct"]).copy()
+        if clean.empty:
+            continue
+        trigger_sign = clean["direction"].map({"Up trigger": 1, "Down trigger": -1})
+        next_sign = clean["kospi200_next_return_pct"].map(lambda value: 1 if value > 0 else (-1 if value < 0 else 0))
+        clean["same_as_trigger"] = next_sign.eq(trigger_sign)
+        clean["opposite_trigger"] = next_sign.eq(-trigger_sign)
+        for group, group_frame in [("all", clean), *list(clean.groupby("direction", sort=True))]:
+            rows.append(
+                {
+                    "file": path.name,
+                    "group": group,
+                    "n": len(group_frame),
+                    "same_as_trigger_pct": group_frame["same_as_trigger"].mean() * 100,
+                    "opposite_trigger_pct": group_frame["opposite_trigger"].mean() * 100,
+                    "mean_kospi200_next_return_pct": group_frame["kospi200_next_return_pct"].mean(),
+                    "median_kospi200_next_return_pct": group_frame["kospi200_next_return_pct"].median(),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def run_pipeline(
+    source_dir: str | Path = DEFAULT_SOURCE_DIR,
+    parquet_dir: str | Path = DEFAULT_PARQUET_DIR,
+    results_dir: str | Path = DEFAULT_RESULTS_DIR,
+    *,
+    entry_delay_minutes: int = DEFAULT_ENTRY_DELAY_MINUTES,
+    exit_delay_minutes: int = DEFAULT_EXIT_DELAY_MINUTES,
+) -> tuple[dict[str, Path], pd.DataFrame, pd.DataFrame]:
+    paths = build_parquet_bundle(source_dir, parquet_dir)
+    trades, summary = run_event_study(
+        parquet_dir,
+        entry_delay_minutes=entry_delay_minutes,
+        exit_delay_minutes=exit_delay_minutes,
+    )
+    results = Path(results_dir)
+    results.mkdir(parents=True, exist_ok=True)
+    suffix = f"entry{entry_delay_minutes}_exit{exit_delay_minutes}"
+    trades.to_csv(results / f"event_study_{suffix}_trades.csv", index=False, encoding="utf-8-sig")
+    summary.to_csv(results / f"event_study_{suffix}_summary.csv", index=False, encoding="utf-8-sig")
+    write_excel_report(trades, summary, results / f"event_study_{suffix}_report.xlsx")
+    collect_next_day_reaction_files(source_dir, results)
     return paths, trades, summary
 
 
-def write_excel_report(trades: pd.DataFrame, output_path: str | Path) -> Path:
-    """Write full and yearly event-study detail/summary sheets to Excel."""
+def write_excel_report(trades: pd.DataFrame, summary: pd.DataFrame, output_path: str | Path) -> Path:
+    """Write event-study trades and summaries to Excel."""
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    frame = trades.copy()
-    frame["activation_dt"] = pd.to_datetime(frame["activation_dt"])
-    frame["year"] = frame["activation_dt"].dt.year
-
-    detail = _korean_detail_frame(frame)
-    summary_all = _korean_summary_frame(summarize_event_returns(frame))
-    yearly_summaries = []
-    for year, yearly in frame.groupby("year", sort=True):
-        summary = _korean_summary_frame(summarize_event_returns(yearly))
-        summary.insert(0, "연도", year)
-        yearly_summaries.append(summary)
-    summary_by_year = pd.concat(yearly_summaries, ignore_index=True) if yearly_summaries else pd.DataFrame()
-
     with pd.ExcelWriter(output, engine="openpyxl", datetime_format="yyyy-mm-dd hh:mm:ss", date_format="yyyy-mm-dd") as writer:
-        detail.to_excel(writer, sheet_name="거래내역_전체", index=False)
-        summary_all.to_excel(writer, sheet_name="요약_전체", index=False)
-        summary_by_year.to_excel(writer, sheet_name="요약_연도별", index=False)
-        for year in sorted(frame["year"].dropna().unique()):
-            year_frame = frame[frame["year"] == year]
-            _korean_detail_frame(year_frame).to_excel(writer, sheet_name=f"거래내역_{int(year)}", index=False)
-            _korean_summary_frame(summarize_event_returns(year_frame)).to_excel(
-                writer,
-                sheet_name=f"요약_{int(year)}",
-                index=False,
-            )
+        trades.to_excel(writer, sheet_name="trades", index=False)
+        summary.to_excel(writer, sheet_name="summary", index=False)
+        if "year" in trades.columns:
+            for year in sorted(trades["year"].dropna().unique()):
+                trades[trades["year"] == year].to_excel(writer, sheet_name=f"trades_{int(year)}", index=False)
         _format_workbook(writer.book)
     return output
-
-
-def _korean_detail_frame(trades: pd.DataFrame) -> pd.DataFrame:
-    columns = {
-        "date": "날짜",
-        "year": "연도",
-        "activation_dt": "발동시간",
-        "release_dt": "종료시간",
-        "direction": "사이드카방향",
-        "etf": "매수ETF",
-        "futures_return_at_trigger_pct": "발동시_K200선물등락률(%)",
-        "minutes_to_release": "발동후_종료까지(분)",
-        "entry_dt": "매수기준분봉",
-        "entry_price": "매수가(종가)",
-        "exit_1m_dt": "종료후1분_매도기준분봉",
-        "exit_1m_price": "종료후1분_매도가(종가)",
-        "ret_1m_pct": "종료후1분_수익률(%)",
-        "exit_3m_dt": "종료후3분_매도기준분봉",
-        "exit_3m_price": "종료후3분_매도가(종가)",
-        "ret_3m_pct": "종료후3분_수익률(%)",
-        "exit_5m_dt": "종료후5분_매도기준분봉",
-        "exit_5m_price": "종료후5분_매도가(종가)",
-        "ret_5m_pct": "종료후5분_수익률(%)",
-    }
-    detail = trades[list(columns)].rename(columns=columns).copy()
-    detail["사이드카방향"] = detail["사이드카방향"].replace(
-        {
-            "buy_sidecar": "매수 사이드카",
-            "sell_sidecar": "매도 사이드카",
-        }
-    )
-    detail["매수ETF"] = detail["매수ETF"].replace(
-        {
-            "KODEX leverage": "KODEX 레버리지",
-            "KODEX inverse": "KODEX 인버스",
-        }
-    )
-    return detail
-
-
-def _korean_summary_frame(summary: pd.DataFrame) -> pd.DataFrame:
-    columns = {
-        "group": "구분",
-        "horizon": "보유기간",
-        "n": "표본수",
-        "mean_pct": "평균수익률(%)",
-        "median_pct": "중앙값수익률(%)",
-        "win_rate_pct": "승률(%)",
-        "min_pct": "최저수익률(%)",
-        "max_pct": "최고수익률(%)",
-        "sum_pct": "단순합계수익률(%)",
-    }
-    frame = summary[list(columns)].rename(columns=columns).copy()
-    frame["구분"] = frame["구분"].replace(
-        {
-            "all": "전체",
-            "buy_sidecar": "매수 사이드카",
-            "sell_sidecar": "매도 사이드카",
-        }
-    )
-    return frame
 
 
 def _format_workbook(workbook) -> None:
@@ -408,12 +431,20 @@ def _pct_return(entry_price, exit_price) -> float | pd.NA:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build sidecar parquet data and event-study outputs.")
-    parser.add_argument("--source", default="sidecar", help="Directory containing source Excel files.")
-    parser.add_argument("--parquet", default="sidecar/parquet", help="Directory for normalized parquet outputs.")
-    parser.add_argument("--results", default="sidecar/results", help="Directory for event-study CSV outputs.")
+    parser.add_argument("--source", default=str(DEFAULT_SOURCE_DIR), help="Directory containing source Excel files.")
+    parser.add_argument("--parquet", default=str(DEFAULT_PARQUET_DIR), help="Directory for normalized parquet outputs.")
+    parser.add_argument("--results", default=str(DEFAULT_RESULTS_DIR), help="Directory for event-study and next-day outputs.")
+    parser.add_argument("--entry-delay-minutes", type=int, default=DEFAULT_ENTRY_DELAY_MINUTES)
+    parser.add_argument("--exit-delay-minutes", type=int, default=DEFAULT_EXIT_DELAY_MINUTES)
     args = parser.parse_args(argv)
 
-    paths, trades, summary = run_pipeline(args.source, args.parquet, args.results)
+    paths, trades, summary = run_pipeline(
+        args.source,
+        args.parquet,
+        args.results,
+        entry_delay_minutes=args.entry_delay_minutes,
+        exit_delay_minutes=args.exit_delay_minutes,
+    )
     print("parquet:")
     for name, path in paths.items():
         print(f"  {name}: {path}")

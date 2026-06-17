@@ -142,6 +142,137 @@ def test_rrg_sector_rotation_ignores_flow_when_op_revision_is_missing(monkeypatc
     assert last["B"] == 0.0
 
 
+def test_rrg_sector_rotation_default_parameters_keep_all_confirmed_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=60, freq="D")
+    columns = ["L1", "L2", "L3", "S1", "S2"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame(
+        {"L1": "Long", "L2": "Long", "L3": "Long", "S1": "Short", "S2": "Short"},
+        index=index,
+    )
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    state = pd.DataFrame({"Long": "Leading", "Short": "Lagging"}, index=index)
+    stock_op = pd.DataFrame({"L1": 0.40, "L2": 0.20, "L3": 0.01, "S1": -0.40, "S2": -0.01}, index=index)
+    sector_op = pd.DataFrame({"Long": 0.25, "Short": -0.25}, index=index)
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (state, state.eq("Leading"), state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+    monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
+
+    strategy = build_strategy("rrg_sector_rotation")
+    last = strategy.build_weights(market).iloc[-1]
+
+    assert set(last[last.gt(0.0)].index) == {"L1", "L2", "L3"}
+    assert set(last[last.lt(0.0)].index) == {"S1", "S2"}
+
+
+def test_rrg_sector_rotation_quantile_thresholds_and_caps_reduce_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=60, freq="D")
+    columns = ["L1", "L2", "L3", "L4", "S1", "S2", "S3"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame(
+        {
+            "L1": "Long",
+            "L2": "Long",
+            "L3": "Long",
+            "L4": "Long",
+            "S1": "Short",
+            "S2": "Short",
+            "S3": "Short",
+        },
+        index=index,
+    )
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    state = pd.DataFrame({"Long": "Leading", "Short": "Lagging"}, index=index)
+    stock_op = pd.DataFrame(
+        {"L1": 0.50, "L2": 0.30, "L3": 0.10, "L4": 0.02, "S1": -0.60, "S2": -0.25, "S3": -0.04},
+        index=index,
+    )
+    sector_op = pd.DataFrame({"Long": 0.25, "Short": -0.25}, index=index)
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (state, state.eq("Leading"), state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+    monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
+
+    strategy = build_strategy(
+        "rrg_sector_rotation",
+        long_quantile=0.50,
+        short_quantile=0.50,
+        min_long_revision=0.05,
+        min_short_revision=0.05,
+        max_long_names=2,
+        max_short_names=1,
+    )
+    last = strategy.build_weights(market).iloc[-1]
+
+    assert set(last[last.gt(0.0)].index) == {"L1", "L2"}
+    assert set(last[last.lt(0.0)].index) == {"S1"}
+    assert last[last.gt(0.0)].sum() == pytest.approx(1.0)
+    assert last[last.lt(0.0)].sum() == pytest.approx(-0.5)
+
+
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"long_quantile": -0.1}, "long_quantile must be between 0 and 1"),
+        ({"long_quantile": 1.1}, "long_quantile must be between 0 and 1"),
+        ({"short_quantile": -0.1}, "short_quantile must be between 0 and 1"),
+        ({"short_quantile": 1.1}, "short_quantile must be between 0 and 1"),
+        ({"min_long_revision": -0.01}, "min_long_revision must be non-negative"),
+        ({"min_short_revision": -0.01}, "min_short_revision must be non-negative"),
+        ({"max_long_names": 0}, "max_long_names must be positive"),
+        ({"max_short_names": 0}, "max_short_names must be positive"),
+    ],
+)
+def test_rrg_sector_rotation_validates_concentration_parameters(kwargs: dict[str, object], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        build_strategy("rrg_sector_rotation", **kwargs)
+
+
 def test_rrg_op_revision_uses_prior_based_change() -> None:
     from backtesting.strategies.rrg_sector_rotation import _build_stock_op_revision
 
@@ -243,7 +374,7 @@ def test_rrg_sector_rotation_weights_op_revision_scores_and_keeps_weakening_off_
     monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
     monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
 
-    strategy = build_strategy("rrg_sector_rotation", max_long_names=2, max_short_names=2, gross_short=0.5)
+    strategy = build_strategy("rrg_sector_rotation", gross_short=0.5)
     weights = strategy.build_weights(market)
     last = weights.iloc[-1]
 

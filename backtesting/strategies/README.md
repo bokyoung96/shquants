@@ -114,6 +114,7 @@ should use the current `id` values.
 - `long sleeve`: `Leading`, `Improving`, or `Weakening` sectors whose sector and stock OP revisions are both positive.
 - `short sleeve`: `Lagging` sectors whose sector and stock OP revisions are both negative.
 - `weighting`: selected long and short sleeves are weighted by cross-sectional OP revision rank, not equal weight or top-N count.
+- `concentration`: optional quantile/min-revision/max-name controls can reduce holdings for personal-account execution without forcing a fixed top-N portfolio. Suggested experiment: `long_quantile=0.70`, `short_quantile=0.70`, `min_long_revision=0.03`, `min_short_revision=0.03`, `max_long_names=20`, `max_short_names=5`.
 - `exposure`: default `gross_long=1.0` and `gross_short=0.5`; neither long nor short sleeve is force-filled.
 - `use`: selected RRG candidate after validation.
 

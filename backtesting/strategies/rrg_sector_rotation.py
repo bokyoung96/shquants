@@ -24,6 +24,12 @@ class RrgSectorRotation(ComposableStrategy):
     rrg_transition_threshold: float = 0.005
     gross_long: float = 1.0
     gross_short: float = 0.5
+    long_quantile: float | None = None
+    short_quantile: float | None = None
+    min_long_revision: float = 0.0
+    min_short_revision: float = 0.0
+    max_long_names: int | None = None
+    max_short_names: int | None = None
 
     def __post_init__(self) -> None:
         validate_positive("lookback", self.lookback)
@@ -31,6 +37,12 @@ class RrgSectorRotation(ComposableStrategy):
             raise ValueError("gross_long must be non-negative")
         if self.gross_short < 0.0:
             raise ValueError("gross_short must be non-negative")
+        _validate_optional_quantile("long_quantile", self.long_quantile)
+        _validate_optional_quantile("short_quantile", self.short_quantile)
+        _validate_non_negative("min_long_revision", self.min_long_revision)
+        _validate_non_negative("min_short_revision", self.min_short_revision)
+        _validate_optional_positive_int("max_long_names", self.max_long_names)
+        _validate_optional_positive_int("max_short_names", self.max_short_names)
         self.signal_producer = _RrgFwdFlow1Signal(
             lookback=self.lookback,
             rrg_medium_lookback=self.rrg_medium_lookback,
@@ -41,6 +53,12 @@ class RrgSectorRotation(ComposableStrategy):
         self.construction_rule = _RrgLongShortRankProportionalWeight(
             gross_long=self.gross_long,
             gross_short=self.gross_short,
+            long_quantile=self.long_quantile,
+            short_quantile=self.short_quantile,
+            min_long_revision=self.min_long_revision,
+            min_short_revision=self.min_short_revision,
+            max_long_names=self.max_long_names,
+            max_short_names=self.max_short_names,
         )
 
 
@@ -48,12 +66,24 @@ class RrgSectorRotation(ComposableStrategy):
 class _RrgLongShortRankProportionalWeight:
     gross_long: float = 1.0
     gross_short: float = 0.5
+    long_quantile: float | None = None
+    short_quantile: float | None = None
+    min_long_revision: float = 0.0
+    min_short_revision: float = 0.0
+    max_long_names: int | None = None
+    max_short_names: int | None = None
 
     def __post_init__(self) -> None:
         if self.gross_long < 0.0:
             raise ValueError("gross_long must be non-negative")
         if self.gross_short < 0.0:
             raise ValueError("gross_short must be non-negative")
+        _validate_optional_quantile("long_quantile", self.long_quantile)
+        _validate_optional_quantile("short_quantile", self.short_quantile)
+        _validate_non_negative("min_long_revision", self.min_long_revision)
+        _validate_non_negative("min_short_revision", self.min_short_revision)
+        _validate_optional_positive_int("max_long_names", self.max_long_names)
+        _validate_optional_positive_int("max_short_names", self.max_short_names)
 
     def build(self, bundle: SignalBundle) -> ConstructionResult:
         long_alpha = bundle.alpha.astype(float)
@@ -78,6 +108,12 @@ class _RrgLongShortRankProportionalWeight:
             long_candidates = long_entry.loc[ts] | (previous_long & long_hold.loc[ts])
             long_candidates = long_candidates & tradable.loc[ts] & long_alpha.loc[ts].notna() & long_alpha.loc[ts].gt(0.0)
             long_scores = long_alpha.loc[ts, long_candidates]
+            long_scores = _filter_candidate_scores(
+                long_scores,
+                min_score=self.min_long_revision,
+                quantile=self.long_quantile,
+                max_names=self.max_long_names,
+            )
             long_ranked = long_scores.sort_values(ascending=False, kind="stable")
             if not long_scores.empty and self.gross_long > 0.0:
                 long_weights = _proportional_rank_weights(long_scores, gross=float(self.gross_long))
@@ -90,6 +126,12 @@ class _RrgLongShortRankProportionalWeight:
             no_long_overlap.loc[long_ranked.index] = False
             short_candidates = short_candidates & no_long_overlap
             short_scores = short_alpha.loc[ts, short_candidates]
+            short_scores = _filter_candidate_scores(
+                short_scores,
+                min_score=self.min_short_revision,
+                quantile=self.short_quantile,
+                max_names=self.max_short_names,
+            )
             if not short_scores.empty and self.gross_short > 0.0:
                 short_weights = _proportional_rank_weights(short_scores, gross=float(self.gross_short))
                 weights.loc[ts, short_weights.index] = -short_weights
@@ -115,6 +157,43 @@ def _proportional_rank_weights(scores: pd.Series, *, gross: float) -> pd.Series:
     if total <= 0.0:
         return pd.Series(dtype=float)
     return ranks.divide(total).mul(gross).astype(float)
+
+
+def _filter_candidate_scores(
+    scores: pd.Series,
+    *,
+    min_score: float,
+    quantile: float | None,
+    max_names: int | None,
+) -> pd.Series:
+    filtered = scores[scores.ge(float(min_score))]
+    if filtered.empty:
+        return filtered
+    if quantile is not None:
+        cutoff = float(filtered.quantile(float(quantile)))
+        filtered = filtered[filtered.ge(cutoff)]
+    if max_names is not None and len(filtered) > max_names:
+        filtered = filtered.sort_values(ascending=False, kind="stable").head(max_names)
+    return filtered
+
+
+def _validate_optional_quantile(name: str, value: float | None) -> None:
+    if value is None:
+        return
+    if value < 0.0 or value > 1.0:
+        raise ValueError(f"{name} must be between 0 and 1")
+
+
+def _validate_non_negative(name: str, value: float) -> None:
+    if value < 0.0:
+        raise ValueError(f"{name} must be non-negative")
+
+
+def _validate_optional_positive_int(name: str, value: int | None) -> None:
+    if value is None:
+        return
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
 
 
 def _required_frame(bundle: SignalBundle, key: str) -> pd.DataFrame:

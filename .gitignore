@@ -216,6 +216,7 @@ wrds/output/
 
 # Local agent/runtime state and generated frontend artifacts
 .omx/
+.worktrees/
 tmp-dashboard-logs/
 dashboard/frontend/node_modules/
 dashboard/frontend/*.tsbuildinfo

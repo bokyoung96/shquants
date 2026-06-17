@@ -1,0 +1,1673 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T07:01:37.102708+00:00",
+  "counts": {
+    "total": 62,
+    "by_category": {
+      "missing_core_methodology": 9,
+      "tiered_or_unresolved_weight_cap": 7,
+      "status_review": 13,
+      "missing_selection_count": 29,
+      "range_or_max_count": 4
+    }
+  },
+  "items": [
+    {
+      "index_code": "FI00.WLT.HDV",
+      "index_name": "FnGuide High Dividend Stocks Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "161510",
+          "etf_name": "PLUS 고배당주"
+        },
+        {
+          "etf_code": "279530",
+          "etf_name": "KODEX 고배당주"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.T10",
+      "index_name": "FnGuide Size/Style Index Series",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "292150",
+          "etf_name": "TIGER 코리아TOP10"
+        },
+        {
+          "etf_code": "395170",
+          "etf_name": "KODEX Top10동일가중"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "index_name": "FnGuide Defense TOP5 Index TR",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "315930",
+          "etf_name": "KODEX Top5PlusTR"
+        },
+        {
+          "etf_code": "449450",
+          "etf_name": "PLUS K방산"
+        }
+      ],
+      "selection": {
+        "total_constituents": 5,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.23
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L07",
+      "index_name": "FnGuide Semiconductor TOP10 Leverage Index TR",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "488080",
+          "etf_name": "TIGER 반도체TOP10레버리지"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MRD",
+      "index_name": "FnGuide REITs Real Estate Infrastructure Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "329200",
+          "etf_name": "TIGER 리츠부동산인프라"
+        },
+        {
+          "etf_code": "0153P0",
+          "etf_name": "ACE 리츠부동산인프라액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.17
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FBI.CD.01",
+      "index_name": "FnGuide CD Interest Rates Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "477080",
+          "etf_name": "RISE CD금리액티브(합성)"
+        },
+        {
+          "etf_code": "458210",
+          "etf_name": "KIWOOM CD금리액티브(합성)"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KB5",
+      "index_name": "FnGuide Network Infrastructure Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "367760",
+          "etf_name": "RISE 네트워크인프라"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L05",
+      "index_name": "FnGuide Secondary Battery Industry Leverage Index TR",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "462330",
+          "etf_name": "KODEX 2차전지산업레버리지"
+        },
+        {
+          "etf_code": "0104G0",
+          "etf_name": "PLUS K방산레버리지"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.04",
+      "index_name": "FnGuide High Dividend Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "251600",
+          "etf_name": "PLUS 고배당주채권혼합"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KRD",
+      "index_name": "FnGuide KOREA High Dividend",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "0105E0",
+          "etf_name": "SOL 코리아고배당"
+        },
+        {
+          "etf_code": "373490",
+          "etf_name": "KODEX 코리아혁신성장액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.TBI",
+      "index_name": "FnGuide Tesla Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "447770",
+          "etf_name": "TIGER 테슬라채권혼합Fn"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.NDX",
+      "index_name": "FnGuide Nasdaq100 Balanced 50 Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "0019K0",
+          "etf_name": "TIME 미국나스닥100채권혼합50액티브"
+        },
+        {
+          "etf_code": "435420",
+          "etf_name": "TIGER 미국나스닥100채권혼합50"
+        },
+        {
+          "etf_code": "0104H0",
+          "etf_name": "KoAct 미국나스닥채권혼합50액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.U10",
+      "index_name": "FnGuide 미국테크TOP10 채권혼합지수",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "472170",
+          "etf_name": "TIGER 미국테크TOP10채권혼합"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KDQ",
+      "index_name": "FnGuide KQ High Dividend Focus Index",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "266160",
+          "etf_name": "RISE 고배당"
+        },
+        {
+          "etf_code": "322410",
+          "etf_name": "HANARO K고배당"
+        },
+        {
+          "etf_code": "270800",
+          "etf_name": "RISE KQ고배당"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG3",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "329650",
+          "etf_name": "KODEX TRF3070"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HSK",
+      "index_name": "FnGuide SK hynix Value Chain Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "494220",
+          "etf_name": "UNICORN SK하이닉스밸류체인액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L08",
+      "index_name": "FnGuide Shipbuilding TOP3 Plus Leverage(2x) Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "0080Y0",
+          "etf_name": "SOL 조선TOP3플러스레버리지"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SHB",
+      "index_name": "FnGuide Samsung Electronics & SK Hynix Bond Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "0183V0",
+          "etf_name": "KIWOOM 삼성전자&SK하이닉스채권혼합50"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NGF",
+      "index_name": "FnGuide Golf Theme Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "367770",
+          "etf_name": "RISE 수소경제테마"
+        },
+        {
+          "etf_code": "150460",
+          "etf_name": "TIGER 중국소비테마"
+        },
+        {
+          "etf_code": "407300",
+          "etf_name": "HANARO Fn골프테마"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KNS",
+      "index_name": "FnGuide KOREA Nuclear Power SMR Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "0092B0",
+          "etf_name": "SOL 한국원자력SMR"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SDV",
+      "index_name": "FnGuide SLV Dividend Value Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "325020",
+          "etf_name": "KODEX 배당가치"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "score_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HSI",
+      "index_name": "FnGuide Solar & ESS Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "457990",
+          "etf_name": "PLUS 태양광&ESS"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KAV",
+      "index_name": "FnGuide K-Shareholder Value Index",
+      "status": "draft_extracted",
+      "category": "range_or_max_count",
+      "next_action": "verify whether range/max count is executable or needs a variable-count rule",
+      "products": [
+        {
+          "etf_code": "494330",
+          "etf_name": "ACE 라이프자산주주가치액티브"
+        },
+        {
+          "etf_code": "445690",
+          "etf_name": "BNK 주주가치액티브"
+        },
+        {
+          "etf_code": "491510",
+          "etf_name": "파워 K-주주가치액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 50
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {},
+        "security_cap": 0.05
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HWG",
+      "index_name": "FnGuide Hanwha Group Index",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "0000J0",
+          "etf_name": "PLUS 한화그룹주"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HPV",
+      "index_name": "FnGuide POSCO Group Focus Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "469170",
+          "etf_name": "ACE 포스코그룹포커스"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG5",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "329660",
+          "etf_name": "KODEX TRF5050"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG7",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "329670",
+          "etf_name": "KODEX TRF7030"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HDP",
+      "index_name": "FnGuide High Dividend Stocks Plus Buyback Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "0098N0",
+          "etf_name": "PLUS 자사주매입고배당주"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHV",
+      "index_name": "FnGuide Electric & Hydrogen Vehicle Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "381560",
+          "etf_name": "HANARO Fn전기&수소차"
+        }
+      ],
+      "selection": {
+        "total_constituents": 30,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NMV",
+      "index_name": "FnGuide K-Metaverse MZ Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "401470",
+          "etf_name": "KODEX 메타버스액티브"
+        },
+        {
+          "etf_code": "400970",
+          "etf_name": "TIGER Fn메타버스"
+        },
+        {
+          "etf_code": "402460",
+          "etf_name": "HANARO Fn K-메타버스MZ"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FGI.US.BTS.1",
+      "index_name": "FnGuide US Equity BestSeller Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "473590",
+          "etf_name": "ACE 미국주식베스트셀러"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MMT",
+      "index_name": "FnGuide Momentum Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "147970",
+          "etf_name": "TIGER 모멘텀"
+        },
+        {
+          "etf_code": "244620",
+          "etf_name": "KODEX 모멘텀Plus"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.ABS",
+      "index_name": "FnGuide Blacksmith Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "442090",
+          "etf_name": "에셋플러스 코리아대장장이액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.09
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.VAL",
+      "index_name": "FnGuide Korea All-round Value Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "447430",
+          "etf_name": "ACE 주주환원가치주액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": 500,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FGI.US.AIT.1",
+      "index_name": "FnGuide 미국AITOP10 지수",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "0178H0",
+          "etf_name": "IBK 미국AI TOP10국채혼합50"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NCE",
+      "index_name": "FnGuide E-Commerce Index",
+      "status": "draft_extracted",
+      "category": "range_or_max_count",
+      "next_action": "verify whether range/max count is executable or needs a variable-count rule",
+      "products": [
+        {
+          "etf_code": "322400",
+          "etf_name": "HANARO e커머스"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 40
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.03",
+      "index_name": "FnGuide Select Value Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "241390",
+          "etf_name": "RISE V&S셀렉트밸류채권혼합"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SHD",
+      "index_name": "FnGuide Dividend Payout Top Picks",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "0152E0",
+          "etf_name": "SOL 배당성향탑픽액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.200",
+      "index_name": "FnGuide-RAFI Korea Index Series",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "145850",
+          "etf_name": "TREX 펀더멘탈 200"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "fundamental_float_adjusted",
+        "residual": {},
+        "security_cap": 0.25
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SEH",
+      "index_name": "FnGuide Hydrogen Power ESS Infra Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "0150K0",
+          "etf_name": "KoAct 수소전력ESS인프라액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {},
+        "security_cap": 0.075
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NH5",
+      "index_name": "FnGuide 5G Industry Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "367740",
+          "etf_name": "HANARO Fn5G산업"
+        }
+      ],
+      "selection": {
+        "total_constituents": 30,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SND",
+      "index_name": "FnGuide K-NewDeal Digital Plus Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "368190",
+          "etf_name": "HANARO Fn K-뉴딜디지털플러스"
+        },
+        {
+          "etf_code": "368680",
+          "etf_name": "KODEX K-뉴딜디지털플러스"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SMF",
+      "index_name": "FnGuide Multi-Factor Index",
+      "status": "draft_extracted",
+      "category": "range_or_max_count",
+      "next_action": "verify whether range/max count is executable or needs a variable-count rule",
+      "products": [
+        {
+          "etf_code": "337120",
+          "etf_name": "KODEX 멀티팩터"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 250
+      },
+      "weighting": {
+        "base": "score_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHB",
+      "index_name": "FnGuide K-Beauty Index",
+      "status": "draft_extracted",
+      "category": "range_or_max_count",
+      "next_action": "verify whether range/max count is executable or needs a variable-count rule",
+      "products": [
+        {
+          "etf_code": "479850",
+          "etf_name": "HANARO K-뷰티"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": [],
+        "max_constituents": 20
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.05",
+      "index_name": "FnGuide Healthcare Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "253290",
+          "etf_name": "RISE 헬스케어채권혼합"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.TKC",
+      "index_name": "FnGuide K-Culture Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "410870",
+          "etf_name": "TIME K컬처액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": 20,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HCY",
+      "index_name": "FnGuide Leading Industry Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "280920",
+          "etf_name": "PLUS 주도업종"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.HAP",
+      "index_name": "FnGuide APPLE Balanced Index",
+      "status": "draft_extracted",
+      "category": "missing_core_methodology",
+      "next_action": "recover index code or methodology PDF before extraction",
+      "products": [
+        {
+          "etf_code": "447660",
+          "etf_name": "PLUS 애플채권혼합"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "unknown",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SVL",
+      "index_name": "FnGuide Select Value Index",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "234310",
+          "etf_name": "RISE V&S셀렉트밸류"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.ESG.ESG",
+      "index_name": "FnGuide ESGM ESG 지수",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "395760",
+          "etf_name": "PLUS ESG성장주액티브"
+        },
+        {
+          "etf_code": "395750",
+          "etf_name": "PLUS ESG가치주액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.1
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NKF",
+      "index_name": "FnGuide K-Food Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "438900",
+          "etf_name": "HANARO Fn K-푸드"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KPC",
+      "index_name": "FnGuide AI Platform Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "407820",
+          "etf_name": "에셋플러스 코리아플랫폼액티브"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.08
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KIC",
+      "index_name": "FnGuide Investor’s choice KR Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "0138D0",
+          "etf_name": "RISE 동학개미"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HDL",
+      "index_name": "FnGuide High Dividend Low Volatility 50 Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "251590",
+          "etf_name": "PLUS 고배당저변동50"
+        },
+        {
+          "etf_code": "266550",
+          "etf_name": "PLUS 중형주저변동50"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.BKA",
+      "index_name": "FnGuide KAKAO Group Focus Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "0120J0",
+          "etf_name": "BNK 카카오그룹포커스"
+        }
+      ],
+      "selection": {
+        "total_constituents": 10,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "index_name": "FnGuide K High Dividend Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "281990",
+          "etf_name": "RISE 중소형고배당"
+        }
+      ],
+      "selection": {
+        "total_constituents": 40,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "custom_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SWT",
+      "index_name": "FnGuide Webtoon and Drama Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "395150",
+          "etf_name": "KODEX 웹툰&드라마"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KDS",
+      "index_name": "FnGuide Domestic Consumption Plus Index",
+      "status": "draft_extracted",
+      "category": "tiered_or_unresolved_weight_cap",
+      "next_action": "parse tiered/fixed bucket cap scope before engine enablement",
+      "products": [
+        {
+          "etf_code": "326230",
+          "etf_name": "RISE 내수주플러스"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HHR",
+      "index_name": "FnGuide REITs Index",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "429740",
+          "etf_name": "PLUS K리츠"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {},
+        "security_cap": 0.15
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.VPS",
+      "index_name": "FnGuide Plus Index Series",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "244670",
+          "etf_name": "KODEX 밸류Plus"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.QPS",
+      "index_name": "FnGuide Plus Index Series",
+      "status": "draft_extracted",
+      "category": "missing_selection_count",
+      "next_action": "inspect selection section and encode exact/range/variable-count rule",
+      "products": [
+        {
+          "etf_code": "244660",
+          "etf_name": "KODEX 퀄리티Plus"
+        }
+      ],
+      "selection": {
+        "total_constituents": null,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "equal_weighted",
+        "residual": {}
+      },
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NAG",
+      "index_name": "FnGuide Agriculture Business Industry Index",
+      "status": "draft_extracted",
+      "category": "status_review",
+      "next_action": "review draft status and promote only after methodology evidence is complete",
+      "products": [
+        {
+          "etf_code": "314700",
+          "etf_name": "HANARO 농업융복합산업"
+        }
+      ],
+      "selection": {
+        "total_constituents": 15,
+        "buckets": []
+      },
+      "weighting": {
+        "base": "float_market_cap_weighted",
+        "residual": {},
+        "security_cap": 0.2
+      },
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    }
+  ]
+}

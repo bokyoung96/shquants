@@ -1,0 +1,765 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T07:01:37.101626+00:00",
+  "counts": {
+    "total": 62,
+    "engine_ready": 0,
+    "blocked": 62
+  },
+  "status_counts": {
+    "draft_extracted": 62
+  },
+  "blocker_counts": {
+    "status=draft_extracted": 62,
+    "selection.total_constituents not extracted with evidence": 47,
+    "weight cap exists in rules but residual/fixed bucket scope is unresolved": 7,
+    "rules.selection_count differs from PDF total constituents": 9
+  },
+  "items": [
+    {
+      "index_code": "FI00.WLT.HDV",
+      "index_name": "FnGuide High Dividend Stocks Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.T10",
+      "index_name": "FnGuide Size/Style Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "DIV.FI00.WLT.DF5",
+      "index_name": "FnGuide Defense TOP5 Index TR",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 5,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L07",
+      "index_name": "FnGuide Semiconductor TOP10 Leverage Index TR",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MRD",
+      "index_name": "FnGuide REITs Real Estate Infrastructure Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FBI.CD.01",
+      "index_name": "FnGuide CD Interest Rates Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KB5",
+      "index_name": "FnGuide Network Infrastructure Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L05",
+      "index_name": "FnGuide Secondary Battery Industry Leverage Index TR",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.04",
+      "index_name": "FnGuide High Dividend Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KRD",
+      "index_name": "FnGuide KOREA High Dividend",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.TBI",
+      "index_name": "FnGuide Tesla Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.NDX",
+      "index_name": "FnGuide Nasdaq100 Balanced 50 Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.U10",
+      "index_name": "FnGuide 미국테크TOP10 채권혼합지수",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KDQ",
+      "index_name": "FnGuide KQ High Dividend Focus Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG3",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HSK",
+      "index_name": "FnGuide SK hynix Value Chain Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.L08",
+      "index_name": "FnGuide Shipbuilding TOP3 Plus Leverage(2x) Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SHB",
+      "index_name": "FnGuide Samsung Electronics & SK Hynix Bond Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NGF",
+      "index_name": "FnGuide Golf Theme Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KNS",
+      "index_name": "FnGuide KOREA Nuclear Power SMR Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SDV",
+      "index_name": "FnGuide SLV Dividend Value Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HSI",
+      "index_name": "FnGuide Solar & ESS Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KAV",
+      "index_name": "FnGuide K-Shareholder Value Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HWG",
+      "index_name": "FnGuide Hanwha Group Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HPV",
+      "index_name": "FnGuide POSCO Group Focus Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG5",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.SG7",
+      "index_name": "FnGuide TRF Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HDP",
+      "index_name": "FnGuide High Dividend Stocks Plus Buyback Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHV",
+      "index_name": "FnGuide Electric & Hydrogen Vehicle Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 30,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NMV",
+      "index_name": "FnGuide K-Metaverse MZ Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FGI.US.BTS.1",
+      "index_name": "FnGuide US Equity BestSeller Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.MMT",
+      "index_name": "FnGuide Momentum Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.ABS",
+      "index_name": "FnGuide Blacksmith Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.VAL",
+      "index_name": "FnGuide Korea All-round Value Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 500,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FGI.US.AIT.1",
+      "index_name": "FnGuide 미국AITOP10 지수",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NCE",
+      "index_name": "FnGuide E-Commerce Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.03",
+      "index_name": "FnGuide Select Value Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SHD",
+      "index_name": "FnGuide Dividend Payout Top Picks",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.200",
+      "index_name": "FnGuide-RAFI Korea Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SEH",
+      "index_name": "FnGuide Hydrogen Power ESS Infra Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 20,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NH5",
+      "index_name": "FnGuide 5G Industry Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 30,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SND",
+      "index_name": "FnGuide K-NewDeal Digital Plus Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SMF",
+      "index_name": "FnGuide Multi-Factor Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NHB",
+      "index_name": "FnGuide K-Beauty Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.05",
+      "index_name": "FnGuide Healthcare Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.TKC",
+      "index_name": "FnGuide K-Culture Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 20,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HCY",
+      "index_name": "FnGuide Leading Industry Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.MIX.HAP",
+      "index_name": "FnGuide APPLE Balanced Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SVL",
+      "index_name": "FnGuide Select Value Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.ESG.ESG",
+      "index_name": "FnGuide ESGM ESG 지수",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NKF",
+      "index_name": "FnGuide K-Food Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KPC",
+      "index_name": "FnGuide AI Platform Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KIC",
+      "index_name": "FnGuide Investor’s choice KR Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HDL",
+      "index_name": "FnGuide High Dividend Low Volatility 50 Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.BKA",
+      "index_name": "FnGuide KAKAO Group Focus Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 10,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "rules.selection_count differs from PDF total constituents"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NDV",
+      "index_name": "FnGuide K High Dividend Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 40,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.SWT",
+      "index_name": "FnGuide Webtoon and Drama Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.KDS",
+      "index_name": "FnGuide Domestic Consumption Plus Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence",
+        "weight cap exists in rules but residual/fixed bucket scope is unresolved"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.HHR",
+      "index_name": "FnGuide REITs Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.VPS",
+      "index_name": "FnGuide Plus Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.QPS",
+      "index_name": "FnGuide Plus Index Series",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": null,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted",
+        "selection.total_constituents not extracted with evidence"
+      ]
+    },
+    {
+      "index_code": "FI00.WLT.NAG",
+      "index_name": "FnGuide Agriculture Business Industry Index",
+      "status": "draft_extracted",
+      "engine_ready": false,
+      "total_constituents": 15,
+      "variable_count": {},
+      "blockers": [
+        "status=draft_extracted"
+      ]
+    }
+  ]
+}

@@ -8,20 +8,12 @@ from typing import Iterable, Mapping
 
 from etfs import paths
 from etfs.common.cap import write_cap_candidate_report
-from etfs.fnguide.data_inventory import write_fnguide_data_inventory
+from etfs.fnguide.data_requirements import write_data_requirements
 from etfs.fnguide.methodology_audit import write_methodology_audit
-from etfs.fnguide.methodology_engine import (
-    write_engine_input_requirements,
-    write_engine_input_template,
-    write_engine_promotion_candidates,
-    write_engine_support_matrix,
-    write_methodology_replication_report,
-    write_target_weights,
-)
 from etfs.fnguide.methodology_extraction import write_methodology_extractions
+from etfs.fnguide.methodology_summary import write_etf_methodology_summary
 from etfs.fnguide.methodology_specs import write_draft_specs, write_methodology_specs
 from etfs.fnguide.validation import (
-    write_target_weight_validation_results,
     write_validation_fixtures,
     write_validation_results,
 )
@@ -34,13 +26,11 @@ def run_offline_pipeline(
     overrides_path: Path = paths.FNGUIDE_SPEC_OVERRIDES_JSON,
     validation_inputs: Iterable[Path] = (),
     validation_output_dir: Path = paths.VALIDATION_OUTPUT_DIR,
-    engine_output_dir: Path = paths.FNGUIDE_ENGINE_OUTPUT_DIR,
-    engine_inputs_path: Path = paths.FNGUIDE_ENGINE_INPUTS_JSON,
     inventory_output_dir: Path = paths.FNGUIDE_OUTPUT_DIR,
+    holdings_dir: Path = paths.REFRESHED_HOLDINGS_FILES_DIR,
 ) -> dict[str, object]:
     extraction_output_dir.mkdir(parents=True, exist_ok=True)
     validation_output_dir.mkdir(parents=True, exist_ok=True)
-    engine_output_dir.mkdir(parents=True, exist_ok=True)
     inventory_output_dir.mkdir(parents=True, exist_ok=True)
 
     extractions_json, extractions_md = write_methodology_extractions(rules_path, extraction_output_dir)
@@ -51,6 +41,14 @@ def run_offline_pipeline(
         overrides_path=overrides_path,
     )
     audit_json, audit_md = write_methodology_audit(methodology_specs, extraction_output_dir)
+    requirements_csv, requirements_json, requirements_md = write_data_requirements(rules_path, inventory_output_dir)
+    summary_json, summary_csv, summary_md = write_etf_methodology_summary(
+        holdings_dir=holdings_dir,
+        rules_path=rules_path,
+        requirements_path=requirements_json,
+        audit_path=audit_json,
+        output_dir=inventory_output_dir,
+    )
 
     outputs: dict[str, str] = {
         "methodology_extractions": extractions_json.as_posix(),
@@ -59,6 +57,12 @@ def run_offline_pipeline(
         "methodology_specs": methodology_specs.as_posix(),
         "methodology_audit": audit_json.as_posix(),
         "methodology_audit_md": audit_md.as_posix(),
+        "requirements": requirements_json.as_posix(),
+        "requirements_csv": requirements_csv.as_posix(),
+        "requirements_md": requirements_md.as_posix(),
+        "etf_methodology_summary": summary_json.as_posix(),
+        "etf_methodology_summary_csv": summary_csv.as_posix(),
+        "etf_methodology_summary_md": summary_md.as_posix(),
     }
     skipped: list[str] = []
 
@@ -78,46 +82,6 @@ def run_offline_pipeline(
         outputs["cap_candidates_md"] = cap_candidates_md.as_posix()
     else:
         skipped.append("validation: input workbooks not provided")
-
-    engine_requirements = write_engine_input_requirements(methodology_specs, engine_output_dir)
-    outputs["engine_input_requirements"] = engine_requirements.as_posix()
-    engine_input_template = write_engine_input_template(methodology_specs, engine_output_dir)
-    outputs["engine_input_template"] = engine_input_template.as_posix()
-    engine_support_json, engine_support_md = write_engine_support_matrix(methodology_specs, engine_output_dir)
-    outputs["engine_support_matrix"] = engine_support_json.as_posix()
-    outputs["engine_support_matrix_md"] = engine_support_md.as_posix()
-    promotion_json, promotion_md = write_engine_promotion_candidates(methodology_specs, engine_output_dir)
-    outputs["engine_promotion_candidates"] = promotion_json.as_posix()
-    outputs["engine_promotion_candidates_md"] = promotion_md.as_posix()
-    data_inventory_json, data_inventory_md = write_fnguide_data_inventory(
-        inventory_output_dir,
-        specs_path=methodology_specs,
-    )
-    outputs["data_inventory"] = data_inventory_json.as_posix()
-    outputs["data_inventory_md"] = data_inventory_md.as_posix()
-
-    replication_json, replication_md = write_methodology_replication_report(
-        methodology_specs,
-        engine_output_dir,
-    )
-    outputs["methodology_replication_report"] = replication_json.as_posix()
-    outputs["methodology_replication_report_md"] = replication_md.as_posix()
-
-    if engine_inputs_path.exists():
-        target_weights = write_target_weights(engine_inputs_path, methodology_specs, engine_output_dir)
-        outputs["target_weights"] = target_weights.as_posix()
-        if fixtures is not None:
-            target_validation = write_target_weight_validation_results(
-                fixtures,
-                target_weights,
-                validation_output_dir,
-                weight_tolerance=0.0,
-            )
-            outputs["target_weight_validation"] = target_validation.as_posix()
-        else:
-            skipped.append("target_weight_validation: validation fixtures not found")
-    else:
-        skipped.append("target_weights: engine_inputs not found; fill engine_inputs.template.json")
 
     return {
         "schema_version": "1.0",
@@ -165,10 +129,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--overrides", default=paths.FNGUIDE_SPEC_OVERRIDES_JSON.as_posix())
     parser.add_argument("--validation-input", nargs="*", default=[])
     parser.add_argument("--validation-output-dir", default=paths.VALIDATION_OUTPUT_DIR.as_posix())
-    parser.add_argument("--engine-output-dir", default=paths.FNGUIDE_ENGINE_OUTPUT_DIR.as_posix())
-    parser.add_argument("--engine-inputs", default=paths.FNGUIDE_ENGINE_INPUTS_JSON.as_posix())
     parser.add_argument("--inventory-output-dir", default=paths.FNGUIDE_OUTPUT_DIR.as_posix())
-    parser.add_argument("--manifest", default=(paths.FNGUIDE_ENGINE_OUTPUT_DIR / "offline_pipeline_manifest.json").as_posix())
+    parser.add_argument("--holdings-dir", default=paths.REFRESHED_HOLDINGS_FILES_DIR.as_posix())
+    parser.add_argument("--manifest", default=(paths.FNGUIDE_OUTPUT_DIR / "offline_pipeline_manifest.json").as_posix())
     return parser
 
 
@@ -181,9 +144,8 @@ def main(argv: list[str] | None = None) -> int:
         overrides_path=Path(args.overrides),
         validation_inputs=[Path(value) for value in args.validation_input],
         validation_output_dir=Path(args.validation_output_dir),
-        engine_output_dir=Path(args.engine_output_dir),
-        engine_inputs_path=Path(args.engine_inputs),
         inventory_output_dir=Path(args.inventory_output_dir),
+        holdings_dir=Path(args.holdings_dir),
     )
     print(f"wrote {manifest_path}")
     return 0

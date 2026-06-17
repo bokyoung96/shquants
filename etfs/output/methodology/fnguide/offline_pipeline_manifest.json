@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T07:01:38.042433+00:00",
+  "outputs": {
+    "methodology_extractions": "etfs/output/methodology/fnguide/methodology_extractions.json",
+    "methodology_extractions_md": "etfs/output/methodology/fnguide/methodology_extractions.md",
+    "draft_specs": "etfs/output/methodology/fnguide/draft_specs.json",
+    "methodology_specs": "etfs/output/methodology/fnguide/methodology_specs.json",
+    "methodology_audit": "etfs/output/methodology/fnguide/methodology_audit.json",
+    "methodology_audit_md": "etfs/output/methodology/fnguide/methodology_audit.md",
+    "requirements": "etfs/output/methodology/fnguide/requirements.json",
+    "requirements_csv": "etfs/output/methodology/fnguide/requirements.csv",
+    "requirements_md": "etfs/output/methodology/fnguide/requirements.md",
+    "etf_methodology_summary": "etfs/output/methodology/fnguide/etf_methodology_summary.json",
+    "etf_methodology_summary_csv": "etfs/output/methodology/fnguide/etf_methodology_summary.csv",
+    "etf_methodology_summary_md": "etfs/output/methodology/fnguide/etf_methodology_summary.md"
+  },
+  "skipped": [
+    "validation: input workbooks not provided"
+  ]
+}

@@ -11,6 +11,7 @@ from etfs.fnguide.methodology_audit import build_parser as build_methodology_aud
 from etfs.fnguide.methodology_engine import build_parser as build_methodology_engine_parser
 from etfs.fnguide.methodology_extraction import build_parser as build_methodology_extraction_parser
 from etfs.fnguide.methodology_specs import build_parser as build_methodology_specs_parser
+from etfs.fnguide.methodology_summary import build_parser as build_methodology_summary_parser
 from etfs.fnguide.pipeline import build_parser as build_fnguide_pipeline_parser
 from etfs.krx.methodology import build_parser as build_krx_parser
 from etfs.msci.methodology import build_parser as build_msci_parser
@@ -56,6 +57,15 @@ def test_output_path_constants_group_outputs_by_role() -> None:
         "etfs/output/methodology/fnguide/methodology_replication_report.json"
     )
     assert paths.FNGUIDE_TARGET_WEIGHTS_JSON.as_posix() == "etfs/output/methodology/fnguide/target_weights.json"
+    assert paths.FNGUIDE_ETF_METHODOLOGY_SUMMARY_JSON.as_posix() == (
+        "etfs/output/methodology/fnguide/etf_methodology_summary.json"
+    )
+    assert paths.FNGUIDE_ETF_METHODOLOGY_SUMMARY_CSV.as_posix() == (
+        "etfs/output/methodology/fnguide/etf_methodology_summary.csv"
+    )
+    assert paths.FNGUIDE_ETF_METHODOLOGY_SUMMARY_MD.as_posix() == (
+        "etfs/output/methodology/fnguide/etf_methodology_summary.md"
+    )
     assert paths.CAP_CANDIDATES_JSON.as_posix() == "etfs/output/validation/cap_candidates.json"
     assert paths.CAP_CANDIDATES_MD.as_posix() == "etfs/output/validation/cap_candidates.md"
     assert paths.REFRESHED_HOLDINGS_FILES_DIR.as_posix() == "etfs/output/files"
@@ -78,6 +88,7 @@ def test_cli_defaults_write_to_grouped_output_folders() -> None:
     assert build_methodology_extraction_parser().parse_args([]).output_dir == paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     assert build_methodology_specs_parser().parse_args([]).output_dir == paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     assert build_methodology_audit_parser().parse_args([]).output_dir == paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
+    assert build_methodology_summary_parser().parse_args([]).output_dir == paths.FNGUIDE_OUTPUT_DIR.as_posix()
     assert build_methodology_engine_parser().parse_args([]).output_dir == paths.FNGUIDE_ENGINE_OUTPUT_DIR.as_posix()
     assert build_cap_parser().parse_args([]).output_dir == paths.VALIDATION_OUTPUT_DIR.as_posix()
     assert build_holdings_refresh_parser().parse_args([]).output_dir == paths.REFRESHED_HOLDINGS_FILES_DIR.as_posix()
@@ -85,8 +96,10 @@ def test_cli_defaults_write_to_grouped_output_folders() -> None:
     assert build_fnguide_pipeline_parser().parse_args([]).extraction_output_dir == (
         paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix()
     )
-    assert build_fnguide_pipeline_parser().parse_args([]).engine_output_dir == paths.FNGUIDE_ENGINE_OUTPUT_DIR.as_posix()
     assert build_fnguide_pipeline_parser().parse_args([]).inventory_output_dir == paths.FNGUIDE_OUTPUT_DIR.as_posix()
+    assert build_fnguide_pipeline_parser().parse_args([]).manifest == (
+        paths.FNGUIDE_OUTPUT_DIR / "offline_pipeline_manifest.json"
+    ).as_posix()
     assert build_krx_parser().parse_args([]).output_dir == paths.KRX_OUTPUT_DIR.as_posix()
     assert build_spglobal_parser().parse_args([]).output_dir == paths.SPGLOBAL_OUTPUT_DIR.as_posix()
     assert build_nasdaq_parser().parse_args([]).output_dir == paths.NASDAQ_OUTPUT_DIR.as_posix()
@@ -106,6 +119,10 @@ def test_cli_defaults_read_from_grouped_output_inputs() -> None:
     assert build_methodology_extraction_parser().parse_args([]).rules == paths.FNGUIDE_RULES_JSON.as_posix()
     assert build_methodology_specs_parser().parse_args([]).extractions == paths.FNGUIDE_EXTRACTIONS_JSON.as_posix()
     assert build_methodology_audit_parser().parse_args([]).specs == paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix()
+    assert build_methodology_summary_parser().parse_args([]).holdings_dir == paths.REFRESHED_HOLDINGS_FILES_DIR.as_posix()
+    assert build_methodology_summary_parser().parse_args([]).rules == paths.FNGUIDE_RULES_JSON.as_posix()
+    assert build_methodology_summary_parser().parse_args([]).requirements == paths.FNGUIDE_REQUIREMENTS_JSON.as_posix()
+    assert build_methodology_summary_parser().parse_args([]).audit == paths.FNGUIDE_METHODOLOGY_AUDIT_JSON.as_posix()
     assert build_methodology_engine_parser().parse_args([]).inputs == paths.FNGUIDE_ENGINE_INPUTS_JSON.as_posix()
     assert build_methodology_engine_parser().parse_args([]).specs == paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix()
     assert build_cap_parser().parse_args([]).fixtures == paths.VALIDATION_FIXTURES_JSON.as_posix()

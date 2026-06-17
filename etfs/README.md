@@ -25,9 +25,9 @@ FnGuide currently has more files than KRX, S&P Global, Nasdaq, and MSCI because 
 | `pipeline.py` | FnGuide offline artifact orchestration | FnGuide-specific orchestration | Keep here; call `etfs/common/` only for active shared primitives |
 | `coverage.py` | FnGuide readiness/coverage report | Provider report over common concepts | Potential later shared report shape, but no move until a second provider needs it |
 | `data_requirements.py` | FnGuide rule-to-data requirement report | Provider report over common concepts | Potential later shared report shape |
-| `data_inventory.py` | Provider-wide replication data inventory | Provider report over common concepts | Potential later shared inventory renderer |
+| `data_inventory.py` | Standalone full-reconstruction data inventory | Provider report over common concepts | Keep out of the default cap workflow until full replication becomes an active goal |
 | `methodology_audit.py` | Spec readiness and blocker categorization | Mixed | Candidate for `etfs/methodology_audit.py` after another provider uses canonical specs |
-| `methodology_engine.py` | Target-weight calculation plus FnGuide engine reports | Mixed; too much still lives here | Next major split: move generic target-weight engine to root, keep FnGuide report/CLI wrapper here |
+| `methodology_engine.py` | Optional target-weight calculation from explicit engine inputs | Mixed; too much still lives here | Keep as a standalone diagnostic tool, not the default cap workflow |
 | `validation.py` | Holdings workbook parsing and validation fixture writing | Mixed; not truly FnGuide-specific | Candidate for root `etfs.validation`/`etfs.holdings_io`; keep only provider-specific ingestion hooks here if needed |
 
 Provider-neutral modules live under `etfs/common/`:
@@ -52,12 +52,10 @@ python -m etfs.fnguide.coverage
 python -m etfs.fnguide.methodology_extraction
 python -m etfs.fnguide.methodology_specs --canonical
 python -m etfs.fnguide.methodology_audit
+python -m etfs.fnguide.methodology_summary
 python -m etfs.refresh.holdings_refresh --template etfs/refresh/pdf.xlsx --output-dir etfs/output/files
 python -m etfs.fnguide.validation --input <holdings.xlsx> --index-map '{"<etf_code>":"<index_code>"}' --write-results
 python -m etfs.common.cap
-python -m etfs.fnguide.methodology_engine --write-requirements
-python -m etfs.fnguide.methodology_engine --write-template
-python -m etfs.fnguide.methodology_engine --write-replication-report
 python -m etfs.fnguide.pipeline
 python -m etfs.krx.methodology
 python -m etfs.spglobal.methodology
@@ -70,15 +68,17 @@ Outputs:
 - `output/files/holdings_<ticker>.parquet`: DataGuide6-refreshed ETF holdings rows from the workbook template, stored per ETF ticker
 - `output/validation/validation_fixtures.json`, `output/validation/validation_results.json`: ETF holdings validation fixtures and count/cash checks
 - `output/validation/cap_candidates.json`, `output/validation/cap_candidates.md`: latest-holdings cap breach candidates with current weight, quantity, market value, cap, and excess weight
-- `output/methodology/fnguide/*.json` and `*.md`: FnGuide methodology PDF manifests, extracted rules, specs, audit, data inventory, and optional target-weight diagnostics
-- `output/validation/target_weight_validation.json`: target weights compared with ETF holdings snapshots, written only when target weights exist
+- `output/methodology/fnguide/*.json` and `*.md`: FnGuide methodology PDF manifests, extracted rules, specs, audit, data requirements, and ETF-level methodology summary
+- `output/methodology/fnguide/etf_methodology_summary.*`: one row per holdings parquet with methodology PDF status, index mapping, rebalance rule, cap, readiness, and review flags
 - `output/methodology/{krx,spglobal,nasdaq,msci}/`: optional methodology probes for non-FnGuide providers
 
-`python -m etfs.fnguide.pipeline` reruns the offline artifact chain from existing FnGuide rule/PDF outputs through extraction, canonical specs, audit, validation, engine input requirements, a fillable engine-input template, and a scoped target-weight diagnostics report. It deliberately skips target-weight generation unless `output/methodology/fnguide/engine_inputs.json` exists, because ETF holdings files are validation evidence, not methodology calculation inputs. When target weights do exist, the pipeline also writes a strict target-vs-holdings comparison.
+`python -m etfs.fnguide.pipeline` reruns the offline artifact chain from existing FnGuide rule/PDF outputs through extraction, canonical specs, audit, data requirements, ETF-level methodology summary, and optional holdings validation/cap candidates. It does not run target-weight generation or full-replication diagnostics by default because the active workflow is holdings-first cap monitoring, not full index reconstruction.
 
-Target-weight diagnostics are secondary to the current cap workflow and intentionally scoped. They prove only that engine-ready methodology specs can execute target-weight formulas from explicit calculation inputs. They do not claim full provider methodology replication until issuer universe construction, bucket selection, and official rebalance target comparisons are also available.
+Target-weight diagnostics remain available through `python -m etfs.fnguide.methodology_engine` when explicit engine inputs are supplied. They are secondary to the current cap workflow and do not claim full provider methodology replication until issuer universe construction, bucket selection, and official rebalance target comparisons are also available.
 
-Cap and target-weight checks are provider-neutral. A specific ETF workbook, such as a SOL AI semiconductor holdings file, is a validation fixture only: it helps test parsing, current holdings, cap breaches, and target-vs-holdings drift after the generic pipeline is working. It is not a production default and does not define the pipeline's scope. The cap candidate report is intentionally holdings-first: it identifies securities already above a conservative security-level cap and carries quantity and market value forward for later market-impact analysis.
+`python -m etfs.fnguide.methodology_summary` is the ETF-level working table for the cap workflow. It joins `output/files/holdings_<ticker>.parquet` with FnGuide rules, data requirements, and audit blockers so every ETF has a single row covering the latest holdings date, methodology PDF status, index code/name, rebalance frequency/months/timing, cap, and what still needs review. Rebalance months and timing come from methodology PDFs; exact calendar dates remain unresolved until the KRX trading calendar, futures/options expiry calendar, and month-end business-day calendar are available.
+
+Cap checks are provider-neutral. A specific ETF workbook, such as a SOL AI semiconductor holdings file, is a validation fixture only: it helps test parsing, current holdings, and cap breaches after the generic pipeline is working. It is not a production default and does not define the pipeline's scope. The cap candidate report is intentionally holdings-first: it identifies securities already above a conservative security-level cap and carries quantity and market value forward for later market-impact analysis.
 
 `python -m etfs.refresh.holdings_refresh` uses FnGuide methodology specs to derive ETF tickers, writes each code into the DataGuide workbook template's `B3` cell as `Axxxxxx`, follows workbook hyperlinks whose ScreenTip is `DataGuide6`, then stores refreshed `A:H` rows from row 7 onward as ticker-level parquet files under `output/files/`. The DataGuide template and ticker workbook live beside the refresh code as `etfs/refresh/pdf.xlsx` and `etfs/refresh/ticker.xlsx`. This follows FnGuide's DataGuide6 auto-refresh macro guidance, but keeps the automation in a script instead of requiring a permanent `.xlsm` macro workbook. Excel runs visible by default because DataGuide6 refresh events are more reliable that way; use `--hidden` only after confirming it works locally. Use `--tickers 0167A0 --limit 1` for a narrow live refresh test, or `--refresh-mode parse-only` to convert the current workbook contents without opening Excel.
 

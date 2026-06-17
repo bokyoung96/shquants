@@ -12,35 +12,7 @@ from typing import Iterable, Mapping
 from openpyxl import load_workbook
 
 from etfs import paths
-
-
-@dataclass(frozen=True, slots=True)
-class ValidationHolding:
-    ticker: str
-    ticker_raw: str
-    name: str
-    quantity: float
-    amount: float
-    weight: float
-
-
-@dataclass(frozen=True, slots=True)
-class ValidationSnapshot:
-    as_of: str
-    equity_holdings: list[ValidationHolding]
-    cash: dict[str, object]
-
-
-@dataclass(frozen=True, slots=True)
-class ValidationFixture:
-    schema_version: str
-    source_type: str
-    etf_code: str
-    etf_code_raw: str
-    etf_name: str
-    index_code: str
-    source: dict[str, object]
-    snapshots: list[ValidationSnapshot]
+from etfs.common.holdings import ValidationFixture, ValidationHolding, ValidationSnapshot
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,8 +88,9 @@ def write_validation_fixtures(
 
 
 def load_validation_fixtures(path: Path) -> list[ValidationFixture]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    return [_fixture_from_mapping(item) for item in payload.get("fixtures", [])]
+    from etfs.common.holdings import load_validation_fixtures as load_holdings_fixtures
+
+    return load_holdings_fixtures(path)
 
 
 def build_validation_results(
@@ -335,7 +308,7 @@ def _snapshot_from_rows(as_of: str, rows: list[tuple[object, ...]]) -> Validatio
         weight = float(row[7] or 0.0) / 100.0
         amount = float(row[6] or 0.0)
         quantity = float(row[5] or 0.0)
-        if not ticker_raw or name == "원화현금":
+        if not ticker_raw or name in {"원화현금", "?먰솕?꾧툑"}:
             cash = {"name": name, "quantity": quantity, "amount": amount, "weight": weight}
             continue
         equity.append(
@@ -354,9 +327,14 @@ def _snapshot_from_rows(as_of: str, rows: list[tuple[object, ...]]) -> Validatio
 def _find_header_row(ws) -> int:
     for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 20)):
         values = [cell.value for cell in row]
-        if values and values[0] == "Date" and "구성종목코드" in values:
+        if values and values[0] in {"Date", "날짜"} and _has_security_code_header(values):
             return row[0].row
     raise ValueError("validation workbook header row not found")
+
+
+def _has_security_code_header(values: Iterable[object]) -> bool:
+    header_values = {str(value) for value in values if value is not None}
+    return bool(header_values & {"구성종목코드", "援ъ꽦醫낅ぉ肄붾뱶"})
 
 
 def _normalize_etf_code(value: str) -> str:
@@ -390,56 +368,29 @@ def _expected_constituent_count(spec: Mapping[str, object]) -> int | None:
     return int(value) if value is not None else None
 
 
-def _fixture_from_mapping(item: Mapping[str, object]) -> ValidationFixture:
-    return ValidationFixture(
-        schema_version=str(item.get("schema_version", "")),
-        source_type=str(item.get("source_type", "")),
-        etf_code=str(item.get("etf_code", "")),
-        etf_code_raw=str(item.get("etf_code_raw", "")),
-        etf_name=str(item.get("etf_name", "")),
-        index_code=str(item.get("index_code", "")),
-        source=dict(_mapping(item.get("source"))),
-        snapshots=[
-            ValidationSnapshot(
-                as_of=str(snapshot.get("as_of", "")),
-                equity_holdings=[
-                    ValidationHolding(
-                        ticker=str(holding.get("ticker", "")),
-                        ticker_raw=str(holding.get("ticker_raw", "")),
-                        name=str(holding.get("name", "")),
-                        quantity=float(holding.get("quantity", 0.0) or 0.0),
-                        amount=float(holding.get("amount", 0.0) or 0.0),
-                        weight=float(holding.get("weight", 0.0) or 0.0),
-                    )
-                    for holding in snapshot.get("equity_holdings", [])
-                ],
-                cash=dict(_mapping(snapshot.get("cash"))),
-            )
-            for snapshot in item.get("snapshots", [])
-        ],
-    )
-
-
 def _mapping(value: object) -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Normalize ETF validation workbooks and compare basic fixture checks.")
-    parser.add_argument("--input", nargs="+", default=["etfs/validation_A0167A0.xlsx"])
+    parser.add_argument("--input", nargs="+", required=True)
     parser.add_argument("--output-dir", default=paths.VALIDATION_OUTPUT_DIR.as_posix())
     parser.add_argument("--specs", default=paths.FNGUIDE_METHODOLOGY_SPECS_JSON.as_posix())
+    parser.add_argument("--index-map", default="{}", help="JSON object mapping ETF codes to index codes.")
     parser.add_argument("--write-results", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    index_map = {"0167A0": "FI00.WLT.KSS"}
+    index_map = json.loads(args.index_map)
+    if not isinstance(index_map, dict):
+        raise ValueError("--index-map must be a JSON object")
     fixtures_path = write_validation_fixtures(
         [Path(value) for value in args.input],
         Path(args.output_dir),
-        index_code_by_etf=index_map,
+        index_code_by_etf={str(key): str(value) for key, value in index_map.items()},
     )
     if args.write_results:
         results_path = write_validation_results(fixtures_path, Path(args.specs), Path(args.output_dir))

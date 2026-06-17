@@ -142,7 +142,7 @@ def test_write_manifest_records_downloads(tmp_path: Path) -> None:
             status="downloaded",
             source_url="https://file.fnguide.com/fnindex/files/FnGuide_Methodology.pdf",
             page_url="https://www.fnindex.co.kr/overview/detail/I/FI00.X",
-            file_path="etfs/raw/methodologies/395270.pdf",
+            file_path="etfs/output/methodologies/395270.pdf",
             sha256="abc",
             bytes=12,
             query='"HANARO Fn K-반도체" FnGuide 지수 방법론',

@@ -29,6 +29,22 @@ def test_parse_validation_workbook_normalizes_equity_and_cash_rows(tmp_path: Pat
     assert snapshot.cash["weight"] == 0.002
 
 
+def test_parse_validation_workbook_accepts_normal_korean_header(tmp_path: Path) -> None:
+    workbook_path = _write_korean_validation_workbook(tmp_path)
+
+    fixture = parse_validation_workbook(workbook_path, index_code_by_etf={"0167A0": "FI00.WLT.NMS"})
+
+    assert fixture.etf_code == "0167A0"
+    assert fixture.etf_name == "SOL AI반도체TOP2플러스"
+    assert fixture.index_code == "FI00.WLT.NMS"
+    assert [snapshot.as_of for snapshot in fixture.snapshots] == ["2026-06-15", "2026-06-16"]
+    latest = fixture.snapshots[-1]
+    assert [holding.ticker for holding in latest.equity_holdings] == ["009150", "000660"]
+    assert latest.equity_holdings[0].name == "삼성전기"
+    assert latest.equity_holdings[0].weight == 0.2575
+    assert latest.cash == {"name": "원화현금", "quantity": 10.0, "amount": 10.0, "weight": 0.0013}
+
+
 def test_write_validation_fixtures_outputs_json_payload(tmp_path: Path) -> None:
     workbook_path = _write_validation_workbook(tmp_path)
 
@@ -193,5 +209,25 @@ def _write_validation_workbook(tmp_path: Path) -> Path:
     ws.append([datetime(2026, 5, 29), "A0167A0", "SOL AI반도체TOP2플러스", "A005930", "삼성전자", 10, 1000, 25.0])
     ws.append([datetime(2026, 5, 29), "A0167A0", "SOL AI반도체TOP2플러스", "A000660", "SK하이닉스", 10, 1000, 74.8])
     ws.append([datetime(2026, 5, 29), "A0167A0", "SOL AI반도체TOP2플러스", None, "원화현금", 10, 2, 0.2])
+    wb.save(path)
+    return path
+
+
+def _write_korean_validation_workbook(tmp_path: Path) -> Path:
+    path = tmp_path / "pdf_A0167A0.xlsx"
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Sheet1"
+    ws.append(["Refresh", "Last Updated: 2026-06-17 10:17:54"])
+    ws.append(["ETF 구성종목"])
+    ws.append(["ETF", "A0167A0", "SOL AI반도체TOP2플러스"])
+    ws.append(["출력주기", "일간", "오름차순"])
+    ws.append(["조회기간", 20260317, "최근일자(20260616)"])
+    ws.append(["날짜", "ETF코드", "ETF명", "구성종목코드", "구성종목", "주식수(계약수)", "금액", "금액기준 구성비중(%)"])
+    ws.append([datetime(2026, 6, 15), "A0167A0", "SOL AI반도체TOP2플러스", "A009150", "삼성전기", 161, 332177000, 25.95])
+    ws.append([datetime(2026, 6, 15), "A0167A0", "SOL AI반도체TOP2플러스", None, "원화현금", 10, 10, 0.10])
+    ws.append([datetime(2026, 6, 16), "A0167A0", "SOL AI반도체TOP2플러스", "A009150", "삼성전기", 161, 329728000, 25.75])
+    ws.append([datetime(2026, 6, 16), "A0167A0", "SOL AI반도체TOP2플러스", "A000660", "SK하이닉스", 133, 316806000, 24.74])
+    ws.append([datetime(2026, 6, 16), "A0167A0", "SOL AI반도체TOP2플러스", None, "원화현금", 10, 10, 0.13])
     wb.save(path)
     return path

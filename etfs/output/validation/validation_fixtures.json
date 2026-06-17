@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-16T06:01:33.130784+00:00",
+  "generated_at": "2026-06-17T01:58:47.341852+00:00",
   "count": 1,
   "fixtures": [
     {
@@ -11,39 +11,925 @@
       "etf_name": "SOL AI반도체TOP2플러스",
       "index_code": "FI00.WLT.KSS",
       "source": {
-        "path": "etfs\\validation_A0167A0.xlsx",
-        "sha256": "6d2bc8dcd61bb6d504ec5fa2e84ab8f7e53236e5e3cdbb226d802ad167f081f7",
+        "path": "etfs\\pdf_A0167A0.xlsx",
+        "sha256": "668f56cdf7dedf3dc1e1baac8673150f28c7d9c629cf01cb1206d1fdb4e29204",
         "source_type": "etf_portfolio_component_xlsx",
         "extraction_status": "parsed"
       },
       "snapshots": [
         {
-          "as_of": "2026-03-31",
+          "as_of": "2026-03-17",
           "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 117370000.0,
+              "weight": 0.22760000000000002
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 128749600.0,
+              "weight": 0.24969999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 35433000.0,
+              "weight": 0.0687
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 3412500.0,
+              "weight": 0.0066
+            },
             {
               "ticker": "009150",
               "ticker_raw": "A009150",
               "name": "삼성전기",
               "quantity": 208.0,
-              "amount": 84760000.0,
-              "weight": 0.1907
-            },
-            {
-              "ticker": "089970",
-              "ticker_raw": "A089970",
-              "name": "브이엠",
-              "quantity": 125.0,
-              "amount": 4843750.0,
-              "weight": 0.0109
+              "amount": 92872000.0,
+              "weight": 0.1801
             },
             {
               "ticker": "058470",
               "ticker_raw": "A058470",
               "name": "리노공업",
               "quantity": 283.0,
-              "amount": 26715200.0,
-              "weight": 0.0601
+              "amount": 31130000.0,
+              "weight": 0.0604
             },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5131250.0,
+              "weight": 0.01
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 21585200.0,
+              "weight": 0.04190000000000001
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2186700.0,
+              "weight": 0.0042
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 75723000.0,
+              "weight": 0.14679999999999999
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2064876.0,
+            "amount": 2064876.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-03-18",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 81270000.0,
+              "weight": 0.147
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2630700.0,
+              "weight": 0.0048
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22659000.0,
+              "weight": 0.040999999999999995
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5737500.0,
+              "weight": 0.0104
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 32997800.0,
+              "weight": 0.059699999999999996
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 96512000.0,
+              "weight": 0.1746
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 38781000.0,
+              "weight": 0.0702
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 3913000.0,
+              "weight": 0.0070999999999999995
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 127776000.0,
+              "weight": 0.23120000000000002
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 138444000.0,
+              "weight": 0.2505
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2042412.0,
+            "amount": 2042412.0,
+            "weight": 0.0037
+          }
+        },
+        {
+          "as_of": "2026-03-19",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 122573000.0,
+              "weight": 0.225
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 133132000.0,
+              "weight": 0.2444
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4036500.0,
+              "weight": 0.0074
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 40145000.0,
+              "weight": 0.0737
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 33139300.0,
+              "weight": 0.0608
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 99736000.0,
+              "weight": 0.18309999999999998
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 6100000.0,
+              "weight": 0.011200000000000002
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22003800.0,
+              "weight": 0.0404
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 78819000.0,
+              "weight": 0.1447
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2952600.0,
+              "weight": 0.0054
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2034681.0,
+            "amount": 2034681.0,
+            "weight": 0.0037
+          }
+        },
+        {
+          "as_of": "2026-03-20",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 78432000.0,
+              "weight": 0.1458
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22750000.0,
+              "weight": 0.042300000000000004
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2889700.0,
+              "weight": 0.0054
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5956250.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 96616000.0,
+              "weight": 0.1796
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 31611100.0,
+              "weight": 0.0588
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4199000.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 39308000.0,
+              "weight": 0.0731
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 132401600.0,
+              "weight": 0.24609999999999999
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 121847000.0,
+              "weight": 0.22649999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2034005.0,
+            "amount": 2034005.0,
+            "weight": 0.0038
+          }
+        },
+        {
+          "as_of": "2026-03-23",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 112893000.0,
+              "weight": 0.22640000000000002
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 123703200.0,
+              "weight": 0.2481
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 35805000.0,
+              "weight": 0.0718
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 3952000.0,
+              "weight": 0.0079
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 30026300.0,
+              "weight": 0.0602
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 88920000.0,
+              "weight": 0.1784
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5531250.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2719500.0,
+              "weight": 0.0055000000000000005
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 21148400.0,
+              "weight": 0.0424
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 71853000.0,
+              "weight": 0.1441
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2012066.0,
+            "amount": 2012066.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-03-24",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 76755000.0,
+              "weight": 0.1476
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 24515400.0,
+              "weight": 0.0472
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2741700.0,
+              "weight": 0.0053
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5868750.0,
+              "weight": 0.0113
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 90896000.0,
+              "weight": 0.1748
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 30365900.0,
+              "weight": 0.0584
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4238000.0,
+              "weight": 0.008199999999999999
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 37262000.0,
+              "weight": 0.0717
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 125960800.0,
+              "weight": 0.24230000000000002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 119306000.0,
+              "weight": 0.22949999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2010746.0,
+            "amount": 2010746.0,
+            "weight": 0.0039000000000000003
+          }
+        },
+        {
+          "as_of": "2026-03-25",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 120395000.0,
+              "weight": 0.2289
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 125496000.0,
+              "weight": 0.2386
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 37293000.0,
+              "weight": 0.0709
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5167500.0,
+              "weight": 0.0098
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 30422500.0,
+              "weight": 0.057800000000000004
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 94536000.0,
+              "weight": 0.1797
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5968750.0,
+              "weight": 0.0113
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2904500.0,
+              "weight": 0.0055000000000000005
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 23732800.0,
+              "weight": 0.0451
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 78045000.0,
+              "weight": 0.1484
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2003760.0,
+            "amount": 2003760.0,
+            "weight": 0.0038
+          }
+        },
+        {
+          "as_of": "2026-03-26",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 71982000.0,
+              "weight": 0.1433
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22113000.0,
+              "weight": 0.044000000000000004
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2752800.0,
+              "weight": 0.0055000000000000005
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5662500.0,
+              "weight": 0.0113
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 95056000.0,
+              "weight": 0.1893
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 29205600.0,
+              "weight": 0.0582
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5245500.0,
+              "weight": 0.0104
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 35650000.0,
+              "weight": 0.071
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 119586400.0,
+              "weight": 0.2382
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 112893000.0,
+              "weight": 0.2248
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1997310.0,
+            "amount": 1997310.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-03-27",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 111562000.0,
+              "weight": 0.2263
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 119320800.0,
+              "weight": 0.242
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 34255000.0,
+              "weight": 0.0695
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5460000.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5587500.0,
+              "weight": 0.0113
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 29686700.0,
+              "weight": 0.0602
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 90272000.0,
+              "weight": 0.18309999999999998
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2704700.0,
+              "weight": 0.0055000000000000005
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22022000.0,
+              "weight": 0.0447
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 70176000.0,
+              "weight": 0.1423
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1990541.0,
+            "amount": 1990541.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-03-30",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 65790000.0,
+              "weight": 0.139
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2471600.0,
+              "weight": 0.0052
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 20602400.0,
+              "weight": 0.0435
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 89232000.0,
+              "weight": 0.1885
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 27847200.0,
+              "weight": 0.0588
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5168750.0,
+              "weight": 0.0109
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4927000.0,
+              "weight": 0.0104
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 32395000.0,
+              "weight": 0.0684
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 117063200.0,
+              "weight": 0.2473
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 105633000.0,
+              "weight": 0.2231
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2287510.0,
+            "amount": 2287510.0,
+            "weight": 0.0048
+          }
+        },
+        {
+          "as_of": "2026-03-31",
+          "equity_holdings": [
             {
               "ticker": "000660",
               "ticker_raw": "A000660",
@@ -53,28 +939,12 @@
               "weight": 0.21969999999999998
             },
             {
-              "ticker": "402340",
-              "ticker_raw": "A402340",
-              "name": "SK스퀘어",
-              "quantity": 129.0,
-              "amount": 60178500.0,
-              "weight": 0.1354
-            },
-            {
-              "ticker": "356860",
-              "ticker_raw": "A356860",
-              "name": "티엘비",
-              "quantity": 37.0,
-              "amount": 2323600.0,
-              "weight": 0.0052
-            },
-            {
-              "ticker": "240810",
-              "ticker_raw": "A240810",
-              "name": "원익IPS",
-              "quantity": 182.0,
-              "amount": 19674200.0,
-              "weight": 0.0443
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 111020800.0,
+              "weight": 0.2498
             },
             {
               "ticker": "007660",
@@ -93,12 +963,52 @@
               "weight": 0.0102
             },
             {
-              "ticker": "005930",
-              "ticker_raw": "A005930",
-              "name": "삼성전자",
-              "quantity": 664.0,
-              "amount": 111020800.0,
-              "weight": 0.2498
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 4843750.0,
+              "weight": 0.0109
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 26715200.0,
+              "weight": 0.0601
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 84760000.0,
+              "weight": 0.1907
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 19674200.0,
+              "weight": 0.0443
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2323600.0,
+              "weight": 0.0052
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 60178500.0,
+              "weight": 0.1354
             }
           ],
           "cash": {
@@ -106,6 +1016,1917 @@
             "quantity": 2280903.0,
             "amount": 2280903.0,
             "weight": 0.0051
+          }
+        },
+        {
+          "as_of": "2026-04-01",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 64629000.0,
+              "weight": 0.1317
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2667700.0,
+              "weight": 0.0054
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 21457800.0,
+              "weight": 0.0437
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 92456000.0,
+              "weight": 0.1884
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 29601800.0,
+              "weight": 0.0603
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5206250.0,
+              "weight": 0.0106
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4888000.0,
+              "weight": 0.01
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 33697000.0,
+              "weight": 0.0687
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 125894400.0,
+              "weight": 0.2565
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 108053000.0,
+              "weight": 0.22010000000000002
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2275327.0,
+            "amount": 2275327.0,
+            "weight": 0.0046
+          }
+        },
+        {
+          "as_of": "2026-04-02",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 100430000.0,
+              "weight": 0.2183
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 118457600.0,
+              "weight": 0.25739999999999996
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 31558000.0,
+              "weight": 0.06860000000000001
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4647500.0,
+              "weight": 0.0101
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5081250.0,
+              "weight": 0.011000000000000001
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 28045300.0,
+              "weight": 0.061
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 86736000.0,
+              "weight": 0.1885
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 19892600.0,
+              "weight": 0.0432
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2449400.0,
+              "weight": 0.0053
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 60565500.0,
+              "weight": 0.1316
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2268839.0,
+            "amount": 2268839.0,
+            "weight": 0.0049
+          }
+        },
+        {
+          "as_of": "2026-04-03",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 62307000.0,
+              "weight": 0.1285
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 20657000.0,
+              "weight": 0.0426
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2423500.0,
+              "weight": 0.005
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 94848000.0,
+              "weight": 0.1957
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 31243200.0,
+              "weight": 0.0644
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5181250.0,
+              "weight": 0.010700000000000001
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4420000.0,
+              "weight": 0.0091
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 31806000.0,
+              "weight": 0.06559999999999999
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 123636800.0,
+              "weight": 0.255
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 105996000.0,
+              "weight": 0.2186
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2262432.0,
+            "amount": 2262432.0,
+            "weight": 0.004699999999999999
+          }
+        },
+        {
+          "as_of": "2026-04-06",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 107206000.0,
+              "weight": 0.2183
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 128218400.0,
+              "weight": 0.261
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 32488000.0,
+              "weight": 0.0661
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4368000.0,
+              "weight": 0.0089
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 29856500.0,
+              "weight": 0.0608
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 4993750.0,
+              "weight": 0.0102
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 96096000.0,
+              "weight": 0.1956
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 20420400.0,
+              "weight": 0.0416
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2482700.0,
+              "weight": 0.0051
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 62823000.0,
+              "weight": 0.12789999999999999
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2242667.0,
+            "amount": 2242667.0,
+            "weight": 0.0046
+          }
+        },
+        {
+          "as_of": "2026-04-07",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 64371000.0,
+              "weight": 0.1288
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2571500.0,
+              "weight": 0.0051
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 20766200.0,
+              "weight": 0.0416
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 95056000.0,
+              "weight": 0.1902
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 31045100.0,
+              "weight": 0.0621
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 4918750.0,
+              "weight": 0.0098
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 4563000.0,
+              "weight": 0.0091
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 32860000.0,
+              "weight": 0.0658
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 130476000.0,
+              "weight": 0.2611
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 110836000.0,
+              "weight": 0.2218
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2236767.0,
+            "amount": 2236767.0,
+            "weight": 0.0045000000000000005
+          }
+        },
+        {
+          "as_of": "2026-04-08",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 124993000.0,
+              "weight": 0.2255
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 139772000.0,
+              "weight": 0.2522
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 37231000.0,
+              "weight": 0.0672
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5161000.0,
+              "weight": 0.009300000000000001
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5437500.0,
+              "weight": 0.0098
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 33054400.0,
+              "weight": 0.0596
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 106912000.0,
+              "weight": 0.1929
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22094800.0,
+              "weight": 0.039900000000000005
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2730600.0,
+              "weight": 0.0049
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 74562000.0,
+              "weight": 0.13449999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2230007.0,
+            "amount": 2230007.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-04-09",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 72240000.0,
+              "weight": 0.1334
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2960000.0,
+              "weight": 0.0055000000000000005
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 21494200.0,
+              "weight": 0.0397
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 107328000.0,
+              "weight": 0.1981
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 32007300.0,
+              "weight": 0.0591
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5406250.0,
+              "weight": 0.01
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 36549000.0,
+              "weight": 0.0675
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5297500.0,
+              "weight": 0.0098
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 135456000.0,
+              "weight": 0.25
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 120758000.0,
+              "weight": 0.2229
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2222568.0,
+            "amount": 2222568.0,
+            "weight": 0.0040999999999999995
+          }
+        },
+        {
+          "as_of": "2026-04-10",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 121.0,
+              "amount": 124267000.0,
+              "weight": 0.223
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 664.0,
+              "amount": 136784000.0,
+              "weight": 0.2455
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 310.0,
+              "amount": 35619000.0,
+              "weight": 0.0639
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 65.0,
+              "amount": 5206500.0,
+              "weight": 0.009300000000000001
+            },
+            {
+              "ticker": "089970",
+              "ticker_raw": "A089970",
+              "name": "브이엠",
+              "quantity": 125.0,
+              "amount": 5750000.0,
+              "weight": 0.0103
+            },
+            {
+              "ticker": "058470",
+              "ticker_raw": "A058470",
+              "name": "리노공업",
+              "quantity": 283.0,
+              "amount": 31639400.0,
+              "weight": 0.056799999999999996
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 208.0,
+              "amount": 117520000.0,
+              "weight": 0.2109
+            },
+            {
+              "ticker": "240810",
+              "ticker_raw": "A240810",
+              "name": "원익IPS",
+              "quantity": 182.0,
+              "amount": 22222200.0,
+              "weight": 0.039900000000000005
+            },
+            {
+              "ticker": "356860",
+              "ticker_raw": "A356860",
+              "name": "티엘비",
+              "quantity": 37.0,
+              "amount": 2756500.0,
+              "weight": 0.0049
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 129.0,
+              "amount": 73272000.0,
+              "weight": 0.1315
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2215230.0,
+            "amount": 2215230.0,
+            "weight": 0.004
+          }
+        },
+        {
+          "as_of": "2026-04-13",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 82940000.0,
+              "weight": 0.1495
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 33619500.0,
+              "weight": 0.060599999999999994
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 91448000.0,
+              "weight": 0.1648
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1359750.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14722000.0,
+              "weight": 0.0265
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10318000.0,
+              "weight": 0.018600000000000002
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6098400.0,
+              "weight": 0.011000000000000001
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 43331400.0,
+              "weight": 0.0781
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 131253000.0,
+              "weight": 0.2365
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 138320000.0,
+              "weight": 0.2493
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1472101.0,
+            "amount": 1472101.0,
+            "weight": 0.0027
+          }
+        },
+        {
+          "as_of": "2026-04-14",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 146699000.0,
+              "weight": 0.2518
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 134844500.0,
+              "weight": 0.23149999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 45069000.0,
+              "weight": 0.0774
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6860700.0,
+              "weight": 0.0118
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10527000.0,
+              "weight": 0.0181
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15164000.0,
+              "weight": 0.026000000000000002
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1496950.0,
+              "weight": 0.0026
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 34456500.0,
+              "weight": 0.0592
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 94024000.0,
+              "weight": 0.16140000000000002
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 91520000.0,
+              "weight": 0.15710000000000002
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1858876.0,
+            "amount": 1858876.0,
+            "weight": 0.0032
+          }
+        },
+        {
+          "as_of": "2026-04-15",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 95095000.0,
+              "weight": 0.15869999999999998
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 98854000.0,
+              "weight": 0.165
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 35619000.0,
+              "weight": 0.059500000000000004
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1572900.0,
+              "weight": 0.0026
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10626000.0,
+              "weight": 0.0177
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15266000.0,
+              "weight": 0.0255
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6691300.0,
+              "weight": 0.011200000000000002
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44598400.0,
+              "weight": 0.07440000000000001
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 137783000.0,
+              "weight": 0.23
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 151088000.0,
+              "weight": 0.2522
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1846353.0,
+            "amount": 1846353.0,
+            "weight": 0.0031
+          }
+        },
+        {
+          "as_of": "2026-04-16",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 153615000.0,
+              "weight": 0.2507
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 142027500.0,
+              "weight": 0.2318
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44417400.0,
+              "weight": 0.0725
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7045500.0,
+              "weight": 0.0115
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10274000.0,
+              "weight": 0.0168
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15096000.0,
+              "weight": 0.0246
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1558200.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 102879000.0,
+              "weight": 0.1679
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 35247000.0,
+              "weight": 0.0575
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 98670000.0,
+              "weight": 0.1611
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1794710.0,
+            "amount": 1794710.0,
+            "weight": 0.0029
+          }
+        },
+        {
+          "as_of": "2026-04-17",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 97526000.0,
+              "weight": 0.1588
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 109319000.0,
+              "weight": 0.17800000000000002
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 36642000.0,
+              "weight": 0.059699999999999996
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1577800.0,
+              "weight": 0.0026
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10263000.0,
+              "weight": 0.0167
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15572000.0,
+              "weight": 0.0254
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6876100.0,
+              "weight": 0.011200000000000002
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 43548600.0,
+              "weight": 0.0709
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 141048000.0,
+              "weight": 0.2296
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 150024000.0,
+              "weight": 0.2443
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1807435.0,
+            "amount": 1807435.0,
+            "weight": 0.0029
+          }
+        },
+        {
+          "as_of": "2026-04-20",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 155078000.0,
+              "weight": 0.2468
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 140068500.0,
+              "weight": 0.2229
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 48254600.0,
+              "weight": 0.0768
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6976200.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15640000.0,
+              "weight": 0.024900000000000002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11088000.0,
+              "weight": 0.0176
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1582700.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 109480000.0,
+              "weight": 0.1743
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 38083500.0,
+              "weight": 0.060599999999999994
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 100243000.0,
+              "weight": 0.15960000000000002
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1756824.0,
+            "amount": 1756824.0,
+            "weight": 0.0028000000000000004
+          }
+        },
+        {
+          "as_of": "2026-04-21",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 102674000.0,
+              "weight": 0.1561
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 39525000.0,
+              "weight": 0.0601
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 124292000.0,
+              "weight": 0.1889
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1614550.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10945000.0,
+              "weight": 0.0166
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16184000.0,
+              "weight": 0.0246
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6899200.0,
+              "weight": 0.0105
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 48218400.0,
+              "weight": 0.0733
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 143007000.0,
+              "weight": 0.21739999999999998
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 162792000.0,
+              "weight": 0.24739999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1778424.0,
+            "amount": 1778424.0,
+            "weight": 0.0027
+          }
+        },
+        {
+          "as_of": "2026-04-22",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 162659000.0,
+              "weight": 0.23850000000000002
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 142027500.0,
+              "weight": 0.2082
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 58426800.0,
+              "weight": 0.0857
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7345800.0,
+              "weight": 0.0108
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16286000.0,
+              "weight": 0.0239
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11605000.0,
+              "weight": 0.017
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1680700.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 130732000.0,
+              "weight": 0.1917
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 46500000.0,
+              "weight": 0.0682
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 102960000.0,
+              "weight": 0.151
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1794050.0,
+            "amount": 1794050.0,
+            "weight": 0.0026
+          }
+        },
+        {
+          "as_of": "2026-04-23",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 104104000.0,
+              "weight": 0.154
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 46500000.0,
+              "weight": 0.0688
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 124614000.0,
+              "weight": 0.1843
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1661100.0,
+              "weight": 0.0025
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15572000.0,
+              "weight": 0.023
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11011000.0,
+              "weight": 0.0163
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7022400.0,
+              "weight": 0.0104
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 54372400.0,
+              "weight": 0.08039999999999999
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 146598500.0,
+              "weight": 0.2168
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 162925000.0,
+              "weight": 0.2409
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1819686.0,
+            "amount": 1819686.0,
+            "weight": 0.0027
+          }
+        },
+        {
+          "as_of": "2026-04-24",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 162526000.0,
+              "weight": 0.23879999999999998
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 143333500.0,
+              "weight": 0.21059999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 55530800.0,
+              "weight": 0.0816
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7538300.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11022000.0,
+              "weight": 0.016200000000000003
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1739500.0,
+              "weight": 0.0026
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15980000.0,
+              "weight": 0.0235
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 126868000.0,
+              "weight": 0.1864
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 50406000.0,
+              "weight": 0.0741
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 103675000.0,
+              "weight": 0.1524
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1848657.0,
+            "amount": 1848657.0,
+            "weight": 0.0027
+          }
+        },
+        {
+          "as_of": "2026-04-27",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 112827000.0,
+              "weight": 0.1605
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 49848000.0,
+              "weight": 0.0709
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 127834000.0,
+              "weight": 0.1819
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1715000.0,
+              "weight": 0.0024
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10241000.0,
+              "weight": 0.0146
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16354000.0,
+              "weight": 0.0233
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7561400.0,
+              "weight": 0.0108
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 56291000.0,
+              "weight": 0.0801
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 146598500.0,
+              "weight": 0.2086
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 171836000.0,
+              "weight": 0.2445
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1779668.0,
+            "amount": 1779668.0,
+            "weight": 0.0025
+          }
+        },
+        {
+          "as_of": "2026-04-28",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 172900000.0,
+              "weight": 0.2422
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 144966000.0,
+              "weight": 0.20309999999999997
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 54517200.0,
+              "weight": 0.0764
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7392000.0,
+              "weight": 0.0104
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9658000.0,
+              "weight": 0.013500000000000002
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1744400.0,
+              "weight": 0.0024
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16150000.0,
+              "weight": 0.0226
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 135079000.0,
+              "weight": 0.1892
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 53661000.0,
+              "weight": 0.07519999999999999
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 115973000.0,
+              "weight": 0.1625
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1802655.0,
+            "amount": 1802655.0,
+            "weight": 0.0025
+          }
+        },
+        {
+          "as_of": "2026-04-29",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 118690000.0,
+              "weight": 0.1656
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 55056000.0,
+              "weight": 0.0768
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 133147000.0,
+              "weight": 0.1857
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1835050.0,
+              "weight": 0.0026
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10076000.0,
+              "weight": 0.0141
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16592000.0,
+              "weight": 0.0231
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7345800.0,
+              "weight": 0.0102
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 52852000.0,
+              "weight": 0.0737
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 147578000.0,
+              "weight": 0.20579999999999998
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 171969000.0,
+              "weight": 0.23989999999999997
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1796273.0,
+            "amount": 1796273.0,
+            "weight": 0.0025
           }
         },
         {
@@ -120,12 +2941,28 @@
               "weight": 0.2394
             },
             {
-              "ticker": "402340",
-              "ticker_raw": "A402340",
-              "name": "SK스퀘어",
-              "quantity": 143.0,
-              "amount": 120263000.0,
-              "weight": 0.16829999999999998
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 143986500.0,
+              "weight": 0.20149999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 54408600.0,
+              "weight": 0.0761
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7137900.0,
+              "weight": 0.01
             },
             {
               "ticker": "218410",
@@ -136,12 +2973,12 @@
               "weight": 0.014499999999999999
             },
             {
-              "ticker": "011070",
-              "ticker_raw": "A011070",
-              "name": "LG이노텍",
-              "quantity": 93.0,
-              "amount": 53289000.0,
-              "weight": 0.0746
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1798300.0,
+              "weight": 0.0025
             },
             {
               "ticker": "095340",
@@ -160,36 +2997,20 @@
               "weight": 0.1875
             },
             {
-              "ticker": "007810",
-              "ticker_raw": "A007810",
-              "name": "코리아써키트",
-              "quantity": 77.0,
-              "amount": 7137900.0,
-              "weight": 0.01
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 53289000.0,
+              "weight": 0.0746
             },
             {
-              "ticker": "007660",
-              "ticker_raw": "A007660",
-              "name": "이수페타시스",
-              "quantity": 362.0,
-              "amount": 54408600.0,
-              "weight": 0.0761
-            },
-            {
-              "ticker": "092870",
-              "ticker_raw": "A092870",
-              "name": "엑시콘",
-              "quantity": 49.0,
-              "amount": 1798300.0,
-              "weight": 0.0025
-            },
-            {
-              "ticker": "005930",
-              "ticker_raw": "A005930",
-              "name": "삼성전자",
-              "quantity": 653.0,
-              "amount": 143986500.0,
-              "weight": 0.20149999999999998
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 120263000.0,
+              "weight": 0.16829999999999998
             }
           ],
           "cash": {
@@ -200,40 +3021,1555 @@
           }
         },
         {
-          "as_of": "2026-05-29",
+          "as_of": "2026-05-04",
           "equity_holdings": [
             {
               "ticker": "402340",
               "ticker_raw": "A402340",
               "name": "SK스퀘어",
               "quantity": 143.0,
-              "amount": 176319000.0,
-              "weight": 0.1405
-            },
-            {
-              "ticker": "095340",
-              "ticker_raw": "A095340",
-              "name": "ISC",
-              "quantity": 68.0,
-              "amount": 13770000.0,
-              "weight": 0.011000000000000001
+              "amount": 141713000.0,
+              "weight": 0.1814
             },
             {
               "ticker": "011070",
               "ticker_raw": "A011070",
               "name": "LG이노텍",
               "quantity": 93.0,
-              "amount": 135594000.0,
-              "weight": 0.1081
+              "amount": 55335000.0,
+              "weight": 0.0708
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 147798000.0,
+              "weight": 0.1892
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1884050.0,
+              "weight": 0.0024
             },
             {
               "ticker": "218410",
               "ticker_raw": "A218410",
               "name": "RFHIC",
               "quantity": 110.0,
-              "amount": 9911000.0,
+              "amount": 10780000.0,
+              "weight": 0.0138
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16830000.0,
+              "weight": 0.0215
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7037800.0,
+              "weight": 0.009000000000000001
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 53938000.0,
+              "weight": 0.069
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 151822500.0,
+              "weight": 0.1943
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 192451000.0,
+              "weight": 0.2463
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1759948.0,
+            "amount": 1759948.0,
+            "weight": 0.0023
+          }
+        },
+        {
+          "as_of": "2026-05-06",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 212933000.0,
+              "weight": 0.2529
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 173698000.0,
+              "weight": 0.20629999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 54879200.0,
+              "weight": 0.0652
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7307300.0,
+              "weight": 0.0087
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10604000.0,
+              "weight": 0.0126
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1996750.0,
+              "weight": 0.0024
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 17408000.0,
+              "weight": 0.0207
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 146832000.0,
+              "weight": 0.1744
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 58776000.0,
+              "weight": 0.0698
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 155727000.0,
+              "weight": 0.185
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1789835.0,
+            "amount": 1789835.0,
+            "weight": 0.0021
+          }
+        },
+        {
+          "as_of": "2026-05-07",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 157157000.0,
+              "weight": 0.184
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 59241000.0,
+              "weight": 0.0694
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 147637000.0,
+              "weight": 0.1728
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16796000.0,
+              "weight": 0.0197
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1864450.0,
+              "weight": 0.0022
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11088000.0,
+              "weight": 0.013000000000000001
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7869400.0,
+              "weight": 0.0092
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 53358800.0,
+              "weight": 0.0625
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 177289500.0,
+              "weight": 0.2076
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 219982000.0,
+              "weight": 0.2575
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1858244.0,
+            "amount": 1858244.0,
+            "weight": 0.0022
+          }
+        },
+        {
+          "as_of": "2026-05-08",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 224238000.0,
+              "weight": 0.263
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 175330500.0,
+              "weight": 0.20559999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 51078200.0,
+              "weight": 0.0599
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7869400.0,
+              "weight": 0.0092
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10967000.0,
+              "weight": 0.0129
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1839950.0,
+              "weight": 0.0022
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 17238000.0,
+              "weight": 0.0202
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 147154000.0,
+              "weight": 0.1726
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 58032000.0,
+              "weight": 0.0681
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 157014000.0,
+              "weight": 0.1841
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1898688.0,
+            "amount": 1898688.0,
+            "weight": 0.0022
+          }
+        },
+        {
+          "as_of": "2026-05-11",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 169741000.0,
+              "weight": 0.1875
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 63984000.0,
+              "weight": 0.0707
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 144900000.0,
+              "weight": 0.16010000000000002
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1844850.0,
+              "weight": 0.002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11440000.0,
+              "weight": 0.0126
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16558000.0,
+              "weight": 0.0183
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7661500.0,
+              "weight": 0.0085
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 50716200.0,
+              "weight": 0.055999999999999994
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 186431500.0,
+              "weight": 0.20600000000000002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 250040000.0,
+              "weight": 0.2762
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1828633.0,
+            "amount": 1828633.0,
+            "weight": 0.002
+          }
+        },
+        {
+          "as_of": "2026-05-12",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 244055000.0,
+              "weight": 0.2733
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 182187000.0,
+              "weight": 0.204
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 46480800.0,
+              "weight": 0.052000000000000005
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7561400.0,
+              "weight": 0.0085
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 12375000.0,
+              "weight": 0.0139
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1678250.0,
+              "weight": 0.0019
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16898000.0,
+              "weight": 0.0189
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 154238000.0,
+              "weight": 0.1727
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 64728000.0,
+              "weight": 0.0725
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 161018000.0,
+              "weight": 0.18030000000000002
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1873303.0,
+            "amount": 1873303.0,
+            "weight": 0.0021
+          }
+        },
+        {
+          "as_of": "2026-05-13",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 170170000.0,
+              "weight": 0.1807
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 70029000.0,
+              "weight": 0.07429999999999999
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 165669000.0,
+              "weight": 0.1759
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1648850.0,
+              "weight": 0.0018
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11583000.0,
+              "weight": 0.0123
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16592000.0,
+              "weight": 0.0176
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8000300.0,
+              "weight": 0.0085
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 48182200.0,
+              "weight": 0.0512
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 185452000.0,
+              "weight": 0.19690000000000002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 262808000.0,
+              "weight": 0.27899999999999997
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1820626.0,
+            "amount": 1820626.0,
+            "weight": 0.0019
+          }
+        },
+        {
+          "as_of": "2026-05-14",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 262010000.0,
+              "weight": 0.27690000000000003
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 193288000.0,
+              "weight": 0.2043
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 47965000.0,
+              "weight": 0.0507
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7546000.0,
+              "weight": 0.008
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16830000.0,
+              "weight": 0.0178
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11968000.0,
+              "weight": 0.0126
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1587600.0,
+              "weight": 0.0017000000000000001
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 164864000.0,
+              "weight": 0.17420000000000002
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 70680000.0,
+              "weight": 0.0747
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 167453000.0,
+              "weight": 0.177
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2096796.0,
+            "amount": 2096796.0,
+            "weight": 0.0022
+          }
+        },
+        {
+          "as_of": "2026-05-15",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 157014000.0,
+              "weight": 0.1766
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 68076000.0,
+              "weight": 0.0766
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 162610000.0,
+              "weight": 0.18289999999999998
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1416100.0,
+              "weight": 0.0016
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10681000.0,
+              "weight": 0.012
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15266000.0,
+              "weight": 0.0172
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7007000.0,
               "weight": 0.0079
             },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 46336000.0,
+              "weight": 0.0521
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 176636500.0,
+              "weight": 0.19870000000000002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 241927000.0,
+              "weight": 0.2721
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2087337.0,
+            "amount": 2087337.0,
+            "weight": 0.0023
+          }
+        },
+        {
+          "as_of": "2026-05-18",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 244720000.0,
+              "weight": 0.2709
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 183493000.0,
+              "weight": 0.20309999999999997
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 47603000.0,
+              "weight": 0.0527
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6352500.0,
+              "weight": 0.006999999999999999
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14212000.0,
+              "weight": 0.015700000000000002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10648000.0,
+              "weight": 0.0118
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1428350.0,
+              "weight": 0.0016
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 165991000.0,
+              "weight": 0.1837
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 70680000.0,
+              "weight": 0.0782
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 156299000.0,
+              "weight": 0.17300000000000001
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2047349.0,
+            "amount": 2047349.0,
+            "weight": 0.0023
+          }
+        },
+        {
+          "as_of": "2026-05-19",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 145860000.0,
+              "weight": 0.1681
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 73749000.0,
+              "weight": 0.085
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 158907000.0,
+              "weight": 0.18309999999999998
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1403850.0,
+              "weight": 0.0016
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10329000.0,
+              "weight": 0.011899999999999999
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 13416400.0,
+              "weight": 0.0155
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6221600.0,
+              "weight": 0.0072
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 43765800.0,
+              "weight": 0.0504
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 179901500.0,
+              "weight": 0.2073
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 232085000.0,
+              "weight": 0.2675
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1996309.0,
+            "amount": 1996309.0,
+            "weight": 0.0023
+          }
+        },
+        {
+          "as_of": "2026-05-20",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 232085000.0,
+              "weight": 0.2641
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 180228000.0,
+              "weight": 0.2051
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44019200.0,
+              "weight": 0.0501
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 6891500.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 13219200.0,
+              "weight": 0.015
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10109000.0,
+              "weight": 0.0115
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1450400.0,
+              "weight": 0.0017000000000000001
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 170821000.0,
+              "weight": 0.19440000000000002
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 70680000.0,
+              "weight": 0.08039999999999999
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 147147000.0,
+              "weight": 0.1675
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1979083.0,
+            "amount": 1979083.0,
+            "weight": 0.0023
+          }
+        },
+        {
+          "as_of": "2026-05-21",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 168597000.0,
+              "weight": 0.1726
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 77934000.0,
+              "weight": 0.07980000000000001
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 193844000.0,
+              "weight": 0.1984
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1543500.0,
+              "weight": 0.0016
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10901000.0,
+              "weight": 0.011200000000000002
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14926000.0,
+              "weight": 0.015300000000000001
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7407400.0,
+              "weight": 0.0076
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 46263600.0,
+              "weight": 0.047400000000000005
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 195573500.0,
+              "weight": 0.2002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 258020000.0,
+              "weight": 0.2641
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1974175.0,
+            "amount": 1974175.0,
+            "weight": 0.002
+          }
+        },
+        {
+          "as_of": "2026-05-22",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 258153000.0,
+              "weight": 0.2588
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 191002500.0,
+              "weight": 0.19149999999999998
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 45648200.0,
+              "weight": 0.0458
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 7753900.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14280000.0,
+              "weight": 0.0143
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11440000.0,
+              "weight": 0.0115
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1729700.0,
+              "weight": 0.0017000000000000001
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 215740000.0,
+              "weight": 0.2163
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 80352000.0,
+              "weight": 0.0806
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 169455000.0,
+              "weight": 0.1699
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1985048.0,
+            "amount": 1985048.0,
+            "weight": 0.002
+          }
+        },
+        {
+          "as_of": "2026-05-26",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 168883000.0,
+              "weight": 0.1564
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 99324000.0,
+              "weight": 0.092
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 253092000.0,
+              "weight": 0.23440000000000003
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1702750.0,
+              "weight": 0.0016
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 11352000.0,
+              "weight": 0.0105
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 16320000.0,
+              "weight": 0.0151
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8485400.0,
+              "weight": 0.0079
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 50571400.0,
+              "weight": 0.046799999999999994
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 195247000.0,
+              "weight": 0.1808
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 272916000.0,
+              "weight": 0.2527
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1926142.0,
+            "amount": 1926142.0,
+            "weight": 0.0018
+          }
+        },
+        {
+          "as_of": "2026-05-27",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 298319000.0,
+              "weight": 0.2646
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 200471000.0,
+              "weight": 0.1778
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 47892600.0,
+              "weight": 0.0425
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8485400.0,
+              "weight": 0.0075
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15776000.0,
+              "weight": 0.013999999999999999
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10890000.0,
+              "weight": 0.0097
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1658650.0,
+              "weight": 0.0015
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 262430000.0,
+              "weight": 0.2328
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 97092000.0,
+              "weight": 0.0861
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 182468000.0,
+              "weight": 0.1618
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1944950.0,
+            "amount": 1944950.0,
+            "weight": 0.0017000000000000001
+          }
+        },
+        {
+          "as_of": "2026-05-28",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 176891000.0,
+              "weight": 0.1521
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 105462000.0,
+              "weight": 0.0907
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 297689000.0,
+              "weight": 0.256
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1470000.0,
+              "weight": 0.0013
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 10241000.0,
+              "weight": 0.0088
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14484000.0,
+              "weight": 0.0125
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8624000.0,
+              "weight": 0.0074
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 46155000.0,
+              "weight": 0.0397
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 195573500.0,
+              "weight": 0.16820000000000002
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 304437000.0,
+              "weight": 0.2618
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 2015288.0,
+            "amount": 2015288.0,
+            "weight": 0.0017000000000000001
+          }
+        },
+        {
+          "as_of": "2026-05-29",
+          "equity_holdings": [
             {
               "ticker": "000660",
               "ticker_raw": "A000660",
@@ -241,22 +4577,6 @@
               "quantity": 133.0,
               "amount": 310289000.0,
               "weight": 0.2473
-            },
-            {
-              "ticker": "007810",
-              "ticker_raw": "A007810",
-              "name": "코리아써키트",
-              "quantity": 77.0,
-              "amount": 9186100.0,
-              "weight": 0.0073
-            },
-            {
-              "ticker": "092870",
-              "ticker_raw": "A092870",
-              "name": "엑시콘",
-              "quantity": 49.0,
-              "amount": 1430800.0,
-              "weight": 0.0011
             },
             {
               "ticker": "005930",
@@ -267,6 +4587,46 @@
               "weight": 0.165
             },
             {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 46770400.0,
+              "weight": 0.0373
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 9186100.0,
+              "weight": 0.0073
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 13770000.0,
+              "weight": 0.011000000000000001
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9911000.0,
+              "weight": 0.0079
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1430800.0,
+              "weight": 0.0011
+            },
+            {
               "ticker": "009150",
               "ticker_raw": "A009150",
               "name": "삼성전기",
@@ -275,12 +4635,20 @@
               "weight": 0.2729
             },
             {
-              "ticker": "007660",
-              "ticker_raw": "A007660",
-              "name": "이수페타시스",
-              "quantity": 362.0,
-              "amount": 46770400.0,
-              "weight": 0.0373
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 135594000.0,
+              "weight": 0.1081
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 176319000.0,
+              "weight": 0.1405
             }
           ],
           "cash": {
@@ -288,6 +4656,1007 @@
             "quantity": 1976627.0,
             "amount": 1976627.0,
             "weight": 0.0016
+          }
+        },
+        {
+          "as_of": "2026-06-01",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 179608000.0,
+              "weight": 0.141
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 142290000.0,
+              "weight": 0.1117
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 322805000.0,
+              "weight": 0.2534
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1394050.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14246000.0,
+              "weight": 0.011200000000000002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9636000.0,
+              "weight": 0.0076
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 9209200.0,
+              "weight": 0.0072
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 50462800.0,
+              "weight": 0.039599999999999996
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 227897000.0,
+              "weight": 0.1789
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 314279000.0,
+              "weight": 0.24670000000000003
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1969244.0,
+            "amount": 1969244.0,
+            "weight": 0.0015
+          }
+        },
+        {
+          "as_of": "2026-06-02",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 313880000.0,
+              "weight": 0.25420000000000004
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 235406500.0,
+              "weight": 0.1907
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 49340600.0,
+              "weight": 0.04
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8393000.0,
+              "weight": 0.0068000000000000005
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9064000.0,
+              "weight": 0.0073
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14382000.0,
+              "weight": 0.0116
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1372000.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 291893000.0,
+              "weight": 0.2364
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 116436000.0,
+              "weight": 0.0943
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 192478000.0,
+              "weight": 0.1559
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1993453.0,
+            "amount": 1993453.0,
+            "weight": 0.0016
+          }
+        },
+        {
+          "as_of": "2026-06-04",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 194623000.0,
+              "weight": 0.16210000000000002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9999000.0,
+              "weight": 0.0083
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 109089000.0,
+              "weight": 0.0908
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 276276000.0,
+              "weight": 0.23010000000000003
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14552000.0,
+              "weight": 0.0121
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1455300.0,
+              "weight": 0.0012
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 9417100.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 229529500.0,
+              "weight": 0.1911
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 48399400.0,
+              "weight": 0.0403
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 305634000.0,
+              "weight": 0.2545
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1912257.0,
+            "amount": 1912257.0,
+            "weight": 0.0016
+          }
+        },
+        {
+          "as_of": "2026-06-05",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 275310000.0,
+              "weight": 0.2416
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 43765800.0,
+              "weight": 0.0384
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 214837000.0,
+              "weight": 0.1885
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 9062900.0,
+              "weight": 0.008
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1237250.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 13736000.0,
+              "weight": 0.0121
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9108000.0,
+              "weight": 0.008
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 282877000.0,
+              "weight": 0.2482
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 107880000.0,
+              "weight": 0.0947
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 179894000.0,
+              "weight": 0.15789999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1884124.0,
+            "amount": 1884124.0,
+            "weight": 0.0017000000000000001
+          }
+        },
+        {
+          "as_of": "2026-06-08",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 159874000.0,
+              "weight": 0.1528
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 101835000.0,
+              "weight": 0.0973
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 267904000.0,
+              "weight": 0.2561
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8327000.0,
+              "weight": 0.008
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1141700.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 11893200.0,
+              "weight": 0.011399999999999999
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8131200.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 38263400.0,
+              "weight": 0.0366
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 192961500.0,
+              "weight": 0.1844
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 254163000.0,
+              "weight": 0.2429
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1763977.0,
+            "amount": 1763977.0,
+            "weight": 0.0017000000000000001
+          }
+        },
+        {
+          "as_of": "2026-06-09",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 294595000.0,
+              "weight": 0.2487
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 41919600.0,
+              "weight": 0.0354
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 210266000.0,
+              "weight": 0.1775
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 9263100.0,
+              "weight": 0.0078000000000000005
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1291150.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 12389600.0,
+              "weight": 0.0105
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8536000.0,
+              "weight": 0.0072
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 317170000.0,
+              "weight": 0.26780000000000004
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 105741000.0,
+              "weight": 0.08929999999999999
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 181467000.0,
+              "weight": 0.1532
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1721101.0,
+            "amount": 1721101.0,
+            "weight": 0.0015
+          }
+        },
+        {
+          "as_of": "2026-06-10",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 169169000.0,
+              "weight": 0.1532
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 101370000.0,
+              "weight": 0.09179999999999999
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 290605000.0,
+              "weight": 0.2632
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8008000.0,
+              "weight": 0.0073
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1229900.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 12280800.0,
+              "weight": 0.0111
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 8908900.0,
+              "weight": 0.008100000000000001
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 40906000.0,
+              "weight": 0.037000000000000005
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 197532500.0,
+              "weight": 0.1789
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 272384000.0,
+              "weight": 0.24670000000000003
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1710542.0,
+            "amount": 1710542.0,
+            "weight": 0.0015
+          }
+        },
+        {
+          "as_of": "2026-06-11",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 279433000.0,
+              "weight": 0.2495
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 195247000.0,
+              "weight": 0.1743
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44598400.0,
+              "weight": 0.0398
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 12954000.0,
+              "weight": 0.0116
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1354850.0,
+              "weight": 0.0012
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8239000.0,
+              "weight": 0.0074
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 10718400.0,
+              "weight": 0.0096
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 290605000.0,
+              "weight": 0.2594
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 99696000.0,
+              "weight": 0.08900000000000001
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 175604000.0,
+              "weight": 0.1568
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1708509.0,
+            "amount": 1708509.0,
+            "weight": 0.0015
+          }
+        },
+        {
+          "as_of": "2026-06-12",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 194194000.0,
+              "weight": 0.1696
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 96348000.0,
+              "weight": 0.08410000000000001
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 275954000.0,
+              "weight": 0.24100000000000002
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8470000.0,
+              "weight": 0.0074
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1509200.0,
+              "weight": 0.0013
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 15640000.0,
+              "weight": 0.0137
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44308800.0,
+              "weight": 0.0387
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 210592500.0,
+              "weight": 0.1839
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 10348800.0,
+              "weight": 0.009000000000000001
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 285950000.0,
+              "weight": 0.24969999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1676013.0,
+            "amount": 1676013.0,
+            "weight": 0.0015
+          }
+        },
+        {
+          "as_of": "2026-06-15",
+          "equity_holdings": [
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 304304000.0,
+              "weight": 0.24530000000000002
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 220061000.0,
+              "weight": 0.17739999999999997
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 43041800.0,
+              "weight": 0.0347
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 14246000.0,
+              "weight": 0.0115
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1406300.0,
+              "weight": 0.0011
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 8767000.0,
+              "weight": 0.0070999999999999995
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 321839000.0,
+              "weight": 0.2595
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 10533600.0,
+              "weight": 0.0085
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 112437000.0,
+              "weight": 0.0907
+            },
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 202059000.0,
+              "weight": 0.1629
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1643482.0,
+            "amount": 1643482.0,
+            "weight": 0.0013
+          }
+        },
+        {
+          "as_of": "2026-06-16",
+          "equity_holdings": [
+            {
+              "ticker": "402340",
+              "ticker_raw": "A402340",
+              "name": "SK스퀘어",
+              "quantity": 143.0,
+              "amount": 214643000.0,
+              "weight": 0.16760000000000003
+            },
+            {
+              "ticker": "011070",
+              "ticker_raw": "A011070",
+              "name": "LG이노텍",
+              "quantity": 93.0,
+              "amount": 114948000.0,
+              "weight": 0.0898
+            },
+            {
+              "ticker": "007810",
+              "ticker_raw": "A007810",
+              "name": "코리아써키트",
+              "quantity": 77.0,
+              "amount": 10156300.0,
+              "weight": 0.0079
+            },
+            {
+              "ticker": "009150",
+              "ticker_raw": "A009150",
+              "name": "삼성전기",
+              "quantity": 161.0,
+              "amount": 329728000.0,
+              "weight": 0.2575
+            },
+            {
+              "ticker": "218410",
+              "ticker_raw": "A218410",
+              "name": "RFHIC",
+              "quantity": 110.0,
+              "amount": 9108000.0,
+              "weight": 0.0070999999999999995
+            },
+            {
+              "ticker": "092870",
+              "ticker_raw": "A092870",
+              "name": "엑시콘",
+              "quantity": 49.0,
+              "amount": 1298500.0,
+              "weight": 0.001
+            },
+            {
+              "ticker": "095340",
+              "ticker_raw": "A095340",
+              "name": "ISC",
+              "quantity": 68.0,
+              "amount": 13566000.0,
+              "weight": 0.0106
+            },
+            {
+              "ticker": "005930",
+              "ticker_raw": "A005930",
+              "name": "삼성전자",
+              "quantity": 653.0,
+              "amount": 223979000.0,
+              "weight": 0.17489999999999997
+            },
+            {
+              "ticker": "007660",
+              "ticker_raw": "A007660",
+              "name": "이수페타시스",
+              "quantity": 362.0,
+              "amount": 44526000.0,
+              "weight": 0.0348
+            },
+            {
+              "ticker": "000660",
+              "ticker_raw": "A000660",
+              "name": "SK하이닉스",
+              "quantity": 133.0,
+              "amount": 316806000.0,
+              "weight": 0.24739999999999998
+            }
+          ],
+          "cash": {
+            "name": "원화현금",
+            "quantity": 1622122.0,
+            "amount": 1622122.0,
+            "weight": 0.0013
           }
         }
       ]

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-17T02:25:17.804029+00:00",
+  "count": 1,
+  "items": [
+    {
+      "etf_code": "0167A0",
+      "etf_name": "SOL AI반도체TOP2플러스",
+      "index_code": "FI00.WLT.KSS",
+      "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
+      "as_of": "2026-06-16",
+      "event_type": "regular_cap_excess",
+      "security_code": "009150",
+      "security_name": "삼성전기",
+      "quantity": 161.0,
+      "market_value": 329728000.0,
+      "weight": 0.2575,
+      "cap": 0.25,
+      "excess_weight": 0.0075,
+      "effective_date": ""
+    }
+  ]
+}

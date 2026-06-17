@@ -4,10 +4,11 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from etfs import paths
-from etfs.fnguide.data_inventory import write_fnguide_data_inventory, write_kss_data_inventory
+from etfs.common.cap import write_cap_candidate_report
+from etfs.fnguide.data_inventory import write_fnguide_data_inventory
 from etfs.fnguide.methodology_audit import write_methodology_audit
 from etfs.fnguide.methodology_engine import (
     write_engine_input_requirements,
@@ -19,8 +20,6 @@ from etfs.fnguide.methodology_engine import (
 )
 from etfs.fnguide.methodology_extraction import write_methodology_extractions
 from etfs.fnguide.methodology_specs import write_draft_specs, write_methodology_specs
-from etfs.fnguide.replication import build_kss_replication, write_kss_replication_artifacts
-from etfs.fnguide.replication_data import write_kss_data_requirements
 from etfs.fnguide.validation import (
     write_target_weight_validation_results,
     write_validation_fixtures,
@@ -28,25 +27,21 @@ from etfs.fnguide.validation import (
 )
 
 
-DEFAULT_INDEX_CODE_BY_ETF = {"0167A0": "FI00.WLT.KSS"}
-
-
 def run_offline_pipeline(
     *,
     rules_path: Path = paths.FNGUIDE_RULES_JSON,
     extraction_output_dir: Path = paths.FNGUIDE_EXTRACTION_OUTPUT_DIR,
     overrides_path: Path = paths.FNGUIDE_SPEC_OVERRIDES_JSON,
-    validation_inputs: Iterable[Path] = (Path("etfs/validation_A0167A0.xlsx"),),
+    validation_inputs: Iterable[Path] = (),
     validation_output_dir: Path = paths.VALIDATION_OUTPUT_DIR,
     engine_output_dir: Path = paths.FNGUIDE_ENGINE_OUTPUT_DIR,
     engine_inputs_path: Path = paths.FNGUIDE_ENGINE_INPUTS_JSON,
-    replication_output_dir: Path = paths.FNGUIDE_REPLICATION_OUTPUT_DIR,
-    kss_snapshot_path: Path = paths.FNGUIDE_REPLICATION_OUTPUT_DIR / "kss_snapshot.json",
+    inventory_output_dir: Path = paths.FNGUIDE_OUTPUT_DIR,
 ) -> dict[str, object]:
     extraction_output_dir.mkdir(parents=True, exist_ok=True)
     validation_output_dir.mkdir(parents=True, exist_ok=True)
     engine_output_dir.mkdir(parents=True, exist_ok=True)
-    replication_output_dir.mkdir(parents=True, exist_ok=True)
+    inventory_output_dir.mkdir(parents=True, exist_ok=True)
 
     extractions_json, extractions_md = write_methodology_extractions(rules_path, extraction_output_dir)
     draft_specs = write_draft_specs(extractions_json, extraction_output_dir)
@@ -73,13 +68,16 @@ def run_offline_pipeline(
         fixtures = write_validation_fixtures(
             validation_paths,
             validation_output_dir,
-            index_code_by_etf=DEFAULT_INDEX_CODE_BY_ETF,
+            index_code_by_etf=index_code_by_etf_from_specs(methodology_specs),
         )
         validation_results = write_validation_results(fixtures, methodology_specs, validation_output_dir)
+        cap_candidates_json, cap_candidates_md = write_cap_candidate_report(fixtures, methodology_specs, validation_output_dir)
         outputs["validation_fixtures"] = fixtures.as_posix()
         outputs["validation_results"] = validation_results.as_posix()
+        outputs["cap_candidates"] = cap_candidates_json.as_posix()
+        outputs["cap_candidates_md"] = cap_candidates_md.as_posix()
     else:
-        skipped.append("validation: input workbooks not found")
+        skipped.append("validation: input workbooks not provided")
 
     engine_requirements = write_engine_input_requirements(methodology_specs, engine_output_dir)
     outputs["engine_input_requirements"] = engine_requirements.as_posix()
@@ -91,51 +89,16 @@ def run_offline_pipeline(
     promotion_json, promotion_md = write_engine_promotion_candidates(methodology_specs, engine_output_dir)
     outputs["engine_promotion_candidates"] = promotion_json.as_posix()
     outputs["engine_promotion_candidates_md"] = promotion_md.as_posix()
-    kss_requirements = write_kss_data_requirements(
-        replication_output_dir,
-        available_datasets={"methodology_spec"} | ({"etf_holdings_snapshot"} if fixtures is not None else set()),
-    )
-    outputs["kss_data_requirements"] = kss_requirements.as_posix()
     data_inventory_json, data_inventory_md = write_fnguide_data_inventory(
-        replication_output_dir,
+        inventory_output_dir,
         specs_path=methodology_specs,
     )
     outputs["data_inventory"] = data_inventory_json.as_posix()
     outputs["data_inventory_md"] = data_inventory_md.as_posix()
-    kss_data_inventory_json, kss_data_inventory_md = write_kss_data_inventory(
-        replication_output_dir,
-        specs_path=methodology_specs,
-    )
-    outputs["kss_data_inventory"] = kss_data_inventory_json.as_posix()
-    outputs["kss_data_inventory_md"] = kss_data_inventory_md.as_posix()
-
-    kss_replication_validation_path = replication_output_dir / "kss_replication_validation.json"
-    if kss_snapshot_path.exists():
-        snapshot_payload = json.loads(kss_snapshot_path.read_text(encoding="utf-8"))
-        kss_result = build_kss_replication(
-            as_of=str(snapshot_payload.get("as_of", "")),
-            effective_date=str(snapshot_payload.get("effective_date", "")),
-            snapshot_rows=snapshot_payload.get("rows", []),
-            validation_weights=snapshot_payload.get("validation_weights", []),
-            validation_source_type=str(snapshot_payload.get("validation_source_type", "missing")),
-            specs_path=methodology_specs,
-        )
-        kss_artifacts = write_kss_replication_artifacts(kss_result, replication_output_dir)
-        outputs.update(
-            {
-                "kss_selected_buckets": kss_artifacts["selected_buckets"],
-                "kss_target_weights": kss_artifacts["target_weights"],
-                "kss_replication_validation": kss_artifacts["replication_validation"],
-                "kss_replication_validation_md": kss_artifacts["replication_validation_md"],
-            }
-        )
-    else:
-        skipped.append("kss_replication: kss_snapshot not found")
 
     replication_json, replication_md = write_methodology_replication_report(
         methodology_specs,
         engine_output_dir,
-        kss_replication_validation_path=kss_replication_validation_path,
     )
     outputs["methodology_replication_report"] = replication_json.as_posix()
     outputs["methodology_replication_report_md"] = replication_md.as_posix()
@@ -164,6 +127,27 @@ def run_offline_pipeline(
     }
 
 
+def index_code_by_etf_from_specs(specs_path: Path) -> dict[str, str]:
+    payload = json.loads(specs_path.read_text(encoding="utf-8"))
+    result: dict[str, str] = {}
+    for spec in payload.get("indices", []):
+        if not isinstance(spec, Mapping):
+            continue
+        index_code = str(spec.get("index_code", "")).strip()
+        if not index_code:
+            continue
+        products = spec.get("products", [])
+        if not isinstance(products, list):
+            continue
+        for product in products:
+            if not isinstance(product, Mapping):
+                continue
+            etf_code = str(product.get("etf_code", "")).strip()
+            if etf_code:
+                result[etf_code] = index_code
+    return result
+
+
 def write_offline_pipeline_manifest(
     output_path: Path,
     **kwargs: object,
@@ -179,15 +163,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rules", default=paths.FNGUIDE_RULES_JSON.as_posix())
     parser.add_argument("--extraction-output-dir", default=paths.FNGUIDE_EXTRACTION_OUTPUT_DIR.as_posix())
     parser.add_argument("--overrides", default=paths.FNGUIDE_SPEC_OVERRIDES_JSON.as_posix())
-    parser.add_argument("--validation-input", nargs="*", default=["etfs/validation_A0167A0.xlsx"])
+    parser.add_argument("--validation-input", nargs="*", default=[])
     parser.add_argument("--validation-output-dir", default=paths.VALIDATION_OUTPUT_DIR.as_posix())
     parser.add_argument("--engine-output-dir", default=paths.FNGUIDE_ENGINE_OUTPUT_DIR.as_posix())
     parser.add_argument("--engine-inputs", default=paths.FNGUIDE_ENGINE_INPUTS_JSON.as_posix())
-    parser.add_argument("--replication-output-dir", default=paths.FNGUIDE_REPLICATION_OUTPUT_DIR.as_posix())
-    parser.add_argument(
-        "--kss-snapshot",
-        default=(paths.FNGUIDE_REPLICATION_OUTPUT_DIR / "kss_snapshot.json").as_posix(),
-    )
+    parser.add_argument("--inventory-output-dir", default=paths.FNGUIDE_OUTPUT_DIR.as_posix())
     parser.add_argument("--manifest", default=(paths.FNGUIDE_ENGINE_OUTPUT_DIR / "offline_pipeline_manifest.json").as_posix())
     return parser
 
@@ -203,8 +183,7 @@ def main(argv: list[str] | None = None) -> int:
         validation_output_dir=Path(args.validation_output_dir),
         engine_output_dir=Path(args.engine_output_dir),
         engine_inputs_path=Path(args.engine_inputs),
-        replication_output_dir=Path(args.replication_output_dir),
-        kss_snapshot_path=Path(args.kss_snapshot),
+        inventory_output_dir=Path(args.inventory_output_dir),
     )
     print(f"wrote {manifest_path}")
     return 0

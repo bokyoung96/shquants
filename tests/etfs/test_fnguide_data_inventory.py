@@ -1,390 +1,79 @@
 import json
 from pathlib import Path
 
-from etfs.fnguide.data_inventory import (
-    build_fnguide_data_inventory,
-    build_kss_data_inventory,
-    main,
-    write_fnguide_data_inventory,
-    write_kss_data_inventory,
-)
+from etfs.fnguide.data_inventory import build_fnguide_data_inventory, write_fnguide_data_inventory
 
 
-def test_build_kss_data_inventory_marks_local_and_external_requirements(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-            {
-                "index_code": "FI00.OTHER",
-                "index_name": "FnGuide Other Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "000001", "etf_name": "Other ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    local_paths = {
-        "price_snapshot": _touch(tmp_path / "price_snapshot.csv"),
-        "float_market_cap_snapshot": _touch(tmp_path / "float_market_cap_snapshot.csv"),
-        "sector_classification": _touch(tmp_path / "sector_classification.csv"),
-        "issuer_holdings_snapshot": _touch(tmp_path / "issuer_holdings_snapshot.csv"),
-    }
-
-    inventory = build_kss_data_inventory(specs_path=specs_path, local_paths=local_paths)
-    requirements = {item["name"]: item for item in inventory["requirements"]}
-
-    assert inventory["schema_version"] == "1.0"
-    assert inventory["index_code"] == "FI00.WLT.KSS"
-    assert inventory["replication_calculation_readiness"] == "missing_calculation_inputs"
-    assert inventory["replication_proven"] is False
-    assert inventory["product_names"] == ["SOL AI Semiconductor ETF"]
-    assert inventory["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
-    assert inventory["methodology_status"] == "methodology_verified"
-    assert inventory["methodology_summary"] == {
-        "total_constituents": None,
-        "buckets": [],
-        "weighting": {},
-        "rebalance": {},
-    }
-    assert requirements["price_snapshot"]["status"] == "available"
-    assert requirements["float_market_cap_snapshot"]["status"] == "available"
-    assert requirements["semiconductor_classification_snapshot"]["status"] == "available"
-    assert requirements["issuer_holdings_snapshot"]["status"] == "available"
-    assert requirements["price_momentum"]["status"] == "derivable"
-    assert requirements["semiconductor_classification_snapshot"]["usage"] == "calculation_input"
-    assert requirements["sales_momentum"]["usage"] == "calculation_input"
-    assert requirements["composite_score"]["usage"] == "calculation_input"
-    assert requirements["sales_momentum"]["status"] == "missing"
-    assert requirements["composite_score"]["status"] == "missing"
-    assert requirements["official_bucket_assignments"]["usage"] == "validation_evidence"
-    assert requirements["official_target_weights"]["usage"] == "validation_evidence"
-    assert requirements["official_bucket_assignments"]["status"] == "missing"
-    assert requirements["official_target_weights"]["status"] == "missing"
-    assert requirements["corporate_actions"]["status"] == "missing"
-    assert requirements["issuer_holdings_snapshot"]["satisfies_full_replication"] is False
-
-
-def test_build_fnguide_data_inventory_includes_kss_and_other_indices(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-            {
-                "index_code": "FI00.OTHER",
-                "index_name": "FnGuide Other Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "000001", "etf_name": "Other ETF"}],
-                "status": "draft_extracted",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-
-    inventory = build_fnguide_data_inventory(specs_path=specs_path)
-    items = {item["index_code"]: item for item in inventory["indices"]}
-
-    assert inventory["provider"] == "fnguide"
-    assert inventory["schema_version"] == "1.0"
-    assert inventory["counts"] == {"indices": 2, "by_calculation_readiness": {"inventory_required": 1, "missing_calculation_inputs": 1}}
-    assert items["FI00.WLT.KSS"]["replication_calculation_readiness"] == "missing_calculation_inputs"
-    assert items["FI00.WLT.KSS"]["tracked_etfs"] == [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}]
-    assert "requirements" in items["FI00.WLT.KSS"]
-    assert items["FI00.OTHER"]["index_name"] == "FnGuide Other Index"
-    assert items["FI00.OTHER"]["product_names"] == ["Other ETF"]
-    assert items["FI00.OTHER"]["tracked_etfs"] == [{"etf_code": "000001", "etf_name": "Other ETF"}]
-    assert items["FI00.OTHER"]["status"] == "draft_extracted"
-    assert items["FI00.OTHER"]["replication_calculation_readiness"] == "inventory_required"
-    assert items["FI00.OTHER"]["requirements"] == []
-
-
-def test_build_kss_data_inventory_resolves_relative_paths_from_specs_directory_and_ignores_directories(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    data_dir = tmp_path / "data"
-    data_dir.mkdir()
-    _touch(data_dir / "price_snapshot.csv")
-    (data_dir / "float_market_cap_snapshot.csv").mkdir()
-    monkeypatch.chdir(tmp_path.parent)
-
-    inventory = build_kss_data_inventory(
-        specs_path=specs_path,
-        local_paths={
-            "price_snapshot": Path("data/price_snapshot.csv"),
-            "float_market_cap_snapshot": Path("data/float_market_cap_snapshot.csv"),
-        },
-    )
-    requirements = {item["name"]: item for item in inventory["requirements"]}
-
-    assert requirements["price_snapshot"]["status"] == "available"
-    assert requirements["price_momentum"]["status"] == "derivable"
-    assert requirements["float_market_cap_snapshot"]["status"] == "missing"
-
-
-def test_build_kss_data_inventory_uses_default_local_paths_when_not_overridden(tmp_path: Path, monkeypatch) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    _touch(tmp_path / "parquet" / "qw_adj_c.parquet")
-    _touch(tmp_path / "parquet" / "qw_mktcap_flt.parquet")
-    _touch(tmp_path / "parquet" / "qw_wics_sec_big.parquet")
-    _touch(tmp_path / "etfs" / "validation_A0167A0.xlsx")
-    monkeypatch.chdir(tmp_path)
-
-    inventory = build_kss_data_inventory(specs_path=specs_path)
-    requirements = {item["name"]: item for item in inventory["requirements"]}
-
-    assert requirements["price_snapshot"]["status"] == "available"
-    assert requirements["price_momentum"]["status"] == "derivable"
-    assert requirements["float_market_cap_snapshot"]["status"] == "available"
-    assert requirements["semiconductor_classification_snapshot"]["status"] == "available"
-    assert requirements["issuer_holdings_snapshot"]["status"] == "available"
-    assert requirements["issuer_holdings_snapshot"]["satisfies_full_replication"] is False
-
-
-def test_write_kss_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    output_dir = tmp_path / "artifacts" / "replication"
-
-    json_path, markdown_path = write_kss_data_inventory(output_dir, specs_path=specs_path)
-
-    payload = json.loads(json_path.read_text(encoding="utf-8"))
-    markdown = markdown_path.read_text(encoding="utf-8")
-
-    assert json_path == output_dir / "kss_data_inventory.json"
-    assert markdown_path == output_dir / "kss_data_inventory.md"
-    assert payload["index_code"] == "FI00.WLT.KSS"
-    assert payload["replication_calculation_readiness"] == "missing_calculation_inputs"
-    assert payload["replication_proven"] is False
-    assert "FI00.WLT.KSS" in markdown
-    assert "missing_calculation_inputs" in markdown
-    assert "official_target_weights" in markdown
-    assert "issuer_holdings_snapshot" in markdown
-
-
-def test_write_kss_data_inventory_escapes_markdown_table_cells(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI | Semiconductor\nTOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-
-    _, markdown_path = write_kss_data_inventory(tmp_path / "artifacts", specs_path=specs_path)
-
-    markdown = markdown_path.read_text(encoding="utf-8")
-    assert "FnGuide AI \\| Semiconductor TOP2 Plus Index" in markdown
-
-
-def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "466920", "etf_name": "SOL AI Semiconductor ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-            {
-                "index_code": "FI00.OTHER",
-                "index_name": "FnGuide Other Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "000001", "etf_name": "Other ETF"}],
-                "status": "draft_extracted",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    output_dir = tmp_path / "artifacts" / "provider"
-
-    json_path, markdown_path = write_fnguide_data_inventory(output_dir, specs_path=specs_path)
-
-    payload = json.loads(json_path.read_text(encoding="utf-8"))
-    markdown = markdown_path.read_text(encoding="utf-8")
-
-    assert json_path == output_dir / "data_inventory.json"
-    assert markdown_path == output_dir / "data_inventory.md"
-    assert payload["counts"]["by_calculation_readiness"] == {"inventory_required": 1, "missing_calculation_inputs": 1}
-    assert "FnGuide" in markdown
-    assert "missing_calculation_inputs" in markdown
-    assert "FI00.WLT.KSS" in markdown
-    assert "466920 SOL AI Semiconductor ETF" in markdown
-
-
-def test_write_fnguide_data_inventory_escapes_markdown_cells_and_tracks_etfs(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI | Semiconductor\nTOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [{"etf_code": "466920", "etf_name": "SOL | AI\nSemiconductor ETF"}],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-
-    _, markdown_path = write_fnguide_data_inventory(tmp_path / "artifacts", specs_path=specs_path)
-
-    markdown = markdown_path.read_text(encoding="utf-8")
-    assert "FnGuide AI \\| Semiconductor TOP2 Plus Index" in markdown
-    assert "466920 SOL \\| AI Semiconductor ETF" in markdown
-
-
-def test_data_inventory_cli_writes_provider_and_kss_outputs(tmp_path: Path) -> None:
-    specs_path = _write_specs(
-        tmp_path / "methodology_specs.json",
-        indices=[
-            {
-                "index_code": "FI00.WLT.KSS",
-                "index_name": "FnGuide AI Semiconductor TOP2 Plus Index",
-                "provider": "fnguide",
-                "products": [],
-                "status": "methodology_verified",
-                "source": {},
-                "rebalance": {},
-                "selection": {},
-                "weighting": {},
-                "validation": {},
-            },
-        ],
-    )
-    output_dir = tmp_path / "cli-output"
-
-    result = main(["--specs", specs_path.as_posix(), "--output-dir", output_dir.as_posix()])
-
-    assert result == 0
-    assert (output_dir / "data_inventory.json").is_file()
-    assert (output_dir / "data_inventory.md").is_file()
-    assert (output_dir / "kss_data_inventory.json").is_file()
-    assert (output_dir / "kss_data_inventory.md").is_file()
-
-
-def _write_specs(path: Path, *, indices: list[dict[str, object]]) -> Path:
-    path.write_text(
+def test_build_fnguide_data_inventory_treats_all_indices_generically(tmp_path: Path) -> None:
+    specs_path = tmp_path / "methodology_specs.json"
+    specs_path.write_text(
         json.dumps(
             {
-                "schema_version": "1.0",
-                "provider": "fnguide",
-                "count": len(indices),
-                "indices": indices,
-            },
-            ensure_ascii=False,
-            indent=2,
+                "indices": [
+                    {
+                        "index_code": "FI00.EXAMPLE.A",
+                        "index_name": "Example A",
+                        "status": "methodology_verified",
+                        "products": [{"etf_code": "111111", "etf_name": "ETF A"}],
+                        "selection": {"total_constituents": 2, "buckets": [{"name": "top2", "count": 2}]},
+                        "weighting": {"base": "equal_weighted"},
+                        "rebalance": {"frequency": "quarterly"},
+                    },
+                    {
+                        "index_code": "FI00.EXAMPLE.B",
+                        "index_name": "Example B",
+                        "status": "draft_extracted",
+                        "products": [{"etf_code": "222222", "etf_name": "ETF B"}],
+                    },
+                ]
+            }
         ),
         encoding="utf-8",
     )
-    return path
+
+    inventory = build_fnguide_data_inventory(specs_path=specs_path)
+
+    assert inventory["provider"] == "fnguide"
+    assert inventory["count"] == 2
+    assert inventory["counts"]["by_calculation_readiness"] == {"inventory_required": 2}
+    items = {item["index_code"]: item for item in inventory["indices"]}
+    assert items["FI00.EXAMPLE.A"]["tracked_etfs"] == [{"etf_code": "111111", "etf_name": "ETF A"}]
+    assert items["FI00.EXAMPLE.A"]["replication_calculation_readiness"] == "inventory_required"
+    assert items["FI00.EXAMPLE.A"]["replication_proven"] is False
+    assert items["FI00.EXAMPLE.A"]["requirements"] == []
+    assert items["FI00.EXAMPLE.A"]["methodology_summary"] == {
+        "total_constituents": 2,
+        "buckets": [{"name": "top2", "count": 2}],
+        "weighting": {"base": "equal_weighted"},
+        "rebalance": {"frequency": "quarterly"},
+    }
 
 
-def _touch(path: Path) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("", encoding="utf-8")
-    return path
+def test_write_fnguide_data_inventory_writes_json_and_markdown(tmp_path: Path) -> None:
+    specs_path = tmp_path / "methodology_specs.json"
+    specs_path.write_text(
+        json.dumps(
+            {
+                "indices": [
+                    {
+                        "index_code": "FI00.EXAMPLE",
+                        "index_name": "Example | Index\nName",
+                        "status": "methodology_verified",
+                        "products": [{"etf_code": "111111", "etf_name": "ETF | Name"}],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    json_path, markdown_path = write_fnguide_data_inventory(tmp_path / "artifacts", specs_path=specs_path)
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert json_path.name == "data_inventory.json"
+    assert markdown_path.name == "data_inventory.md"
+    assert payload["indices"][0]["index_code"] == "FI00.EXAMPLE"
+    assert "FI00.EXAMPLE" in markdown
+    assert "Example \\| Index Name" in markdown
+    assert "111111 ETF \\| Name" in markdown

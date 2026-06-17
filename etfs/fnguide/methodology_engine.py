@@ -238,23 +238,17 @@ def write_engine_input_template(
     return output_path
 
 
-def build_methodology_replication_report(
-    specs_path: Path,
-    *,
-    kss_replication_validation_path: Path = paths.FNGUIDE_KSS_VALIDATION_JSON,
-) -> dict[str, object]:
+def build_methodology_replication_report(specs_path: Path) -> dict[str, object]:
     payload = json.loads(specs_path.read_text(encoding="utf-8"))
     specs = [_mapping(spec) for spec in payload.get("indices", [])]
     matrix = build_engine_support_matrix(specs)
     support_by_index = {str(item["index_code"]): _mapping(item) for item in matrix["items"]}
     ready_specs = load_engine_ready_specs(specs_path)
-    kss_full_replication = _load_kss_full_replication_status(kss_replication_validation_path)
     items = [
         _methodology_replication_item(
             spec,
             support_by_index.get(str(spec.get("index_code", "")), {}),
             ready_specs,
-            kss_full_replication,
         )
         for spec in specs
     ]
@@ -285,13 +279,8 @@ def build_methodology_replication_report(
 def write_methodology_replication_report(
     specs_path: Path,
     output_dir: Path,
-    *,
-    kss_replication_validation_path: Path = paths.FNGUIDE_KSS_VALIDATION_JSON,
 ) -> tuple[Path, Path]:
-    report = build_methodology_replication_report(
-        specs_path,
-        kss_replication_validation_path=kss_replication_validation_path,
-    )
+    report = build_methodology_replication_report(specs_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "methodology_replication_report.json"
     md_path = output_dir / "methodology_replication_report.md"
@@ -609,46 +598,17 @@ def _placeholder_constituent(fields: list[str]) -> dict[str, object]:
     return {field: "" if field == "security_code" else None for field in fields}
 
 
-def _load_kss_full_replication_status(path: Path) -> dict[str, object]:
-    if not path.exists():
-        return {"proven": False, "path": path.as_posix()}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, Mapping):
-            raise ValueError("validation artifact payload must be a mapping")
-        result = _mapping(payload.get("result"))
-        if not result:
-            raise ValueError("validation artifact result must be a mapping")
-    except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
-        return {
-            "proven": False,
-            "path": path.as_posix(),
-            "error": f"unusable KSS validation artifact: {exc}",
-        }
-    return {
-        "proven": result.get("index_code") == "FI00.WLT.KSS"
-        and result.get("validation_source_type") == "official_target_weights"
-        and result.get("status") == "passed",
-        "path": path.as_posix(),
-    }
-
-
 def _methodology_replication_item(
     spec: Mapping[str, object],
     support_item: Mapping[str, object],
     ready_specs: Mapping[str, Mapping[str, object]],
-    kss_full_replication: Mapping[str, object],
 ) -> dict[str, object]:
     index_code = str(spec.get("index_code", ""))
-    artifact_proven = index_code == "FI00.WLT.KSS" and bool(kss_full_replication.get("proven"))
     methodology = str(support_item.get("methodology", ""))
     full_replication_blockers = [
         "constituent universe and bucket selection are supplied as explicit engine inputs",
         "official rebalance target weights are not available for direct comparison",
     ]
-    artifact_error = str(kss_full_replication.get("error", "")).strip()
-    if index_code == "FI00.WLT.KSS" and artifact_error:
-        full_replication_blockers.append(artifact_error)
     base = {
         "index_code": index_code,
         "index_name": str(spec.get("index_name", "")),
@@ -681,15 +641,11 @@ def _methodology_replication_item(
         }
     checks = _mapping(result.get("checks"))
     status = "passed" if checks and all(value == "passed" for value in checks.values()) else "failed"
-    proven = artifact_proven and status == "passed"
     return {
         **base,
         "target_weight_replication_status": status,
         "target_weight_checks": dict(checks),
         "target_weight_metrics": dict(_mapping(result.get("metrics"))),
-        "full_methodology_replication_status": "proven" if proven else "not_proven",
-        "full_methodology_replication_evidence": str(kss_full_replication.get("path", "")) if proven else "",
-        "full_methodology_replication_blockers": [] if proven else full_replication_blockers,
         "error": "" if status == "passed" else "target-weight checks failed",
     }
 
@@ -932,10 +888,10 @@ def _capped_pro_rata_weights(
     weights: dict[str, float] = {}
     remaining_weight = total_weight
     while remaining:
-        market_cap_total = sum(remaining.values())
-        if market_cap_total <= 0:
+        metric_total = sum(remaining.values())
+        if metric_total <= 0:
             raise ValueError(f"{metric} must be positive for weighted constituents")
-        proposed = {code: remaining_weight * metric_value / market_cap_total for code, metric_value in remaining.items()}
+        proposed = {code: remaining_weight * metric_value / metric_total for code, metric_value in remaining.items()}
         if cap is None:
             weights.update(proposed)
             break

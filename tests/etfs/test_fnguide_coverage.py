@@ -1,4 +1,4 @@
-import json
+﻿import json
 from pathlib import Path
 
 from etfs.fnguide.coverage import build_coverage_records, write_fnguide_coverage
@@ -10,7 +10,7 @@ def _requirement_item(**overrides):
         "name": "SAMPLE ETF",
         "index_name": "FnGuide Sample Index",
         "methodology_status": "available",
-        "methodology_file": "etfs/raw/methodologies/111111.pdf",
+        "methodology_file": "etfs/output/methodologies/111111.pdf",
         "source_url": "https://example.com/sample.pdf",
         "family": "keyword_theme",
         "rebalance_frequency": "semiannual",
@@ -73,3 +73,4 @@ def test_write_fnguide_coverage_uses_simple_fnguide_file_names(tmp_path: Path) -
     assert payload["provider"] == "fnguide"
     assert payload["count"] == 1
     assert "FnGuide first-pass coverage" in md_path.read_text(encoding="utf-8")
+

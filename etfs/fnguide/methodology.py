@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, unquote, urljoin, urlparse
 import httpx
 
 from etfs import paths
+from etfs.refresh.holdings_refresh import load_refresh_targets_from_ticker_workbook
 from etfs.research import EtfListing, USER_AGENT
 
 
@@ -274,7 +275,13 @@ def download_methodology(
     raw_dir: Path,
     fnindex_catalog: Iterable[FnIndexEntry] = (),
     max_results_per_query: int = 5,
+    force: bool = False,
 ) -> MethodologyDownload:
+    if not force:
+        cached = _cached_download(listing, raw_dir)
+        if cached is not None:
+            return cached
+
     catalog_candidates = build_fnindex_catalog_candidates(listing, fnindex_catalog)
     try:
         search_results = search_candidates(client, listing, max_results_per_query=max_results_per_query)
@@ -359,6 +366,29 @@ def save_pdf(
         provider="fnguide",
         index_name=index_name,
         source_type="methodology_pdf",
+        confidence="high",
+    )
+
+
+def _cached_download(listing: EtfListing, raw_dir: Path) -> MethodologyDownload | None:
+    cached_files = sorted(raw_dir.glob(f"{listing.code}_*.pdf"))
+    if not cached_files:
+        return None
+    path = cached_files[0]
+    content = path.read_bytes()
+    return MethodologyDownload(
+        code=listing.code,
+        name=listing.name,
+        status="downloaded",
+        source_url="",
+        page_url="",
+        file_path=str(path),
+        sha256=hashlib.sha256(content).hexdigest(),
+        bytes=len(content),
+        query="existing_cache",
+        provider="fnguide",
+        index_name="",
+        source_type="methodology_pdf_cache",
         confidence="high",
     )
 
@@ -465,6 +495,13 @@ def load_domestic_sector_list(path: Path) -> list[EtfListing]:
         return [EtfListing(code=row["code"], name=row["name"]) for row in csv.DictReader(handle)]
 
 
+def load_ticker_workbook_list(path: Path, *, visible_only: bool = True) -> list[EtfListing]:
+    return [
+        EtfListing(code=target.etf_code, name=target.etf_name)
+        for target in load_refresh_targets_from_ticker_workbook(path, visible_only=visible_only)
+    ]
+
+
 def write_manifest(downloads: list[MethodologyDownload], output_dir: Path) -> tuple[Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     csv_path = output_dir / "pdfs.csv"
@@ -487,7 +524,10 @@ def write_manifest(downloads: list[MethodologyDownload], output_dir: Path) -> tu
 
 
 def run(args: argparse.Namespace) -> list[MethodologyDownload]:
-    listings = load_domestic_sector_list(Path(args.input))
+    if args.input:
+        listings = load_domestic_sector_list(Path(args.input))
+    else:
+        listings = load_ticker_workbook_list(Path(args.ticker_workbook), visible_only=not bool(args.all_rows))
     if args.max_etfs:
         listings = listings[: args.max_etfs]
     headers = {"User-Agent": USER_AGENT, "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.7"}
@@ -503,6 +543,7 @@ def run(args: argparse.Namespace) -> list[MethodologyDownload]:
                     raw_dir=Path(args.raw_dir),
                     fnindex_catalog=fnindex_catalog,
                     max_results_per_query=args.max_results,
+                    force=bool(args.force),
                 )
             )
             write_manifest(downloads, Path(args.output_dir))
@@ -511,11 +552,14 @@ def run(args: argparse.Namespace) -> list[MethodologyDownload]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Download FnGuide/FnIndex methodology PDFs for ETF listings.")
-    parser.add_argument("--input", default=paths.SECTOR_CSV.as_posix())
+    parser.add_argument("--input", default="", help="Optional CSV with code,name columns. Defaults to ticker workbook.")
+    parser.add_argument("--ticker-workbook", default=paths.REFRESH_TICKER_XLSX.as_posix())
+    parser.add_argument("--all-rows", action="store_true", help="Use every ticker row instead of only visible filtered rows.")
     parser.add_argument("--output-dir", default=paths.FNGUIDE_OUTPUT_DIR.as_posix())
-    parser.add_argument("--raw-dir", default="etfs/raw/methodologies")
+    parser.add_argument("--raw-dir", default=paths.METHODOLOGY_PDF_DIR.as_posix())
     parser.add_argument("--max-etfs", type=int, default=0)
     parser.add_argument("--max-results", type=int, default=0, help="DuckDuckGo fallback results per query. 0 disables search fallback.")
+    parser.add_argument("--force", action="store_true", help="Redownload PDFs even when a cached file exists for a ticker.")
     parser.add_argument("--timeout", type=float, default=20.0)
     return parser
 

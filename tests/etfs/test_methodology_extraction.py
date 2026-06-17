@@ -39,7 +39,7 @@ def _top2_rule_item(**overrides):
         "status": "downloaded",
         "source_url": "https://example.com/top2.pdf",
         "page_url": "https://www.fnindex.co.kr/overview/detail/I/FI00.WLT.KSS",
-        "file_path": "etfs/raw/methodologies/0167A0.pdf",
+        "file_path": "etfs/output/methodologies/0167A0.pdf",
         "sha256": "abc123",
         "pdf_page_count": 20,
         "rules": {

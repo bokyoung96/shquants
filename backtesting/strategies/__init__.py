@@ -8,6 +8,7 @@ from .rrg_sector_rotation import (
     RrgSectorRotationPrune90,
 )
 from .mfbt import Mfbt
+from .signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
 from .trend_rank import TrendRank
 from .registry import build_strategy, list_strategies, register_strategy
 
@@ -19,6 +20,8 @@ __all__ = (
     "RrgSectorRotationOpRrgEx10K2",
     "RrgSectorRotationOpRrgEx10K1",
     "Mfbt",
+    "SignalEventRotation",
+    "SignalEventRotationSelected",
     "TrendRank",
     "RegisteredStrategy",
     "build_strategy",

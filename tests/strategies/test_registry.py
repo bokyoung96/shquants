@@ -23,6 +23,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
         RrgSectorRotationOpRrgK2,
         RrgSectorRotationPrune90,
     )
+    from backtesting.strategies.signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
@@ -35,6 +36,8 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert RrgSectorRotationOpRrgK1.__name__ == "RrgSectorRotationOpRrgK1"
     assert RrgSectorRotationOpRrgEx10K2.__name__ == "RrgSectorRotationOpRrgEx10K2"
     assert RrgSectorRotationOpRrgEx10K1.__name__ == "RrgSectorRotationOpRrgEx10K1"
+    assert SignalEventRotation.__name__ == "SignalEventRotation"
+    assert SignalEventRotationSelected.__name__ == "SignalEventRotationSelected"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -52,6 +55,8 @@ def test_registry_lists_default_strategies() -> None:
     assert "rrg_sector_rotation_op_rrg_k1" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k2" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k1" in strategies
+    assert "signal_event_rotation" in strategies
+    assert "signal_event_rotation_selected" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -96,6 +101,8 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "rrg_sector_rotation_op_rrg_k1",
         "rrg_sector_rotation_op_rrg_ex10_k2",
         "rrg_sector_rotation_op_rrg_ex10_k1",
+        "signal_event_rotation",
+        "signal_event_rotation_selected",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
     assert "rrg-fwd-flow1-ls" not in strategies

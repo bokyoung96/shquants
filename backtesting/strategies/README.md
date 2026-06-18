@@ -20,6 +20,8 @@ logic:
 - `rrg_sector_rotation_op_rrg_k1`: price RRG confirmed by OP RRG, compressed to one long leader and one short leader per active sector.
 - `rrg_sector_rotation_op_rrg_ex10_k2`: OP RRG K2 with all BM-weight-above-10% names excluded from OP RRG calculation.
 - `rrg_sector_rotation_op_rrg_ex10_k1`: OP RRG K1 with all BM-weight-above-10% names excluded from OP RRG calculation.
+- `signal_event_rotation`: KOSPI200 OP-consensus signal events with sector price/OP RRG confirmation, flow gates, and staged participation.
+- `signal_event_rotation_selected`: selected 500-candidate signal-event variant, fixed to OP12-proxy acceleration, retail-contra confirmation, K2 compression, and 0.3 gross short.
 
 Each strategy entry below follows the same schema:
 
@@ -158,6 +160,23 @@ should use the current `id` values.
 - `construction`: same per-sector leader compression as the matching base variant.
 - `use`: test whether mega-cap OP consensus is distorting the OP RRG denominator. The 2026-06-18 48-variant grid suggests this exclusion is mostly diagnostic rather than a preferred production path, because the main qavg ex10pct variants gave up Sharpe and return versus the base OP RRG.
 
+### `signal_event_rotation`
+
+- `profile`: KOSPI200 signal-event alpha sleeve for index-aware alpha research.
+- `data`: adjusted close, KOSPI200 benchmark and membership, WICS big sector, market cap/float market cap, OP/EPS forward estimates, and foreign/institution/retail flow.
+- `signal`: stock OP/EPS revision score gated by sector price RRG and sector OP RRG state. A position starts only after a discrete event such as revision cross-up, revision acceleration, sector turn, 252-day high, or moving-average reclaim.
+- `flow`: optional confirmation from smart money, foreign, institution, or retail-contra flow normalized by market cap.
+- `construction`: rank-weighted long sleeve with one/two/three leaders per active sector or breadth mode. Long/short risk modes are fixed coarse gross-short levels rather than fitted thresholds.
+- `participation`: new long events ramp over fixed steps, so the strategy behaves like a band-trading entry rather than a same-day all-in signal.
+- `use`: selected production surface for the 500-candidate signal-event sweep in `scripts/run_signal_event_rotation_grid.py`.
+
+### `signal_event_rotation_selected`
+
+- `profile`: fixed selected variant from the 2026-06-18 500-candidate sweep.
+- `parameters`: `score_mode=op12`, `event_mode=accel`, `flow_gate=retail_contra`, `construction_mode=k2`, `risk_mode=ls03`.
+- `result`: 2020-01-01..2026-05-11 weekly next-open sweep showed 79.70% CAGR, -28.93% MDD, 2.00 Sharpe, 64.94% benchmark monthly win rate, 24.38% average turnover, and 6.3 average names.
+- `use`: default registered strategy when a single production candidate is needed instead of the broad research surface.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless
@@ -181,6 +200,8 @@ a preset overrides schedule or fill mode:
 - `rrg_sector_rotation_op_rrg_k1`: `weekly`, `next_open`
 - `rrg_sector_rotation_op_rrg_ex10_k2`: `weekly`, `next_open`
 - `rrg_sector_rotation_op_rrg_ex10_k1`: `weekly`, `next_open`
+- `signal_event_rotation`: `weekly`, `next_open`
+- `signal_event_rotation_selected`: `weekly`, `next_open`
 
 ## Screening Notes
 

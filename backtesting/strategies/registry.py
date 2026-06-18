@@ -9,7 +9,14 @@ from .benchmark_tilt import BenchmarkTilt
 from .earnings_revision import EarningsRevision
 from .mfbt import Mfbt
 from .revision_signal import RevisionSignal
-from .rrg_sector_rotation import RrgSectorRotation
+from .rrg_sector_rotation import (
+    RrgSectorRotation,
+    RrgSectorRotationOpRrgEx10K1,
+    RrgSectorRotationOpRrgEx10K2,
+    RrgSectorRotationOpRrgK1,
+    RrgSectorRotationOpRrgK2,
+    RrgSectorRotationPrune90,
+)
 from .trend_rank import TrendRank
 
 
@@ -46,3 +53,8 @@ register_strategy("mfbt", Mfbt)
 register_strategy("benchmark_overlay", BenchmarkOverlay)
 register_strategy("benchmark_tilt", BenchmarkTilt)
 register_strategy("rrg_sector_rotation", RrgSectorRotation)
+register_strategy("rrg_sector_rotation_prune90", RrgSectorRotationPrune90)
+register_strategy("rrg_sector_rotation_op_rrg_k2", RrgSectorRotationOpRrgK2)
+register_strategy("rrg_sector_rotation_op_rrg_k1", RrgSectorRotationOpRrgK1)
+register_strategy("rrg_sector_rotation_op_rrg_ex10_k2", RrgSectorRotationOpRrgEx10K2)
+register_strategy("rrg_sector_rotation_op_rrg_ex10_k1", RrgSectorRotationOpRrgEx10K1)

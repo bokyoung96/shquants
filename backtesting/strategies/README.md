@@ -15,6 +15,11 @@ logic:
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
 - `rrg_sector_rotation`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
+- `rrg_sector_rotation_prune90`: RRG sector rotation with sector-preserving small-position pruning.
+- `rrg_sector_rotation_op_rrg_k2`: price RRG confirmed by OP RRG, compressed to two long leaders and one short leader per active sector.
+- `rrg_sector_rotation_op_rrg_k1`: price RRG confirmed by OP RRG, compressed to one long leader and one short leader per active sector.
+- `rrg_sector_rotation_op_rrg_ex10_k2`: OP RRG K2 with all BM-weight-above-10% names excluded from OP RRG calculation.
+- `rrg_sector_rotation_op_rrg_ex10_k1`: OP RRG K1 with all BM-weight-above-10% names excluded from OP RRG calculation.
 
 Each strategy entry below follows the same schema:
 
@@ -118,6 +123,41 @@ should use the current `id` values.
 - `exposure`: default `gross_long=1.0` and `gross_short=0.5`; neither long nor short sleeve is force-filled.
 - `use`: selected RRG candidate after validation.
 
+### `rrg_sector_rotation_prune90`
+
+- `profile`: concentrated long plus weak-hedge long-short stock strategy.
+- `data`: same as `rrg_sector_rotation`.
+- `signal`: same RRG sector gate and OP revision confirmation as `rrg_sector_rotation`.
+- `construction`: first builds the OP-rank long/short portfolio, compresses each active sector to at most two long names and one short name, then prunes small positions by side while preserving sector exposure. Long and short books each keep the names needed to explain 90% of absolute side exposure, always keep at least one name per active sector/side, and softly cap total names at 20 by removing the smallest non-protected positions.
+- `weighting`: removed weights are redistributed within the same sector and same side, so sector rotation exposure is preserved while small operationally noisy positions are removed.
+- `use`: personal-account variant of `rrg_sector_rotation` when the baseline has too many small positions but sector pinpoint concentration should be avoided.
+
+### `rrg_sector_rotation_op_rrg_k2`
+
+- `profile`: aggressive long plus weak-hedge long-short stock strategy.
+- `data`: same price/sector/K200/market-cap inputs as `rrg_sector_rotation`, plus `op_fwd_12m` for OP RRG state.
+- `price RRG`: WI26 sector relative price versus KOSPI200, classified with 126D relative strength and 42D/21D relative momentum.
+- `OP RRG`: WI26 sector 12M forward OP share versus total KOSPI200 12M forward OP, classified with the same RRG state logic. Non-positive sector or market OP leaves that sector `Unclassified` for that date.
+- `long sleeve`: price RRG state in `Leading`, `Improving`, or `Weakening`; OP RRG state in `Leading` or `Improving`; and stock qavg OP revision positive.
+- `short sleeve`: price RRG state `Lagging`; OP RRG state `Lagging` or `Weakening`; and stock qavg OP revision negative.
+- `construction`: builds OP-rank long/short weights and then preserves active sector exposure while keeping up to two long OP leaders and one short OP leader per active sector.
+- `use`: alpha-forward RRG variant when OP cycle confirmation is preferred over the simpler sector OP sign gate.
+
+### `rrg_sector_rotation_op_rrg_k1`
+
+- `profile`: more concentrated version of `rrg_sector_rotation_op_rrg_k2`.
+- `data`, `price RRG`, `OP RRG`, and sleeve gates`: same as `rrg_sector_rotation_op_rrg_k2`.
+- `construction`: preserves active sector exposure while keeping one long OP leader and one short OP leader per active sector.
+- `use`: concentrated research variant for smaller personal-account name count. It should be evaluated with drawdown sensitivity because single-name concentration is meaningfully higher than k2.
+
+### `rrg_sector_rotation_op_rrg_ex10_k2` / `rrg_sector_rotation_op_rrg_ex10_k1`
+
+- `profile`: diagnostic variants of `rrg_sector_rotation_op_rrg_k2` and `rrg_sector_rotation_op_rrg_k1`.
+- `data`: same as the base OP RRG variants, plus daily KOSPI200 benchmark weights.
+- `OP RRG exclusion`: before computing sector OP share and total market OP, every stock whose daily BM weight is greater than 10% is masked out. This excludes all such high-index-weight names date by date, not only Samsung Electronics.
+- `construction`: same per-sector leader compression as the matching base variant.
+- `use`: test whether mega-cap OP consensus is distorting the OP RRG denominator. The 2026-06-18 48-variant grid suggests this exclusion is mostly diagnostic rather than a preferred production path, because the main qavg ex10pct variants gave up Sharpe and return versus the base OP RRG.
+
 ## Dashboard Defaults
 
 The dashboard launches all active strategies with one shared global config unless
@@ -136,6 +176,11 @@ a preset overrides schedule or fill mode:
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
 - `rrg_sector_rotation`: `weekly`, `next_open`
+- `rrg_sector_rotation_prune90`: `weekly`, `next_open`
+- `rrg_sector_rotation_op_rrg_k2`: `weekly`, `next_open`
+- `rrg_sector_rotation_op_rrg_k1`: `weekly`, `next_open`
+- `rrg_sector_rotation_op_rrg_ex10_k2`: `weekly`, `next_open`
+- `rrg_sector_rotation_op_rrg_ex10_k1`: `weekly`, `next_open`
 
 ## Screening Notes
 

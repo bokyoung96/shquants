@@ -15,7 +15,14 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.earnings_revision import EarningsRevision
     from backtesting.strategies.mfbt import Mfbt
     from backtesting.strategies.revision_signal import RevisionSignal
-    from backtesting.strategies.rrg_sector_rotation import RrgSectorRotation
+    from backtesting.strategies.rrg_sector_rotation import (
+        RrgSectorRotation,
+        RrgSectorRotationOpRrgEx10K1,
+        RrgSectorRotationOpRrgEx10K2,
+        RrgSectorRotationOpRrgK1,
+        RrgSectorRotationOpRrgK2,
+        RrgSectorRotationPrune90,
+    )
 
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
@@ -23,6 +30,11 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert Mfbt.__name__ == "Mfbt"
     assert RevisionSignal.__name__ == "RevisionSignal"
     assert RrgSectorRotation.__name__ == "RrgSectorRotation"
+    assert RrgSectorRotationPrune90.__name__ == "RrgSectorRotationPrune90"
+    assert RrgSectorRotationOpRrgK2.__name__ == "RrgSectorRotationOpRrgK2"
+    assert RrgSectorRotationOpRrgK1.__name__ == "RrgSectorRotationOpRrgK1"
+    assert RrgSectorRotationOpRrgEx10K2.__name__ == "RrgSectorRotationOpRrgEx10K2"
+    assert RrgSectorRotationOpRrgEx10K1.__name__ == "RrgSectorRotationOpRrgEx10K1"
 
 
 def test_registry_lists_default_strategies() -> None:
@@ -35,6 +47,11 @@ def test_registry_lists_default_strategies() -> None:
     assert "benchmark_overlay" in strategies
     assert "mfbt" in strategies
     assert "rrg_sector_rotation" in strategies
+    assert "rrg_sector_rotation_prune90" in strategies
+    assert "rrg_sector_rotation_op_rrg_k2" in strategies
+    assert "rrg_sector_rotation_op_rrg_k1" in strategies
+    assert "rrg_sector_rotation_op_rrg_ex10_k2" in strategies
+    assert "rrg_sector_rotation_op_rrg_ex10_k1" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -74,6 +91,11 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "benchmark_tilt",
         "mfbt",
         "rrg_sector_rotation",
+        "rrg_sector_rotation_prune90",
+        "rrg_sector_rotation_op_rrg_k2",
+        "rrg_sector_rotation_op_rrg_k1",
+        "rrg_sector_rotation_op_rrg_ex10_k2",
+        "rrg_sector_rotation_op_rrg_ex10_k1",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
     assert "rrg-fwd-flow1-ls" not in strategies
@@ -253,6 +275,137 @@ def test_rrg_sector_rotation_quantile_thresholds_and_caps_reduce_candidates(
     assert set(last[last.lt(0.0)].index) == {"S1"}
     assert last[last.gt(0.0)].sum() == pytest.approx(1.0)
     assert last[last.lt(0.0)].sum() == pytest.approx(-0.5)
+
+
+def test_rrg_sector_rotation_prune90_preserves_sector_exposure_while_reducing_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=60, freq="D")
+    columns = ["L1", "L2", "L3", "L4", "S1", "S2"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame(
+        {"L1": "Long", "L2": "Long", "L3": "Long", "L4": "Long", "S1": "Short", "S2": "Short"},
+        index=index,
+    )
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    state = pd.DataFrame({"Long": "Leading", "Short": "Lagging"}, index=index)
+    stock_op = pd.DataFrame(
+        {"L1": 0.50, "L2": 0.30, "L3": 0.10, "L4": 0.02, "S1": -0.60, "S2": -0.04},
+        index=index,
+    )
+    sector_op = pd.DataFrame({"Long": 0.25, "Short": -0.25}, index=index)
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (state, state.eq("Leading"), state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+    monkeypatch.setattr(module, "_build_sector_op_revision", lambda **_: sector_op)
+
+    raw = build_strategy("rrg_sector_rotation", gross_short=0.5).build_weights(market).iloc[-1]
+    pruned = build_strategy("rrg_sector_rotation_prune90", coverage=0.66, gross_short=0.5).build_weights(market).iloc[-1]
+
+    assert set(raw[raw.gt(0.0)].index) == {"L1", "L2", "L3", "L4"}
+    assert set(pruned[pruned.gt(0.0)].index) == {"L1", "L2"}
+    assert set(pruned[pruned.lt(0.0)].index) == {"S1"}
+    assert pruned[pruned.gt(0.0)].sum() == pytest.approx(raw[raw.gt(0.0)].sum())
+    assert pruned[pruned.lt(0.0)].sum() == pytest.approx(raw[raw.lt(0.0)].sum())
+
+
+def test_rrg_sector_rotation_op_rrg_variants_confirm_price_rrg_with_op_rrg(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=80, freq="D")
+    columns = ["L1", "L2", "L3", "X1", "S1", "S2"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame(
+        {"L1": "Long", "L2": "Long", "L3": "Long", "X1": "Excluded", "S1": "Short", "S2": "Short"},
+        index=index,
+    )
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+            "op_fwd_12m": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    price_state = pd.DataFrame({"Long": "Leading", "Excluded": "Leading", "Short": "Lagging"}, index=index)
+    op_state = pd.DataFrame({"Long": "Improving", "Excluded": "Lagging", "Short": "Weakening"}, index=index)
+    stock_op = pd.DataFrame(
+        {"L1": 0.50, "L2": 0.30, "L3": 0.10, "X1": 0.90, "S1": -0.60, "S2": -0.04},
+        index=index,
+    )
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (price_state, price_state.eq("Leading"), price_state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_op_rrg_state", lambda **_: op_state)
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+
+    k2 = build_strategy("rrg_sector_rotation_op_rrg_k2", gross_short=0.5).build_weights(market).iloc[-1]
+    k1 = build_strategy("rrg_sector_rotation_op_rrg_k1", gross_short=0.5).build_weights(market).iloc[-1]
+
+    assert set(k2[k2.gt(0.0)].index) == {"L1", "L2"}
+    assert set(k2[k2.lt(0.0)].index) == {"S1"}
+    assert set(k1[k1.gt(0.0)].index) == {"L1"}
+    assert set(k1[k1.lt(0.0)].index) == {"S1"}
+    assert "X1" not in set(k2[k2.ne(0.0)].index)
+
+
+def test_rrg_op_rrg_excludes_large_benchmark_weight_names_from_op_share() -> None:
+    from backtesting.strategies.rrg_sector_rotation import _exclude_op_by_benchmark_weight
+
+    index = pd.date_range("2024-01-02", periods=2, freq="D")
+    columns = ["BIG", "MID", "SMALL"]
+    op = pd.DataFrame(
+        [[100.0, 50.0, 25.0], [110.0, 55.0, 30.0]],
+        index=index,
+        columns=columns,
+    )
+    bm_weights = pd.DataFrame(
+        [[0.11, 0.09, 0.01], [0.08, 0.12, 0.01]],
+        index=index,
+        columns=columns,
+    )
+
+    filtered = _exclude_op_by_benchmark_weight(op=op, benchmark_weights=bm_weights, threshold=0.10)
+
+    assert pd.isna(filtered.loc[index[0], "BIG"])
+    assert filtered.loc[index[0], "MID"] == pytest.approx(50.0)
+    assert filtered.loc[index[0], "SMALL"] == pytest.approx(25.0)
+    assert filtered.loc[index[1], "BIG"] == pytest.approx(110.0)
+    assert pd.isna(filtered.loc[index[1], "MID"])
+    assert filtered.loc[index[1], "SMALL"] == pytest.approx(30.0)
 
 
 @pytest.mark.parametrize(

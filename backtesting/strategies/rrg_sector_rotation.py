@@ -182,6 +182,26 @@ class RrgSectorRotationOpRrgEx10K1(RrgSectorRotationOpRrg):
 
 
 @dataclass(slots=True)
+class RrgSectorRotationOpRrgQavgAccelX128(RrgSectorRotationOpRrg):
+    """Selected RRG-improvement path from the 5,000-candidate overlay sweep."""
+
+    long_per_sector: int = 2
+    short_per_sector: int = 1
+    overlay_scale: float = 1.28
+
+    def __post_init__(self) -> None:
+        RrgSectorRotationOpRrg.__post_init__(self)
+        validate_positive("overlay_scale", self.overlay_scale)
+        self.construction_rule = _RrgOpRrgAccelerationScaledWeight(
+            gross_long=self.gross_long,
+            gross_short=self.gross_short,
+            long_per_sector=self.long_per_sector,
+            short_per_sector=self.short_per_sector,
+            scale=self.overlay_scale,
+        )
+
+
+@dataclass(slots=True)
 class _RrgLongShortRankProportionalWeight:
     gross_long: float = 1.0
     gross_short: float = 0.5
@@ -404,6 +424,50 @@ class _RrgOpRrgSectorCompressedWeight:
                 **raw.meta,
                 "sector_long_per_sector": self.long_per_sector,
                 "sector_short_per_sector": self.short_per_sector,
+            },
+        )
+
+
+@dataclass(slots=True)
+class _RrgOpRrgAccelerationScaledWeight:
+    gross_long: float = 1.0
+    gross_short: float = 0.5
+    long_per_sector: int = 2
+    short_per_sector: int = 1
+    scale: float = 1.28
+
+    def __post_init__(self) -> None:
+        if self.gross_long < 0.0:
+            raise ValueError("gross_long must be non-negative")
+        if self.gross_short < 0.0:
+            raise ValueError("gross_short must be non-negative")
+        _validate_optional_positive_int("long_per_sector", self.long_per_sector)
+        _validate_optional_positive_int("short_per_sector", self.short_per_sector)
+        validate_positive("scale", self.scale)
+
+    def build(self, bundle: SignalBundle) -> ConstructionResult:
+        base = _RrgOpRrgSectorCompressedWeight(
+            gross_long=self.gross_long,
+            gross_short=self.gross_short,
+            long_per_sector=self.long_per_sector,
+            short_per_sector=self.short_per_sector,
+        ).build(bundle)
+        alpha = bundle.alpha.reindex(index=base.base_target_weights.index, columns=base.base_target_weights.columns).astype(float)
+        short_alpha = _required_frame(bundle, "short_alpha").reindex(index=base.base_target_weights.index, columns=base.base_target_weights.columns).astype(float)
+        long_accel = alpha.gt(alpha.shift(20))
+        short_accel = short_alpha.gt(short_alpha.shift(20))
+        weights = base.base_target_weights.mul(float(self.scale))
+        weights = weights.where((weights.gt(0.0) & long_accel) | (weights.lt(0.0) & short_accel), 0.0)
+        selected = weights.ne(0.0)
+        return ConstructionResult(
+            base_target_weights=weights,
+            selection_mask=selected,
+            group_long_budget=base.group_long_budget,
+            group_short_budget=base.group_short_budget,
+            meta={
+                **base.meta,
+                "acceleration_overlay": "qavg",
+                "overlay_scale": self.scale,
             },
         )
 

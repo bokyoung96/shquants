@@ -21,6 +21,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
         RrgSectorRotationOpRrgEx10K2,
         RrgSectorRotationOpRrgK1,
         RrgSectorRotationOpRrgK2,
+        RrgSectorRotationOpRrgQavgAccelX128,
         RrgSectorRotationPrune90,
     )
     from backtesting.strategies.signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
@@ -36,6 +37,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert RrgSectorRotationOpRrgK1.__name__ == "RrgSectorRotationOpRrgK1"
     assert RrgSectorRotationOpRrgEx10K2.__name__ == "RrgSectorRotationOpRrgEx10K2"
     assert RrgSectorRotationOpRrgEx10K1.__name__ == "RrgSectorRotationOpRrgEx10K1"
+    assert RrgSectorRotationOpRrgQavgAccelX128.__name__ == "RrgSectorRotationOpRrgQavgAccelX128"
     assert SignalEventRotation.__name__ == "SignalEventRotation"
     assert SignalEventRotationSelected.__name__ == "SignalEventRotationSelected"
 
@@ -55,6 +57,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "rrg_sector_rotation_op_rrg_k1" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k2" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k1" in strategies
+    assert "rrg_sector_rotation_op_rrg_qavg_accel_x128" in strategies
     assert "signal_event_rotation" in strategies
     assert "signal_event_rotation_selected" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
@@ -101,6 +104,7 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "rrg_sector_rotation_op_rrg_k1",
         "rrg_sector_rotation_op_rrg_ex10_k2",
         "rrg_sector_rotation_op_rrg_ex10_k1",
+        "rrg_sector_rotation_op_rrg_qavg_accel_x128",
         "signal_event_rotation",
         "signal_event_rotation_selected",
     }
@@ -387,6 +391,51 @@ def test_rrg_sector_rotation_op_rrg_variants_confirm_price_rrg_with_op_rrg(
     assert set(k1[k1.gt(0.0)].index) == {"L1"}
     assert set(k1[k1.lt(0.0)].index) == {"S1"}
     assert "X1" not in set(k2[k2.ne(0.0)].index)
+
+
+def test_rrg_selected_acceleration_overlay_scales_only_accelerating_positions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=80, freq="D")
+    columns = ["L1", "L2", "S1"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame({"L1": "Long", "L2": "Long", "S1": "Short"}, index=index)
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd": empty,
+            "op_fwd_12m": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    price_state = pd.DataFrame({"Long": "Leading", "Short": "Lagging"}, index=index)
+    op_state = pd.DataFrame({"Long": "Improving", "Short": "Weakening"}, index=index)
+    stock_op = pd.DataFrame({"L1": 0.20, "L2": 0.40, "S1": -0.20}, index=index)
+    stock_op.iloc[-1] = {"L1": 0.60, "L2": 0.30, "S1": -0.60}
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (price_state, price_state.eq("Leading"), price_state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_op_rrg_state", lambda **_: op_state)
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+
+    weights = build_strategy("rrg_sector_rotation_op_rrg_qavg_accel_x128").build_weights(market).iloc[-1]
+
+    assert weights["L1"] == pytest.approx(1.28 * 2.0 / 3.0)
+    assert weights["L2"] == pytest.approx(0.0)
+    assert weights["S1"] == pytest.approx(-1.28 * 0.5)
 
 
 def test_rrg_op_rrg_excludes_large_benchmark_weight_names_from_op_share() -> None:

@@ -15,6 +15,7 @@ from .rrg_sector_rotation import (
     RrgSectorRotationOpRrgEx10K2,
     RrgSectorRotationOpRrgK1,
     RrgSectorRotationOpRrgK2,
+    RrgSectorRotationOpRrgQavgAccelX128,
     RrgSectorRotationPrune90,
 )
 from .signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
@@ -59,5 +60,6 @@ register_strategy("rrg_sector_rotation_op_rrg_k2", RrgSectorRotationOpRrgK2)
 register_strategy("rrg_sector_rotation_op_rrg_k1", RrgSectorRotationOpRrgK1)
 register_strategy("rrg_sector_rotation_op_rrg_ex10_k2", RrgSectorRotationOpRrgEx10K2)
 register_strategy("rrg_sector_rotation_op_rrg_ex10_k1", RrgSectorRotationOpRrgEx10K1)
+register_strategy("rrg_sector_rotation_op_rrg_qavg_accel_x128", RrgSectorRotationOpRrgQavgAccelX128)
 register_strategy("signal_event_rotation", SignalEventRotation)
 register_strategy("signal_event_rotation_selected", SignalEventRotationSelected)

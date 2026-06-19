@@ -21,6 +21,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
         RrgSectorRotationOpRrgEx10K2,
         RrgSectorRotationOpRrgK1,
         RrgSectorRotationOpRrgK2,
+        RrgSectorRotationOpRrgMonthly1M,
         RrgSectorRotationOpRrgQavgAccelX128,
         RrgSectorRotationPrune90,
     )
@@ -34,6 +35,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert RrgSectorRotation.__name__ == "RrgSectorRotation"
     assert RrgSectorRotationPrune90.__name__ == "RrgSectorRotationPrune90"
     assert RrgSectorRotationOpRrgK2.__name__ == "RrgSectorRotationOpRrgK2"
+    assert RrgSectorRotationOpRrgMonthly1M.__name__ == "RrgSectorRotationOpRrgMonthly1M"
     assert RrgSectorRotationOpRrgK1.__name__ == "RrgSectorRotationOpRrgK1"
     assert RrgSectorRotationOpRrgEx10K2.__name__ == "RrgSectorRotationOpRrgEx10K2"
     assert RrgSectorRotationOpRrgEx10K1.__name__ == "RrgSectorRotationOpRrgEx10K1"
@@ -54,6 +56,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "rrg_sector_rotation" in strategies
     assert "rrg_sector_rotation_prune90" in strategies
     assert "rrg_sector_rotation_op_rrg_k2" in strategies
+    assert "op_rrg_strat" in strategies
     assert "rrg_sector_rotation_op_rrg_k1" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k2" in strategies
     assert "rrg_sector_rotation_op_rrg_ex10_k1" in strategies
@@ -101,6 +104,7 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "rrg_sector_rotation",
         "rrg_sector_rotation_prune90",
         "rrg_sector_rotation_op_rrg_k2",
+        "op_rrg_strat",
         "rrg_sector_rotation_op_rrg_k1",
         "rrg_sector_rotation_op_rrg_ex10_k2",
         "rrg_sector_rotation_op_rrg_ex10_k1",
@@ -146,7 +150,7 @@ def test_rrg_sector_rotation_ignores_flow_when_op_revision_is_missing(monkeypatc
             "eps_fwd": empty,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
+            "op_fwd_12m": empty,
             "trading_value": pd.DataFrame(1_000_000.0, index=index, columns=columns),
             "foreign_flow": zeros,
             "inst_flow": zeros,
@@ -200,7 +204,7 @@ def test_rrg_sector_rotation_default_parameters_keep_all_confirmed_candidates(
             "benchmark": benchmark,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
+            "op_fwd_12m": empty,
         },
         universe=None,
         benchmark=None,
@@ -254,7 +258,7 @@ def test_rrg_sector_rotation_quantile_thresholds_and_caps_reduce_candidates(
             "benchmark": benchmark,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
+            "op_fwd_12m": empty,
         },
         universe=None,
         benchmark=None,
@@ -313,7 +317,7 @@ def test_rrg_sector_rotation_prune90_preserves_sector_exposure_while_reducing_na
             "benchmark": benchmark,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
+            "op_fwd_12m": empty,
         },
         universe=None,
         benchmark=None,
@@ -365,7 +369,6 @@ def test_rrg_sector_rotation_op_rrg_variants_confirm_price_rrg_with_op_rrg(
             "benchmark": benchmark,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
             "op_fwd_12m": empty,
         },
         universe=None,
@@ -393,6 +396,50 @@ def test_rrg_sector_rotation_op_rrg_variants_confirm_price_rrg_with_op_rrg(
     assert "X1" not in set(k2[k2.ne(0.0)].index)
 
 
+def test_op_rrg_strat_lags_op_signals_by_one_trading_day(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from backtesting.strategies import rrg_sector_rotation as module
+
+    index = pd.date_range("2024-01-02", periods=6, freq="B")
+    columns = ["A"]
+    close = pd.DataFrame({symbol: np.linspace(100.0, 120.0, len(index)) for symbol in columns}, index=index)
+    k200 = pd.DataFrame(True, index=index, columns=columns)
+    sector = pd.DataFrame({"A": "Tech"}, index=index)
+    market_cap = pd.DataFrame(100.0, index=index, columns=columns)
+    benchmark = pd.DataFrame({"IKS200": np.linspace(100.0, 115.0, len(index))}, index=index)
+    empty = pd.DataFrame(np.nan, index=index, columns=columns)
+    market = MarketData(
+        frames={
+            "close": close,
+            "k200_yn": k200,
+            "sector_big": sector,
+            "market_cap": market_cap,
+            "benchmark": benchmark,
+            "op_fwd_q1": empty,
+            "op_fwd_q2": empty,
+            "op_fwd_12m": empty,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    price_state = pd.DataFrame({"Tech": "Leading"}, index=index)
+    op_state = pd.DataFrame({"Tech": "Lagging"}, index=index)
+    op_state.loc[index[2], "Tech"] = "Leading"
+    stock_op = pd.DataFrame(np.nan, index=index, columns=columns)
+    stock_op.loc[index[2], "A"] = 0.50
+
+    monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (price_state, price_state.eq("Leading"), price_state.eq("Lagging")))
+    monkeypatch.setattr(module, "_build_op_rrg_state", lambda **_: op_state)
+    monkeypatch.setattr(module, "_build_stock_op_revision", lambda **_: stock_op)
+
+    weights = build_strategy("op_rrg_strat", gross_short=0.0).build_weights(market)
+
+    assert weights.loc[index[2], "A"] == 0.0
+    assert weights.loc[index[3], "A"] == pytest.approx(1.0)
+
+
 def test_rrg_selected_acceleration_overlay_scales_only_accelerating_positions(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -415,7 +462,6 @@ def test_rrg_selected_acceleration_overlay_scales_only_accelerating_positions(
             "benchmark": benchmark,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
             "op_fwd_12m": empty,
         },
         universe=None,
@@ -493,7 +539,7 @@ def test_rrg_op_revision_uses_prior_based_change() -> None:
     op = pd.DataFrame([prior, prior, current], index=index)
 
     actual = _build_stock_op_revision(
-        frames={"op_fwd_q1": op, "op_fwd_q2": op, "op_fwd": op},
+        frames={"op_fwd_q1": op, "op_fwd_q2": op, "op_fwd_12m": op},
         index=index,
         columns=pd.Index(columns),
         sector=sector,
@@ -505,6 +551,32 @@ def test_rrg_op_revision_uses_prior_based_change() -> None:
     assert last["B"] == pytest.approx(0.20)
     assert pd.isna(last["C"])
     assert last["D"] == pytest.approx(1.0)
+
+
+def test_rrg_op_revision_can_use_month_end_one_month_change() -> None:
+    from backtesting.strategies.rrg_sector_rotation import _build_stock_op_revision
+
+    index = pd.date_range("2024-01-02", "2024-03-05", freq="B")
+    columns = pd.Index(["A"])
+    sector = pd.DataFrame("Tech", index=index, columns=columns)
+    values = pd.Series(100.0, index=index)
+    values.loc["2024-02-15":] = 110.0
+    values.loc["2024-02-29":] = 120.0
+    values.loc["2024-03-01":] = 132.0
+    op = pd.DataFrame({"A": values}, index=index)
+
+    actual = _build_stock_op_revision(
+        frames={"op_fwd_q1": op, "op_fwd_q2": op, "op_fwd_12m": op},
+        index=index,
+        columns=columns,
+        sector=sector,
+        lookback=20,
+        monthly_months=1,
+    )
+
+    assert pd.isna(actual.loc["2024-02-15", "A"])
+    assert actual.loc["2024-02-29", "A"] == pytest.approx(0.20)
+    assert actual.loc["2024-03-05", "A"] == pytest.approx(0.20)
 
 
 def test_rrg_sector_rotation_weights_op_revision_scores_and_keeps_weakening_off_short(
@@ -545,7 +617,7 @@ def test_rrg_sector_rotation_weights_op_revision_scores_and_keeps_weakening_off_
             "eps_fwd": empty,
             "op_fwd_q1": empty,
             "op_fwd_q2": empty,
-            "op_fwd": empty,
+            "op_fwd_12m": empty,
             "trading_value": pd.DataFrame(1_000_000.0, index=index, columns=columns),
             "foreign_flow": zeros,
             "inst_flow": zeros,

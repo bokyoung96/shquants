@@ -14,6 +14,7 @@ logic:
 - `mfbt`: multi-factor backtest scaffold with price, earnings, dividend, and retail-flow signals.
 - `benchmark_overlay`: benchmark-weighted portfolio with a soft active overlay.
 - `benchmark_tilt`: benchmark-weighted portfolio tilted by revision, flow, and trend.
+- `op_rrg_strat`: final OP RRG sector strategy using one-day-lagged month-end one-month OP revisions.
 - `rrg_sector_rotation`: RRG sector rotation with OP revision confirmation and a weak short sleeve.
 - `rrg_sector_rotation_prune90`: RRG sector rotation with sector-preserving small-position pruning.
 - `rrg_sector_rotation_op_rrg_k2`: price RRG confirmed by OP RRG, compressed to two long leaders and one short leader per active sector.
@@ -145,6 +146,15 @@ should use the current `id` values.
 - `construction`: builds OP-rank long/short weights and then preserves active sector exposure while keeping up to two long OP leaders and one short OP leader per active sector.
 - `use`: alpha-forward RRG variant when OP cycle confirmation is preferred over the simpler sector OP sign gate.
 
+### `op_rrg_strat`
+
+- `profile`: final selected OP RRG sector strategy.
+- `class`: `RrgSectorRotationOpRrgMonthly1M`.
+- `data`: same as `rrg_sector_rotation_op_rrg_k2`.
+- `signal`: same price RRG and OP RRG sector gates as `rrg_sector_rotation_op_rrg_k2`, but stock OP revision is computed from month-end OP consensus divided by previous month-end OP consensus minus one, averaged across Q1, Q2, and 12M forward OP. Both OP RRG state and stock OP revision are shifted by one trading day before they can affect target weights, so same-day consensus updates cannot be traded.
+- `construction`: same K2 compression: after OP-rank long/short weights are built across the selected stock pool, each active sector keeps up to two long leaders and one short leader while preserving sector exposure.
+- `use`: preferred RRG production/research candidate after the monthly OP revision and look-ahead checks. It better matches the monthly update cadence of OP consensus than the older 20-trading-day revision proxy.
+
 ### `rrg_sector_rotation_op_rrg_k1`
 
 - `profile`: more concentrated version of `rrg_sector_rotation_op_rrg_k2`.
@@ -183,7 +193,7 @@ The dashboard launches all active strategies with one shared global config unles
 a preset overrides schedule or fill mode:
 
 - `start`: `2020-01-01`
-- `end`: `2026-05-11`
+- `end`: `2026-05-29`
 - `capital`: `100,000,000`
 - `fee`: `0.0002` (2bp)
 - `sell_tax`: `0.0015` (15bp)
@@ -194,6 +204,7 @@ a preset overrides schedule or fill mode:
 - `revision_signal`: use `uv run python -m backtesting.run --preset kospi200_revision_signal`
 - `benchmark_overlay`: `monthly`, `close`
 - `benchmark_tilt`: `monthly`, `close`
+- `op_rrg_strat`: `weekly`, `next_open`
 - `rrg_sector_rotation`: `weekly`, `next_open`
 - `rrg_sector_rotation_prune90`: `weekly`, `next_open`
 - `rrg_sector_rotation_op_rrg_k2`: `weekly`, `next_open`

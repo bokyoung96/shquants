@@ -117,6 +117,8 @@ class RrgSectorRotationOpRrg(ComposableStrategy):
     long_per_sector: int = 2
     short_per_sector: int = 1
     op_rrg_exclude_bm_weight_gt: float | None = None
+    stock_op_revision_months: int | None = None
+    op_signal_lag: int = 1
 
     def __post_init__(self) -> None:
         validate_positive("lookback", self.lookback)
@@ -131,6 +133,8 @@ class RrgSectorRotationOpRrg(ComposableStrategy):
         _validate_optional_positive_int("long_per_sector", self.long_per_sector)
         _validate_optional_positive_int("short_per_sector", self.short_per_sector)
         _validate_optional_quantile("op_rrg_exclude_bm_weight_gt", self.op_rrg_exclude_bm_weight_gt)
+        _validate_optional_positive_int("stock_op_revision_months", self.stock_op_revision_months)
+        _validate_non_negative_int("op_signal_lag", self.op_signal_lag)
         self.signal_producer = _RrgOpRrgSignal(
             lookback=self.lookback,
             rrg_medium_lookback=self.rrg_medium_lookback,
@@ -146,6 +150,8 @@ class RrgSectorRotationOpRrg(ComposableStrategy):
             short_price_states=self.short_price_states,
             short_op_states=self.short_op_states,
             op_rrg_exclude_bm_weight_gt=self.op_rrg_exclude_bm_weight_gt,
+            stock_op_revision_months=self.stock_op_revision_months,
+            op_signal_lag=self.op_signal_lag,
         )
         self.construction_rule = _RrgOpRrgSectorCompressedWeight(
             gross_long=self.gross_long,
@@ -159,6 +165,15 @@ class RrgSectorRotationOpRrg(ComposableStrategy):
 class RrgSectorRotationOpRrgK2(RrgSectorRotationOpRrg):
     long_per_sector: int = 2
     short_per_sector: int = 1
+
+
+@dataclass(slots=True)
+class RrgSectorRotationOpRrgMonthly1M(RrgSectorRotationOpRrg):
+    """Final OP RRG strategy using one-day-lagged month-end stock OP revisions."""
+
+    long_per_sector: int = 2
+    short_per_sector: int = 1
+    stock_op_revision_months: int | None = 1
 
 
 @dataclass(slots=True)
@@ -676,6 +691,11 @@ def _validate_optional_positive_int(name: str, value: int | None) -> None:
         raise ValueError(f"{name} must be positive")
 
 
+def _validate_non_negative_int(name: str, value: int) -> None:
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")
+
+
 def _validate_state_names(name: str, values: tuple[str, ...]) -> None:
     allowed = {"Leading", "Improving", "Weakening", "Lagging", "Unclassified"}
     invalid = sorted(set(values) - allowed)
@@ -718,7 +738,7 @@ class _RrgFwdFlow1Signal:
             DatasetId.QW_MKTCAP_FLT,
             DatasetId.QW_OP_NFQ1,
             DatasetId.QW_OP_NFQ2,
-            DatasetId.QW_OP_NFY1,
+            DatasetId.QW_OP_FWD_12M,
         )
 
     def build(self, market: MarketData) -> SignalBundle:
@@ -820,6 +840,8 @@ class _RrgOpRrgSignal:
     short_price_states: tuple[str, ...] = ("Lagging",)
     short_op_states: tuple[str, ...] = ("Lagging", "Weakening")
     op_rrg_exclude_bm_weight_gt: float | None = None
+    stock_op_revision_months: int | None = None
+    op_signal_lag: int = 1
 
     @property
     def datasets(self) -> tuple[DatasetId, ...]:
@@ -832,7 +854,6 @@ class _RrgOpRrgSignal:
             DatasetId.QW_MKTCAP_FLT,
             DatasetId.QW_OP_NFQ1,
             DatasetId.QW_OP_NFQ2,
-            DatasetId.QW_OP_NFY1,
             DatasetId.QW_OP_FWD_12M,
         )
         if self.op_rrg_exclude_bm_weight_gt is not None:
@@ -887,24 +908,20 @@ class _RrgOpRrgSignal:
             columns=close.columns,
             sector=sector,
             lookback=self.lookback,
+            monthly_months=self.stock_op_revision_months,
         )
+        if self.op_signal_lag:
+            op_state = op_state.shift(self.op_signal_lag)
+            stock_op = stock_op.shift(self.op_signal_lag)
 
         price_by_symbol = _map_sector_state_to_symbols(sector=sector, rrg_state=price_state.reindex(index=close.index))
         op_by_symbol = _map_sector_state_to_symbols(sector=sector, rrg_state=op_state.reindex(index=close.index))
-        long_ok = (
-            price_by_symbol.isin(self.long_price_states)
-            & op_by_symbol.isin(self.long_op_states)
-            & stock_op.gt(0.0)
-            & k200
-        )
-        short_ok = (
-            price_by_symbol.isin(self.short_price_states)
-            & op_by_symbol.isin(self.short_op_states)
-            & stock_op.lt(0.0)
-            & k200
-        )
-        candidate_score = stock_op.where(long_ok & stock_op.gt(0.0))
-        short_candidate_score = stock_op.mul(-1.0).where(short_ok & stock_op.lt(0.0))
+        long_price_ok = price_by_symbol.isin(self.long_price_states) & stock_op.gt(0.0) & k200
+        short_price_ok = price_by_symbol.isin(self.short_price_states) & stock_op.lt(0.0) & k200
+        long_ok = long_price_ok & op_by_symbol.isin(self.long_op_states)
+        short_ok = short_price_ok & op_by_symbol.isin(self.short_op_states)
+        candidate_score = stock_op.where(long_ok)
+        short_candidate_score = stock_op.mul(-1.0).where(short_ok)
 
         return SignalBundle(
             alpha=candidate_score,
@@ -1083,10 +1100,20 @@ def _build_stock_op_revision(
     columns: pd.Index,
     sector: pd.DataFrame,
     lookback: int,
+    monthly_months: int | None = None,
 ) -> pd.DataFrame:
+    if monthly_months is not None:
+        op_delta, _op_count, _op_positive_count = _estimate_family_monthly_delta(
+            frames=frames,
+            keys=("op_fwd_q1", "op_fwd_q2", "op_fwd_12m"),
+            index=index,
+            columns=columns,
+            months=monthly_months,
+        )
+        return op_delta
     op_delta, _op_count, _op_positive_count = _estimate_family_delta(
         frames=frames,
-        keys=("op_fwd_q1", "op_fwd_q2", "op_fwd"),
+        keys=("op_fwd_q1", "op_fwd_q2", "op_fwd_12m"),
         index=index,
         columns=columns,
         sector=sector,
@@ -1163,6 +1190,33 @@ def _estimate_family_delta(
         deltas.append(delta)
         available.append(delta.notna().astype(float))
         positive.append(delta.gt(0.0).astype(float).where(delta.notna(), 0.0))
+
+    delta_sum = sum(frame.fillna(0.0) for frame in deltas)
+    count = sum(frame for frame in available)
+    positive_count = sum(frame for frame in positive)
+    average_delta = delta_sum.divide(count.replace(0.0, np.nan))
+    return average_delta, count, positive_count
+
+
+def _estimate_family_monthly_delta(
+    *,
+    frames: dict[str, pd.DataFrame],
+    keys: tuple[str, ...],
+    index: pd.Index,
+    columns: pd.Index,
+    months: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    deltas: list[pd.DataFrame] = []
+    available: list[pd.DataFrame] = []
+    positive: list[pd.DataFrame] = []
+    for key in keys:
+        estimate = frames[key].reindex(index=index, columns=columns).ffill().astype(float)
+        monthly = estimate.resample("ME").last().ffill()
+        delta = _prior_based_revision(current=monthly, prior=monthly.shift(months))
+        daily_delta = delta.reindex(index, method="ffill")
+        deltas.append(daily_delta)
+        available.append(daily_delta.notna().astype(float))
+        positive.append(daily_delta.gt(0.0).astype(float).where(daily_delta.notna(), 0.0))
 
     delta_sum = sum(frame.fillna(0.0) for frame in deltas)
     count = sum(frame for frame in available)

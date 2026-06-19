@@ -15,6 +15,7 @@ from .rrg_sector_rotation import (
     RrgSectorRotationOpRrgEx10K2,
     RrgSectorRotationOpRrgK1,
     RrgSectorRotationOpRrgK2,
+    RrgSectorRotationOpRrgMonthly1M,
     RrgSectorRotationOpRrgQavgAccelX128,
     RrgSectorRotationPrune90,
 )
@@ -57,6 +58,7 @@ register_strategy("benchmark_tilt", BenchmarkTilt)
 register_strategy("rrg_sector_rotation", RrgSectorRotation)
 register_strategy("rrg_sector_rotation_prune90", RrgSectorRotationPrune90)
 register_strategy("rrg_sector_rotation_op_rrg_k2", RrgSectorRotationOpRrgK2)
+register_strategy("op_rrg_strat", RrgSectorRotationOpRrgMonthly1M)
 register_strategy("rrg_sector_rotation_op_rrg_k1", RrgSectorRotationOpRrgK1)
 register_strategy("rrg_sector_rotation_op_rrg_ex10_k2", RrgSectorRotationOpRrgEx10K2)
 register_strategy("rrg_sector_rotation_op_rrg_ex10_k1", RrgSectorRotationOpRrgEx10K1)

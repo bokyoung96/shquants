@@ -288,6 +288,32 @@ def test_loader_uses_semantic_key_for_op_fwd_12m_data(tmp_path: Path) -> None:
     assert "qw_op_fwd_12m" not in data.frames
 
 
+def test_loader_preserves_daily_op_forward_estimate_changes(tmp_path: Path) -> None:
+    parquet_dir = tmp_path / "parquet"
+    parquet_dir.mkdir()
+    store = ParquetStore(parquet_dir)
+    store.write(
+        "qw_op_fwd_12m",
+        pd.DataFrame(
+            {"005930": [10.0, 20.0]},
+            index=pd.to_datetime(["2024-01-10", "2024-01-31"]),
+        ),
+    )
+
+    loader = DataLoader(DataCatalog.default(), store)
+    data = loader.load(
+        LoadRequest(
+            datasets=[DatasetId.QW_OP_FWD_12M],
+            start="2024-01-10",
+            end="2024-01-31",
+        )
+    )
+
+    frame = data.frames["op_fwd_12m"]
+    assert frame.loc[pd.Timestamp("2024-01-10"), "005930"] == 10.0
+    assert frame.loc[pd.Timestamp("2024-01-31"), "005930"] == 20.0
+
+
 def test_loader_uses_semantic_key_for_dps_ttm_data(tmp_path: Path) -> None:
     parquet_dir = tmp_path / "parquet"
     parquet_dir.mkdir()

@@ -5,6 +5,7 @@ from .rrg_sector_rotation import (
     RrgSectorRotationOpRrgEx10K2,
     RrgSectorRotationOpRrgK1,
     RrgSectorRotationOpRrgK2,
+    RrgSectorRotationOpRrgMonthly1M,
     RrgSectorRotationPrune90,
 )
 from .mfbt import Mfbt
@@ -16,6 +17,7 @@ __all__ = (
     "RrgSectorRotation",
     "RrgSectorRotationPrune90",
     "RrgSectorRotationOpRrgK2",
+    "RrgSectorRotationOpRrgMonthly1M",
     "RrgSectorRotationOpRrgK1",
     "RrgSectorRotationOpRrgEx10K2",
     "RrgSectorRotationOpRrgEx10K1",

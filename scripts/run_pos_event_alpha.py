@@ -40,28 +40,34 @@ class EventStrategySpec:
 
 def build_event_strategy_specs() -> list[EventStrategySpec]:
     specs: list[EventStrategySpec] = []
-    for max_positions in (1, 3, 5):
-        for atr_multiplier in (2.0, 2.5, 3.0):
-            for entry_mode in ("near_high", "breakout"):
-                specs.append(
-                    EventStrategySpec(
-                        name=f"event_{entry_mode}_n{max_positions}_atr{str(atr_multiplier).replace('.', '')}",
-                        params={
-                            "max_positions": max_positions,
-                            "positivity_lookback": 60,
-                            "min_periods": 60,
-                            "high_lookback": 252,
-                            "atr_lookback": 20,
-                            "atr_multiplier": atr_multiplier,
-                            "relative_signal_groups": 3,
-                            "entry_high_ratio": 0.95,
-                            "exit_high_ratio": 0.90,
-                            "replacement_margin": 0.25,
-                            "entry_mode": entry_mode,
-                            "exit_rank_group_count": 2,
-                        },
+    for op_layer in ("base", "op_filter", "op_rank_filter"):
+        for max_positions in (1, 3, 5):
+            for atr_multiplier in (2.0, 2.5, 3.0):
+                for entry_mode in ("near_high", "breakout"):
+                    specs.append(
+                        EventStrategySpec(
+                            name=(
+                                f"event_{op_layer}_{entry_mode}"
+                                f"_n{max_positions}_atr{str(atr_multiplier).replace('.', '')}"
+                            ),
+                            params={
+                                "op_layer": op_layer,
+                                "op_lookback": 60,
+                                "max_positions": max_positions,
+                                "positivity_lookback": 60,
+                                "min_periods": 60,
+                                "high_lookback": 252,
+                                "atr_lookback": 20,
+                                "atr_multiplier": atr_multiplier,
+                                "relative_signal_groups": 3,
+                                "entry_high_ratio": 0.95,
+                                "exit_high_ratio": 0.90,
+                                "replacement_margin": 0.25,
+                                "entry_mode": entry_mode,
+                                "exit_rank_group_count": 2,
+                            },
+                        )
                     )
-                )
     return specs
 
 
@@ -114,18 +120,23 @@ def run_event_alpha_grid(
     close = store.read("qw_adj_c").astype(float)
     high = store.read("qw_adj_h").astype(float)
     low = store.read("qw_adj_l").astype(float)
+    op = store.read("qw_op_fwd_12m").astype(float)
+    sector = store.read("qw_wi_sec_26_big")
     membership = store.read("qw_k200_yn").reindex(index=close.index, columns=close.columns).fillna(False).astype(bool)
     benchmark = store.read("qw_BM")
 
     end_ts = pd.Timestamp(end) if end is not None else close.index.max()
     close = close.loc[warmup_start:end_ts]
-    common_index = close.index.intersection(high.index).intersection(low.index)
-    common_columns = close.columns.intersection(high.columns).intersection(low.columns)
+    common_index = close.index.intersection(high.index).intersection(low.index).intersection(op.index).intersection(sector.index)
+    common_columns = close.columns.intersection(high.columns).intersection(low.columns).intersection(op.columns).intersection(sector.columns)
     close = close.loc[common_index, common_columns]
     high = high.reindex(index=common_index, columns=common_columns)
     low = low.reindex(index=common_index, columns=common_columns)
+    op = op.reindex(index=common_index, columns=common_columns).ffill()
+    sector = sector.reindex(index=common_index, columns=common_columns).ffill()
     membership = membership.reindex(index=common_index, columns=common_columns).fillna(False).astype(bool)
     entry_membership = _entry_membership_window(membership=membership, start=start_ts)
+    op_inputs = _op_layer_inputs(op=op, sector=sector, membership=membership, lookback=60)
 
     stock_returns = close.pct_change(fill_method=None)
     benchmark_returns = _next_day_benchmark_returns(benchmark=benchmark, index=close.index).reindex(close.index)
@@ -134,12 +145,14 @@ def run_event_alpha_grid(
     all_events: list[pd.DataFrame] = []
 
     for spec in specs:
-        config = EventQueueConfig(**spec.params)
+        config = EventQueueConfig(**_event_config_params(spec.params))
+        op_layer = str(spec.params["op_layer"])
         result = build_positivity_event_queue_strategy(
             close=close,
             high=high,
             low=low,
             membership=entry_membership,
+            entry_filter=op_inputs[op_layer],
             config=config,
         )
         strategy_returns = _weighted_next_day_returns(weights=result.weights, stock_returns=stock_returns).loc[start_ts:end_ts]
@@ -194,6 +207,48 @@ def _entry_membership_window(*, membership: pd.DataFrame, start: pd.Timestamp) -
     return eligible
 
 
+def _event_config_params(params: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in params.items() if key not in {"op_layer", "op_lookback"}}
+
+
+def _op_layer_inputs(
+    *,
+    op: pd.DataFrame,
+    sector: pd.DataFrame,
+    membership: pd.DataFrame,
+    lookback: int,
+) -> dict[str, pd.DataFrame]:
+    if lookback <= 0:
+        raise ValueError("lookback must be positive")
+    members = membership.reindex(index=op.index, columns=op.columns).fillna(False).astype(bool)
+    op_momentum = op.astype(float).sub(op.astype(float).shift(lookback)).where(members)
+    op_rank = _sector_percentile_rank(values=op_momentum, sector=sector, membership=members)
+    base = pd.DataFrame(True, index=op.index, columns=op.columns)
+    return {
+        "base": base,
+        "op_filter": op_momentum.gt(0.0).fillna(False),
+        "op_rank_filter": (op_rank.gt(0.5) & op_momentum.gt(0.0)).fillna(False),
+    }
+
+
+def _sector_percentile_rank(
+    *,
+    values: pd.DataFrame,
+    sector: pd.DataFrame,
+    membership: pd.DataFrame,
+) -> pd.DataFrame:
+    ranks = pd.DataFrame(float("nan"), index=values.index, columns=values.columns)
+    sectors = sector.reindex(index=values.index, columns=values.columns)
+    members = membership.reindex(index=values.index, columns=values.columns).fillna(False).astype(bool)
+    for sector_name in pd.unique(sectors.to_numpy().ravel()):
+        if pd.isna(sector_name):
+            continue
+        sector_members = sectors.eq(sector_name) & members
+        sector_values = values.where(sector_members)
+        ranks = ranks.where(~sector_members, sector_values.rank(axis=1, pct=True))
+    return ranks
+
+
 def _warmup_start_for_specs(*, start: pd.Timestamp, specs: list[EventStrategySpec]) -> pd.Timestamp:
     max_lookback = 0
     for spec in specs:
@@ -203,6 +258,7 @@ def _warmup_start_for_specs(*, start: pd.Timestamp, specs: list[EventStrategySpe
             int(params["positivity_lookback"]),
             int(params["high_lookback"]),
             int(params["atr_lookback"]),
+            int(params.get("op_lookback", 0)),
         )
     return start - pd.offsets.BDay(max_lookback + 80)
 

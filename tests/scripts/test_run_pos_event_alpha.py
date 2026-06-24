@@ -8,6 +8,8 @@ import pytest
 import scripts.run_pos_event_alpha as event_alpha
 from scripts.run_pos_event_alpha import (
     _entry_membership_window,
+    _op_layer_inputs,
+    _sector_percentile_rank,
     _warmup_start_for_specs,
     _write_event_outputs,
     build_event_strategy_specs,
@@ -21,6 +23,7 @@ def test_build_event_strategy_specs_covers_queue_size_stop_and_entry_mode_grid()
     assert {spec.params["max_positions"] for spec in specs} == {1, 3, 5}
     assert {spec.params["atr_multiplier"] for spec in specs} == {2.0, 2.5, 3.0}
     assert {spec.params["entry_mode"] for spec in specs} == {"near_high", "breakout"}
+    assert {spec.params["op_layer"] for spec in specs} == {"base", "op_filter", "op_rank_filter"}
     assert len({spec.name for spec in specs}) == len(specs)
 
 
@@ -149,3 +152,46 @@ def test_warmup_start_for_specs_keeps_largest_lookback_plus_buffer() -> None:
     warmup_start = _warmup_start_for_specs(start=pd.Timestamp("2024-01-01"), specs=specs)
 
     assert warmup_start == pd.Timestamp("2024-01-01") - pd.offsets.BDay(332)
+
+
+def test_sector_percentile_rank_ranks_op_momentum_within_sector() -> None:
+    idx = pd.to_datetime(["2024-01-02"])
+    values = pd.DataFrame({"A": [3.0], "B": [1.0], "C": [2.0], "D": [4.0]}, index=idx)
+    sector = pd.DataFrame({"A": ["Tech"], "B": ["Tech"], "C": ["Other"], "D": ["Other"]}, index=idx)
+    membership = pd.DataFrame(True, index=idx, columns=values.columns)
+
+    ranked = _sector_percentile_rank(values=values, sector=sector, membership=membership)
+
+    assert ranked.loc[idx[0], "A"] == 1.0
+    assert ranked.loc[idx[0], "B"] == 0.5
+    assert ranked.loc[idx[0], "D"] == 1.0
+    assert ranked.loc[idx[0], "C"] == 0.5
+
+
+def test_op_layer_inputs_builds_base_filter_and_rank_filter() -> None:
+    idx = pd.bdate_range("2024-01-02", periods=4)
+    op = pd.DataFrame(
+        {
+            "A": [100.0, 100.0, 100.0, 120.0],
+            "B": [100.0, 100.0, 100.0, 90.0],
+            "C": [100.0, 100.0, 100.0, 105.0],
+            "D": [100.0, 100.0, 100.0, 130.0],
+        },
+        index=idx,
+    )
+    sector = pd.DataFrame(
+        [["Tech", "Tech", "Other", "Other"] for _ in idx],
+        index=idx,
+        columns=op.columns,
+    )
+    membership = pd.DataFrame(True, index=idx, columns=op.columns)
+
+    inputs = _op_layer_inputs(op=op, sector=sector, membership=membership, lookback=3)
+
+    assert inputs["base"].loc[idx[-1]].all()
+    assert bool(inputs["op_filter"].loc[idx[-1], "A"]) is True
+    assert bool(inputs["op_filter"].loc[idx[-1], "B"]) is False
+    assert bool(inputs["op_rank_filter"].loc[idx[-1], "A"]) is True
+    assert bool(inputs["op_rank_filter"].loc[idx[-1], "B"]) is False
+    assert bool(inputs["op_rank_filter"].loc[idx[-1], "D"]) is True
+    assert bool(inputs["op_rank_filter"].loc[idx[-1], "C"]) is False

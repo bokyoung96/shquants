@@ -68,6 +68,7 @@ def build_positivity_event_queue_strategy(
     high: pd.DataFrame,
     low: pd.DataFrame,
     membership: pd.DataFrame,
+    entry_filter: pd.DataFrame | None = None,
     score_bonus: pd.DataFrame | None = None,
     config: EventQueueConfig | None = None,
 ) -> PositivityEventQueueResult:
@@ -78,6 +79,7 @@ def build_positivity_event_queue_strategy(
     highs = high.reindex(index=prices.index, columns=prices.columns).astype(float)
     lows = low.reindex(index=prices.index, columns=prices.columns).astype(float)
     members = membership.reindex(index=prices.index, columns=prices.columns).fillna(False).astype(bool)
+    external_entry = _aligned_entry_filter(entry_filter=entry_filter, index=prices.index, columns=prices.columns)
     bonus = _aligned_bonus(score_bonus=score_bonus, index=prices.index, columns=prices.columns)
 
     returns = prices.pct_change(fill_method=None)
@@ -91,7 +93,7 @@ def build_positivity_event_queue_strategy(
     price_event = high_ratio.ge(cfg.entry_high_ratio)
     if cfg.entry_mode == "breakout":
         price_event = high_ratio.ge(1.0)
-    entry_signal = members & pos_rank.ge(rank_cut) & price_event & atr.notna() & prices.notna()
+    entry_signal = members & external_entry & pos_rank.ge(rank_cut) & price_event & atr.notna() & prices.notna()
     score = pos_rank.add(high_ratio.rank(axis=1, pct=True), fill_value=0.0).add(bonus, fill_value=0.0).where(members)
 
     held = pd.Series(False, index=prices.columns)
@@ -281,6 +283,17 @@ def _aligned_bonus(
     if score_bonus is None:
         return pd.DataFrame(0.0, index=index, columns=columns)
     return score_bonus.reindex(index=index, columns=columns).fillna(0.0).astype(float)
+
+
+def _aligned_entry_filter(
+    *,
+    entry_filter: pd.DataFrame | None,
+    index: pd.Index,
+    columns: pd.Index,
+) -> pd.DataFrame:
+    if entry_filter is None:
+        return pd.DataFrame(True, index=index, columns=columns)
+    return entry_filter.reindex(index=index, columns=columns).fillna(False).astype(bool)
 
 
 def _exit_mask(

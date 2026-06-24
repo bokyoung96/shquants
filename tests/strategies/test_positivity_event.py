@@ -95,3 +95,50 @@ def test_event_queue_replaces_weakest_active_name_when_score_margin_is_met() -> 
     assert result.weights.loc[idx[3], "A"] == pytest.approx(0.0)
     assert result.weights.loc[idx[3], "B"] == pytest.approx(1.0)
     assert result.trades["exit_reason"].tolist() == ["replacement"]
+
+
+def test_event_queue_applies_external_entry_filter() -> None:
+    idx = pd.to_datetime(
+        ["2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-08"]
+    )
+    close = pd.DataFrame({"A": [100.0, 102.0, 104.0, 105.0, 106.0]}, index=idx)
+    high = close.add(1.0)
+    low = close.sub(1.0)
+    membership = pd.DataFrame(True, index=idx, columns=close.columns)
+    entry_filter = pd.DataFrame(False, index=idx, columns=close.columns)
+
+    blocked = build_positivity_event_queue_strategy(
+        close=close,
+        high=high,
+        low=low,
+        membership=membership,
+        entry_filter=entry_filter,
+        config=EventQueueConfig(
+            max_positions=1,
+            positivity_lookback=2,
+            min_periods=2,
+            high_lookback=2,
+            atr_lookback=2,
+            relative_signal_groups=1,
+        ),
+    )
+
+    entry_filter.loc[idx[2], "A"] = True
+    allowed = build_positivity_event_queue_strategy(
+        close=close,
+        high=high,
+        low=low,
+        membership=membership,
+        entry_filter=entry_filter,
+        config=EventQueueConfig(
+            max_positions=1,
+            positivity_lookback=2,
+            min_periods=2,
+            high_lookback=2,
+            atr_lookback=2,
+            relative_signal_groups=1,
+        ),
+    )
+
+    assert blocked.entry_events.empty
+    assert allowed.entry_events["symbol"].tolist() == ["A"]

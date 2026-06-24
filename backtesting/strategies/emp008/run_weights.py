@@ -33,8 +33,8 @@ def build_emp008_config(
             raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
         config = replace(config, risk_model=risk_model)
     if factor_set is not None:
-        if factor_set not in {"mfbt", "origin"}:
-            raise ValueError("factor_set must be 'mfbt' or 'origin'")
+        if factor_set not in {"mfbt", "mfbt_pos", "origin"}:
+            raise ValueError("factor_set must be 'mfbt', 'mfbt_pos', or 'origin'")
         if factor_set == "origin":
             config = replace(
                 config,
@@ -222,8 +222,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=("mfbt", "origin"),
-        help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
+        choices=("mfbt", "mfbt_pos", "origin"),
+        help="Alpha factor set. Use 'mfbt_pos' to replace price momentum with positivity, or 'origin' for LnMktcap, Momentum_12M, DY.",
     )
     parser.add_argument(
         "--sector-neutral-dataset",

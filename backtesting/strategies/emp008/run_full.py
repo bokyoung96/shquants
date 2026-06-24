@@ -222,8 +222,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=("mfbt", "origin"),
-        help="Alpha factor set. Use 'origin' for LnMktcap, Momentum_12M, DY.",
+        choices=("mfbt", "mfbt_pos", "origin"),
+        help="Alpha factor set. Use 'mfbt_pos' to replace price momentum with positivity, or 'origin' for LnMktcap, Momentum_12M, DY.",
     )
     parser.add_argument(
         "--sector-neutral-dataset",

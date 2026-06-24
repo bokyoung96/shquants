@@ -26,8 +26,10 @@ def build_raw_mfbt_factors(market: MarketData, config: MfbtEmp008Config) -> dict
             "Momentum_12M": _origin_momentum_12m(close),
             "DY": _origin_dividend_yield(market),
         }
+    momentum_name = "positivity_momentum" if config.factor_set == "mfbt_pos" else "price_momentum"
+    momentum = _positivity_momentum(close, config) if config.factor_set == "mfbt_pos" else _price_momentum(close)
     return {
-        "price_momentum": _price_momentum(close),
+        momentum_name: momentum,
         "earnings_momentum": _earnings_momentum(market, config),
         "dividend_yield": _dividend_yield(market),
         "retail_flow": _retail_flow(market, config),
@@ -47,6 +49,17 @@ def _price_momentum(close: pd.DataFrame) -> pd.DataFrame:
     ratio = close.divide(trailing_high.where(trailing_high.gt(0.0)))
     monthly_ratio = month_end_observations(ratio)
     return _monthly_output(close, monthly_ratio)
+
+
+def _positivity_momentum(close: pd.DataFrame, config: MfbtEmp008Config) -> pd.DataFrame:
+    returns = close.pct_change(fill_method=None)
+    non_negative = returns.ge(0.0).where(returns.notna())
+    positivity = non_negative.rolling(
+        config.positivity_momentum_lookback_days,
+        min_periods=config.positivity_momentum_lookback_days,
+    ).mean()
+    monthly_positivity = month_end_observations(positivity)
+    return _monthly_output(close, monthly_positivity)
 
 
 def _origin_momentum_12m(close: pd.DataFrame) -> pd.DataFrame:

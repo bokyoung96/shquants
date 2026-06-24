@@ -283,6 +283,16 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in required_datasets(config)
 
 
+def test_build_emp008_config_sets_mfbt_positivity_variant() -> None:
+    config = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt_pos")
+
+    assert config.factor_set == "mfbt_pos"
+    assert config.expected_alpha_policy == "mean"
+    assert config.rank_transform_factors == ("ln_market_cap",)
+    assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 not in required_datasets(config)
+
+
 def test_build_emp008_config_sets_wics_sector_neutral_dataset() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, sector_neutral_dataset="wics")
 
@@ -352,6 +362,53 @@ def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend
     assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
     assert factors["Momentum_12M"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
     assert factors["DY"].loc["2024-02-29", "A"] == pytest.approx(0.65)
+
+
+def test_mfbt_positivity_raw_factors_replace_price_high_ratio_with_rolling_positivity() -> None:
+    dates = pd.bdate_range("2024-01-02", periods=24)
+    close = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 100.0, 102.0, 104.0, 103.0, *([104.0] * 18)],
+            "B": [100.0, 99.0, 98.0, 99.0, 98.0, 97.0, *([96.0] * 18)],
+        },
+        index=dates,
+    )
+    market = MarketData(
+        frames={
+            "close": close,
+            "op_fwd_12m": close * 1_000_000_000.0,
+            "dps_ttm": close * 0.02,
+            "retail_flow": pd.DataFrame(1.0, index=dates, columns=close.columns),
+            "sector_big": pd.DataFrame("Tech", index=dates, columns=close.columns),
+            "market_cap": close * 10_000_000.0,
+            "free_cash_flow": close * 10_000.0,
+            "interest_bearing_liability": close * 1_000.0,
+            "quick_asset": close * 500.0,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    config = MfbtEmp008Config(
+        factor_set="mfbt_pos",
+        positivity_momentum_lookback_days=3,
+        retail_flow_lookback_days=3,
+    )
+    factors = build_raw_mfbt_factors(market, config)
+
+    assert list(factors) == [
+        "positivity_momentum",
+        "earnings_momentum",
+        "dividend_yield",
+        "retail_flow",
+        "value",
+        "ln_market_cap",
+    ]
+    assert "price_momentum" not in factors
+    expected = close.pct_change(fill_method=None).ge(0.0).rolling(3, min_periods=3).mean()
+    month_end = dates[-1]
+    assert factors["positivity_momentum"].loc[month_end, "A"] == pytest.approx(expected.loc[month_end, "A"])
+    assert factors["positivity_momentum"].loc[month_end, "B"] == pytest.approx(expected.loc[month_end, "B"])
 
 
 def test_origin_dividend_yield_maps_later_month_snapshot_to_close_month_end() -> None:

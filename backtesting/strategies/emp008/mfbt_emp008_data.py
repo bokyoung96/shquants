@@ -19,6 +19,7 @@ class MfbtEmp008Config:
     universe_dataset: DatasetId = DatasetId.QW_K200_YN
     float_market_cap_dataset: DatasetId = DatasetId.QW_MKTCAP_FLT
     retail_flow_lookback_days: int = 252
+    positivity_momentum_lookback_days: int = 252
     low_op_threshold: float = 100_000_000_000.0
     extreme_growth_threshold: float = 0.50
     rank_transform_factors: tuple[str, ...] = ("ln_market_cap",)

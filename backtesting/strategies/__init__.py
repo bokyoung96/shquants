@@ -10,6 +10,7 @@ from .rrg_sector_rotation import (
 )
 from .mfbt import Mfbt
 from .signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
+from .team import Strat1
 from .trend_rank import TrendRank
 from .registry import build_strategy, list_strategies, register_strategy
 
@@ -24,6 +25,7 @@ __all__ = (
     "Mfbt",
     "SignalEventRotation",
     "SignalEventRotationSelected",
+    "Strat1",
     "TrendRank",
     "RegisteredStrategy",
     "build_strategy",

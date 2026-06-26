@@ -36,11 +36,15 @@ py-modules = ["report", "root", "run"]
 
 [tool.setuptools.packages.find]
 where = [".", "analysts/src"]
-include = ["analysts*", "backtesting*", "dashboard*", "etc*", "etfs*", "orderbook*", "wrds*"]
+include = ["analysts*", "api*", "backtesting*", "dashboard*", "etc*", "etfs*", "orderbook*", "wrds*"]
 exclude = ["analysts.tests*", "tests*"]
 namespaces = false
 
 [tool.setuptools.package-data]
+api = [
+  "README.md",
+  "config.example.json",
+]
 backtesting = [
   "reporting/styles.css",
   "reporting/templates/*.j2",

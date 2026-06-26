@@ -63,6 +63,7 @@ def test_registry_lists_default_strategies() -> None:
     assert "rrg_sector_rotation_op_rrg_qavg_accel_x128" in strategies
     assert "signal_event_rotation" in strategies
     assert "signal_event_rotation_selected" in strategies
+    assert "team_strat1" in strategies
     assert "index_alpha_tilt_consensus_revision_oi_beta" not in strategies
     assert "q1q5_ls" not in strategies
     assert "squeeze_ls" not in strategies
@@ -111,6 +112,7 @@ def test_registry_lists_screened_strategy_names_only() -> None:
         "rrg_sector_rotation_op_rrg_qavg_accel_x128",
         "signal_event_rotation",
         "signal_event_rotation_selected",
+        "team_strat1",
     }
     assert "consensus_beta_soft_participation_benchmark_overlay" not in strategies
     assert "rrg-fwd-flow1-ls" not in strategies

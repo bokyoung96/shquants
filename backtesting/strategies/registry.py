@@ -20,6 +20,7 @@ from .rrg_sector_rotation import (
     RrgSectorRotationPrune90,
 )
 from .signal_event_rotation import SignalEventRotation, SignalEventRotationSelected
+from .team import Strat1
 from .trend_rank import TrendRank
 
 
@@ -65,3 +66,4 @@ register_strategy("rrg_sector_rotation_op_rrg_ex10_k1", RrgSectorRotationOpRrgEx
 register_strategy("rrg_sector_rotation_op_rrg_qavg_accel_x128", RrgSectorRotationOpRrgQavgAccelX128)
 register_strategy("signal_event_rotation", SignalEventRotation)
 register_strategy("signal_event_rotation_selected", SignalEventRotationSelected)
+register_strategy("team_strat1", Strat1)

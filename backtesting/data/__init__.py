@@ -1,6 +1,7 @@
 """Public data exports."""
 
 from .loader import DataLoader, LoadRequest, MarketData
+from .kr_stock_5m import KrStock5mDataset, available_months, read_ticker_bars, summarize_dataset
 from .policy import expand_monthly_frame
 from .store import ParquetStore
 from .download import Csv, DataDownloadResult, DataPipeline, Pipeline, Result, Writer
@@ -32,6 +33,7 @@ __all__ = (
     "DataTableSpec",
     "Flow",
     "FlowRegistry",
+    "KrStock5mDataset",
     "LoadRequest",
     "MarketData",
     "ObjectRegistry",
@@ -45,5 +47,8 @@ __all__ = (
     "StrategyRegistry",
     "Table",
     "Writer",
+    "available_months",
     "expand_monthly_frame",
+    "read_ticker_bars",
+    "summarize_dataset",
 )

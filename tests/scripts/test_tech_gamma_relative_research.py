@@ -93,6 +93,43 @@ def test_op_revision_filter_uses_prior_day_revision() -> None:
     assert bool(by_date.loc[pd.Timestamp("2024-01-04"), "factor_filter_ok"])
 
 
+def test_flow_filters_use_prior_trailing_flow_to_cap() -> None:
+    frame = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]),
+            "ticker": ["A005930", "A005930", "A005930"],
+            "close": [100.0, 101.0, 102.0],
+        }
+    )
+    dates = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"])
+    data = ResearchFeatureData(
+        market_cap=pd.DataFrame({"A005930": [100.0, 100.0, 100.0]}, index=dates),
+        foreign_flow=pd.DataFrame({"A005930": [-2.0, 5.0, 7.0]}, index=dates),
+        institution_flow=pd.DataFrame({"A005930": [-1.0, -1.0, 3.0]}, index=dates),
+    )
+
+    foreign = apply_research_features(
+        frame,
+        TechGammaConfig(factor_filter="foreign_positive", factor_lookback_days=1),
+        data,
+    ).set_index("date")
+    either = apply_research_features(
+        frame,
+        TechGammaConfig(factor_filter="foreign_or_institution_positive", factor_lookback_days=1),
+        data,
+    ).set_index("date")
+    both = apply_research_features(
+        frame,
+        TechGammaConfig(factor_filter="foreign_and_institution_positive", factor_lookback_days=1),
+        data,
+    ).set_index("date")
+
+    assert not bool(foreign.loc[pd.Timestamp("2024-01-03"), "factor_filter_ok"])
+    assert bool(foreign.loc[pd.Timestamp("2024-01-04"), "factor_filter_ok"])
+    assert bool(either.loc[pd.Timestamp("2024-01-04"), "factor_filter_ok"])
+    assert not bool(both.loc[pd.Timestamp("2024-01-04"), "factor_filter_ok"])
+
+
 def test_fast_grid_continuation_matches_reference_simulator() -> None:
     day1 = _ticker_frame("A005930", [100, 101, 102, 103, 104, 105, 106, 106])
     day2 = _ticker_frame("A005930", [106, 106, 106, 106, 107, 107.5, 108, 108])
@@ -136,12 +173,26 @@ def test_fast_grid_continuation_drops_open_position_before_min_holding_at_data_e
     assert fast.empty
 
 
-def test_breakout_grid_is_structural_and_bounded_without_absolute_055_cutoff() -> None:
+def test_breakout_grid_is_flow_filtered_without_op_filters() -> None:
     specs = build_strategy_specs(max_strategies=5000)
+    filters = {spec.config.factor_filter for spec in specs}
+    lookbacks = {spec.config.factor_lookback_days for spec in specs}
+    positivity_lookbacks = {spec.config.positivity_lookback_days for spec in specs}
+    benchmarks = {spec.config.positivity_benchmark for spec in specs}
 
     assert len(specs) == 5000
     assert len({spec.name for spec in specs}) == 5000
-    assert {spec.config.positivity_benchmark for spec in specs} >= {"sector_cap_weighted", "index_cap_weighted"}
+    assert filters == {
+        "none",
+        "foreign_positive",
+        "institution_positive",
+        "foreign_or_institution_positive",
+        "foreign_and_institution_positive",
+    }
+    assert not any("op_" in factor_filter for factor_filter in filters)
+    assert lookbacks == {20, 40, 60}
+    assert positivity_lookbacks == {60, 90, 126}
+    assert benchmarks == {"sector_cap_weighted", "index_cap_weighted"}
     assert all(spec.config.min_daily_positivity == 0.0 for spec in specs)
 
 

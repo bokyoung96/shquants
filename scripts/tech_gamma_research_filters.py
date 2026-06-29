@@ -205,10 +205,14 @@ def _factor_filter(features: pd.DataFrame, name: str) -> pd.Series:
             return features["op_revision"].gt(0.0)
         case "op_sector_rank_positive":
             return features["op_revision"].gt(0.0) & features["op_sector_rank"].gt(0.5)
-        case "foreign_flow_positive":
+        case "foreign_positive" | "foreign_flow_positive":
             return features["foreign_flow_to_cap"].gt(0.0)
-        case "institution_flow_positive":
+        case "institution_positive" | "institution_flow_positive":
             return features["institution_flow_to_cap"].gt(0.0)
+        case "foreign_or_institution_positive":
+            return features["foreign_flow_to_cap"].gt(0.0) | features["institution_flow_to_cap"].gt(0.0)
+        case "foreign_and_institution_positive":
+            return features["foreign_flow_to_cap"].gt(0.0) & features["institution_flow_to_cap"].gt(0.0)
         case "op_or_flow_positive":
             return features["op_revision"].gt(0.0) | features["foreign_flow_to_cap"].gt(0.0)
         case _:

@@ -65,18 +65,17 @@ def feature_key(config: TechGammaConfig) -> FeatureKey:
 def _sampled_grid(max_strategies: int) -> list[dict[str, int | float | str]]:
     feature_dimensions = list(
         product(
-            (40, 60, 90, 126, 252),
-            ("sector_cap_weighted", "index_cap_weighted", "sector_equal_weight", "index_equal_weight"),
+            (60, 90, 126),
+            ("sector_cap_weighted", "index_cap_weighted"),
             (0.0, 0.02, 0.05),
             (
                 "none",
-                "op_revision_positive",
-                "op_sector_rank_positive",
-                "foreign_flow_positive",
-                "institution_flow_positive",
-                "op_or_flow_positive",
+                "foreign_positive",
+                "institution_positive",
+                "foreign_or_institution_positive",
+                "foreign_and_institution_positive",
             ),
-            (40, 60, 90),
+            (20, 40, 60),
         )
     )
     execution_dimensions = list(

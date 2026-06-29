@@ -279,3 +279,20 @@ def test_run_intraday_only_skips_overnight_trades(tmp_path, monkeypatch) -> None
 
     overnight = pd.read_csv(output / "overnight_trades.csv")
     assert overnight.empty
+
+
+def test_parse_args_accepts_flow_only_filter(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "run_tech_gamma_long_only.py",
+            "--factor-filter",
+            "foreign_or_institution_positive",
+        ],
+    )
+
+    from scripts.run_tech_gamma_long_only import parse_args
+
+    args = parse_args()
+
+    assert args.factor_filter == "foreign_or_institution_positive"

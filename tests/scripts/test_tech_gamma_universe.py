@@ -45,3 +45,30 @@ def test_filter_kospi200_historical_members_keeps_only_active_rows(tmp_path) -> 
         {"date": pd.Timestamp("2024-01-02"), "ticker": "A005930"},
         {"date": pd.Timestamp("2024-01-03"), "ticker": "A000660"},
     ]
+
+
+def test_filter_kospi200_historical_members_avoids_frame_merge(tmp_path, monkeypatch) -> None:
+    membership = pd.DataFrame(
+        {
+            "A005930": [1, 1],
+            "A000660": [0, 1],
+        },
+        index=pd.to_datetime(["2024-01-02", "2024-01-03"]),
+    ).rename_axis("date")
+    membership.to_parquet(tmp_path / "qw_k200_yn.parquet", engine="pyarrow")
+    frame = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03"]),
+            "ticker": ["A005930", "A000660"],
+            "close": [100.0, 91.0],
+        }
+    )
+
+    def fail_merge(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("historical membership filtering should not merge into the 5-minute frame")
+
+    monkeypatch.setattr(pd.DataFrame, "merge", fail_merge)
+
+    filtered = filter_kospi200_historical_members(frame, tmp_path)
+
+    assert filtered["ticker"].tolist() == ["A005930", "A000660"]

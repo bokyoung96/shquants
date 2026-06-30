@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from scripts.run_tech_gamma_long_only import TechGammaConfig, summarize
+from scripts.tech_gamma_costs import net_return_after_costs
 
 
 def rank_grid_summary(summary: pd.DataFrame) -> pd.DataFrame:
@@ -109,7 +110,7 @@ def continuation_trade(
         "exit_price": exit_price,
         "signal_score": float(signal["signal_score"]),
         "gross_return": gross,
-        "net_return": gross - 3.0 / 10_000.0,
+        "net_return": net_return_after_costs(gross),
         "exit_reason": exit_reason,
     }
 

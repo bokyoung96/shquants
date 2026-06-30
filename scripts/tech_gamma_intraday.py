@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING, TypedDict, assert_never
 
 import pandas as pd
 
+from scripts.tech_gamma_costs import ROUND_TRIP_COST_BPS, net_return_after_costs
 from scripts.tech_gamma_schemes import get_scheme
 
 if TYPE_CHECKING:
     from scripts.run_tech_gamma_long_only import TechGammaConfig
 
 
-ROUND_TRIP_BPS = 3.0
+ROUND_TRIP_BPS = ROUND_TRIP_COST_BPS
 
 
 class TradeSide(StrEnum):
@@ -146,7 +147,7 @@ def _trade(current: IntradayPosition, row: pd.Series, side: TradeSide, exit_reas
         "exit_price": exit_price,
         "signal_score": current.score,
         "gross_return": gross,
-        "net_return": gross - ROUND_TRIP_BPS / 10_000.0,
+        "net_return": net_return_after_costs(gross),
         "exit_reason": exit_reason,
     }
 

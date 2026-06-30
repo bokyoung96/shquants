@@ -473,7 +473,7 @@ def test_rrg_selected_acceleration_overlay_scales_only_accelerating_positions(
     price_state = pd.DataFrame({"Long": "Leading", "Short": "Lagging"}, index=index)
     op_state = pd.DataFrame({"Long": "Improving", "Short": "Weakening"}, index=index)
     stock_op = pd.DataFrame({"L1": 0.20, "L2": 0.40, "S1": -0.20}, index=index)
-    stock_op.iloc[-1] = {"L1": 0.60, "L2": 0.30, "S1": -0.60}
+    stock_op.iloc[-2] = {"L1": 0.60, "L2": 0.30, "S1": -0.60}
 
     monkeypatch.setattr(module, "_build_rrg_context", lambda **_: (price_state, price_state.eq("Leading"), price_state.eq("Lagging")))
     monkeypatch.setattr(module, "_build_op_rrg_state", lambda **_: op_state)

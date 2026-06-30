@@ -153,6 +153,7 @@ def test_fast_grid_continuation_matches_reference_simulator() -> None:
     assert fast[["ticker", "signal_time", "entry_time", "exit_time", "exit_reason"]].to_dict("records") == reference[
         ["ticker", "signal_time", "entry_time", "exit_time", "exit_reason"]
     ].to_dict("records")
+    assert abs(fast.iloc[0]["net_return"] - (fast.iloc[0]["gross_return"] - 0.0024)) < 1e-12
 
 
 def test_fast_grid_continuation_drops_open_position_before_min_holding_at_data_end() -> None:

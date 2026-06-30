@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 import pandas as pd
 
-from scripts.tech_gamma_intraday import ROUND_TRIP_BPS
+from scripts.tech_gamma_costs import net_return_after_costs
 from scripts.tech_gamma_schemes import get_scheme
 
 if TYPE_CHECKING:
@@ -98,6 +98,6 @@ def _trade(position: HoldingPosition, row: pd.Series, exit_reason: str) -> Holdi
         "exit_price": exit_price,
         "signal_score": position.signal_score,
         "gross_return": gross,
-        "net_return": gross - ROUND_TRIP_BPS / 10_000.0,
+        "net_return": net_return_after_costs(gross),
         "exit_reason": exit_reason,
     }

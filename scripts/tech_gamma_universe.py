@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
@@ -27,9 +28,11 @@ def filter_kospi200_historical_members(frame: pd.DataFrame, parquet_dir: Path) -
     membership = pd.read_parquet(parquet_dir / "qw_k200_yn.parquet", engine="pyarrow")
     tickers = pd.Index(frame["ticker"].drop_duplicates())
     dates = pd.DatetimeIndex(sorted(pd.to_datetime(frame["date"]).unique()))
-    active = membership.reindex(index=dates, columns=tickers).ffill().fillna(0).gt(0)
-    active.index.name = "date"
-    active.columns.name = "ticker"
-    active_rows = active.stack(future_stack=True).rename("k200_member").reset_index()
-    keyed = frame.merge(active_rows, on=["date", "ticker"], how="left", sort=False)
-    return keyed.loc[keyed["k200_member"].fillna(False)].drop(columns="k200_member").reset_index(drop=True)
+    active = membership.reindex(index=membership.index.union(dates), columns=tickers).ffill().reindex(dates).fillna(0).gt(0)
+    active_values = active.to_numpy(dtype=bool)
+    date_codes = pd.Categorical(pd.to_datetime(frame["date"]), categories=dates).codes
+    ticker_codes = pd.Categorical(frame["ticker"], categories=tickers).codes
+    valid = (date_codes >= 0) & (ticker_codes >= 0)
+    keep = np.zeros(len(frame), dtype=bool)
+    keep[valid] = active_values[date_codes[valid], ticker_codes[valid]]
+    return frame.loc[keep].reset_index(drop=True)

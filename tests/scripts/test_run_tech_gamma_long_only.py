@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import pandas as pd
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import pytest
+from matplotlib.figure import Figure
 
 from backtesting.data.kr_stock_5m import KrStock5mDataset
 from scripts.run_tech_gamma_long_only import (
@@ -157,6 +161,7 @@ def test_52w_high_breakout_continuation_holds_while_daily_new_high_persists() ->
     assert first["exit_time"] == pd.Timestamp("2024-01-05 09:40")
     assert first["exit_reason"] == "new_high_lost"
     assert first["gross_return"] > 0.0
+    assert abs(first["net_return"] - (first["gross_return"] - 0.0024)) < 1e-12
 
 
 def test_simulate_intraday_can_short_breakout_failure() -> None:
@@ -204,6 +209,7 @@ def test_simulate_overnight_uses_close_pressure_and_next_open() -> None:
     assert trade["entry_time"].strftime("%Y-%m-%d") == "2024-01-02"
     assert trade["exit_time"].strftime("%Y-%m-%d") == "2024-01-03"
     assert trade["net_return"] > 0.0
+    assert abs(trade["net_return"] - (trade["gross_return"] - 0.0024)) < 1e-12
 
 
 def test_simulate_overnight_rejects_missing_opening_range_score() -> None:
@@ -238,9 +244,123 @@ def test_write_performance_outputs_creates_subplot_png_and_equity_csv(tmp_path) 
     write_performance_outputs(intraday, overnight, tmp_path)
 
     assert (tmp_path / "performance_subplots.png").stat().st_size > 0
+    image = mpimg.imread(tmp_path / "performance_subplots.png")
+    assert image.shape[0] >= 1800
+    assert image.shape[1] >= 2500
     curves = pd.read_csv(tmp_path / "equity_curves.csv")
     assert list(curves.columns) == ["date", "intraday", "overnight", "combined"]
     assert curves["combined"].iloc[-1] > 1.0
+
+
+def test_performance_plot_uses_strategy_dashboard_panels(tmp_path, monkeypatch) -> None:
+    from scripts.tech_gamma_plots import plot_performance_subplots
+
+    dates = pd.to_datetime(["2024-01-02", "2024-01-03", "2024-02-01", "2024-03-01"])
+    curves = pd.DataFrame(
+        {
+            "intraday": [1.0, 1.01, 1.00, 1.06],
+            "overnight": [1.0, 1.0, 1.0, 1.0],
+            "combined": [1.0, 1.01, 1.00, 1.06],
+        },
+        index=dates,
+    )
+    intraday = pd.DataFrame(
+        {
+            "ticker": ["A005930", "A000660"],
+            "entry_time": pd.to_datetime(["2024-01-02 09:10", "2024-02-01 09:10"]),
+            "exit_time": pd.to_datetime(["2024-01-03 15:30", "2024-03-01 15:30"]),
+            "net_return": [0.02, -0.01],
+        }
+    )
+    overnight = pd.DataFrame(columns=intraday.columns)
+    saved: list[Figure] = []
+
+    def capture_savefig(self, *_args, **_kwargs) -> None:
+        saved.append(self)
+
+    monkeypatch.setattr(Figure, "savefig", capture_savefig)
+
+    plot_performance_subplots(curves, intraday, overnight, tmp_path / "performance.png", "Strategy")
+
+    assert len(saved) == 1
+    titles = [axis.get_title(loc="left") for axis in saved[0].axes]
+    assert "Cumulative return path" in titles
+    assert "Drawdown pressure" in titles
+    assert "Exposure / active positions" in titles
+    assert "Monthly return tape" in titles
+    assert "Yearly scorecard" in titles
+    assert "Strategy snapshot" in titles
+    plt.close("all")
+
+
+def test_performance_curve_uses_position_slots_for_portfolio_return() -> None:
+    from scripts.tech_gamma_plots import equity_curves
+
+    intraday = pd.DataFrame(
+        {
+            "entry_time": pd.to_datetime(["2024-01-02 09:05", "2024-01-02 09:10"]),
+            "exit_time": pd.to_datetime(["2024-01-02 14:55", "2024-01-02 15:10"]),
+            "net_return": [0.10, 0.20],
+        }
+    )
+    overnight = pd.DataFrame(columns=["exit_time", "net_return"])
+
+    curves = equity_curves(intraday, overnight)
+
+    assert curves["combined"].iloc[-1] == 1.15
+
+
+def test_performance_curve_marks_open_positions_to_market() -> None:
+    from scripts.tech_gamma_plots import equity_curves
+
+    intraday = pd.DataFrame(
+        {
+            "ticker": ["A005930"],
+            "entry_time": pd.to_datetime(["2024-01-02 09:05"]),
+            "exit_time": pd.to_datetime(["2024-01-04 15:30"]),
+            "entry_price": [100.0],
+            "net_return": [0.10],
+        }
+    )
+    daily_prices = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]),
+            "ticker": ["A005930", "A005930", "A005930"],
+            "close": [95.0, 90.0, 110.0],
+        }
+    )
+
+    curves = equity_curves(intraday, pd.DataFrame(), mark_to_market=daily_prices)
+
+    assert curves.loc[pd.Timestamp("2024-01-02"), "combined"] == pytest.approx(0.95)
+    assert curves.loc[pd.Timestamp("2024-01-03"), "combined"] == pytest.approx(0.90)
+    assert curves.loc[pd.Timestamp("2024-01-04"), "combined"] == pytest.approx(1.10)
+
+
+def test_performance_curve_includes_exit_date_when_price_history_stops_before_exit() -> None:
+    from scripts.tech_gamma_plots import equity_curves
+
+    intraday = pd.DataFrame(
+        {
+            "ticker": ["A005930"],
+            "entry_time": pd.to_datetime(["2024-01-02 09:05"]),
+            "exit_time": pd.to_datetime(["2024-01-04 15:30"]),
+            "entry_price": [100.0],
+            "net_return": [0.10],
+        }
+    )
+    daily_prices = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03"]),
+            "ticker": ["A005930", "A005930"],
+            "close": [95.0, 90.0],
+        }
+    )
+
+    curves = equity_curves(intraday, pd.DataFrame(), mark_to_market=daily_prices)
+
+    assert curves.index[-1] == pd.Timestamp("2024-01-04")
+    assert curves["combined"].iloc[-1] == pytest.approx(1.10)
 
 
 def test_run_persists_selected_scheme_config(tmp_path, monkeypatch) -> None:

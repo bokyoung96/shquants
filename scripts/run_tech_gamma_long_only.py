@@ -15,6 +15,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from backtesting.data.kr_stock_5m import KrStock5mDataset, normalize_ticker, read_tickers_bars
 from root import ROOT
+from scripts.tech_gamma_costs import ROUND_TRIP_COST_BPS, net_return_after_costs
 from scripts.tech_gamma_holding import simulate_continuation_holding
 from scripts.tech_gamma_intraday import TradeSide, simulate_intraday
 from scripts.tech_gamma_plots import write_performance_outputs
@@ -23,7 +24,7 @@ from scripts.tech_gamma_universe import filter_kospi200_historical_members, kosp
 from scripts.tech_gamma_schemes import get_scheme, scheme_names
 
 
-ROUND_TRIP_BPS = 3.0
+ROUND_TRIP_BPS = ROUND_TRIP_COST_BPS
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +56,8 @@ class TechGammaConfig:
     factor_lookback_days: int = 60
     overnight_enabled: bool = True
     high_lookback_days: int = 370
+    entry_confirmation: str = "first_close"
+    episode_compression: bool = False
 
 
 def load_strategy_frame(dataset: KrStock5mDataset, config: TechGammaConfig) -> pd.DataFrame:
@@ -98,7 +101,7 @@ def simulate_overnight(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataF
                     "exit_price": float(exit_row["open"]),
                     "signal_score": float(signal["signal_score"]),
                     "gross_return": gross,
-                    "net_return": gross - ROUND_TRIP_BPS / 10_000.0,
+                    "net_return": net_return_after_costs(gross),
                 }
             )
     return pd.DataFrame(rows)

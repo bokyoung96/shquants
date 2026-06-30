@@ -113,6 +113,35 @@ def test_daily_prefilter_keeps_only_possible_breakout_dates() -> None:
     assert candidates.iloc[0]["prior_52w_close_high"] == 100.0
 
 
+def test_daily_prefilter_respects_disabled_research_filters() -> None:
+    from scripts.run_flow_filtered_breakout_single import prefilter_breakout_candidates
+
+    dates = pd.to_datetime(["2018-12-28", "2019-01-02"])
+    close = pd.DataFrame({"A001": [100.0, 101.0]}, index=dates)
+    high = pd.DataFrame({"A001": [100.0, 103.0]}, index=dates)
+    low = pd.DataFrame({"A001": [99.0, 100.5]}, index=dates)
+    filters = pd.DataFrame(
+        {
+            "date": [pd.Timestamp("2019-01-02")],
+            "ticker": ["A001"],
+            "positivity_filter_ok": [False],
+            "factor_filter_ok": [False],
+        }
+    )
+
+    candidates = prefilter_breakout_candidates(
+        close=close,
+        high=high,
+        low=low,
+        daily_features=filters,
+        config=TechGammaConfig(start="2019-01-01", range_buffer_bps=8.0, use_positivity=False, factor_filter="none"),
+    )
+
+    assert candidates[["date", "ticker"]].to_dict("records") == [
+        {"date": pd.Timestamp("2019-01-02"), "ticker": "A001"}
+    ]
+
+
 def test_entry_candidates_can_wait_for_next_close_confirmation() -> None:
     from scripts.run_flow_filtered_breakout_single import _entry_candidates
 
@@ -176,6 +205,43 @@ def test_entry_candidates_reject_failed_next_close_confirmation() -> None:
             "atr": [1.0] * 3,
             "hhmm": ["0925", "0930", "0935"],
             "breakout_52w_bps": [-100.0, 100.0, -50.0],
+            "signal_score": [0.0, 1.0, 0.0],
+            "positivity_filter_ok": [True] * 3,
+            "factor_filter_ok": [True] * 3,
+        }
+    )
+
+    confirmed = _entry_candidates(
+        frame,
+        TechGammaConfig(
+            start="2019-01-01",
+            range_end_hhmm="0920",
+            exit_hhmm="1455",
+            range_buffer_bps=8.0,
+            entry_confirmation="next_close_confirmed",
+        ),
+    )
+
+    assert confirmed.empty
+
+
+def test_entry_candidates_reject_floating_point_touch_as_confirmation() -> None:
+    from scripts.run_flow_filtered_breakout_single import _entry_candidates
+
+    frame = pd.DataFrame(
+        {
+            "ticker": ["A001", "A001", "A001"],
+            "date": pd.to_datetime(["2019-01-02"] * 3),
+            "ts": pd.to_datetime(["2019-01-02 09:25", "2019-01-02 09:30", "2019-01-02 09:35"]),
+            "next_ts": pd.to_datetime(["2019-01-02 09:30", "2019-01-02 09:35", "2019-01-02 09:40"]),
+            "open": [99.0, 101.0, 100.0],
+            "next_open": [101.0, 100.0, 100.2],
+            "close": [99.0, 101.0, 100.0],
+            "previous_intraday_close": [float("nan"), 99.0, 101.0],
+            "prior_52w_close_high": [99.99999999999999] * 3,
+            "atr": [1.0] * 3,
+            "hhmm": ["0925", "0930", "0935"],
+            "breakout_52w_bps": [-100.0, 100.0, 0.0],
             "signal_score": [0.0, 1.0, 0.0],
             "positivity_filter_ok": [True] * 3,
             "factor_filter_ok": [True] * 3,

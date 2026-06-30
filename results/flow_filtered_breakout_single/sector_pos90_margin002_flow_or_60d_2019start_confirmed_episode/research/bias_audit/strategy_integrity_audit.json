@@ -1,0 +1,46 @@
+{
+  "trade_log_integrity": {
+    "trades": 2630,
+    "tickers": 215,
+    "entry_before_or_at_signal_violations": 0,
+    "exit_before_entry_violations": 0,
+    "same_ticker_overlap_violations": 0,
+    "duplicate_trade_rows": 0,
+    "missing_required_columns": [],
+    "missing_required_values": 0,
+    "nonpositive_entry_prices": 0,
+    "nonpositive_exit_prices": 0
+  },
+  "return_accounting": {
+    "slots": 20,
+    "round_trip_cost_bps": 24.0,
+    "gross_return_mismatches": 0,
+    "max_gross_return_abs_delta": 6.487865800153259e-16,
+    "net_return_mismatches": 0,
+    "max_net_return_abs_delta": 6.487865800153259e-16,
+    "fixed_notional_final_return_from_trades": 0.81938470087,
+    "fixed_notional_final_return_from_ledger": 0.81938470087,
+    "fixed_notional_final_return_delta": 0.0
+  },
+  "source_entry_exit": {
+    "entry_price_mismatches": 0,
+    "signal_confirmation_violations": 0,
+    "signal_confirmation_examples": [],
+    "missing_entry_bars": 0,
+    "exit_condition_violations": 0,
+    "missing_signal_candidate_rows": 0,
+    "missing_daily_exit_rows": 0,
+    "min_holding_violations": 0
+  },
+  "universe_membership": {
+    "kospi200_membership_violations": 0,
+    "missing_membership_checks": 0,
+    "membership_source_end": "2026-06-04",
+    "signals_after_membership_source_end": 15
+  },
+  "known_limitations": [
+    "ATR stop exits are simulated at the stop price when the daily low breaches the stop; the exact intraday breach time is not modelled.",
+    "Prefilter candidates use same-day daily high to reduce 5-minute loading, but final entry validation is checked against intraday signal/confirmation bars.",
+    "Historical KOSPI200 membership is applied, but this audit does not independently validate the upstream membership file against exchange announcements."
+  ]
+}

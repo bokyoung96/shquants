@@ -262,7 +262,9 @@ def prefilter_breakout_candidates(
         merged["positivity_filter_ok"] = True
     if "factor_filter_ok" not in merged.columns:
         merged["factor_filter_ok"] = True
-    return merged.loc[merged["positivity_filter_ok"].fillna(False) & merged["factor_filter_ok"].fillna(False)].reset_index(drop=True)
+    positivity_ok = merged["positivity_filter_ok"].fillna(False) if config.use_positivity else pd.Series(True, index=merged.index)
+    factor_ok = merged["factor_filter_ok"].fillna(False) if config.factor_filter != "none" else pd.Series(True, index=merged.index)
+    return merged.loc[positivity_ok & factor_ok].reset_index(drop=True)
 
 
 def remove_overlapping_trades(trades: pd.DataFrame) -> pd.DataFrame:
@@ -525,7 +527,7 @@ def _entry_candidates(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataFr
         working["confirmation_close"] = grouped["close"].shift(-1)
         working["confirmed_next_ts"] = grouped["next_ts"].shift(-1)
         working["confirmed_next_open"] = grouped["next_open"].shift(-1)
-        working["confirmation_ok"] = working["confirmation_close"].gt(working["prior_52w_close_high"])
+        working["confirmation_ok"] = _strictly_above_high(working["confirmation_close"], working["prior_52w_close_high"])
     elif config.entry_confirmation == "first_close":
         working["confirmed_next_ts"] = working["next_ts"]
         working["confirmed_next_open"] = working["next_open"]
@@ -538,7 +540,7 @@ def _entry_candidates(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataFr
         & working["signal_score"].notna()
         & working["prior_52w_close_high"].notna()
         & working["atr"].notna()
-        & working["close"].gt(working["prior_52w_close_high"])
+        & _strictly_above_high(working["close"], working["prior_52w_close_high"])
         & (previous_close.isna() | previous_close.le(working["prior_52w_close_high"]))
         & working["hhmm"].gt(config.range_end_hhmm)
         & working["hhmm"].lt(config.exit_hhmm)
@@ -552,6 +554,10 @@ def _entry_candidates(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataFr
     entries["next_ts"] = working.loc[mask, "confirmed_next_ts"].to_numpy()
     entries["next_open"] = working.loc[mask, "confirmed_next_open"].to_numpy()
     return entries.sort_values(["ticker", "date", "ts"]).groupby(["ticker", "date"], sort=True).head(1)
+
+
+def _strictly_above_high(value: pd.Series, prior_high: pd.Series) -> pd.Series:
+    return value.gt(prior_high + prior_high.abs().mul(1e-12))
 
 
 def _simulate_daily_continuation(entries: pd.DataFrame, daily: pd.DataFrame, config: TechGammaConfig) -> pd.DataFrame:

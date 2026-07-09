@@ -161,7 +161,7 @@ def test_52w_high_breakout_continuation_holds_while_daily_new_high_persists() ->
     assert first["exit_time"] == pd.Timestamp("2024-01-05 09:40")
     assert first["exit_reason"] == "new_high_lost"
     assert first["gross_return"] > 0.0
-    assert abs(first["net_return"] - (first["gross_return"] - 0.0024)) < 1e-12
+    assert abs(first["net_return"] - (first["gross_return"] - 0.0035)) < 1e-12
 
 
 def test_simulate_intraday_can_short_breakout_failure() -> None:
@@ -209,7 +209,7 @@ def test_simulate_overnight_uses_close_pressure_and_next_open() -> None:
     assert trade["entry_time"].strftime("%Y-%m-%d") == "2024-01-02"
     assert trade["exit_time"].strftime("%Y-%m-%d") == "2024-01-03"
     assert trade["net_return"] > 0.0
-    assert abs(trade["net_return"] - (trade["gross_return"] - 0.0024)) < 1e-12
+    assert abs(trade["net_return"] - (trade["gross_return"] - 0.0035)) < 1e-12
 
 
 def test_simulate_overnight_rejects_missing_opening_range_score() -> None:

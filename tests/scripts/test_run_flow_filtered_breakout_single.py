@@ -59,7 +59,7 @@ def test_batched_single_runner_uses_warmup_for_loading_but_not_performance(tmp_p
                 "exit_price": [101.0],
                 "signal_score": [1.0],
                 "gross_return": [0.01],
-                "net_return": [0.0076],
+                "net_return": [0.0065],
                 "exit_reason": ["test"],
             }
         )
@@ -186,6 +186,59 @@ def test_entry_candidates_can_wait_for_next_close_confirmation() -> None:
     assert confirmed.iloc[0]["ts"] == pd.Timestamp("2019-01-02 09:30")
     assert confirmed.iloc[0]["next_ts"] == pd.Timestamp("2019-01-02 09:40")
     assert confirmed.iloc[0]["next_open"] == 103.0
+
+
+def test_entry_candidates_ignore_filter_flags_when_filters_are_disabled() -> None:
+    from scripts.run_flow_filtered_breakout_single import _entry_candidates
+
+    frame = pd.DataFrame(
+        {
+            "ticker": ["A001", "A001", "A001", "A001"],
+            "date": pd.to_datetime(["2019-01-02"] * 4),
+            "ts": pd.to_datetime(["2019-01-02 09:25", "2019-01-02 09:30", "2019-01-02 09:35", "2019-01-02 09:40"]),
+            "next_ts": pd.to_datetime(["2019-01-02 09:30", "2019-01-02 09:35", "2019-01-02 09:40", pd.NaT]),
+            "open": [99.0, 101.0, 102.0, 103.0],
+            "next_open": [101.0, 102.0, 103.0, float("nan")],
+            "close": [99.0, 101.0, 102.0, 103.0],
+            "previous_intraday_close": [float("nan"), 99.0, 101.0, 102.0],
+            "prior_52w_close_high": [100.0] * 4,
+            "atr": [1.0] * 4,
+            "hhmm": ["0925", "0930", "0935", "0940"],
+            "breakout_52w_bps": [-100.0, 100.0, 200.0, 300.0],
+            "signal_score": [0.0, 1.0, 2.0, 3.0],
+            "positivity_filter_ok": [False, False, False, False],
+            "factor_filter_ok": [False, False, False, False],
+        }
+    )
+
+    disabled = _entry_candidates(
+        frame,
+        TechGammaConfig(
+            start="2019-01-01",
+            range_end_hhmm="0920",
+            exit_hhmm="1455",
+            range_buffer_bps=8.0,
+            use_positivity=False,
+            factor_filter="none",
+            entry_confirmation="next_close_confirmed",
+        ),
+    )
+    enabled = _entry_candidates(
+        frame,
+        TechGammaConfig(
+            start="2019-01-01",
+            range_end_hhmm="0920",
+            exit_hhmm="1455",
+            range_buffer_bps=8.0,
+            use_positivity=True,
+            factor_filter="foreign_or_institution_positive",
+            entry_confirmation="next_close_confirmed",
+        ),
+    )
+
+    assert len(disabled) == 1
+    assert disabled.iloc[0]["ts"] == pd.Timestamp("2019-01-02 09:30")
+    assert enabled.empty
 
 
 def test_entry_candidates_reject_failed_next_close_confirmation() -> None:

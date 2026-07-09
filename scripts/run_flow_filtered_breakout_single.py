@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# ruff: noqa: E402
+
 import argparse
 import json
 import sys
@@ -535,6 +537,16 @@ def _entry_candidates(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataFr
     else:
         raise ValueError(f"unknown entry_confirmation: {config.entry_confirmation}")
     previous_close = working["previous_intraday_close"]
+    positivity_ok = (
+        working["positivity_filter_ok"].fillna(False)
+        if config.use_positivity and "positivity_filter_ok" in working.columns
+        else pd.Series(True, index=working.index)
+    )
+    factor_ok = (
+        working["factor_filter_ok"].fillna(False)
+        if config.factor_filter != "none" and "factor_filter_ok" in working.columns
+        else pd.Series(True, index=working.index)
+    )
     mask = (
         working["confirmed_next_open"].notna()
         & working["signal_score"].notna()
@@ -545,8 +557,8 @@ def _entry_candidates(frame: pd.DataFrame, config: TechGammaConfig) -> pd.DataFr
         & working["hhmm"].gt(config.range_end_hhmm)
         & working["hhmm"].lt(config.exit_hhmm)
         & working["breakout_52w_bps"].ge(config.range_buffer_bps)
-        & working["positivity_filter_ok"].fillna(False)
-        & working["factor_filter_ok"].fillna(False)
+        & positivity_ok
+        & factor_ok
         & working["confirmation_ok"].fillna(False)
     )
     columns = ["ticker", "date", "ts", "next_ts", "next_open", "atr", "signal_score"]

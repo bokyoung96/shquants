@@ -219,6 +219,7 @@ wrds/output/
 .omx/
 .worktrees/
 tmp-dashboard-logs/
+tmp/
 dashboard/frontend/node_modules/
 dashboard/frontend/*.tsbuildinfo
 dashboard/frontend/vite.config.js

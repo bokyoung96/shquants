@@ -1,4 +1,5 @@
 from .base import RegisteredStrategy
+from .fifty_two_week_breakout_atr import BreakoutAtrConfig, BreakoutAtrResult, FiftyTwoWeekBreakoutAtrStrategy
 from .rrg_sector_rotation import (
     RrgSectorRotation,
     RrgSectorRotationOpRrgEx10K1,
@@ -23,6 +24,9 @@ __all__ = (
     "RrgSectorRotationOpRrgEx10K2",
     "RrgSectorRotationOpRrgEx10K1",
     "Mfbt",
+    "BreakoutAtrConfig",
+    "BreakoutAtrResult",
+    "FiftyTwoWeekBreakoutAtrStrategy",
     "SignalEventRotation",
     "SignalEventRotationSelected",
     "Strat1",

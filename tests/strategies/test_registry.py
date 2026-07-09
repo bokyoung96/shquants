@@ -13,6 +13,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     from backtesting.strategies.benchmark_overlay import BenchmarkOverlay
     from backtesting.strategies.benchmark_tilt import BenchmarkTilt
     from backtesting.strategies.earnings_revision import EarningsRevision
+    from backtesting.strategies.fifty_two_week_breakout_atr import FiftyTwoWeekBreakoutAtrStrategy
     from backtesting.strategies.mfbt import Mfbt
     from backtesting.strategies.revision_signal import RevisionSignal
     from backtesting.strategies.rrg_sector_rotation import (
@@ -30,6 +31,7 @@ def test_strategy_modules_export_simple_class_names() -> None:
     assert BenchmarkOverlay.__name__ == "BenchmarkOverlay"
     assert BenchmarkTilt.__name__ == "BenchmarkTilt"
     assert EarningsRevision.__name__ == "EarningsRevision"
+    assert FiftyTwoWeekBreakoutAtrStrategy.__name__ == "FiftyTwoWeekBreakoutAtrStrategy"
     assert Mfbt.__name__ == "Mfbt"
     assert RevisionSignal.__name__ == "RevisionSignal"
     assert RrgSectorRotation.__name__ == "RrgSectorRotation"

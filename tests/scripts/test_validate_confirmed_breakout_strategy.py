@@ -18,16 +18,16 @@ def test_audit_return_accounting_recomputes_net_return_and_fixed_pnl() -> None:
             "entry_price": [100.0, 200.0],
             "exit_price": [110.0, 190.0],
             "gross_return": [0.10, -0.05],
-            "net_return": [0.0976, -0.0524],
+            "net_return": [0.0965, -0.0535],
         }
     )
-    ledger = pd.DataFrame({"equity": [1.0, 1.00226]}, index=pd.to_datetime(["2024-01-03", "2024-01-04"]))
+    ledger = pd.DataFrame({"equity": [1.0, 1.00215]}, index=pd.to_datetime(["2024-01-03", "2024-01-04"]))
 
     audit = audit_return_accounting(trades, ledger, slots=20)
 
     assert audit["gross_return_mismatches"] == 0
     assert audit["net_return_mismatches"] == 0
-    assert audit["fixed_notional_final_return_from_trades"] == 0.00226
+    assert audit["fixed_notional_final_return_from_trades"] == 0.00215
     assert audit["fixed_notional_final_return_delta"] == 0.0
 
 
@@ -40,7 +40,7 @@ def test_audit_trade_log_integrity_flags_bad_temporal_order() -> None:
             "exit_time": pd.to_datetime(["2024-01-03 15:30", "2024-01-02 15:30"]),
             "entry_price": [100.0, 100.0],
             "exit_price": [101.0, 99.0],
-            "net_return": [0.0076, -0.0124],
+            "net_return": [0.0065, -0.0135],
         }
     )
 

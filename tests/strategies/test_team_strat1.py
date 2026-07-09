@@ -23,6 +23,17 @@ def test_team_strat1_registers_ohlcv_sell_filter_strategy() -> None:
     )
 
 
+def test_team_strat1_defaults_to_requested_filter_thresholds() -> None:
+    strategy = build_strategy("team_strat1")
+
+    assert strategy.rng_min == pytest.approx(0.10)
+    assert strategy.ref_min == pytest.approx(1.5)
+    assert strategy.vol_pct == pytest.approx(0.9)
+    assert strategy.vol_days == 250
+    assert strategy.ref_m == 3
+    assert strategy.min_hits == 4
+
+
 def test_team_strat1_builds_short_weights_from_shooting_star_filters() -> None:
     index = pd.to_datetime(["2024-01-02", "2024-03-28", "2024-03-29", "2024-04-01"])
     close = pd.DataFrame(

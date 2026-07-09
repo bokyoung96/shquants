@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 # Strat1 shooting-star sell filters:
-# 1) (high - low) / prev_close > 15%  [intraday volatility]
+# 1) (high - low) / prev_close > 10%  [intraday volatility]
 # 2) upper_wick > body               [sell-off pressure]
 # 3) high / closest-3M-close > 1.5x  [prior run-up]
-# 4) last-day volume rank >= 90%     [volume confirmation]
+# 4) last-day volume rank over recent 250 trading days >= 90% [volume confirmation]
 # Selected names are held as an equal-weight short basket.
 
 from dataclasses import dataclass
@@ -21,10 +21,10 @@ from ..base import RegisteredStrategy
 class Strat1(RegisteredStrategy):
     """Shooting-star sell filter adapted to the registered strategy contract."""
 
-    rng_min: float = 0.15
+    rng_min: float = 0.10
     ref_min: float = 1.5
     vol_pct: float = 0.9
-    vol_days: int = 252
+    vol_days: int = 250
     ref_m: int = 3
     min_hits: int = 4
     gross_short: float = 1.0

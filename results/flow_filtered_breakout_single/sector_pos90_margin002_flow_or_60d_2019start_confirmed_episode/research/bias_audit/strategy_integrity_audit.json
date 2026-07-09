@@ -13,13 +13,13 @@
   },
   "return_accounting": {
     "slots": 20,
-    "round_trip_cost_bps": 24.0,
+    "round_trip_cost_bps": 35.0,
     "gross_return_mismatches": 0,
-    "max_gross_return_abs_delta": 6.487865800153259e-16,
+    "max_gross_return_abs_delta": 5.056718932472393e-16,
     "net_return_mismatches": 0,
-    "max_net_return_abs_delta": 6.487865800153259e-16,
-    "fixed_notional_final_return_from_trades": 0.81938470087,
-    "fixed_notional_final_return_from_ledger": 0.81938470087,
+    "max_net_return_abs_delta": 5.048045315092509e-16,
+    "fixed_notional_final_return_from_trades": 0.67473470087,
+    "fixed_notional_final_return_from_ledger": 0.67473470087,
     "fixed_notional_final_return_delta": 0.0
   },
   "source_entry_exit": {

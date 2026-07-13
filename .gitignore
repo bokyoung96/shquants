@@ -224,3 +224,9 @@ dashboard/frontend/node_modules/
 dashboard/frontend/*.tsbuildinfo
 dashboard/frontend/vite.config.js
 dashboard/frontend/vite.config.d.ts
+
+# KIND local inputs and generated artifacts
+kind/~$*.xlsx
+kind/cache/
+kind/logs/
+kind/outputs/

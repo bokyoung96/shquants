@@ -95,6 +95,29 @@ def test_exact_stage_wins_before_normalized_stage() -> None:
     assert result.candidates == (exact,)
 
 
+def test_exact_stage_with_only_wrong_issuers_falls_through_to_normalized_match() -> None:
+    exact_wrong_issuer = disclosure(
+        company="삼성전자",
+        issuer="99999",
+        receipt="20240430000001",
+    )
+    normalized_correct_issuer = disclosure(
+        company="(주) 삼성전자",
+        issuer="00593",
+        receipt="20240430000002",
+    )
+
+    result = match_disclosure(
+        "A005930",
+        "삼성전자",
+        [exact_wrong_issuer, normalized_correct_issuer],
+    )
+
+    assert result.confidence is Confidence.NORMALIZED_MATCH
+    assert result.disclosure is normalized_correct_issuer
+    assert result.candidates == (normalized_correct_issuer,)
+
+
 def test_empty_expected_normalized_name_fails_closed() -> None:
     result = match_disclosure(
         "A005930", " --- ", [disclosure(company="!!!")]
@@ -248,14 +271,13 @@ def test_identical_receipt_repeated_across_pages_is_deduplicated() -> None:
 @pytest.mark.parametrize(
     "changed",
     [
-        {"company": "삼성 전자"},
         {"title": f"[정정] {PROVISIONAL_TITLE}"},
         {"time": "09:30"},
-        {"issuer_id": "99999"},
+        {"issuer_id": None},
     ],
 )
 def test_conflicting_evidence_for_one_receipt_fails_closed(
-    changed: dict[str, str],
+    changed: dict[str, str | None],
 ) -> None:
     first = disclosure(page=1, position=3)
     conflicting = replace(first, page=2, position=1, **changed)
@@ -270,6 +292,57 @@ def test_conflicting_evidence_for_one_receipt_fails_closed(
     }
     assert result.disclosure is None
     assert "conflict" in (result.rejection_reason or "")
+
+
+def test_conflicting_company_evidence_for_one_receipt_fails_inside_normalized_pool() -> None:
+    first = disclosure(company="(주) 삼성전자", page=1, position=3)
+    conflicting = replace(
+        first,
+        company="삼성 전자",
+        page=2,
+        position=1,
+    )
+
+    result = match_disclosure(
+        "A005930", "삼성전자", [first, conflicting]
+    )
+
+    assert result.confidence is Confidence.MULTIPLE_MATCH
+    assert result.disclosure is None
+    assert "conflict" in (result.rejection_reason or "")
+
+
+def test_unrelated_duplicate_receipt_conflict_does_not_block_target_match() -> None:
+    unrelated = disclosure(
+        company="광고미디어",
+        receipt="20240430000001",
+        issuer="12345",
+        page=1,
+        position=1,
+    )
+    unrelated_conflict = replace(
+        unrelated,
+        time="09:30",
+        page=2,
+        position=1,
+    )
+    target = disclosure(
+        company="삼성전자",
+        receipt="20240430000002",
+        issuer="00593",
+        page=3,
+        position=1,
+    )
+
+    result = match_disclosure(
+        "A005930",
+        "삼성전자",
+        [unrelated, unrelated_conflict, target],
+    )
+
+    assert result.confidence is Confidence.EXACT_MATCH
+    assert result.disclosure is target
+    assert result.candidates == (target,)
 
 
 def test_title_must_contain_provisional_pattern() -> None:

@@ -65,6 +65,17 @@ def _deduplicate_receipts(
     return unique, conflicts
 
 
+def _is_issuer_viable(
+    candidate: Disclosure,
+    expected_issuer: str | None,
+) -> bool:
+    return (
+        expected_issuer is None
+        or candidate.issuer_id is None
+        or candidate.issuer_id == expected_issuer
+    )
+
+
 def _is_correction(candidate: Disclosure) -> bool:
     return candidate.title.strip().startswith(CORRECTION_PREFIX)
 
@@ -109,7 +120,34 @@ def match_disclosure(
             rejection_reason="no eligible provisional title candidate",
         )
 
-    deduplicated, conflicts = _deduplicate_receipts(eligible)
+    expected_issuer = _issuer_id_for_ticker(ticker)
+
+    exact_candidates = [
+        candidate
+        for candidate in eligible
+        if candidate.company.strip() == company.strip()
+        and _is_issuer_viable(candidate, expected_issuer)
+    ]
+    candidates, conflicts = _deduplicate_receipts(exact_candidates)
+    confidence = Confidence.EXACT_MATCH
+
+    if not candidates and not conflicts:
+        normalized_company = normalize_company_name(company)
+        if not normalized_company:
+            return MatchResult(
+                confidence=Confidence.NO_MATCH,
+                disclosure=None,
+                rejection_reason="expected company name normalizes to empty",
+            )
+        normalized_candidates = [
+            candidate
+            for candidate in eligible
+            if normalize_company_name(candidate.company) == normalized_company
+            and _is_issuer_viable(candidate, expected_issuer)
+        ]
+        candidates, conflicts = _deduplicate_receipts(normalized_candidates)
+        confidence = Confidence.NORMALIZED_MATCH
+
     if conflicts:
         return MatchResult(
             confidence=Confidence.MULTIPLE_MATCH,
@@ -118,50 +156,25 @@ def match_disclosure(
             rejection_reason="conflicting evidence for duplicate receipt identifier",
         )
 
-    exact = [
-        candidate
-        for candidate in deduplicated
-        if candidate.company.strip() == company.strip()
-    ]
-    confidence = Confidence.EXACT_MATCH
-    candidates = exact
-
     if not candidates:
-        expected_name = normalize_company_name(company)
-        if not expected_name:
-            return MatchResult(
-                confidence=Confidence.NO_MATCH,
-                disclosure=None,
-                rejection_reason="expected company name normalizes to empty",
-            )
-        candidates = [
+        issuer_conflicting_company_candidates = [
             candidate
-            for candidate in deduplicated
-            if normalize_company_name(candidate.company) == expected_name
+            for candidate in eligible
+            if candidate.company.strip() == company.strip()
+            or normalize_company_name(candidate.company)
+            == normalize_company_name(company)
         ]
-        confidence = Confidence.NORMALIZED_MATCH
-
-    if not candidates:
+        reason = "no eligible company name candidate"
+        if any(
+            not _is_issuer_viable(candidate, expected_issuer)
+            for candidate in issuer_conflicting_company_candidates
+        ):
+            reason = "company candidates conflict with expected issuer"
         return MatchResult(
             confidence=Confidence.NO_MATCH,
             disclosure=None,
-            rejection_reason="no eligible company name candidate",
+            rejection_reason=reason,
         )
-
-    expected_issuer = _issuer_id_for_ticker(ticker)
-    if expected_issuer is not None:
-        candidates = [
-            candidate
-            for candidate in candidates
-            if candidate.issuer_id is None
-            or candidate.issuer_id == expected_issuer
-        ]
-        if not candidates:
-            return MatchResult(
-                confidence=Confidence.NO_MATCH,
-                disclosure=None,
-                rejection_reason="company candidates conflict with expected issuer",
-            )
 
     candidates = _apply_title_priority(candidates)
     if len(candidates) > 1:

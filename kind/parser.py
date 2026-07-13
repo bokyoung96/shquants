@@ -69,7 +69,7 @@ def parse_disclosure_page(
         )
 
         if company_link is None or disclosure_link is None:
-            if re.fullmatch(PROVISIONAL_TITLE_PATTERN, title):
+            if re.search(PROVISIONAL_TITLE_PATTERN, title):
                 raise KindSchemaError(
                     f"provisional disclosure row {position} is missing a required link"
                 )
@@ -84,6 +84,7 @@ def parse_disclosure_page(
             ISSUER_PATTERN,
             "issuer",
             position,
+            allow_return_false=True,
         )
         receipt_id = _extract_identifier(
             disclosure_link,
@@ -114,9 +115,12 @@ def _cell_text(cell: Tag) -> str:
 
 
 def _handler_link(cell: Tag, handler_name: str) -> Tag | None:
+    handler_start = re.compile(rf"\s*{re.escape(handler_name)}\s*\(")
     return cell.find(
         "a",
-        onclick=lambda value: isinstance(value, str) and handler_name in value,
+        onclick=lambda value: (
+            isinstance(value, str) and handler_start.match(value) is not None
+        ),
     )
 
 
@@ -125,6 +129,8 @@ def _extract_identifier(
     pattern: str,
     identifier_name: str,
     position: int,
+    *,
+    allow_return_false: bool = False,
 ) -> str:
     onclick = link.get("onclick")
     if not isinstance(onclick, str):
@@ -132,7 +138,10 @@ def _extract_identifier(
             f"row {position} has invalid {identifier_name} handler"
         )
 
-    match = re.search(pattern, onclick)
+    allowed_tail = r"\s*;?\s*"
+    if allow_return_false:
+        allowed_tail += r"(?:return false;\s*)?"
+    match = re.fullmatch(rf"\s*(?:{pattern}){allowed_tail}", onclick)
     if match is None:
         raise KindSchemaError(
             f"row {position} has invalid {identifier_name} handler"

@@ -181,12 +181,59 @@ def test_provisional_row_requires_both_links(
 
 
 @pytest.mark.parametrize(
+    "title",
+    [
+        "연결재무제표기준영업(잠정)실적(공정공시)",
+        "영업(잠정)실적(공정공시)(자회사의 주요경영사항)",
+        (
+            "연결재무제표기준 영업 (잠정) 실적 (공정공시)  "
+            "(자회사의 주요경영사항)"
+        ),
+    ],
+)
+@pytest.mark.parametrize("missing_link", ["company", "disclosure"])
+def test_provisional_title_family_requires_both_links(
+    title: str,
+    missing_link: str,
+) -> None:
+    issuer_onclick: str | None = (
+        "companysummary_open('00066'); return false;"
+    )
+    disclosure_onclick: str | None = (
+        "openDisclsViewer('20240425000004','')"
+    )
+    if missing_link == "company":
+        issuer_onclick = None
+    else:
+        disclosure_onclick = None
+
+    with pytest.raises(KindSchemaError, match="provisional.*link"):
+        parse_disclosure_page(
+            _page_html(
+                [
+                    _row(
+                        title=title,
+                        issuer_onclick=issuer_onclick,
+                        disclosure_onclick=disclosure_onclick,
+                    )
+                ]
+            ),
+            announcement_date="2024-04-25",
+            page=1,
+        )
+
+
+@pytest.mark.parametrize(
     "onclick",
     [
         "companysummary_open('0006'); return false;",
         "companysummary_open('000660'); return false;",
         "companysummary_open('00-66'); return false;",
         "companysummary_open('00066'",
+        (
+            "companysummary_open('00066'); "
+            "companysummary_open('00067')"
+        ),
     ],
 )
 def test_parse_disclosure_page_rejects_malformed_issuer_handler(
@@ -208,6 +255,10 @@ def test_parse_disclosure_page_rejects_malformed_issuer_handler(
         "openDisclsViewer('2024A425000004','')",
         "openDisclsViewer('20240425000004')",
         "openDisclsViewer('20240425000004','",
+        (
+            "openDisclsViewer('20240425000004',''); "
+            "openDisclsViewer('20240425000005','')"
+        ),
     ],
 )
 def test_parse_disclosure_page_rejects_malformed_receipt_handler(
@@ -219,6 +270,72 @@ def test_parse_disclosure_page_rejects_malformed_receipt_handler(
             announcement_date="2024-04-25",
             page=1,
         )
+
+
+@pytest.mark.parametrize(
+    ("issuer_onclick", "disclosure_onclick"),
+    [
+        (
+            "prefixcompanysummary_open('00066')suffix",
+            "openDisclsViewer('20240425000004','')",
+        ),
+        (
+            "companysummary_open('00066'); return false;",
+            "prefixopenDisclsViewer('20240425000004','')suffix",
+        ),
+    ],
+)
+def test_parse_disclosure_page_rejects_handler_surrounding_junk(
+    issuer_onclick: str,
+    disclosure_onclick: str,
+) -> None:
+    with pytest.raises(KindSchemaError):
+        parse_disclosure_page(
+            _page_html(
+                [
+                    _row(
+                        issuer_onclick=issuer_onclick,
+                        disclosure_onclick=disclosure_onclick,
+                    )
+                ]
+            ),
+            announcement_date="2024-04-25",
+            page=1,
+        )
+
+
+@pytest.mark.parametrize(
+    ("issuer_onclick", "disclosure_onclick"),
+    [
+        (
+            "companysummary_open('00066'); return false;",
+            "openDisclsViewer('20240425000004','')",
+        ),
+        (
+            "  companysummary_open('00066') ;  ",
+            "  openDisclsViewer('20240425000004' , 'detail') ;  ",
+        ),
+    ],
+)
+def test_parse_disclosure_page_accepts_observed_complete_handlers(
+    issuer_onclick: str,
+    disclosure_onclick: str,
+) -> None:
+    actual = parse_disclosure_page(
+        _page_html(
+            [
+                _row(
+                    issuer_onclick=issuer_onclick,
+                    disclosure_onclick=disclosure_onclick,
+                )
+            ]
+        ),
+        announcement_date="2024-04-25",
+        page=1,
+    )
+
+    assert actual.disclosures[0].issuer_id == "00066"
+    assert actual.disclosures[0].receipt_id == "20240425000004"
 
 
 @pytest.mark.parametrize(
@@ -273,12 +390,18 @@ def test_empty_or_noncompany_table_is_valid(rows: list[str]) -> None:
     assert actual == ParsedPage(disclosures=(), total_pages=1)
 
 
-def test_nonprovisional_row_without_required_links_is_skipped() -> None:
+@pytest.mark.parametrize(
+    "title",
+    ["주주총회소집공고", "영업실적 등에 대한 전망"],
+)
+def test_nonprovisional_row_without_required_links_is_skipped(
+    title: str,
+) -> None:
     actual = parse_disclosure_page(
         _page_html(
             [
                 _row(
-                    title="주주총회소집공고",
+                    title=title,
                     issuer_onclick=None,
                     disclosure_onclick=None,
                 )

@@ -84,36 +84,75 @@ def test_time_pattern_accepts_only_zero_padded_24_hour_times() -> None:
     assert re.fullmatch(TIME_PATTERN, "23:59")
     assert not re.fullmatch(TIME_PATTERN, "8:05")
     assert not re.fullmatch(TIME_PATTERN, "24:00")
+    assert not re.fullmatch(TIME_PATTERN, "0٨:0٥")
 
 
-def test_page_pattern_captures_only_ascii_numeric_pages() -> None:
-    match = re.fullmatch(PAGE_PATTERN, "fnPageGo('12')")
+@pytest.mark.parametrize("page", ["1", "999"])
+def test_page_pattern_captures_positive_pages_up_to_999(page: str) -> None:
+    match = re.search(PAGE_PATTERN, f"fnPageGo('{page}')")
 
     assert match is not None
-    assert match.group(1) == "12"
-    assert not re.fullmatch(PAGE_PATTERN, "fnPageGo('١٢')")
-    assert not re.fullmatch(PAGE_PATTERN, "fnPageGo('12a')")
+    assert match.group(1) == page
 
 
-def test_issuer_pattern_accepts_alphanumeric_ids_and_rejects_malformed_calls() -> None:
-    numeric = re.fullmatch(ISSUER_PATTERN, "companysummary_open('00066')")
-    alphanumeric = re.fullmatch(ISSUER_PATTERN, "companysummary_open('A12B3')")
-
-    assert numeric is not None
-    assert numeric.group(1) == "00066"
-    assert alphanumeric is not None
-    assert alphanumeric.group(1) == "A12B3"
-    assert not re.fullmatch(ISSUER_PATTERN, "companysummary_open('A-12')")
-    assert not re.fullmatch(ISSUER_PATTERN, "companysummary_open('A12'")
+@pytest.mark.parametrize("page", ["0", "1000", "0001", "١٢", "12a"])
+def test_page_pattern_rejects_out_of_range_or_malformed_pages(page: str) -> None:
+    assert not re.search(PAGE_PATTERN, f"fnPageGo('{page}')")
 
 
-def test_receipt_pattern_requires_ascii_digits_and_the_next_argument_delimiter() -> None:
-    match = re.search(RECEIPT_PATTERN, "openDisclsViewer('20240425000004','')")
+@pytest.mark.parametrize("issuer_id", ["00066", "A12B3"])
+def test_issuer_pattern_accepts_five_ascii_alphanumeric_characters(
+    issuer_id: str,
+) -> None:
+    match = re.search(ISSUER_PATTERN, f"companysummary_open('{issuer_id}')")
+
+    assert match is not None
+    assert match.group(1) == issuer_id
+
+
+@pytest.mark.parametrize("issuer_id", ["A123", "A12345", "A-123"])
+def test_issuer_pattern_rejects_invalid_identifier_boundaries(
+    issuer_id: str,
+) -> None:
+    assert not re.search(ISSUER_PATTERN, f"companysummary_open('{issuer_id}')")
+
+
+def test_issuer_pattern_rejects_truncated_handler_call() -> None:
+    assert not re.search(ISSUER_PATTERN, "companysummary_open('A12B3'")
+
+
+@pytest.mark.parametrize(
+    "onclick",
+    [
+        "openDisclsViewer('20240425000004','')",
+        "openDisclsViewer('20240425000004' , 'detail')",
+    ],
+)
+def test_receipt_pattern_accepts_complete_14_digit_handler_calls(
+    onclick: str,
+) -> None:
+    match = re.search(RECEIPT_PATTERN, onclick)
 
     assert match is not None
     assert match.group(1) == "20240425000004"
-    assert not re.search(RECEIPT_PATTERN, "openDisclsViewer('2024A425000004','')")
-    assert not re.search(RECEIPT_PATTERN, "openDisclsViewer('20240425000004')")
+
+
+@pytest.mark.parametrize(
+    "onclick",
+    [
+        "openDisclsViewer('1','')",
+        "openDisclsViewer('2024042500000','')",
+        "openDisclsViewer('202404250000044','')",
+        "openDisclsViewer('2024A425000004','')",
+        "openDisclsViewer('20240425000004')",
+        "openDisclsViewer('20240425000004','",
+        "openDisclsViewer('20240425000004',''",
+    ],
+)
+def test_receipt_pattern_rejects_invalid_or_truncated_handler_calls(
+    onclick: str,
+) -> None:
+    assert not re.search(RECEIPT_PATTERN, onclick)
 
 
 def test_title_patterns_distinguish_supported_disclosure_types() -> None:

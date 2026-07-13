@@ -22,8 +22,13 @@ FORM_DEFAULTS = {
     "copyUrl": "",
 }
 
-TABLE_SELECTOR = "table.list"
-ROW_SELECTOR = "tbody tr"
+TABLE_SELECTOR = "section.scrarea.type-00 > table.list.type-00.mt10"
+ROW_SELECTOR = ":scope > tr"
+EXPECTED_TABLE_SUMMARY = "시간, 회사명, 공시제목, 제출인, 차트/주가"
+PAGINATION_GROUP_SELECTOR = "section.paging-group"
+PAGINATION_NAV_SELECTOR = ":scope > div.paging.type-00"
+PAGINATION_INFO_SELECTOR = ":scope > div.info.type-00"
+ACTIVE_PAGE_SELECTOR = ":scope > a.active"
 COMPANY_LINK_ONCLICK = "companysummary_open"
 DISCLOSURE_LINK_ONCLICK = "openDisclsViewer"
 EXPECTED_CELL_COUNT = 5

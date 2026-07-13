@@ -3,6 +3,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
+import kind.selectors as kind_selectors
 from kind import Confidence, Disclosure, MatchResult, ParsedPage
 from kind.selectors import (
     COMPANY_LINK_ONCLICK,
@@ -72,8 +73,21 @@ def test_selector_contract_is_exact() -> None:
         "searchCorpName": "",
         "copyUrl": "",
     }
-    assert TABLE_SELECTOR == "table.list"
-    assert ROW_SELECTOR == "tbody tr"
+    assert TABLE_SELECTOR == (
+        "section.scrarea.type-00 > table.list.type-00.mt10"
+    )
+    assert ROW_SELECTOR == ":scope > tr"
+    assert kind_selectors.EXPECTED_TABLE_SUMMARY == (
+        "시간, 회사명, 공시제목, 제출인, 차트/주가"
+    )
+    assert kind_selectors.PAGINATION_GROUP_SELECTOR == "section.paging-group"
+    assert kind_selectors.PAGINATION_NAV_SELECTOR == (
+        ":scope > div.paging.type-00"
+    )
+    assert kind_selectors.PAGINATION_INFO_SELECTOR == (
+        ":scope > div.info.type-00"
+    )
+    assert kind_selectors.ACTIVE_PAGE_SELECTOR == ":scope > a.active"
     assert COMPANY_LINK_ONCLICK == "companysummary_open"
     assert DISCLOSURE_LINK_ONCLICK == "openDisclsViewer"
     assert EXPECTED_CELL_COUNT == 5

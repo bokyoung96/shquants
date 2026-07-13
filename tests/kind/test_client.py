@@ -222,7 +222,7 @@ def _write_valid_cache(cache_dir: Path, date: str, pages: list[str]) -> tuple[Pa
     hashes: dict[str, str] = {}
     for index, html in enumerate(pages, start=1):
         path = date_dir / f"page-{index:04d}.html"
-        path.write_text(html, encoding="utf-8")
+        path.write_text(html, encoding="utf-8", newline="")
         page_paths.append(path)
         hashes[path.name] = _sha256_text(html)
     manifest = {

@@ -238,7 +238,7 @@ class KindClient:
         for path in paths:
             if not path.exists():
                 return None
-            if _sha256_text(path.read_text(encoding="utf-8")) != hashes.get(path.name):
+            if _sha256_text(_read_text_exact(path)) != hashes.get(path.name):
                 return None
         return paths
 
@@ -265,6 +265,10 @@ def _atomic_write_text(path: Path, value: str) -> None:
             temporary.unlink()
 
 
+def _read_text_exact(path: Path) -> str:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
-

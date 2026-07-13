@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import date as Date, timedelta
 from pathlib import Path
 from typing import Protocol
 
@@ -10,7 +11,7 @@ import pandas as pd
 
 from kind.client import KindClient, PlaywrightTransport
 from kind.matching import match_disclosure, normalize_company_name
-from kind.models import Confidence, Disclosure
+from kind.models import Confidence, Disclosure, MatchResult
 from kind.parser import KindSchemaError, parse_disclosure_page
 from kind.validation import (
     PRIMARY_COLUMNS,
@@ -34,6 +35,50 @@ class PipelineResult:
     validation: ValidationSummary
 
 
+NEARBY_SEARCH_DAYS = 3
+
+
+def _date_window(date: str, radius: int = NEARBY_SEARCH_DAYS) -> tuple[str, ...]:
+    anchor = Date.fromisoformat(date)
+    return tuple(
+        (anchor + timedelta(days=offset)).isoformat()
+        for offset in range(-radius, radius + 1)
+    )
+
+
+def _match_with_nearby_dates(
+    ticker: str,
+    company: str,
+    date: str,
+    disclosures_by_date: dict[str, tuple[Disclosure, ...]],
+) -> tuple[MatchResult, str, tuple[Disclosure, ...]]:
+    same_day = disclosures_by_date.get(date, ())
+    match = match_disclosure(ticker, company, same_day)
+    if match.confidence is not Confidence.NO_MATCH:
+        return match, date, same_day
+
+    for distance in range(1, NEARBY_SEARCH_DAYS + 1):
+        for signed_distance in (-distance, distance):
+            candidate_date = (
+                Date.fromisoformat(date) + timedelta(days=signed_distance)
+            ).isoformat()
+            nearby = disclosures_by_date.get(candidate_date, ())
+            nearby_match = match_disclosure(ticker, company, nearby)
+            if nearby_match.confidence is not Confidence.NO_MATCH:
+                reason = nearby_match.rejection_reason
+                suffix = f"nearby disclosure date {candidate_date}"
+                return (
+                    replace(
+                        nearby_match,
+                        rejection_reason=f"{reason}; {suffix}" if reason else suffix,
+                    ),
+                    candidate_date,
+                    nearby,
+                )
+
+    return match, date, same_day
+
+
 async def fetch_dates_with_semaphore(
     client: DateFetcher,
     dates: list[str],
@@ -45,7 +90,12 @@ async def fetch_dates_with_semaphore(
 
     async def fetch_one(date: str) -> tuple[str, tuple[Path, ...]]:
         async with semaphore:
-            return date, await client.fetch_date(date, refresh=refresh)
+            try:
+                return date, await client.fetch_date(date, refresh=refresh)
+            except Exception:
+                # A single unavailable KIND date must not discard all other
+                # dates; it remains auditable as a no-match downstream.
+                return date, ()
 
     pairs = await asyncio.gather(*(fetch_one(date) for date in dates))
     return dict(pairs)
@@ -91,15 +141,21 @@ def match_all_rows(
 
     for row in input_frame.itertuples(index=False):
         date = pd.Timestamp(row.announcement_date).strftime("%Y-%m-%d")
-        disclosures = disclosures_by_date.get(date, ())
-        match = match_disclosure(row.ticker, row.company, disclosures)
+        match, matched_date, disclosures = _match_with_nearby_dates(
+            row.ticker,
+            row.company,
+            date,
+            disclosures_by_date,
+        )
         matched = match.confidence in {
             Confidence.EXACT_MATCH,
             Confidence.NORMALIZED_MATCH,
         }
         announcement_datetime = pd.NaT
         if matched and match.disclosure is not None:
-            announcement_datetime = pd.Timestamp(f"{date} {match.disclosure.time}")
+            announcement_datetime = pd.Timestamp(
+                f"{matched_date} {match.disclosure.time}"
+            )
 
         records.append(
             {
@@ -120,6 +176,7 @@ def match_all_rows(
                 disclosure=match.disclosure,
                 candidates=match.candidates,
                 rejection_reason=match.rejection_reason,
+                matched_date=matched_date,
             )
         )
 
@@ -141,9 +198,16 @@ async def run_pipeline(
 ) -> PipelineResult:
     input_frame = read_timeframe(input_path)
     unique_dates = sorted(input_frame["announcement_date"].dt.strftime("%Y-%m-%d").unique())
+    fetch_dates = sorted(
+        {
+            candidate_date
+            for date in unique_dates
+            for candidate_date in _date_window(date)
+        }
+    )
     cache_pages = await fetch_dates_with_semaphore(
         client,
-        list(unique_dates),
+        fetch_dates,
         concurrency=concurrency,
         refresh=refresh,
     )
@@ -207,6 +271,7 @@ def _audit_record(
     disclosure: Disclosure | None,
     candidates: tuple[Disclosure, ...],
     rejection_reason: str | None,
+    matched_date: str,
 ) -> dict[str, object]:
     candidate_receipts = "|".join(candidate.receipt_id for candidate in candidates)
     candidate_titles = "|".join(candidate.title for candidate in candidates)
@@ -221,6 +286,12 @@ def _audit_record(
         "announcement_date": date,
         "confidence": confidence.value,
         "announcement_time": disclosure.time if disclosure is not None else None,
+        "disclosure_date": matched_date if disclosure is not None else None,
+        "date_offset_days": (
+            (Date.fromisoformat(matched_date) - Date.fromisoformat(date)).days
+            if disclosure is not None
+            else None
+        ),
         "receipt_id": disclosure.receipt_id if disclosure is not None else None,
         "issuer_id": disclosure.issuer_id if disclosure is not None else None,
         "page": disclosure.page if disclosure is not None else None,

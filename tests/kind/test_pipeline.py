@@ -7,9 +7,11 @@ import pandas as pd
 
 from kind.pipeline import (
     fetch_dates_with_semaphore,
+    match_all_rows,
     parse_cached_dates,
     run_pipeline,
 )
+from kind.models import Confidence, Disclosure
 from kind.validation import PRIMARY_COLUMNS
 from kind.workbook import (
     EXPECTED_ITEM_CODE,
@@ -27,7 +29,7 @@ class CachedClient:
 
     async def fetch_date(self, date: str, *, refresh: bool = False) -> tuple[Path, ...]:
         self.calls.append(date)
-        return self.pages_by_date[date]
+        return self.pages_by_date.get(date, ())
 
 
 class TrackingClient:
@@ -42,6 +44,13 @@ class TrackingClient:
         await asyncio.sleep(0.01)
         self.active -= 1
         return (self.page,)
+
+
+class FailingClient:
+    async def fetch_date(self, date: str, *, refresh: bool = False) -> tuple[Path, ...]:
+        if date == "2024-05-01":
+            raise RuntimeError("temporary unavailable")
+        return ()
 
 
 def test_run_pipeline_matches_cached_pages_and_writes_outputs(tmp_path: Path) -> None:
@@ -76,7 +85,15 @@ def test_run_pipeline_matches_cached_pages_and_writes_outputs(tmp_path: Path) ->
     assert (log_dir / "missing_match.csv").exists()
     assert (log_dir / "schema_error.csv").exists()
     assert (output_dir / "announcements_with_time.xlsx").exists()
-    assert client.calls == ["2024-04-30"]
+    assert set(client.calls) == {
+        "2024-04-27",
+        "2024-04-28",
+        "2024-04-29",
+        "2024-04-30",
+        "2024-05-01",
+        "2024-05-02",
+        "2024-05-03",
+    }
 
 
 def test_fetch_dates_with_semaphore_limits_concurrency(tmp_path: Path) -> None:
@@ -99,6 +116,19 @@ def test_fetch_dates_with_semaphore_limits_concurrency(tmp_path: Path) -> None:
     assert client.max_active == 2
 
 
+def test_fetch_dates_with_semaphore_keeps_other_dates_when_one_fetch_fails() -> None:
+    result = asyncio.run(
+        fetch_dates_with_semaphore(
+            FailingClient(),
+            ["2024-04-30", "2024-05-01"],
+            concurrency=2,
+        )
+    )
+
+    assert set(result) == {"2024-04-30", "2024-05-01"}
+    assert result["2024-05-01"] == ()
+
+
 def test_schema_error_keeps_date_available_for_no_match(tmp_path: Path) -> None:
     broken = tmp_path / "broken.html"
     broken.write_text("<html>not KIND</html>", encoding="utf-8")
@@ -114,6 +144,40 @@ def test_schema_error_keeps_date_available_for_no_match(tmp_path: Path) -> None:
             "message": errors[0]["message"],
         }
     ]
+
+
+def test_match_all_rows_searches_three_nearby_days_after_same_day_miss() -> None:
+    input_frame = pd.DataFrame(
+        {
+            "ticker": ["A000660"],
+            "company": ["SK하이닉스"],
+            "quarter": [6],
+            "announcement_date": [pd.Timestamp("2024-04-30")],
+        }
+    )
+    nearby = Disclosure(
+        announcement_date="2024-04-28",
+        time="08:05",
+        company="SK하이닉스",
+        title="영업 (잠정) 실적 (공정공시)",
+        submitter="SK하이닉스",
+        issuer_id="00066",
+        receipt_id="20240428000001",
+        page=1,
+        position=1,
+    )
+
+    frame, audit = match_all_rows(
+        input_frame,
+        {"2024-04-28": (nearby,), "2024-04-30": ()},
+    )
+
+    assert frame.loc[0, "confidence"] is Confidence.EXACT_MATCH.value
+    assert frame.loc[0, "announcement_datetime"] == pd.Timestamp(
+        "2024-04-28 08:05"
+    )
+    assert audit.loc[0, "disclosure_date"] == "2024-04-28"
+    assert audit.loc[0, "date_offset_days"] == -2
 
 
 def _write_pipeline_workbook(path: Path) -> Path:

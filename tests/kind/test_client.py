@@ -87,6 +87,17 @@ def test_retry_after_transient_post_failure_uses_expected_form(tmp_path: Path) -
     )
 
 
+def test_schema_error_page_is_cached_for_pipeline_audit(tmp_path: Path) -> None:
+    malformed = "<html><body>temporary empty KIND response</body></html>"
+    transport = FakeTransport({(ANNOUNCEMENT_DATE, 1): malformed})
+    client = KindClient(transport, cache_dir=tmp_path, min_delay=0)
+
+    (path,) = asyncio.run(client.fetch_date(ANNOUNCEMENT_DATE))
+
+    assert path.read_text(encoding="utf-8") == malformed
+    assert (tmp_path / ANNOUNCEMENT_DATE / "manifest.json").exists()
+
+
 def test_corrupt_cache_hash_refetches_and_rewrites_manifest(tmp_path: Path) -> None:
     old_html = _page_html([_row(time="08:05")], current=1, total=1)
     new_html = _page_html([_row(time="09:15")], current=1, total=1)

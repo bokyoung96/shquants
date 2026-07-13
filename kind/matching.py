@@ -12,6 +12,7 @@ LEGAL_FORMS = ("(주)", "주식회사")
 SUBSIDIARY_MARKER = "자회사의 주요경영사항"
 CORRECTION_PREFIX = "[정정]"
 VALID_TICKER_PATTERN = re.compile(r"A[0-9A-Z]{6}")
+CONSOLIDATED_MARKER = re.compile(r"연결\s*재무제표\s*기준")
 
 
 def normalize_company_name(value: str) -> str:
@@ -84,25 +85,27 @@ def _is_subsidiary(candidate: Disclosure) -> bool:
     return SUBSIDIARY_MARKER in candidate.title
 
 
+def _is_consolidated(candidate: Disclosure) -> bool:
+    return CONSOLIDATED_MARKER.search(candidate.title) is not None
+
+
 def _apply_title_priority(candidates: list[Disclosure]) -> list[Disclosure]:
+    candidates = [candidate for candidate in candidates if not _is_subsidiary(candidate)]
+    if not candidates:
+        return []
     direct_originals = [
         candidate
         for candidate in candidates
-        if not _is_correction(candidate) and not _is_subsidiary(candidate)
+        if not _is_correction(candidate)
     ]
     if direct_originals:
-        return direct_originals
+        consolidated = [
+            candidate for candidate in direct_originals if _is_consolidated(candidate)
+        ]
+        return consolidated or direct_originals
 
-    direct = [
-        candidate for candidate in candidates if not _is_subsidiary(candidate)
-    ]
-    if direct:
-        return direct
-
-    subsidiary_originals = [
-        candidate for candidate in candidates if not _is_correction(candidate)
-    ]
-    return subsidiary_originals or candidates
+    consolidated = [candidate for candidate in candidates if _is_consolidated(candidate)]
+    return consolidated or candidates
 
 
 def match_disclosure(
@@ -112,8 +115,18 @@ def match_disclosure(
 ) -> MatchResult:
     """Return one evidenced match or fail closed with auditable candidates."""
 
-    eligible = [candidate for candidate in disclosures if _is_eligible(candidate)]
+    eligible = [
+        candidate
+        for candidate in disclosures
+        if _is_eligible(candidate) and not _is_subsidiary(candidate)
+    ]
     if not eligible:
+        if any(_is_eligible(candidate) and _is_subsidiary(candidate) for candidate in disclosures):
+            return MatchResult(
+                confidence=Confidence.NO_MATCH,
+                disclosure=None,
+                rejection_reason="eligible subsidiary statement excluded",
+            )
         return MatchResult(
             confidence=Confidence.NO_MATCH,
             disclosure=None,

@@ -12,7 +12,7 @@ from typing import Protocol
 
 from playwright.async_api import APIRequestContext, Playwright, async_playwright
 
-from kind.parser import parse_disclosure_page
+from kind.parser import KindSchemaError, parse_disclosure_page
 from kind.selectors import (
     FORM_DEFAULTS,
     KIND_MAIN_URL,
@@ -159,12 +159,18 @@ class KindClient:
                         timeout_ms=self.timeout_ms,
                     )
                 )
-                parsed = parse_disclosure_page(
-                    html,
-                    announcement_date=date,
-                    page=page_number,
-                )
-                total_pages = parsed.total_pages
+                try:
+                    parsed = parse_disclosure_page(
+                        html,
+                        announcement_date=date,
+                        page=page_number,
+                    )
+                except KindSchemaError:
+                    # Publish malformed pages so the pipeline can retain an
+                    # auditable schema error and continue other dates.
+                    parsed = None
+                if parsed is not None:
+                    total_pages = parsed.total_pages
                 page_path = date_dir / f"page-{page_number:04d}.html"
                 _atomic_write_text(page_path, html)
                 page_paths.append(page_path)

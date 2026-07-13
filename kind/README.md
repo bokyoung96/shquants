@@ -58,6 +58,12 @@ refetch; an interrupted run does not publish a valid manifest for partial data.
   duplicate receipt carried conflicting evidence.
 - `NO_MATCH`: no eligible unambiguous disclosure was found.
 
+When both separate and consolidated statements are present, the
+`연결재무제표기준` title is preferred. Disclosures whose title identifies
+`자회사의 주요경영사항` are excluded. If the announcement date has no match,
+the same company is checked on each date up to three days before and after;
+the audit records the selected disclosure date and day offset.
+
 Only `EXACT_MATCH` and `NORMALIZED_MATCH` rows receive `announcement_datetime`.
 Unresolved rows stay `NaT`. The CLI returns `0` only when validation is strictly
 complete; otherwise it writes all artifacts and returns `2`.

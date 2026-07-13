@@ -231,7 +231,7 @@ def test_single_correction_is_accepted() -> None:
     assert result.candidates == (correction,)
 
 
-def test_two_direct_original_receipts_remain_ambiguous_in_dom_order() -> None:
+def test_two_direct_original_receipts_prefer_consolidated_statement() -> None:
     separate = disclosure(
         title=PROVISIONAL_TITLE,
         time="09:00",
@@ -251,10 +251,41 @@ def test_two_direct_original_receipts_remain_ambiguous_in_dom_order() -> None:
         "A005930", "삼성전자", [separate, consolidated]
     )
 
-    assert result.confidence is Confidence.MULTIPLE_MATCH
+    assert result.confidence is Confidence.EXACT_MATCH
+    assert result.disclosure is consolidated
+    assert result.candidates == (consolidated,)
+
+
+def test_consolidated_statement_is_preferred_over_separate_statement() -> None:
+    separate = disclosure(
+        title=PROVISIONAL_TITLE,
+        receipt="20240430000002",
+        time="09:00",
+    )
+    consolidated = disclosure(
+        title="연결재무제표기준" + PROVISIONAL_TITLE,
+        receipt="20240430000001",
+        time="08:00",
+    )
+
+    result = match_disclosure(
+        "A005930", disclosure().company, [separate, consolidated]
+    )
+
+    assert result.confidence is Confidence.EXACT_MATCH
+    assert result.disclosure is consolidated
+
+
+def test_subsidiary_statement_is_excluded_even_when_it_is_the_only_candidate() -> None:
+    subsidiary = disclosure(
+        title=PROVISIONAL_TITLE + " (자회사의 주요경영사항)",
+    )
+
+    result = match_disclosure("A005930", disclosure().company, [subsidiary])
+
+    assert result.confidence is Confidence.NO_MATCH
     assert result.disclosure is None
-    assert result.candidates == (separate, consolidated)
-    assert "multiple" in (result.rejection_reason or "")
+    assert "subsidiary" in (result.rejection_reason or "")
 
 
 def test_identical_receipt_repeated_across_pages_is_deduplicated() -> None:

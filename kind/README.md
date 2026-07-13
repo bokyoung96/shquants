@@ -61,8 +61,10 @@ refetch; an interrupted run does not publish a valid manifest for partial data.
 When both separate and consolidated statements are present, the
 `연결재무제표기준` title is preferred. Disclosures whose title identifies
 `자회사의 주요경영사항` are excluded. If the announcement date has no match,
-the same company is checked on each date up to three days before and after;
-the audit records the selected disclosure date and day offset.
+the same issuer is checked on each weekday up to ten business days before and
+after; only provisional operating-performance titles are eligible. The audit
+records the selected disclosure date and day offset. Korean exchange holidays
+are not encoded separately, so the window is weekday-based.
 
 Only `EXACT_MATCH` and `NORMALIZED_MATCH` rows receive `announcement_datetime`.
 Unresolved rows stay `NaT`. The CLI returns `0` only when validation is strictly

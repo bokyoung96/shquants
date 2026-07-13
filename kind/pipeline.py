@@ -35,13 +35,27 @@ class PipelineResult:
     validation: ValidationSummary
 
 
-NEARBY_SEARCH_DAYS = 3
+NEARBY_SEARCH_BUSINESS_DAYS = 10
 
 
-def _date_window(date: str, radius: int = NEARBY_SEARCH_DAYS) -> tuple[str, ...]:
+def _shift_business_days(anchor: Date, offset: int) -> Date:
+    step = 1 if offset >= 0 else -1
+    remaining = abs(offset)
+    current = anchor
+    while remaining:
+        current += timedelta(days=step)
+        if current.weekday() < 5:
+            remaining -= 1
+    return current
+
+
+def _date_window(
+    date: str,
+    radius: int = NEARBY_SEARCH_BUSINESS_DAYS,
+) -> tuple[str, ...]:
     anchor = Date.fromisoformat(date)
     return tuple(
-        (anchor + timedelta(days=offset)).isoformat()
+        _shift_business_days(anchor, offset).isoformat()
         for offset in range(-radius, radius + 1)
     )
 
@@ -57,10 +71,10 @@ def _match_with_nearby_dates(
     if match.confidence is not Confidence.NO_MATCH:
         return match, date, same_day
 
-    for distance in range(1, NEARBY_SEARCH_DAYS + 1):
+    for distance in range(1, NEARBY_SEARCH_BUSINESS_DAYS + 1):
         for signed_distance in (-distance, distance):
-            candidate_date = (
-                Date.fromisoformat(date) + timedelta(days=signed_distance)
+            candidate_date = _shift_business_days(
+                Date.fromisoformat(date), signed_distance
             ).isoformat()
             nearby = disclosures_by_date.get(candidate_date, ())
             nearby_match = match_disclosure(ticker, company, nearby)

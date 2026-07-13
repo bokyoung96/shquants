@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from kind.pipeline import (
+    _date_window,
     fetch_dates_with_semaphore,
     match_all_rows,
     parse_cached_dates,
@@ -85,15 +86,7 @@ def test_run_pipeline_matches_cached_pages_and_writes_outputs(tmp_path: Path) ->
     assert (log_dir / "missing_match.csv").exists()
     assert (log_dir / "schema_error.csv").exists()
     assert (output_dir / "announcements_with_time.xlsx").exists()
-    assert set(client.calls) == {
-        "2024-04-27",
-        "2024-04-28",
-        "2024-04-29",
-        "2024-04-30",
-        "2024-05-01",
-        "2024-05-02",
-        "2024-05-03",
-    }
+    assert set(client.calls) == set(_date_window("2024-04-30"))
 
 
 def test_fetch_dates_with_semaphore_limits_concurrency(tmp_path: Path) -> None:
@@ -146,7 +139,7 @@ def test_schema_error_keeps_date_available_for_no_match(tmp_path: Path) -> None:
     ]
 
 
-def test_match_all_rows_searches_three_nearby_days_after_same_day_miss() -> None:
+def test_match_all_rows_searches_nearby_business_days_after_same_day_miss() -> None:
     input_frame = pd.DataFrame(
         {
             "ticker": ["A000660"],
@@ -156,7 +149,7 @@ def test_match_all_rows_searches_three_nearby_days_after_same_day_miss() -> None
         }
     )
     nearby = Disclosure(
-        announcement_date="2024-04-28",
+        announcement_date="2024-04-29",
         time="08:05",
         company="SK하이닉스",
         title="영업 (잠정) 실적 (공정공시)",
@@ -169,15 +162,27 @@ def test_match_all_rows_searches_three_nearby_days_after_same_day_miss() -> None
 
     frame, audit = match_all_rows(
         input_frame,
-        {"2024-04-28": (nearby,), "2024-04-30": ()},
+        {"2024-04-29": (nearby,), "2024-04-30": ()},
     )
 
     assert frame.loc[0, "confidence"] is Confidence.EXACT_MATCH.value
     assert frame.loc[0, "announcement_datetime"] == pd.Timestamp(
-        "2024-04-28 08:05"
+        "2024-04-29 08:05"
     )
-    assert audit.loc[0, "disclosure_date"] == "2024-04-28"
-    assert audit.loc[0, "date_offset_days"] == -2
+    assert audit.loc[0, "disclosure_date"] == "2024-04-29"
+    assert audit.loc[0, "date_offset_days"] == -1
+
+
+def test_date_window_counts_business_days_and_skips_weekends() -> None:
+    dates = _date_window("2024-05-13", radius=2)
+
+    assert dates == (
+        "2024-05-09",
+        "2024-05-10",
+        "2024-05-13",
+        "2024-05-14",
+        "2024-05-15",
+    )
 
 
 def _write_pipeline_workbook(path: Path) -> Path:

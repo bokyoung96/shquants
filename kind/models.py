@@ -34,3 +34,17 @@ class MatchResult:
     disclosure: Disclosure | None
     candidates: tuple[Disclosure, ...] = field(default_factory=tuple)
     rejection_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.confidence in {
+            Confidence.EXACT_MATCH,
+            Confidence.NORMALIZED_MATCH,
+        } and self.disclosure is None:
+            raise ValueError(f"{self.confidence.value} requires a disclosure")
+        if self.confidence in {
+            Confidence.MULTIPLE_MATCH,
+            Confidence.NO_MATCH,
+        } and self.disclosure is not None:
+            raise ValueError(
+                f"{self.confidence.value} must not include a disclosure"
+            )

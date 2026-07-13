@@ -63,11 +63,11 @@ def parse_disclosure_page(
         receipt_links = _handler_links(title_cell, DISCLOSURE_LINK_ONCLICK)
         company_evidence = _cell_text(company_cell)
         title_evidence = _cell_text(title_cell)
+        provisional = re.search(PROVISIONAL_TITLE_PATTERN, title_evidence) is not None
 
-        if not company_evidence and not company_links:
+        if not provisional and not company_evidence and not company_links:
             continue
 
-        provisional = re.search(PROVISIONAL_TITLE_PATTERN, title_evidence) is not None
         company_link = _require_identity_link(
             company_links,
             company_cell,
@@ -128,7 +128,7 @@ def parse_disclosure_page(
         receipt_ids.add(receipt_id)
 
         company = _cell_text(company_link)
-        title = _cell_text(receipt_link)
+        title = title_evidence
         if not company:
             raise _row_error(context, position, "company anchor text is empty")
         if not title:
@@ -242,8 +242,16 @@ def _pagination_total(
         )
 
     handler_pattern = rf"(?:{PAGE_PATTERN});return false;"
+    numbered_link_ids = _validate_numbered_page_links(
+        nav,
+        active,
+        current,
+        total,
+        handler_pattern,
+        context,
+    )
     for link in nav.find_all("a"):
-        if link is active:
+        if id(link) in numbered_link_ids:
             continue
         onclick = link.get("onclick")
         if not isinstance(onclick, str) or "fnPageGo" not in onclick:
@@ -260,6 +268,67 @@ def _pagination_total(
                 f"outside 1..{total} excluding current {current}"
             )
     return total
+
+
+def _validate_numbered_page_links(
+    nav: Tag,
+    active: Tag,
+    current: int,
+    total: int,
+    handler_pattern: str,
+    context: str,
+) -> set[int]:
+    numbered_links = [
+        link
+        for link in nav.find_all("a")
+        if isinstance(link.get("href"), str)
+        and link["href"].startswith("#page_link_")
+    ]
+    seen_pages: set[int] = set()
+    for link in numbered_links:
+        href = link["href"]
+        href_match = re.fullmatch(r"#page_link_([1-9][0-9]{0,2})", href)
+        if href_match is None:
+            raise KindSchemaError(
+                f"{context}: pagination numbered link has invalid href {href!r}"
+            )
+        number = int(href_match.group(1))
+        if number > total:
+            raise KindSchemaError(
+                f"{context}: pagination numbered link {number} exceeds total {total}"
+            )
+        if link.get_text() != str(number):
+            raise KindSchemaError(
+                f"{context}: pagination numbered link label {link.get_text()!r} "
+                f"does not match href page {number}"
+            )
+        if number in seen_pages:
+            raise KindSchemaError(
+                f"{context}: duplicate pagination numbered link {number}"
+            )
+        seen_pages.add(number)
+
+        if link is active:
+            if number != current:
+                raise KindSchemaError(
+                    f"{context}: active pagination numbered link {number} "
+                    f"does not match current {current}"
+                )
+            continue
+
+        onclick = link.get("onclick")
+        match = (
+            re.fullmatch(handler_pattern, onclick)
+            if isinstance(onclick, str)
+            else None
+        )
+        if match is None or int(match.group(1)) != number:
+            raise KindSchemaError(
+                f"{context}: pagination numbered link {number} has invalid "
+                f"handler {onclick!r}"
+            )
+
+    return {id(link) for link in numbered_links}
 
 
 def _pagination_info(info: Tag, context: str) -> tuple[int, int]:
@@ -288,7 +357,7 @@ def _pagination_info(info: Tag, context: str) -> tuple[int, int]:
 
 
 def _cell_text(cell: Tag) -> str:
-    return cell.get_text(" ", strip=True)
+    return " ".join(cell.get_text(" ", strip=True).split())
 
 
 def _handler_links(cell: Tag, handler_name: str) -> list[Tag]:

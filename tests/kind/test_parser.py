@@ -320,6 +320,51 @@ def test_every_pagination_handler_has_exact_observed_grammar(
         _parse(_page_html(pagination_html=pagination))
 
 
+@pytest.mark.parametrize(
+    "numbered_links",
+    [
+        (
+            '<a href="#page_link_2" '
+            'onclick="goPage(\'2\');return false;">2</a>'
+        ),
+        (
+            '<a href="#page_link_2" '
+            'onclick="fnPageGo(\'3\');return false;">2</a>'
+        ),
+        (
+            '<a href="#page_link_2" '
+            'onclick="fnPageGo(\'2\');return false;">3</a>'
+        ),
+        (
+            '<a href="#page_link_3" '
+            'onclick="fnPageGo(\'3\');return false;">2</a>'
+        ),
+        (
+            '<a href="#page_link_02" '
+            'onclick="fnPageGo(\'2\');return false;">2</a>'
+        ),
+        '<a href="#page_link_2">2</a>',
+        (
+            '<a href="#page_link_2" '
+            'onclick="fnPageGo(\'2\');return false;">2</a>'
+            '<a href="#page_link_2" '
+            'onclick="fnPageGo(\'2\');return false;">2</a>'
+        ),
+    ],
+)
+def test_numbered_page_links_have_consistent_unique_metadata(
+    numbered_links: str,
+) -> None:
+    pagination = _paging_html(
+        current=1,
+        total=5,
+        nav_extra=numbered_links,
+    )
+
+    with pytest.raises(KindSchemaError, match="pagination.*numbered"):
+        _parse(_page_html(pagination_html=pagination))
+
+
 def test_disclosure_table_is_required() -> None:
     with pytest.raises(KindSchemaError, match="table"):
         _parse(_page_html(table_html="<p>no table</p>"))
@@ -384,6 +429,25 @@ def test_nested_table_rows_are_not_treated_as_disclosure_rows() -> None:
 )
 def test_empty_or_proven_noncompany_rows_are_valid(rows: list[str]) -> None:
     assert _parse(_page_html(rows)).disclosures == ()
+
+
+def test_empty_company_provisional_row_cannot_take_noncompany_shortcut() -> None:
+    title_html = (
+        '<a onclick="openDisclsViewer(\'20240425000004\',\'\')">'
+        "영업(잠정)실적(공정공시)</a>"
+    )
+
+    with pytest.raises(KindSchemaError, match="provisional.*company.*link"):
+        _parse(
+            _page_html(
+                [
+                    _row(
+                        company_html="   ",
+                        title_html=title_html,
+                    )
+                ]
+            )
+        )
 
 
 def test_company_text_without_company_handler_is_schema_error() -> None:
@@ -469,17 +533,17 @@ def test_multiple_receipt_handler_anchors_are_rejected() -> None:
         _parse(_page_html([_row(title_html=title_html)]))
 
 
-def test_selected_anchor_text_excludes_plain_markers_and_unrelated_links() -> None:
+def test_displayed_title_preserves_plain_markers_around_receipt_anchor() -> None:
     company_html = (
         '<span>유가증권</span>'
         '<a onclick="companysummary_open(\'00066\')"> SK하이닉스 </a>'
         '<a href="#profile">회사정보</a>'
     )
     title_html = (
-        '정정 '
+        '<span> [정정] </span>'
         '<a onclick="openDisclsViewer(\'20240425000004\',\'\')">'
-        f" {PROVISIONAL_TITLE} </a>"
-        '<a href="#note">첨부</a>'
+        " 연결재무제표기준영업(잠정)실적(공정공시) </a>"
+        '<span> (자회사의   주요경영사항) </span>'
     )
 
     disclosure = _parse(
@@ -489,7 +553,10 @@ def test_selected_anchor_text_excludes_plain_markers_and_unrelated_links() -> No
     ).disclosures[0]
 
     assert disclosure.company == "SK하이닉스"
-    assert disclosure.title == PROVISIONAL_TITLE
+    assert disclosure.title == (
+        "[정정] 연결재무제표기준영업(잠정)실적(공정공시) "
+        "(자회사의 주요경영사항)"
+    )
 
 
 @pytest.mark.parametrize("time", ["8:05", "0٨:0٥", "08：05", "24:00"])

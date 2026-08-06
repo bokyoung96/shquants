@@ -1176,6 +1176,52 @@ def test_evaluate_factor_quantiles_emits_all_quantile_rows_when_names_are_fewer_
     assert pd.isna(cumulative.loc[(QuantileWeighting.MARKET_CAP, "Q5"), "cumulative_return"])
 
 
+def test_evaluate_factor_quantiles_preserves_sparse_daily_endpoint_coverage() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+
+    result = evaluate_factor_quantiles(
+        factors={"sparse_factor": factors["sparse_factor"]},
+        directions={"sparse_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[1:3],
+        start="2024-03-29",
+        end="2024-03-29",
+        q=5,
+    )
+
+    daily_endpoint = (
+        result.daily_cumulative_returns[
+            (result.daily_cumulative_returns["factor"] == "sparse_factor")
+            & (result.daily_cumulative_returns["date"] == pd.Timestamp("2024-03-29"))
+        ]
+        .sort_values(["weighting", "portfolio"], kind="mergesort")
+        .reset_index(drop=True)
+        .loc[:, ["weighting", "portfolio", "cumulative_return"]]
+    )
+    cumulative_endpoint = (
+        result.cumulative_returns[
+            (result.cumulative_returns["factor"] == "sparse_factor")
+            & (result.cumulative_returns["return_date"] == pd.Timestamp("2024-03-29"))
+        ]
+        .sort_values(["weighting", "portfolio"], kind="mergesort")
+        .reset_index(drop=True)
+        .loc[:, ["weighting", "portfolio", "cumulative_return"]]
+    )
+    pd.testing.assert_frame_equal(daily_endpoint, cumulative_endpoint)
+
+    sparse_daily = result.daily_cumulative_returns[
+        (result.daily_cumulative_returns["factor"] == "sparse_factor")
+        & (result.daily_cumulative_returns["weighting"] == QuantileWeighting.EQUAL)
+        & (result.daily_cumulative_returns["date"] == pd.Timestamp("2024-03-29"))
+    ].set_index("portfolio").sort_index()
+    assert pd.isna(sparse_daily.loc["Q4", "cumulative_return"])
+    assert pd.isna(sparse_daily.loc["Q5", "cumulative_return"])
+    assert pd.isna(sparse_daily.loc["high_minus_low", "cumulative_return"])
+    assert pd.isna(sparse_daily.loc["preferred_minus_avoided", "cumulative_return"])
+
+
 def test_evaluate_factor_quantiles_filters_on_return_date_and_uses_consecutive_month_pairs() -> None:
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
 

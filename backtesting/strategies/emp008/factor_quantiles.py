@@ -689,6 +689,11 @@ def _build_daily_cumulative_returns(
     daily_cumulative_returns = pd.DataFrame(
         quantile_rows + spread_rows,
         columns=_DAILY_CUMULATIVE_RETURNS_COLUMNS,
+    )
+    daily_cumulative_returns = _fill_missing_daily_coverage(
+        close=ordered_close,
+        monthly_returns=monthly_returns,
+        daily_cumulative_returns=daily_cumulative_returns,
     ).sort_values(
         ["factor", "weighting", "portfolio", "date", "signal_date"],
         kind="mergesort",
@@ -696,9 +701,63 @@ def _build_daily_cumulative_returns(
 
     if daily_cumulative_returns.duplicated(["date", "factor", "weighting", "portfolio"]).any():
         raise ValueError("daily_cumulative_returns must have unique date/factor/weighting/portfolio rows")
-    if not daily_cumulative_returns["cumulative_return"].map(np.isfinite).all():
+    if not daily_cumulative_returns["cumulative_return"].dropna().map(np.isfinite).all():
         raise ValueError("daily_cumulative_returns cumulative_return values must be finite")
     return daily_cumulative_returns
+
+
+def _fill_missing_daily_coverage(
+    *,
+    close: pd.DataFrame,
+    monthly_returns: pd.DataFrame,
+    daily_cumulative_returns: pd.DataFrame,
+) -> pd.DataFrame:
+    coverage = monthly_returns.loc[
+        :,
+        ["signal_date", "return_date", "factor", "weighting", "portfolio"],
+    ].sort_values(
+        ["factor", "weighting", "portfolio", "signal_date", "return_date"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    if coverage.empty:
+        return daily_cumulative_returns
+
+    existing_keys = {
+        tuple(row)
+        for row in daily_cumulative_returns.loc[:, ["signal_date", "date", "factor", "weighting", "portfolio"]].itertuples(index=False, name=None)
+    }
+    prior_seen: set[tuple[str, str, str]] = set()
+    filler_rows: list[dict[str, object]] = []
+
+    for signal_date, return_date, factor_name, weighting, portfolio in coverage.itertuples(index=False, name=None):
+        portfolio_key = (factor_name, str(weighting), portfolio)
+        period_dates = close.index[(close.index >= signal_date) & (close.index <= return_date)]
+        emit_dates = period_dates if portfolio_key not in prior_seen else period_dates[1:]
+        missing_dates = [
+            pd.Timestamp(date)
+            for date in emit_dates
+            if (signal_date, pd.Timestamp(date), factor_name, weighting, portfolio) not in existing_keys
+        ]
+        for date in missing_dates:
+            filler_rows.append(
+                {
+                    "signal_date": signal_date,
+                    "date": date,
+                    "factor": factor_name,
+                    "weighting": weighting,
+                    "portfolio": portfolio,
+                    "cumulative_return": float("nan"),
+                }
+            )
+        prior_seen.add(portfolio_key)
+
+    if not filler_rows:
+        return daily_cumulative_returns
+
+    return pd.concat(
+        [daily_cumulative_returns, pd.DataFrame(filler_rows, columns=_DAILY_CUMULATIVE_RETURNS_COLUMNS)],
+        ignore_index=True,
+    )
 
 
 def _build_summary(

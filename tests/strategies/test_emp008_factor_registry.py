@@ -6,8 +6,8 @@ from types import MappingProxyType
 import pytest
 
 from backtesting.catalog import DatasetId
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
+from backtesting.strategies.emp008.data import Emp008Config
+from backtesting.strategies.emp008.factor_registry import (
     FACTOR_DEFINITIONS,
     FACTOR_SET_DEFINITIONS,
     FactorDefinition,
@@ -174,7 +174,7 @@ def test_factor_set_values_returns_declared_order() -> None:
 
 
 def test_emp008_config_normalizes_factor_set_to_enum_member() -> None:
-    config = MfbtEmp008Config(factor_set="origin")
+    config = Emp008Config(factor_set="origin")
 
     assert config.factor_set is FactorSetId.ORIGIN
 
@@ -190,11 +190,11 @@ def test_emp008_config_normalizes_factor_set_to_enum_member() -> None:
 )
 def test_emp008_config_rejects_removed_metadata_constructor_kwargs(field_name: str, value: object) -> None:
     with pytest.raises(TypeError, match=field_name):
-        MfbtEmp008Config(**{field_name: value})  # type: ignore[arg-type]
+        Emp008Config(**{field_name: value})  # type: ignore[arg-type]
 
 
 def test_factor_definition_builders_share_config_signature() -> None:
-    config = MfbtEmp008Config()
+    config = Emp008Config()
 
     for definition in FACTOR_DEFINITIONS.values():
         assert callable(definition.builder)

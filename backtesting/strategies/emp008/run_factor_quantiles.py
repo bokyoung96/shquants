@@ -5,9 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
-from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import run_emp008_factor_quantiles
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values
+from backtesting.strategies.emp008.factor_pipeline import load_and_prepare_emp008_factors
+from backtesting.strategies.emp008.factor_quantiles import run_emp008_factor_quantiles
+from backtesting.strategies.emp008.factor_registry import factor_set_values
 from backtesting.strategies.emp008.run_weights import DEFAULT_START, build_emp008_config, latest_common_end
 
 

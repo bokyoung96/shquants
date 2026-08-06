@@ -8,9 +8,9 @@ import pandas as pd
 import pytest
 
 from backtesting.data import MarketData
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import PreparedEmp008Factors
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import FactorSetId, get_factor_set_definition
+from backtesting.strategies.emp008.data import Emp008Config
+from backtesting.strategies.emp008.factor_pipeline import PreparedEmp008Factors
+from backtesting.strategies.emp008.factor_registry import FactorSetId, get_factor_set_definition
 from backtesting.strategies.emp008.run_weights import DEFAULT_START
 
 from backtesting.strategies.emp008 import run_factor_quantiles
@@ -98,7 +98,7 @@ def make_prepared_bundle() -> PreparedEmp008Factors:
         benchmark=None,
     )
     return PreparedEmp008Factors(
-        config=MfbtEmp008Config(),
+        config=Emp008Config(),
         market=market,
         factor_set_definition=get_factor_set_definition("mfbt"),
         raw_factors=dict(alpha_factors),

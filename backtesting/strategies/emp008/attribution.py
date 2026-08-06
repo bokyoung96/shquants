@@ -7,15 +7,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .mfbt_emp008 import _positive_benchmark_weights
-from .mfbt_emp008_data import MfbtEmp008Config
-from .mfbt_emp008_factor_pipeline import (
+from .strategy import _positive_benchmark_weights
+from .data import Emp008Config
+from .factor_pipeline import (
     PreparedEmp008Factors,
     load_and_prepare_emp008_factors,
     validate_prepared_emp008_factors,
 )
-from .mfbt_emp008_preprocess import combine_exposures
-from .mfbt_emp008_risk import fit_cross_sectional_factor_returns
+from .preprocess import combine_exposures
+from .risk import fit_cross_sectional_factor_returns
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +61,7 @@ def build_emp008_factor_attribution(
     parquet_dir: Path,
     run_root: Path,
     output_dir: Path | None = None,
-    config: MfbtEmp008Config | None = None,
+    config: Emp008Config | None = None,
     prepared: PreparedEmp008Factors | None = None,
 ) -> dict[str, object]:
     active_weights = pd.read_parquet(run_root / "weights" / "active_weights.parquet").astype(float)
@@ -69,7 +69,7 @@ def build_emp008_factor_attribution(
     if active_weights.empty:
         raise ValueError("active weights are empty")
 
-    requested_config = config or MfbtEmp008Config()
+    requested_config = config or Emp008Config()
     if prepared is not None:
         validate_prepared_emp008_factors(
             prepared,

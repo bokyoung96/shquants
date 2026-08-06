@@ -8,7 +8,7 @@ import pandas as pd
 from backtesting.data import MarketData
 
 if TYPE_CHECKING:
-    from .mfbt_emp008_data import MfbtEmp008Config
+    from .data import Emp008Config
 
 
 def month_end_observations(frame: pd.DataFrame) -> pd.DataFrame:
@@ -21,7 +21,7 @@ def align_like_close(market: MarketData, key: str) -> pd.DataFrame:
     return market.frames[key].reindex(index=close.index, columns=close.columns)
 
 
-def build_price_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_price_momentum(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     trailing_high = close.rolling(252, min_periods=252).max()
@@ -30,7 +30,7 @@ def build_price_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.Dat
     return _monthly_output(close, monthly_ratio)
 
 
-def build_positivity_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_positivity_momentum(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     close = market.frames["close"].astype(float)
     returns = close.pct_change(fill_method=None)
     non_negative = returns.ge(0.0).where(returns.notna())
@@ -42,7 +42,7 @@ def build_positivity_momentum(market: MarketData, config: MfbtEmp008Config) -> p
     return _monthly_output(close, monthly_positivity)
 
 
-def build_origin_momentum_12m(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_origin_momentum_12m(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     monthly_close = month_end_observations(close)
@@ -50,7 +50,7 @@ def build_origin_momentum_12m(market: MarketData, config: MfbtEmp008Config) -> p
     return _monthly_output(close, momentum)
 
 
-def build_origin_dividend_yield(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_origin_dividend_yield(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     dividend_yld = market.frames["dividend_yld_fy0"].reindex(columns=close.columns).astype(float)
@@ -58,7 +58,7 @@ def build_origin_dividend_yield(market: MarketData, config: MfbtEmp008Config) ->
     return _monthly_output(close, monthly_dividend_yld)
 
 
-def build_earnings_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_earnings_momentum(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     close = market.frames["close"].astype(float)
     op = align_like_close(market, "op_fwd_12m").astype(float)
 
@@ -74,7 +74,7 @@ def build_earnings_momentum(market: MarketData, config: MfbtEmp008Config) -> pd.
     return _monthly_output(close, growth)
 
 
-def build_dividend_yield(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_dividend_yield(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     dps_ttm = align_like_close(market, "dps_ttm").astype(float)
@@ -86,7 +86,7 @@ def build_dividend_yield(market: MarketData, config: MfbtEmp008Config) -> pd.Dat
     return _monthly_output(close, dividend_yield)
 
 
-def build_retail_flow(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_retail_flow(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     close = market.frames["close"].astype(float)
     retail_flow = align_like_close(market, "retail_flow").astype(float)
     sector = align_like_close(market, "sector_big").ffill()
@@ -102,7 +102,7 @@ def build_retail_flow(market: MarketData, config: MfbtEmp008Config) -> pd.DataFr
     return _monthly_output(close, monthly_metric)
 
 
-def build_value(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_value(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     market_cap = align_like_close(market, "market_cap").astype(float)
@@ -134,7 +134,7 @@ def build_value(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
     return _monthly_output(close, value)
 
 
-def build_ln_market_cap(market: MarketData, config: MfbtEmp008Config) -> pd.DataFrame:
+def build_ln_market_cap(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     market_cap = align_like_close(market, "market_cap").astype(float)

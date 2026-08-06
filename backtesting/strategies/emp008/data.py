@@ -7,7 +7,7 @@ import pandas as pd
 
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import DataLoader, LoadRequest, MarketData, ParquetStore
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
+from backtesting.strategies.emp008.factor_registry import (
     FactorSetId,
     factor_definitions_for_set,
     get_factor_set_definition,
@@ -18,7 +18,7 @@ FORWARD_SNAPSHOT_FRAME_KEYS = frozenset({"dividend_yld_fy0"})
 
 
 @dataclass(frozen=True, slots=True)
-class MfbtEmp008Config:
+class Emp008Config:
     sector_dataset: DatasetId = DatasetId.QW_WI_SEC_26_BIG
     sector_neutral_dataset: DatasetId | None = None
     bm_weights_dataset: DatasetId = DatasetId.QW_BM_WEIGHTS
@@ -69,7 +69,7 @@ class MfbtEmp008Config:
         return get_factor_set_definition(self.factor_set).snapshot_forward_days
 
 
-def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
+def required_datasets(config: Emp008Config) -> tuple[DatasetId, ...]:
     factor_definitions = factor_definitions_for_set(config.factor_set)
     factor_datasets = [dataset_id for definition in factor_definitions for dataset_id in definition.datasets]
     ordered = [
@@ -90,12 +90,12 @@ def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
     return tuple(dict.fromkeys(ordered))
 
 
-def load_mfbt_emp008_market(
+def load_emp008_market(
     *,
     parquet_dir: Path,
     start: str,
     end: str,
-    config: MfbtEmp008Config,
+    config: Emp008Config,
 ) -> MarketData:
     loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
     load_start = padded_history_start(start, config)
@@ -121,17 +121,17 @@ def load_mfbt_emp008_market(
     return _trim_non_forward_snapshot_frames(market, end=end, config=config)
 
 
-def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
+def padded_history_start(start: str, config: Emp008Config) -> str:
     buffer_days = config.retail_flow_lookback_days * 2 + config.risk_window * 31
     return (pd.Timestamp(start) - pd.Timedelta(days=buffer_days)).strftime("%Y-%m-%d")
 
 
-def padded_snapshot_end(end: str, config: MfbtEmp008Config) -> str:
+def padded_snapshot_end(end: str, config: Emp008Config) -> str:
     forward_days = max(get_factor_set_definition(config.factor_set).snapshot_forward_days, 0)
     return (pd.Timestamp(end) + pd.Timedelta(days=forward_days)).strftime("%Y-%m-%d")
 
 
-def _trim_non_forward_snapshot_frames(market: MarketData, *, end: str, config: MfbtEmp008Config) -> MarketData:
+def _trim_non_forward_snapshot_frames(market: MarketData, *, end: str, config: Emp008Config) -> MarketData:
     if get_factor_set_definition(config.factor_set).snapshot_forward_days <= 0:
         return market
 

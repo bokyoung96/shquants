@@ -12,9 +12,9 @@ import pandas as pd
 
 from backtesting.catalog import DataCatalog
 from backtesting.catalog import DatasetId
-from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result, run_mfbt_emp008
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values, parse_factor_set
+from backtesting.strategies.emp008.strategy import Emp008Result, run_emp008
+from backtesting.strategies.emp008.data import Emp008Config, required_datasets
+from backtesting.strategies.emp008.factor_registry import factor_set_values, parse_factor_set
 
 
 DEFAULT_START = "2020-01-31"
@@ -27,8 +27,8 @@ def build_emp008_config(
     risk_model: str | None = None,
     factor_set: str | None = None,
     sector_neutral_dataset: str | None = None,
-) -> MfbtEmp008Config:
-    config = MfbtEmp008Config()
+) -> Emp008Config:
+    config = Emp008Config()
     if risk_model is not None:
         if risk_model not in {"factor_idio", "direct_covariance"}:
             raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
@@ -53,7 +53,7 @@ def _resolve_sector_neutral_dataset(value: str) -> DatasetId | None:
     raise ValueError("sector_neutral_dataset must be 'default'/'wi26' or 'wics'")
 
 
-def latest_common_end(parquet_dir: Path, config: MfbtEmp008Config) -> str:
+def latest_common_end(parquet_dir: Path, config: Emp008Config) -> str:
     catalog = DataCatalog.default()
     ends: list[pd.Timestamp] = []
     for dataset_id in required_datasets(config):
@@ -114,7 +114,7 @@ class timed:
             self.logger.error("stage_failed=%s elapsed_seconds=%.3f", self.name, elapsed)
 
 
-def weights_summary(result: MfbtEmp008Result, weights_csv: Path) -> dict[str, object]:
+def weights_summary(result: Emp008Result, weights_csv: Path) -> dict[str, object]:
     weights = result.target_weights
     diagnostics = result.diagnostics
     return {
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> None:
     }
     try:
         with timed(logger, "weights"):
-            result = run_mfbt_emp008(
+            result = run_emp008(
                 parquet_dir=args.parquet_dir,
                 start=args.start,
                 end=end,

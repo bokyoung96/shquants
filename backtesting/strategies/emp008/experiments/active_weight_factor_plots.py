@@ -8,29 +8,27 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from backtesting.strategies.emp008.mfbt_emp008 import (
-    _apply_expected_alpha_policy,
-    _neutralize_large_benchmark_weight_factor_exposures,
-    _positive_benchmark_weights,
-    run_mfbt_emp008,
+from backtesting.strategies.emp008.strategy import _apply_expected_alpha_policy, _positive_benchmark_weights, run_emp008
+from backtesting.strategies.emp008.data import Emp008Config, load_emp008_market
+from backtesting.strategies.emp008.factor_pipeline import (
+    load_and_prepare_emp008_factors,
+    neutralize_large_benchmark_weight_exposures,
 )
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
-from backtesting.strategies.emp008.mfbt_emp008_factors import build_raw_mfbt_factors
-from backtesting.strategies.emp008.mfbt_emp008_preprocess import (
+from backtesting.strategies.emp008.factors import build_raw_factors
+from backtesting.strategies.emp008.preprocess import (
     build_sector_active_exposures,
     combine_exposures,
     preprocess_factor_frame,
 )
-from backtesting.strategies.emp008.mfbt_emp008_risk import compute_expected_alpha, fit_cross_sectional_factor_returns
+from backtesting.strategies.emp008.risk import compute_expected_alpha, fit_cross_sectional_factor_returns
 from backtesting.strategies.emp008.run_weights import build_emp008_config
 
 _LEGACY_RAW_PREPARE_COMPAT = (
-    load_mfbt_emp008_market,
-    build_raw_mfbt_factors,
+    load_emp008_market,
+    build_raw_factors,
     preprocess_factor_frame,
     build_sector_active_exposures,
-    _neutralize_large_benchmark_weight_factor_exposures,
+    neutralize_large_benchmark_weight_exposures,
 )
 
 
@@ -99,7 +97,7 @@ def build_strategy_config(
     strategy: str,
     tracking_error_annual: float,
     risk_model: str,
-) -> MfbtEmp008Config:
+) -> Emp008Config:
     if strategy == "mfbt_zcap5":
         base = build_emp008_config(
             tracking_error_annual=tracking_error_annual,
@@ -145,7 +143,7 @@ def load_or_run_strategy_weights(
         tracking_error_annual=tracking_error_annual,
         risk_model=risk_model,
     )
-    result = run_mfbt_emp008(
+    result = run_emp008(
         parquet_dir=parquet_dir,
         start=start,
         end=end,
@@ -418,7 +416,7 @@ def _parser() -> argparse.ArgumentParser:
         default=Path("backtesting")
         / "strategies"
         / "emp008"
-        / "mfbt_emp008_experiments"
+        / "experiments"
         / "results"
         / "samsung_hynix_active_factor",
     )

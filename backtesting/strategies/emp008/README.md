@@ -46,7 +46,7 @@ The MFBT factor sets use all factor inputs above. `origin` loads only the
 common portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
 `QW_DPS_TTM` instead. Raw close (`QW_C`) is not part of the EMP008 calculation.
 
-`MfbtEmp008Config` controls dataset choices and key parameters:
+`Emp008Config` controls dataset choices and key parameters:
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ it is not allowed to replace or fill official benchmark rows.
 
 ## Registry Extension Contract
 
-New factors are added through `mfbt_emp008_factor_registry.py`, not by appending
+New factors are added through `factor_registry.py`, not by appending
 ad hoc branches to individual runners. Each `FactorDefinition` must declare:
 
 - `id`: stable public factor name used in outputs
@@ -84,8 +84,8 @@ ad hoc branches to individual runners. Each `FactorDefinition` must declare:
 - `datasets`: extra parquet dependencies beyond the common EMP008 inputs
 - `direction`: `HIGH` when larger exposure is preferred, `LOW` when smaller is preferred
 - `rank_transform`: whether the post-fill cross section is ranked before z-scoring
-- `winsor_config_attr`: optional `MfbtEmp008Config` attribute used to winsorize raw values
-- `zscore_cap_config_attr`: optional `MfbtEmp008Config` attribute used to cap final z-scores
+- `winsor_config_attr`: optional `Emp008Config` attribute used to winsorize raw values
+- `zscore_cap_config_attr`: optional `Emp008Config` attribute used to cap final z-scores
 - `neutralize_large_benchmark_weight`: whether very large benchmark names are forced to neutral exposure
 - `requires_construction_sector`: whether raw construction needs `sector_dataset`
 
@@ -278,7 +278,7 @@ are expressed in percent units.
 
 ### Risk Model Comparison Result
 
-The risk model comparison was run with:
+The risk model comparison was run with the compatibility wrapper scripts:
 
 ```powershell
 uv run python scripts\run_mfbt_emp008_full.py `
@@ -403,6 +403,14 @@ runner modules that use them:
 - weights/config/output helpers: `run_weights.py`
 - backtest spec and summary helpers: `run_backtest.py`
 - full orchestration: `run_full.py`
+
+The implementation package itself uses neutral module names:
+`strategy.py`, `data.py`, `factors.py`, `factor_builders.py`,
+`factor_pipeline.py`, `factor_quantiles.py`, `factor_registry.py`,
+`optimize.py`, `preprocess.py`, `risk.py`, and `experiments/`.
+The retained `mfbt_emp008` naming in wrapper scripts, factor-set values, and
+default run/output names identifies the real MFBT variant rather than the
+shared package code.
 
 ## Recommended Runs
 
@@ -537,7 +545,7 @@ reconstructing hidden pivots:
 - The generated primary output is parquet, while `target_weights.file` currently
   reads CSV only. The runner writes `target_weights.csv` as a bridge.
 - Report generation works from a saved `BacktestRunner` run, not directly from
-  `MfbtEmp008Result`.
+  `Emp008Result`.
 - Local "latest" is bounded by the slowest required parquet input. Some datasets
   may be newer than others, but EMP008 should use the common available date.
 - The risk model is intentionally simple: plain cross-sectional least squares,
@@ -550,12 +558,12 @@ reconstructing hidden pivots:
   optimization anchor as soon as they are available.
 - Sector neutrality depends on the configured sector dataset and float-market-cap
   weights. Changes to sector taxonomy can change active constraints.
-- Legacy EMP008 surfaces are not the public path for this strategy. The supported
-  path is the `mfbt_emp008*.py` plus `run_*.py` set described here.
+- The supported package path uses the neutral modules listed above, while the
+  `scripts/run_mfbt_emp008_*.py` wrappers remain for compatibility.
 
 ## Verification
 
 ```powershell
-uv run pytest tests/scripts/test_run_mfbt_emp008_full.py -q
+uv run pytest tests/scripts/test_run_emp008_full.py -q
 uv run pytest tests/ingest/test_pipeline.py tests/catalog/test_groups.py tests/data/test_loader.py -q
 ```

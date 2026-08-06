@@ -10,10 +10,10 @@ import pandas as pd
 
 from backtesting.run import BacktestRunner
 from backtesting.strategies.emp008.comparison import _benchmark_returns, excess_summary_bps, performance_metrics
-from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
-from backtesting.strategies.emp008.mfbt_emp008_factors import build_raw_mfbt_factors
-from backtesting.strategies.emp008.mfbt_emp008_preprocess import preprocess_factor_frame
+from backtesting.strategies.emp008.strategy import run_emp008
+from backtesting.strategies.emp008.data import Emp008Config, load_emp008_market
+from backtesting.strategies.emp008.factors import build_raw_factors
+from backtesting.strategies.emp008.preprocess import preprocess_factor_frame
 from backtesting.strategies.emp008.run_backtest import (
     active_share_summary,
     build_target_weight_spec,
@@ -33,10 +33,10 @@ DEFAULT_VARIANTS = (
 @dataclass(frozen=True, slots=True)
 class Variant:
     name: str
-    config: MfbtEmp008Config
+    config: Emp008Config
 
 
-def build_variants(base_config: MfbtEmp008Config) -> dict[str, Variant]:
+def build_variants(base_config: Emp008Config) -> dict[str, Variant]:
     return {
         "baseline": Variant("baseline", base_config),
         "value_zcap_5": Variant("value_zcap_5", replace(base_config, value_zscore_cap=5.0)),
@@ -162,7 +162,7 @@ def run_variant(
     weights_csv = weights_dir / "target_weights.csv"
     active_weights_path = weights_dir / "active_weights.parquet"
     if force or not weights_csv.exists() or not active_weights_path.exists():
-        result = run_mfbt_emp008(
+        result = run_emp008(
             parquet_dir=parquet_dir,
             start=start,
             end=end,
@@ -217,8 +217,8 @@ def value_exposure_diagnostics(
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     for variant in variants:
-        market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=variant.config)
-        raw_value = build_raw_mfbt_factors(market, variant.config)["value"]
+        market = load_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=variant.config)
+        raw_value = build_raw_factors(market, variant.config)["value"]
         close = market.frames["close"].astype(float)
         float_mktcap = market.frames["float_market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
         universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
@@ -316,7 +316,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("backtesting/strategies/emp008/mfbt_emp008_experiments/results/value_factor_robustness"),
+        default=Path("backtesting/strategies/emp008/experiments/results/value_factor_robustness"),
     )
     parser.add_argument("--start", default="2022-12-29")
     parser.add_argument("--end", default="2026-05-28")

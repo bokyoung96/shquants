@@ -8,20 +8,20 @@ import pandas as pd
 
 from backtesting.data import MarketData
 
-from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
-from .mfbt_emp008_factor_registry import (
+from .data import Emp008Config, load_emp008_market
+from .factor_registry import (
     FactorDefinition,
     FactorSetDefinition,
     factor_definitions_for_set,
     get_factor_set_definition,
 )
-from .mfbt_emp008_factors import build_raw_mfbt_factors
-from .mfbt_emp008_preprocess import build_sector_active_exposures, preprocess_factor_frame
+from .factors import build_raw_factors
+from .preprocess import build_sector_active_exposures, preprocess_factor_frame
 
 
 @dataclass(frozen=True, slots=True)
 class PreparedEmp008Factors:
-    config: MfbtEmp008Config
+    config: Emp008Config
     market: MarketData
     factor_set_definition: FactorSetDefinition
     raw_factors: dict[str, pd.DataFrame]
@@ -39,14 +39,14 @@ class PreparedEmp008Factors:
 def validate_prepared_emp008_factors(
     prepared: PreparedEmp008Factors,
     *,
-    config: MfbtEmp008Config | None = None,
+    config: Emp008Config | None = None,
     start: str | pd.Timestamp | None = None,
     end: str | pd.Timestamp | None = None,
     required_dates: Iterable[str | pd.Timestamp] = (),
 ) -> None:
     if config is not None and config != prepared.config:
         diff_parts: list[str] = []
-        for field in fields(MfbtEmp008Config):
+        for field in fields(Emp008Config):
             prepared_value = getattr(prepared.config, field.name)
             requested_value = getattr(config, field.name)
             if prepared_value != requested_value:
@@ -161,10 +161,10 @@ def neutralize_large_benchmark_weight_exposures(
     return neutralized
 
 
-def prepare_emp008_factors(market: MarketData, config: MfbtEmp008Config) -> PreparedEmp008Factors:
+def prepare_emp008_factors(market: MarketData, config: Emp008Config) -> PreparedEmp008Factors:
     factor_set_definition = get_factor_set_definition(config.factor_set)
     factor_definitions = factor_definitions_for_set(config.factor_set)
-    raw_factors = build_raw_mfbt_factors(market, config)
+    raw_factors = build_raw_factors(market, config)
 
     close = market.frames["close"].astype(float)
     market_cap = market.frames["market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
@@ -219,7 +219,7 @@ def load_and_prepare_emp008_factors(
     parquet_dir: Path,
     start: str,
     end: str,
-    config: MfbtEmp008Config,
+    config: Emp008Config,
 ) -> PreparedEmp008Factors:
-    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=config)
+    market = load_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=config)
     return prepare_emp008_factors(market, config)

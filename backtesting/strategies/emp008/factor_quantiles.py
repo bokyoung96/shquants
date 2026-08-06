@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors
-from .mfbt_emp008_factor_registry import FactorDirection, FactorSetId, factor_definitions_for_set
+from .factor_pipeline import PreparedEmp008Factors
+from .factor_registry import FactorDirection, FactorSetId, factor_definitions_for_set
 
 
 class Emp008FactorQuantilesUnavailableError(ValueError):

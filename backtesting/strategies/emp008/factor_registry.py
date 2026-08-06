@@ -10,12 +10,12 @@ import pandas as pd
 from backtesting.catalog import DatasetId
 from backtesting.data import MarketData
 
-from . import mfbt_emp008_factor_builders as builders
+from . import factor_builders as builders
 
 if TYPE_CHECKING:
-    from .mfbt_emp008_data import MfbtEmp008Config
+    from .data import Emp008Config
 
-FactorBuilder = Callable[[MarketData, "MfbtEmp008Config"], pd.DataFrame]
+FactorBuilder = Callable[[MarketData, "Emp008Config"], pd.DataFrame]
 
 
 @unique

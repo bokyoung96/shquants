@@ -7,15 +7,15 @@ import pytest
 
 from backtesting.data import MarketData
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, build_emp008_factor_attribution
-from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import get_factor_set_definition
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import (
+from backtesting.strategies.emp008.strategy import run_emp008
+from backtesting.strategies.emp008.data import Emp008Config
+from backtesting.strategies.emp008.factor_registry import get_factor_set_definition
+from backtesting.strategies.emp008.factor_pipeline import (
     PreparedEmp008Factors,
     load_and_prepare_emp008_factors,
     prepare_emp008_factors,
 )
-from backtesting.strategies.emp008.mfbt_emp008_optimize import OptimizationResult
+from backtesting.strategies.emp008.optimize import OptimizationResult
 
 
 def _sample_market() -> MarketData:
@@ -43,8 +43,8 @@ def _sample_market() -> MarketData:
     )
 
 
-def _sample_prepared(config: MfbtEmp008Config | None = None) -> PreparedEmp008Factors:
-    active_config = config or MfbtEmp008Config()
+def _sample_prepared(config: Emp008Config | None = None) -> PreparedEmp008Factors:
+    active_config = config or Emp008Config()
     market = _sample_market()
     dates = market.frames["close"].index
     columns = market.frames["close"].columns
@@ -104,7 +104,7 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     market = _sample_market()
-    config = MfbtEmp008Config(value_raw_winsor_quantile=0.15, value_zscore_cap=3.5)
+    config = Emp008Config(value_raw_winsor_quantile=0.15, value_zscore_cap=3.5)
     raw_factors = {
         "price_momentum": pd.DataFrame(
             [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]],
@@ -137,7 +137,7 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
         frame.attrs["factor_name"] = name
     calls: list[tuple[str, bool, float | None, float | None]] = []
 
-    def fake_build_raw_factors(_market: MarketData, _config: MfbtEmp008Config) -> dict[str, pd.DataFrame]:
+    def fake_build_raw_factors(_market: MarketData, _config: Emp008Config) -> dict[str, pd.DataFrame]:
         return raw_factors
 
     def fake_preprocess(
@@ -162,15 +162,15 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
         return {"Tech": sector.eq("Tech").astype(float)}
 
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_pipeline.build_raw_mfbt_factors",
+        "backtesting.strategies.emp008.factor_pipeline.build_raw_factors",
         fake_build_raw_factors,
     )
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_pipeline.preprocess_factor_frame",
+        "backtesting.strategies.emp008.factor_pipeline.preprocess_factor_frame",
         fake_preprocess,
     )
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_pipeline.build_sector_active_exposures",
+        "backtesting.strategies.emp008.factor_pipeline.build_sector_active_exposures",
         fake_sector_exposures,
     )
 
@@ -210,24 +210,24 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
 
 def test_load_and_prepare_emp008_factors_loads_market_then_prepares(monkeypatch: pytest.MonkeyPatch) -> None:
     market = _sample_market()
-    config = MfbtEmp008Config()
+    config = Emp008Config()
     prepared = _sample_prepared(config)
     calls: list[object] = []
 
-    def fake_load_market(*, parquet_dir: Path, start: str, end: str, config: MfbtEmp008Config) -> MarketData:
+    def fake_load_market(*, parquet_dir: Path, start: str, end: str, config: Emp008Config) -> MarketData:
         calls.append((parquet_dir, start, end, config))
         return market
 
-    def fake_prepare(loaded_market: MarketData, prepared_config: MfbtEmp008Config) -> PreparedEmp008Factors:
+    def fake_prepare(loaded_market: MarketData, prepared_config: Emp008Config) -> PreparedEmp008Factors:
         calls.append((loaded_market, prepared_config))
         return prepared
 
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_pipeline.load_mfbt_emp008_market",
+        "backtesting.strategies.emp008.factor_pipeline.load_emp008_market",
         fake_load_market,
     )
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_pipeline.prepare_emp008_factors",
+        "backtesting.strategies.emp008.factor_pipeline.prepare_emp008_factors",
         fake_prepare,
     )
 
@@ -240,7 +240,7 @@ def test_load_and_prepare_emp008_factors_loads_market_then_prepares(monkeypatch:
     ]
 
 
-def test_run_mfbt_emp008_uses_supplied_prepared_bundle_without_reloading(
+def test_run_emp008_uses_supplied_prepared_bundle_without_reloading(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prepared = _sample_prepared()
@@ -267,10 +267,10 @@ def test_run_mfbt_emp008_uses_supplied_prepared_bundle_without_reloading(
             sector_active_exposure_abs_max=0.0,
         )
 
-    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008.load_and_prepare_emp008_factors", fail_loader)
-    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008._optimize_month", fake_optimize_month)
+    monkeypatch.setattr("backtesting.strategies.emp008.strategy.load_and_prepare_emp008_factors", fail_loader)
+    monkeypatch.setattr("backtesting.strategies.emp008.strategy._optimize_month", fake_optimize_month)
 
-    result = run_mfbt_emp008(
+    result = run_emp008(
         parquet_dir=Path("parquet"),
         start="2024-02-29",
         end="2024-03-29",
@@ -295,37 +295,37 @@ def test_run_mfbt_emp008_uses_supplied_prepared_bundle_without_reloading(
     assert result.active_weights.loc["2024-03-29", "A"] == pytest.approx(0.1)
 
 
-def test_run_mfbt_emp008_rejects_mismatched_config_for_prepared_bundle() -> None:
-    prepared = _sample_prepared(MfbtEmp008Config(factor_set="origin"))
+def test_run_emp008_rejects_mismatched_config_for_prepared_bundle() -> None:
+    prepared = _sample_prepared(Emp008Config(factor_set="origin"))
 
     with pytest.raises(ValueError, match="prepared/config mismatch"):
-        run_mfbt_emp008(
+        run_emp008(
             parquet_dir=Path("parquet"),
             start="2024-02-29",
             end="2024-03-29",
-            config=MfbtEmp008Config(factor_set="mfbt"),
+            config=Emp008Config(factor_set="mfbt"),
             prepared=prepared,
         )
 
 
-def test_run_mfbt_emp008_reports_non_factor_set_config_differences() -> None:
-    prepared = _sample_prepared(MfbtEmp008Config(risk_model="factor_idio"))
+def test_run_emp008_reports_non_factor_set_config_differences() -> None:
+    prepared = _sample_prepared(Emp008Config(risk_model="factor_idio"))
 
     with pytest.raises(ValueError, match="risk_model"):
-        run_mfbt_emp008(
+        run_emp008(
             parquet_dir=Path("parquet"),
             start="2024-02-29",
             end="2024-03-29",
-            config=MfbtEmp008Config(risk_model="direct_covariance"),
+            config=Emp008Config(risk_model="direct_covariance"),
             prepared=prepared,
         )
 
 
-def test_run_mfbt_emp008_rejects_prepared_bundle_with_insufficient_end_coverage() -> None:
+def test_run_emp008_rejects_prepared_bundle_with_insufficient_end_coverage() -> None:
     prepared = _sample_prepared()
 
     with pytest.raises(ValueError, match="prepared data range"):
-        run_mfbt_emp008(
+        run_emp008(
             parquet_dir=Path("parquet"),
             start="2024-02-29",
             end="2024-04-30",
@@ -333,7 +333,7 @@ def test_run_mfbt_emp008_rejects_prepared_bundle_with_insufficient_end_coverage(
         )
 
 
-def test_run_mfbt_emp008_rejects_prepared_bundle_when_monthly_dates_stop_before_requested_end_month() -> None:
+def test_run_emp008_rejects_prepared_bundle_when_monthly_dates_stop_before_requested_end_month() -> None:
     prepared = _sample_prepared()
     april_index = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29", "2024-04-30"])
     extended_close = pd.DataFrame(
@@ -354,7 +354,7 @@ def test_run_mfbt_emp008_rejects_prepared_bundle_when_monthly_dates_stop_before_
     )
 
     with pytest.raises(ValueError, match="monthly output range"):
-        run_mfbt_emp008(
+        run_emp008(
             parquet_dir=Path("parquet"),
             start="2024-02-29",
             end="2024-04-30",
@@ -362,7 +362,7 @@ def test_run_mfbt_emp008_rejects_prepared_bundle_when_monthly_dates_stop_before_
         )
 
 
-def test_run_mfbt_emp008_accepts_last_business_day_in_requested_end_month(
+def test_run_emp008_accepts_last_business_day_in_requested_end_month(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prepared = _sample_prepared()
@@ -396,9 +396,9 @@ def test_run_mfbt_emp008_accepts_last_business_day_in_requested_end_month(
             sector_active_exposure_abs_max=0.0,
         )
 
-    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008._optimize_month", fake_optimize_month)
+    monkeypatch.setattr("backtesting.strategies.emp008.strategy._optimize_month", fake_optimize_month)
 
-    result = run_mfbt_emp008(
+    result = run_emp008(
         parquet_dir=Path("parquet"),
         start="2024-05-31",
         end="2024-06-30",
@@ -474,7 +474,7 @@ def test_build_emp008_factor_attribution_uses_supplied_prepared_bundle_without_r
 def test_build_emp008_factor_attribution_rejects_mismatched_config_for_prepared_bundle(
     tmp_path: Path,
 ) -> None:
-    prepared = _sample_prepared(MfbtEmp008Config(factor_set="origin"))
+    prepared = _sample_prepared(Emp008Config(factor_set="origin"))
     run_root = tmp_path / "run"
     weights_dir = run_root / "weights"
     weights_dir.mkdir(parents=True)
@@ -487,7 +487,7 @@ def test_build_emp008_factor_attribution_rejects_mismatched_config_for_prepared_
         build_emp008_factor_attribution(
             parquet_dir=Path("parquet"),
             run_root=run_root,
-            config=MfbtEmp008Config(factor_set="mfbt"),
+            config=Emp008Config(factor_set="mfbt"),
             prepared=prepared,
         )
 

@@ -6,19 +6,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .mfbt_emp008_data import MfbtEmp008Config
-from .mfbt_emp008_factor_pipeline import (
-    PreparedEmp008Factors,
-    common_month_end_dates,
-    complete_benchmark_history,
-    load_and_prepare_emp008_factors,
-    neutralize_large_benchmark_weight_exposures,
-    validate_prepared_emp008_factors,
-)
-from .mfbt_emp008_factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
-from .mfbt_emp008_optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
-from .mfbt_emp008_preprocess import combine_exposures
-from .mfbt_emp008_risk import (
+from .data import Emp008Config
+from .factor_pipeline import PreparedEmp008Factors, load_and_prepare_emp008_factors, validate_prepared_emp008_factors
+from .factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
+from .optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
+from .preprocess import combine_exposures
+from .risk import (
     compute_expected_alpha,
     factor_covariance,
     fit_cross_sectional_factor_returns,
@@ -27,7 +20,7 @@ from .mfbt_emp008_risk import (
 
 
 @dataclass(frozen=True, slots=True)
-class MfbtEmp008Result:
+class Emp008Result:
     target_weights: pd.DataFrame
     active_weights: pd.DataFrame
     diagnostics: pd.DataFrame
@@ -71,16 +64,16 @@ def build_diagnostics_row(
     }
 
 
-def run_mfbt_emp008(
+def run_emp008(
     *,
     parquet_dir: Path,
     start: str,
     end: str,
-    config: MfbtEmp008Config | None = None,
+    config: Emp008Config | None = None,
     output_dir: Path | None = None,
     prepared: PreparedEmp008Factors | None = None,
-) -> MfbtEmp008Result:
-    requested_config = config or MfbtEmp008Config()
+) -> Emp008Result:
+    requested_config = config or Emp008Config()
     if prepared is not None:
         validate_prepared_emp008_factors(prepared, config=requested_config, start=start, end=end)
     active_config = prepared.config if prepared is not None else requested_config
@@ -140,7 +133,7 @@ def run_mfbt_emp008(
             )
         )
 
-    result = MfbtEmp008Result(
+    result = Emp008Result(
         target_weights=pd.DataFrame(target_rows).fillna(0.0),
         active_weights=pd.DataFrame(active_rows).fillna(0.0),
         diagnostics=pd.DataFrame(diagnostics),
@@ -165,7 +158,7 @@ def _optimize_month(
     stock_excess_return_dates: list[pd.Timestamp],
     alpha_factor_names: list[str],
     sector_factor_names: list[str],
-    config: MfbtEmp008Config,
+    config: Emp008Config,
     run_optimization: bool,
 ) -> OptimizationResult | None:
     exposures = combine_exposures(alpha_factors, sector_factors, factor_date)
@@ -228,20 +221,17 @@ def _optimize_month(
     raise ValueError(f"unsupported risk_model: {config.risk_model}")
 
 
-_common_month_end_dates = common_month_end_dates
-
-
 def _validated_optimization(target_date: pd.Timestamp, result: OptimizationResult) -> OptimizationResult:
     if not result.success:
         raise RuntimeError(f"optimization failed for {target_date:%Y-%m-%d}")
     return result
 
 
-def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: MfbtEmp008Config) -> bool:
+def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: Emp008Config) -> bool:
     return len(factor_returns) >= config.risk_window
 
 
-def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: MfbtEmp008Config) -> pd.Series:
+def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: Emp008Config) -> pd.Series:
     factor_set_definition = get_factor_set_definition(config.factor_set)
     if not factor_set_definition.constrain_expected_alpha_to_direction:
         return expected_alpha
@@ -265,22 +255,6 @@ def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:
     if total <= 0.0:
         raise ValueError("no positive benchmark weights")
     return positive.div(total)
-
-
-_complete_benchmark_history = complete_benchmark_history
-
-
-def _neutralize_large_benchmark_weight_factor_exposures(
-    alpha_factors: dict[str, pd.DataFrame],
-    bm_weights: pd.DataFrame,
-    config: MfbtEmp008Config,
-) -> dict[str, pd.DataFrame]:
-    return neutralize_large_benchmark_weight_exposures(
-        alpha_factors,
-        bm_weights,
-        factor_definitions_for_set(config.factor_set),
-        threshold=config.large_bm_neutral_weight_threshold,
-    )
 
 
 def _residual_variance_for_target_universe(residual_var: pd.Series, target_tickers: pd.Index) -> pd.Series:

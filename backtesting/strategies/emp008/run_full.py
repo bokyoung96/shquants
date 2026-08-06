@@ -23,12 +23,12 @@ from backtesting.strategies.emp008.run_weights import (
     weights_summary,
     write_target_weights_csv,
 )
-from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
-from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
+from backtesting.strategies.emp008.strategy import run_emp008
+from backtesting.strategies.emp008.factor_pipeline import load_and_prepare_emp008_factors
+from backtesting.strategies.emp008.factor_quantiles import (
     run_emp008_factor_quantiles,
 )
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values
+from backtesting.strategies.emp008.factor_registry import factor_set_values
 
 
 DEFAULT_NAME = "mfbt_emp008"
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> None:
             )
 
         with timed(logger, "weights"):
-            emp008_result = run_mfbt_emp008(
+            emp008_result = run_emp008(
                 parquet_dir=args.parquet_dir,
                 start=args.start,
                 end=end,

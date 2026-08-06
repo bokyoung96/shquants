@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 
 from backtesting.data import MarketData
-from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import PreparedEmp008Factors
-from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
+from backtesting.strategies.emp008.factor_pipeline import PreparedEmp008Factors
+from backtesting.strategies.emp008.factor_quantiles import (
     Emp008FactorQuantilesUnavailableError,
     Emp008FactorQuantileResult,
     QuantileWeighting,
@@ -17,11 +17,11 @@ from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
     run_emp008_factor_quantiles,
     summarize_monthly_returns,
 )
-from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
+from backtesting.strategies.emp008.factor_registry import (
     FactorDirection,
     get_factor_set_definition,
 )
-from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config
+from backtesting.strategies.emp008.data import Emp008Config
 
 
 def _frame(
@@ -178,7 +178,7 @@ def _sample_prepared() -> PreparedEmp008Factors:
         benchmark=None,
     )
     return PreparedEmp008Factors(
-        config=MfbtEmp008Config(),
+        config=Emp008Config(),
         market=market,
         factor_set_definition=get_factor_set_definition("mfbt"),
         raw_factors=dict(alpha_factors),
@@ -1283,7 +1283,7 @@ def test_run_emp008_factor_quantiles_uses_prepared_monthly_dates_and_total_marke
         return _empty_result()
 
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.mfbt_emp008_factor_quantiles.evaluate_factor_quantiles",
+        "backtesting.strategies.emp008.factor_quantiles.evaluate_factor_quantiles",
         fake_evaluate_factor_quantiles,
     )
 

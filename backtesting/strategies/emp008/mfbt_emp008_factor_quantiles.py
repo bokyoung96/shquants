@@ -104,11 +104,11 @@ def evaluate_factor_quantiles(
             signal_values = frame.loc[signal_date]
             eligibility = (
                 signal_universe
-                & signal_values.notna()
-                & signal_prices.notna()
-                & return_prices.notna()
+                & signal_values.map(np.isfinite)
+                & signal_prices.map(np.isfinite)
+                & return_prices.map(np.isfinite)
                 & signal_prices.gt(0.0)
-                & signal_market_cap.notna()
+                & signal_market_cap.map(np.isfinite)
                 & signal_market_cap.gt(0.0)
             )
             eligible_names = signal_values.index[eligibility]

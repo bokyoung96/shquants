@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -335,6 +336,58 @@ def test_evaluate_factor_quantiles_filters_on_return_date_and_uses_consecutive_m
     assert set(result.portfolio_weights["return_date"]) == {pd.Timestamp("2024-03-29")}
 
 
+def test_evaluate_factor_quantiles_excludes_nonfinite_inputs_from_both_weightings() -> None:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29"])
+    columns = ["A", "B", "C", "D", "E", "F", "G"]
+    factors = {
+        "high_factor": _frame(
+            dates,
+            columns,
+            [
+                [1.0, 2.0, float("inf"), float("-inf"), 5.0, 6.0, 7.0],
+                [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5],
+            ],
+        )
+    }
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, float("inf"), 12.0, 13.0, 14.0, 15.0, 16.0],
+            [11.0, 12.0, 13.0, float("inf"), 15.0, 16.0, 17.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [100.0, 200.0, 300.0, 400.0, float("inf"), float("-inf"), 700.0],
+            [101.0, 201.0, 301.0, 401.0, 501.0, 601.0, 701.0],
+        ],
+    )
+    universe = _frame(dates, columns, [[True] * len(columns), [True] * len(columns)]).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors=factors,
+        directions={"high_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(dates),
+        start="2024-02-29",
+        end="2024-02-29",
+        q=2,
+    )
+
+    assert set(result.portfolio_weights["ticker"]) == {"A", "G"}
+    for weighting in QuantileWeighting:
+        weighted = result.portfolio_weights[result.portfolio_weights["weighting"] == weighting]
+        assert weighted["weight"].map(np.isfinite).all()
+        returns = result.monthly_returns[result.monthly_returns["weighting"] == weighting]
+        assert returns["return"].map(np.isfinite).all()
+        assert weighted["ticker"].tolist() == ["A", "G"]
+
+
 def test_evaluate_factor_quantiles_validates_inputs_and_reports_empty_results() -> None:
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
 
@@ -390,6 +443,96 @@ def test_evaluate_factor_quantiles_validates_inputs_and_reports_empty_results() 
             end="2024-02-29",
             q=5,
         )
+
+
+def test_evaluate_factor_quantiles_emits_nan_rank_ic_for_insufficient_or_constant_cases() -> None:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29"])
+    columns = ["A", "B", "C"]
+    factors = {
+        "valid_factor": _frame(
+            dates,
+            columns,
+            [
+                [1.0, 2.0, 3.0],
+                [2.0, 3.0, 4.0],
+                [3.0, 4.0, 5.0],
+            ],
+        ),
+        "one_obs_factor": _frame(
+            dates,
+            columns,
+            [
+                [1.0, None, None],
+                [2.0, None, None],
+                [3.0, None, None],
+            ],
+        ),
+        "constant_signal_factor": _frame(
+            dates,
+            columns,
+            [
+                [5.0, 5.0, 5.0],
+                [6.0, 6.0, 6.0],
+                [7.0, 7.0, 7.0],
+            ],
+        ),
+        "constant_return_factor": _frame(
+            dates,
+            columns,
+            [
+                [10.0, 20.0, 30.0],
+                [11.0, 21.0, 31.0],
+                [12.0, 22.0, 32.0],
+            ],
+        ),
+    }
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 10.0, 10.0],
+            [20.0, 20.0, 20.0],
+            [21.0, 22.0, 23.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [100.0, 200.0, 300.0],
+            [110.0, 210.0, 310.0],
+            [120.0, 220.0, 320.0],
+        ],
+    )
+    universe = _frame(dates, columns, [[True, True, True]] * len(dates)).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors=factors,
+        directions={name: FactorDirection.HIGH for name in factors},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(dates),
+        start="2024-02-29",
+        end="2024-03-29",
+        q=3,
+    )
+
+    rank_ic = result.rank_ic.set_index(["factor", "return_date"]).sort_index()
+    for factor_name, return_date, n_obs in [
+        ("one_obs_factor", pd.Timestamp("2024-02-29"), 1),
+        ("one_obs_factor", pd.Timestamp("2024-03-29"), 1),
+        ("constant_signal_factor", pd.Timestamp("2024-02-29"), 3),
+        ("constant_signal_factor", pd.Timestamp("2024-03-29"), 3),
+        ("constant_return_factor", pd.Timestamp("2024-02-29"), 3),
+    ]:
+        row = rank_ic.loc[(factor_name, return_date)]
+        assert pd.isna(row["rank_ic"])
+        assert pd.isna(row["directional_rank_ic"])
+        assert row["n_obs"] == n_obs
+
+    valid_row = rank_ic.loc[("valid_factor", pd.Timestamp("2024-03-29"))]
+    assert valid_row["rank_ic"] > 0.0
 
 
 def test_run_emp008_factor_quantiles_uses_prepared_monthly_dates_and_total_market_cap(

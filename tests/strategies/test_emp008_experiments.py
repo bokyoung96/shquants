@@ -140,29 +140,6 @@ def test_factor_contribution_panel_uses_shared_prepared_bundle(monkeypatch: pyte
         monthly_dates=tuple(dates),
     )
 
-    def fail(*args: object, **kwargs: object) -> None:
-        raise AssertionError("duplicate raw/preprocess path should not run")
-
-    monkeypatch.setattr(
-        "backtesting.strategies.emp008.experiments.active_weight_factor_plots.load_emp008_market",
-        fail,
-    )
-    monkeypatch.setattr(
-        "backtesting.strategies.emp008.experiments.active_weight_factor_plots.build_raw_factors",
-        fail,
-    )
-    monkeypatch.setattr(
-        "backtesting.strategies.emp008.experiments.active_weight_factor_plots.preprocess_factor_frame",
-        fail,
-    )
-    monkeypatch.setattr(
-        "backtesting.strategies.emp008.experiments.active_weight_factor_plots.build_sector_active_exposures",
-        fail,
-    )
-    monkeypatch.setattr(
-        "backtesting.strategies.emp008.experiments.active_weight_factor_plots.neutralize_large_benchmark_weight_exposures",
-        fail,
-    )
     monkeypatch.setattr(
         "backtesting.strategies.emp008.experiments.active_weight_factor_plots.load_and_prepare_emp008_factors",
         lambda parquet_dir, start, end, config: prepared,

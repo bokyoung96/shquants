@@ -163,7 +163,7 @@ def _optimize_month(
 ) -> OptimizationResult | None:
     exposures = combine_exposures(alpha_factors, sector_factors, factor_date)
     stock_returns = close.loc[return_date].divide(close.loc[factor_date]).sub(1.0)
-    bm = _positive_benchmark_weights(bm_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0])
+    bm = positive_benchmark_weights(bm_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0])
     excess_returns = stock_returns.sub(stock_returns.reindex(bm.index).mul(bm).sum())
     regression = fit_cross_sectional_factor_returns(exposures, excess_returns)
     factor_return_rows.append(regression.factor_returns)
@@ -184,9 +184,9 @@ def _optimize_month(
         sector_factor_names=sector_factor_names,
         window=config.risk_window,
     )
-    expected_alpha = _apply_expected_alpha_policy(expected_alpha, config)
+    expected_alpha = apply_expected_alpha_policy(expected_alpha, config)
     target_exposures = combine_exposures(alpha_factors, sector_factors, return_date)
-    target_bm = _positive_benchmark_weights(
+    target_bm = positive_benchmark_weights(
         bm_weights.reindex(index=[return_date], columns=target_exposures.index).iloc[0]
     )
     if config.risk_model == "factor_idio":
@@ -231,7 +231,7 @@ def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: Emp008Con
     return len(factor_returns) >= config.risk_window
 
 
-def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: Emp008Config) -> pd.Series:
+def apply_expected_alpha_policy(expected_alpha: pd.Series, config: Emp008Config) -> pd.Series:
     factor_set_definition = get_factor_set_definition(config.factor_set)
     if not factor_set_definition.constrain_expected_alpha_to_direction:
         return expected_alpha
@@ -248,7 +248,7 @@ def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: Emp008Config
     return adjusted
 
 
-def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:
+def positive_benchmark_weights(weights: pd.Series) -> pd.Series:
     positive = weights.astype(float).fillna(0.0)
     positive = positive.loc[positive.gt(0.0)]
     total = positive.sum()

@@ -151,9 +151,9 @@ def main(argv: list[str] | None = None) -> None:
     logs_dir = run_root / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.log_file or logs_dir / f"weights_{timestamp()}.log"
-    logger = configure_logging(log_path, logger_name="mfbt_emp008_weights")
+    logger = configure_logging(log_path, logger_name="emp008_weights")
 
-    logger.info("MFBT EMP008 weights run started")
+    logger.info("EMP008 weights run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
         "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s",
@@ -191,15 +191,15 @@ def main(argv: list[str] | None = None) -> None:
         summary_path = run_root / "weights_summary.json"
         summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info("summary_path=%s", summary_path)
-        logger.info("MFBT EMP008 weights run completed")
+        logger.info("EMP008 weights run completed")
         print(json.dumps(summary, ensure_ascii=False, indent=2))
     except Exception:
-        logger.exception("MFBT EMP008 weights run failed")
+        logger.exception("EMP008 weights run failed")
         raise
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate MFBT EMP008 target weights only.")
+    parser = argparse.ArgumentParser(description="Generate EMP008 target weights only.")
     parser.add_argument("--start", default=DEFAULT_START, help=f"Requested output start date. Default: {DEFAULT_START}")
     parser.add_argument("--end", help="Requested end date. Default: min latest date across required parquet datasets.")
     parser.add_argument("--name", default=DEFAULT_NAME, help=f"Weights run name. Default: {DEFAULT_NAME}")

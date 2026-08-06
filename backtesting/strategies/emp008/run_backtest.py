@@ -153,9 +153,9 @@ def main(argv: list[str] | None = None) -> None:
     logs_dir = run_root / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.log_file or logs_dir / f"backtest_{timestamp()}.log"
-    logger = configure_logging(log_path, logger_name="mfbt_emp008_backtest")
+    logger = configure_logging(log_path, logger_name="emp008_backtest")
 
-    logger.info("MFBT EMP008 backtest run started")
+    logger.info("EMP008 backtest run started")
     logger.info("weights_csv=%s", weights_csv)
     logger.info("start=%s end=%s rebalance_count=%s", filtered_dates[0], end, len(filtered_dates))
     logger.info(
@@ -227,10 +227,10 @@ def main(argv: list[str] | None = None) -> None:
         summary_path = run_root / "backtest_summary.json"
         summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info("summary_path=%s", summary_path)
-        logger.info("MFBT EMP008 backtest run completed")
+        logger.info("EMP008 backtest run completed")
         print(json.dumps(summary, ensure_ascii=False, indent=2))
     except Exception:
-        logger.exception("MFBT EMP008 backtest run failed")
+        logger.exception("EMP008 backtest run failed")
         raise
 
 
@@ -266,7 +266,7 @@ def filter_dates(dates: tuple[str, ...], *, start: str | None, end: str | None) 
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Backtest/report an existing MFBT EMP008 target_weights.csv.")
+    parser = argparse.ArgumentParser(description="Backtest/report an existing EMP008 target_weights.csv.")
     parser.add_argument("--weights-csv", type=Path, help="Existing target_weights.csv. Overrides --weights-name.")
     parser.add_argument("--weights-name", default=DEFAULT_WEIGHTS_NAME, help=f"Weights run under --output-root. Default: {DEFAULT_WEIGHTS_NAME}")
     parser.add_argument("--name", default=DEFAULT_NAME, help=f"Backtest/report run name. Default: {DEFAULT_NAME}")

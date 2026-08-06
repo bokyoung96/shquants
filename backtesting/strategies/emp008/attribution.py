@@ -7,7 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .strategy import _positive_benchmark_weights
+from .strategy import positive_benchmark_weights
 from .data import Emp008Config
 from .factor_pipeline import (
     PreparedEmp008Factors,
@@ -162,7 +162,7 @@ def _compute_attribution(
             continue
         exposures = combine_exposures(alpha_factors, sector_factors, factor_date)
         stock_returns = close.loc[return_date].divide(close.loc[factor_date]).sub(1.0)
-        bm = _positive_benchmark_weights(bm_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0])
+        bm = positive_benchmark_weights(bm_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0])
         excess_returns = stock_returns.sub(stock_returns.reindex(bm.index).mul(bm).sum())
         regression = fit_cross_sectional_factor_returns(exposures, excess_returns)
         active = active_weights.loc[factor_date]

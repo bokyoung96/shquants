@@ -39,9 +39,10 @@ from backtesting.strategies.emp008.comparison import (
 )
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
 from backtesting.strategies.emp008.strategy import Emp008Result
-from backtesting.strategies.emp008.factors import _sector_relative_retail_flow, build_raw_factors
+from backtesting.strategies.emp008.factor_builders import _sector_relative_retail_flow
+from backtesting.strategies.emp008.factors import build_raw_factors
 from backtesting.strategies.emp008.strategy import (
-    _apply_expected_alpha_policy,
+    apply_expected_alpha_policy,
     _has_sufficient_risk_history,
     _stock_excess_covariance_for_target_universe,
 )
@@ -1024,7 +1025,7 @@ def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
         }
     )
 
-    result = _apply_expected_alpha_policy(
+    result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="origin"),
     )
@@ -1038,7 +1039,7 @@ def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
 def test_origin_expected_alpha_policy_applies_dividend_direction_to_new_dividend_name() -> None:
     expected_alpha = pd.Series({"LnMktcap": -0.01, "Momentum_12M": 0.02, "dividend_yield": -0.03})
 
-    result = _apply_expected_alpha_policy(
+    result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="origin_new_dividend"),
     )
@@ -1061,7 +1062,7 @@ def test_mfbt_origin_small_cap_policy_preserves_origin_factor_directions() -> No
         }
     )
 
-    result = _apply_expected_alpha_policy(
+    result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="mfbt_origin_smallcap"),
     )
@@ -1073,7 +1074,7 @@ def test_mfbt_origin_small_cap_policy_preserves_origin_factor_directions() -> No
 def test_mfbt_origin_small_cap_policy_keeps_negative_size_alpha() -> None:
     expected_alpha = pd.Series({"ln_market_cap": -0.01, "value": 0.04})
 
-    result = _apply_expected_alpha_policy(
+    result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="mfbt_origin_smallcap"),
     )
@@ -1084,7 +1085,7 @@ def test_mfbt_origin_small_cap_policy_keeps_negative_size_alpha() -> None:
 def test_expected_alpha_policy_ignores_unknown_and_sector_names() -> None:
     expected_alpha = pd.Series({"mystery_factor": -0.5, "sector_tech": 0.1, "value": -0.02})
 
-    result = _apply_expected_alpha_policy(
+    result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="mfbt_origin_smallcap"),
     )

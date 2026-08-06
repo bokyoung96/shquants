@@ -11,6 +11,8 @@ def test_emp008_package_uses_neutral_module_and_symbol_names() -> None:
 
     assert strategy.run_emp008 is not None
     assert strategy.Emp008Result is not None
+    assert strategy.apply_expected_alpha_policy is not None
+    assert strategy.positive_benchmark_weights is not None
     assert data.Emp008Config is not None
     assert data.load_emp008_market is not None
     assert factors.build_raw_factors is not None

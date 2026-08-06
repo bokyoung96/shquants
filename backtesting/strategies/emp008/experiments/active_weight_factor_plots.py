@@ -8,28 +8,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from backtesting.strategies.emp008.strategy import _apply_expected_alpha_policy, _positive_benchmark_weights, run_emp008
-from backtesting.strategies.emp008.data import Emp008Config, load_emp008_market
-from backtesting.strategies.emp008.factor_pipeline import (
-    load_and_prepare_emp008_factors,
-    neutralize_large_benchmark_weight_exposures,
-)
-from backtesting.strategies.emp008.factors import build_raw_factors
-from backtesting.strategies.emp008.preprocess import (
-    build_sector_active_exposures,
-    combine_exposures,
-    preprocess_factor_frame,
-)
+from backtesting.strategies.emp008.data import Emp008Config
+from backtesting.strategies.emp008.factor_pipeline import load_and_prepare_emp008_factors
+from backtesting.strategies.emp008.preprocess import combine_exposures
 from backtesting.strategies.emp008.risk import compute_expected_alpha, fit_cross_sectional_factor_returns
 from backtesting.strategies.emp008.run_weights import build_emp008_config
-
-_LEGACY_RAW_PREPARE_COMPAT = (
-    load_emp008_market,
-    build_raw_factors,
-    preprocess_factor_frame,
-    build_sector_active_exposures,
-    neutralize_large_benchmark_weight_exposures,
-)
+from backtesting.strategies.emp008.strategy import apply_expected_alpha_policy, positive_benchmark_weights, run_emp008
 
 
 DEFAULT_TICKERS = ("A005930", "A000660")
@@ -192,7 +176,7 @@ def factor_contribution_panel(
                 factor_date,
             )
             stock_returns = factor_bundle.close.loc[return_date].divide(factor_bundle.close.loc[factor_date]).sub(1.0)
-            bm = _positive_benchmark_weights(
+            bm = positive_benchmark_weights(
                 factor_bundle.benchmark_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0]
             )
         except (KeyError, ValueError):
@@ -213,7 +197,7 @@ def factor_contribution_panel(
             sector_factor_names=sector_factor_names,
             window=config.risk_window,
         )
-        expected_alpha = _apply_expected_alpha_policy(expected_alpha, config)
+        expected_alpha = apply_expected_alpha_policy(expected_alpha, config)
         target_exposures = combine_exposures(
             factor_bundle.alpha_factors,
             factor_bundle.sector_factors,

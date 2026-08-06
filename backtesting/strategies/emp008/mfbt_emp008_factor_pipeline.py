@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 
@@ -33,6 +34,62 @@ class PreparedEmp008Factors:
     sector: pd.DataFrame
     benchmark_weights: pd.DataFrame
     monthly_dates: tuple[pd.Timestamp, ...]
+
+
+def validate_prepared_emp008_factors(
+    prepared: PreparedEmp008Factors,
+    *,
+    config: MfbtEmp008Config | None = None,
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    required_dates: Iterable[str | pd.Timestamp] = (),
+) -> None:
+    if config is not None and config != prepared.config:
+        raise ValueError(
+            "prepared/config mismatch: "
+            f"prepared factor_set='{prepared.config.factor_set.value}' "
+            f"requested factor_set='{config.factor_set.value}'"
+        )
+
+    if prepared.close.empty or not prepared.monthly_dates:
+        raise ValueError("prepared bundle is empty and cannot be reused")
+
+    close_index = pd.DatetimeIndex(prepared.close.index)
+    available_start = close_index.min()
+    available_end = close_index.max()
+
+    monthly_dates = set(pd.to_datetime(prepared.monthly_dates))
+    missing_required_dates = sorted(
+        {
+            pd.Timestamp(date)
+            for date in required_dates
+            if pd.Timestamp(date) not in monthly_dates
+        }
+    )
+    if missing_required_dates:
+        missing_text = ", ".join(date.date().isoformat() for date in missing_required_dates)
+        available_text = ", ".join(date.date().isoformat() for date in prepared.monthly_dates)
+        raise ValueError(
+            "prepared bundle is missing required target dates: "
+            f"{missing_text}; available monthly dates: {available_text}"
+        )
+
+    if start is not None:
+        requested_start = pd.Timestamp(start)
+        if requested_start < available_start:
+            raise ValueError(
+                "prepared data range does not cover requested start: "
+                f"requested {requested_start.date().isoformat()} "
+                f"but available range is {available_start.date().isoformat()} to {available_end.date().isoformat()}"
+            )
+    if end is not None:
+        requested_end = pd.Timestamp(end)
+        if requested_end > available_end:
+            raise ValueError(
+                "prepared data range does not cover requested end: "
+                f"requested {requested_end.date().isoformat()} "
+                f"but available range is {available_start.date().isoformat()} to {available_end.date().isoformat()}"
+            )
 
 
 def common_month_end_dates(factors: dict[str, pd.DataFrame]) -> list[pd.Timestamp]:

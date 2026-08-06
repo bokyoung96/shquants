@@ -271,6 +271,31 @@ def test_run_mfbt_emp008_uses_supplied_prepared_bundle_without_reloading(
     assert result.active_weights.loc["2024-03-29", "A"] == pytest.approx(0.1)
 
 
+def test_run_mfbt_emp008_rejects_mismatched_config_for_prepared_bundle() -> None:
+    prepared = _sample_prepared(MfbtEmp008Config(factor_set="origin"))
+
+    with pytest.raises(ValueError, match="prepared/config mismatch"):
+        run_mfbt_emp008(
+            parquet_dir=Path("parquet"),
+            start="2024-02-29",
+            end="2024-03-29",
+            config=MfbtEmp008Config(factor_set="mfbt"),
+            prepared=prepared,
+        )
+
+
+def test_run_mfbt_emp008_rejects_prepared_bundle_with_insufficient_end_coverage() -> None:
+    prepared = _sample_prepared()
+
+    with pytest.raises(ValueError, match="prepared data range"):
+        run_mfbt_emp008(
+            parquet_dir=Path("parquet"),
+            start="2024-02-29",
+            end="2024-04-30",
+            prepared=prepared,
+        )
+
+
 def test_build_emp008_factor_attribution_uses_supplied_prepared_bundle_without_reload(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -331,3 +356,44 @@ def test_build_emp008_factor_attribution_uses_supplied_prepared_bundle_without_r
     assert payload["periods"] == 1
     assert payload["date_start"] == "2024-03-29"
     assert payload["date_end"] == "2024-03-29"
+
+
+def test_build_emp008_factor_attribution_rejects_mismatched_config_for_prepared_bundle(
+    tmp_path: Path,
+) -> None:
+    prepared = _sample_prepared(MfbtEmp008Config(factor_set="origin"))
+    run_root = tmp_path / "run"
+    weights_dir = run_root / "weights"
+    weights_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {"A": [0.10], "B": [-0.10]},
+        index=pd.to_datetime(["2024-02-29"]),
+    ).to_parquet(weights_dir / "active_weights.parquet")
+
+    with pytest.raises(ValueError, match="prepared/config mismatch"):
+        build_emp008_factor_attribution(
+            parquet_dir=Path("parquet"),
+            run_root=run_root,
+            config=MfbtEmp008Config(factor_set="mfbt"),
+            prepared=prepared,
+        )
+
+
+def test_build_emp008_factor_attribution_rejects_missing_required_target_date(
+    tmp_path: Path,
+) -> None:
+    prepared = _sample_prepared()
+    run_root = tmp_path / "run"
+    weights_dir = run_root / "weights"
+    weights_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {"A": [0.10], "B": [-0.10]},
+        index=pd.to_datetime(["2024-04-30"]),
+    ).to_parquet(weights_dir / "active_weights.parquet")
+
+    with pytest.raises(ValueError, match="missing required target dates"):
+        build_emp008_factor_attribution(
+            parquet_dir=Path("parquet"),
+            run_root=run_root,
+            prepared=prepared,
+        )

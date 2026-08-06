@@ -9,7 +9,11 @@ import pandas as pd
 
 from .mfbt_emp008 import _positive_benchmark_weights
 from .mfbt_emp008_data import MfbtEmp008Config
-from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors, load_and_prepare_emp008_factors
+from .mfbt_emp008_factor_pipeline import (
+    PreparedEmp008Factors,
+    load_and_prepare_emp008_factors,
+    validate_prepared_emp008_factors,
+)
 from .mfbt_emp008_preprocess import combine_exposures
 from .mfbt_emp008_risk import fit_cross_sectional_factor_returns
 
@@ -65,7 +69,16 @@ def build_emp008_factor_attribution(
     if active_weights.empty:
         raise ValueError("active weights are empty")
 
-    active_config = prepared.config if prepared is not None else (config or MfbtEmp008Config())
+    requested_config = config or MfbtEmp008Config()
+    if prepared is not None:
+        validate_prepared_emp008_factors(
+            prepared,
+            config=requested_config,
+            start=active_weights.index.min(),
+            end=active_weights.index.max(),
+            required_dates=tuple(active_weights.index),
+        )
+    active_config = prepared.config if prepared is not None else requested_config
     start = active_weights.index.min().date().isoformat()
     end = active_weights.index.max().date().isoformat()
     factor_bundle = prepared or load_and_prepare_emp008_factors(parquet_dir, start, end, active_config)

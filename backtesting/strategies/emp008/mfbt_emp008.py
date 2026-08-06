@@ -13,6 +13,7 @@ from .mfbt_emp008_factor_pipeline import (
     complete_benchmark_history,
     load_and_prepare_emp008_factors,
     neutralize_large_benchmark_weight_exposures,
+    validate_prepared_emp008_factors,
 )
 from .mfbt_emp008_factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
 from .mfbt_emp008_optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
@@ -79,7 +80,10 @@ def run_mfbt_emp008(
     output_dir: Path | None = None,
     prepared: PreparedEmp008Factors | None = None,
 ) -> MfbtEmp008Result:
-    active_config = prepared.config if prepared is not None else (config or MfbtEmp008Config())
+    requested_config = config or MfbtEmp008Config()
+    if prepared is not None:
+        validate_prepared_emp008_factors(prepared, config=requested_config, start=start, end=end)
+    active_config = prepared.config if prepared is not None else requested_config
     factor_bundle = prepared or load_and_prepare_emp008_factors(parquet_dir, start, end, active_config)
     alpha_factor_names = list(factor_bundle.raw_factors)
     sector_factor_names = list(factor_bundle.sector_factors)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
@@ -31,6 +32,15 @@ def main(argv: list[str] | None = None) -> None:
     )
     payload = result.write_outputs(args.output_dir, factor_set=config.factor_set, q=args.quantiles)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+def run_cli(argv: list[str] | None = None) -> int:
+    try:
+        main(argv)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -69,4 +79,4 @@ def _parser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(run_cli())

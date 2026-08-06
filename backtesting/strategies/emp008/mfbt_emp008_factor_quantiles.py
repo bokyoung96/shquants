@@ -42,7 +42,9 @@ class Emp008FactorQuantileResult:
 
         destination.mkdir(parents=True, exist_ok=True)
         with TemporaryDirectory(dir=destination.parent) as tmp_dir:
-            staging_dir = Path(tmp_dir)
+            staging_root = Path(tmp_dir)
+            staging_dir = staging_root / "artifacts"
+            staging_dir.mkdir()
             monthly_returns_csv = staging_dir / "monthly_returns.csv"
             monthly_returns_parquet = staging_dir / "monthly_returns.parquet"
             portfolio_weights_parquet = staging_dir / "portfolio_weights.parquet"
@@ -66,7 +68,7 @@ class Emp008FactorQuantileResult:
             )
             manifest_json.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
-            for path in [
+            artifact_paths = [
                 monthly_returns_csv,
                 monthly_returns_parquet,
                 portfolio_weights_parquet,
@@ -76,8 +78,8 @@ class Emp008FactorQuantileResult:
                 summary_csv,
                 summary_json,
                 manifest_json,
-            ]:
-                path.replace(destination / path.name)
+            ]
+            _publish_artifacts_atomically(artifact_paths=artifact_paths, destination=destination, staging_root=staging_root)
 
         return {
             "monthly_returns_csv": str(destination / "monthly_returns.csv"),
@@ -149,6 +151,17 @@ _SUMMARY_COLUMNS = (
     "ic_information_ratio",
     "ic_positive_rate",
     "quantile_monotonicity",
+)
+_ARTIFACT_FILENAMES = (
+    "monthly_returns.csv",
+    "monthly_returns.parquet",
+    "portfolio_weights.parquet",
+    "rank_ic.csv",
+    "rank_ic.parquet",
+    "cumulative_returns.csv",
+    "summary.csv",
+    "summary.json",
+    "manifest.json",
 )
 
 
@@ -924,6 +937,37 @@ def _build_manifest(
         "market_cap_field": "market_cap",
         "artifacts": artifacts,
     }
+
+
+def _publish_artifacts_atomically(
+    *,
+    artifact_paths: Sequence[Path],
+    destination: Path,
+    staging_root: Path,
+) -> None:
+    backup_dir = staging_root / "backup"
+    backup_dir.mkdir()
+    published_targets: list[Path] = []
+    backed_up_targets: list[Path] = []
+    try:
+        for filename in _ARTIFACT_FILENAMES:
+            target = destination / filename
+            if target.exists():
+                target.replace(backup_dir / filename)
+                backed_up_targets.append(target)
+        for path in artifact_paths:
+            target = destination / path.name
+            path.replace(target)
+            published_targets.append(target)
+    except Exception:
+        for target in reversed(published_targets):
+            if target.exists():
+                target.unlink()
+        for target in backed_up_targets:
+            backup_path = backup_dir / target.name
+            if backup_path.exists():
+                backup_path.replace(target)
+        raise
 
 
 def _json_safe_records(frame: pd.DataFrame) -> list[dict[str, object]]:

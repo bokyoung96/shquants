@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -653,6 +654,49 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
     with pytest.raises(ValueError, match="n_obs"):
         small_n_obs_rank_ic_result.write_outputs(small_n_obs_rank_ic_dir, factor_set="mfbt", q=2)
     assert not small_n_obs_rank_ic_dir.exists() or list(small_n_obs_rank_ic_dir.iterdir()) == []
+
+
+def test_write_outputs_rolls_back_on_publication_failure(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+    result = evaluate_factor_quantiles(
+        factors={
+            "price_momentum": factors["high_factor"],
+            "ln_market_cap": factors["low_factor"],
+        },
+        directions={
+            "price_momentum": FactorDirection.HIGH,
+            "ln_market_cap": FactorDirection.LOW,
+        },
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:4],
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+    output_dir = tmp_path / "artifacts"
+    output_dir.mkdir()
+    sentinel = output_dir / "keep.txt"
+    sentinel.write_text("leave me", encoding="utf-8")
+
+    original_replace = Path.replace
+    calls: list[str] = []
+
+    def failing_replace(self: Path, target: Path) -> Path:
+        calls.append(target.name)
+        if target.name == "rank_ic.csv":
+            raise OSError("simulated publish failure")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", failing_replace)
+
+    with pytest.raises(OSError, match="simulated publish failure"):
+        result.write_outputs(output_dir, factor_set="mfbt", q=2)
+
+    assert calls
+    assert sentinel.read_text(encoding="utf-8") == "leave me"
+    assert sorted(path.name for path in output_dir.iterdir()) == ["keep.txt"]
 
 
 def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_ic() -> None:

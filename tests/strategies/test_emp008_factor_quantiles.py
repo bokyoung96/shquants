@@ -388,6 +388,150 @@ def test_evaluate_factor_quantiles_excludes_nonfinite_inputs_from_both_weighting
         assert weighted["ticker"].tolist() == ["A", "G"]
 
 
+def test_evaluate_factor_quantiles_supports_unique_integer_tickers() -> None:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29"])
+    columns = [101, 102, 103, 104]
+    factors = {
+        "high_factor": _frame(
+            dates,
+            columns,
+            [
+                [1.0, 2.0, 3.0, 4.0],
+                [1.5, 2.5, 3.5, 4.5],
+            ],
+        )
+    }
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 10.0, 10.0, 10.0],
+            [11.0, 12.0, 13.0, 14.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [1.0, 3.0, 5.0, 7.0],
+            [2.0, 4.0, 6.0, 8.0],
+        ],
+    )
+    universe = _frame(dates, columns, [[True] * len(columns), [True] * len(columns)]).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors=factors,
+        directions={"high_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(dates),
+        start="2024-02-29",
+        end="2024-02-29",
+        q=2,
+    )
+
+    weights = result.portfolio_weights.sort_values(["weighting", "quantile", "ticker"], kind="mergesort").reset_index(drop=True)
+    assert set(weights["ticker"]) == {"101", "102", "103", "104"}
+    equal_q1 = weights[
+        (weights["weighting"] == QuantileWeighting.EQUAL)
+        & (weights["quantile"] == "Q1")
+    ]
+    cap_q1 = weights[
+        (weights["weighting"] == QuantileWeighting.MARKET_CAP)
+        & (weights["quantile"] == "Q1")
+    ]
+    assert equal_q1["ticker"].tolist() == ["101", "102"]
+    assert equal_q1["weight"].tolist() == pytest.approx([0.5, 0.5])
+    assert cap_q1["weight"].tolist() == pytest.approx([0.25, 0.75])
+    monthly = result.monthly_returns.set_index(["weighting", "portfolio"]).sort_index()
+    assert monthly.loc[(QuantileWeighting.EQUAL, "Q1"), "return"] == pytest.approx(0.15)
+    assert monthly.loc[(QuantileWeighting.MARKET_CAP, "Q1"), "return"] == pytest.approx(0.175)
+
+
+def test_evaluate_factor_quantiles_rejects_duplicate_or_ambiguous_ticker_labels() -> None:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29"])
+    duplicate_columns = ["A", "A", "B"]
+    close_duplicate = _frame(
+        dates,
+        duplicate_columns,
+        [
+            [10.0, 11.0, 12.0],
+            [11.0, 12.0, 13.0],
+        ],
+    )
+    market_cap_duplicate = _frame(
+        dates,
+        duplicate_columns,
+        [
+            [100.0, 110.0, 120.0],
+            [101.0, 111.0, 121.0],
+        ],
+    )
+    universe_duplicate = _frame(dates, duplicate_columns, [[True, True, True], [True, True, True]]).astype(bool)
+    factor_duplicate = _frame(
+        dates,
+        duplicate_columns,
+        [
+            [1.0, 2.0, 3.0],
+            [1.5, 2.5, 3.5],
+        ],
+    )
+
+    with pytest.raises(ValueError, match="duplicate.*ticker"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factor_duplicate},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close_duplicate,
+            market_cap=market_cap_duplicate,
+            universe=universe_duplicate,
+            monthly_dates=tuple(dates),
+            start="2024-02-29",
+            end="2024-02-29",
+            q=2,
+        )
+
+    mixed_columns = [101, "101", 202]
+    close_mixed = _frame(
+        dates,
+        mixed_columns,
+        [
+            [10.0, 11.0, 12.0],
+            [11.0, 12.0, 13.0],
+        ],
+    )
+    market_cap_mixed = _frame(
+        dates,
+        mixed_columns,
+        [
+            [100.0, 110.0, 120.0],
+            [101.0, 111.0, 121.0],
+        ],
+    )
+    universe_mixed = _frame(dates, mixed_columns, [[True, True, True], [True, True, True]]).astype(bool)
+    factor_mixed = _frame(
+        dates,
+        mixed_columns,
+        [
+            [1.0, 2.0, 3.0],
+            [1.5, 2.5, 3.5],
+        ],
+    )
+
+    with pytest.raises(ValueError, match="ambiguous.*101"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factor_mixed},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close_mixed,
+            market_cap=market_cap_mixed,
+            universe=universe_mixed,
+            monthly_dates=tuple(dates),
+            start="2024-02-29",
+            end="2024-02-29",
+            q=2,
+        )
+
+
 def test_evaluate_factor_quantiles_validates_inputs_and_reports_empty_results() -> None:
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
 
@@ -425,6 +569,45 @@ def test_evaluate_factor_quantiles_validates_inputs_and_reports_empty_results() 
             market_cap=market_cap,
             universe=universe,
             monthly_dates=monthly_dates[:1],
+            start="2024-01-31",
+            end="2024-01-31",
+            q=5,
+        )
+
+    with pytest.raises(ValueError, match="start.*must be on or before.*end"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factors["high_factor"]},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close,
+            market_cap=market_cap,
+            universe=universe,
+            monthly_dates=monthly_dates[:2],
+            start="2024-03-01",
+            end="2024-02-29",
+            q=5,
+        )
+
+    with pytest.raises(ValueError, match="strictly increasing"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factors["high_factor"]},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close,
+            market_cap=market_cap,
+            universe=universe,
+            monthly_dates=(monthly_dates[1], monthly_dates[0]),
+            start="2024-02-29",
+            end="2024-02-29",
+            q=5,
+        )
+
+    with pytest.raises(ValueError, match="duplicate.*monthly dates"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factors["high_factor"]},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close,
+            market_cap=market_cap,
+            universe=universe,
+            monthly_dates=(monthly_dates[0], monthly_dates[0]),
             start="2024-01-31",
             end="2024-01-31",
             q=5,

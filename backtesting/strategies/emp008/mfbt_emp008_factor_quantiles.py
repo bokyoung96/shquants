@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum, unique
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -68,9 +68,18 @@ def evaluate_factor_quantiles(
     if not factors:
         raise ValueError("at least one factor is required")
 
+    start_ts = pd.Timestamp(start)
+    end_ts = pd.Timestamp(end)
+    if start_ts > end_ts:
+        raise ValueError("start must be on or before end")
+
     normalized_monthly_dates = tuple(pd.Timestamp(date) for date in monthly_dates)
     if len(normalized_monthly_dates) < 2:
         raise ValueError("at least two monthly dates are required")
+    if len(set(normalized_monthly_dates)) != len(normalized_monthly_dates):
+        raise ValueError("duplicate monthly dates are not allowed")
+    if any(left >= right for left, right in zip(normalized_monthly_dates[:-1], normalized_monthly_dates[1:])):
+        raise ValueError("monthly dates must be strictly increasing")
 
     factor_names = list(factors)
     missing_directions = sorted(name for name in factor_names if name not in directions)
@@ -78,8 +87,12 @@ def evaluate_factor_quantiles(
         missing_text = ", ".join(missing_directions)
         raise ValueError(f"missing directions for factor(s): {missing_text}")
 
-    start_ts = pd.Timestamp(start)
-    end_ts = pd.Timestamp(end)
+    _validate_frame_axes(
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        factors=factors,
+    )
     aligned_close = close.astype(float)
     aligned_market_cap = market_cap.reindex(index=aligned_close.index, columns=aligned_close.columns).astype(float)
     aligned_universe = universe.reindex(index=aligned_close.index, columns=aligned_close.columns).fillna(False).astype(bool)
@@ -154,7 +167,7 @@ def evaluate_factor_quantiles(
                                 "factor": factor_name,
                                 "weighting": weighting,
                                 "quantile": quantile,
-                                "ticker": ticker,
+                                "ticker": str(ticker),
                                 "weight": float(weight),
                             }
                         )
@@ -232,28 +245,29 @@ def evaluate_factor_quantiles(
     )
 
 
-def _build_quantile_memberships(signals: pd.Series, *, q: int) -> dict[str, list[str]]:
+def _build_quantile_memberships(signals: pd.Series, *, q: int) -> dict[str, list[Any]]:
     ordered = pd.DataFrame(
         {
             "signal": signals.astype(float),
             "ticker_key": signals.index.map(str),
+            "position_key": np.arange(len(signals)),
         },
         index=signals.index,
-    ).sort_values(["signal", "ticker_key"], kind="mergesort")
+    ).sort_values(["signal", "ticker_key", "position_key"], kind="mergesort")
     ordered_names = ordered.index.tolist()
     if not ordered_names:
         return {}
     bucket_count = min(q, len(ordered_names))
     buckets = np.array_split(np.array(ordered_names, dtype=object), bucket_count)
     return {
-        f"Q{bucket_index}": [str(name) if not isinstance(name, str) else name for name in bucket.tolist()]
+        f"Q{bucket_index}": bucket.tolist()
         for bucket_index, bucket in enumerate(buckets, start=1)
         if len(bucket) > 0
     }
 
 
 def _quantile_weights(
-    names: list[str],
+    names: list[Any],
     *,
     weighting: QuantileWeighting,
     signal_market_cap: pd.Series,
@@ -266,6 +280,40 @@ def _quantile_weights(
         total = float(values.sum())
         return values.divide(total)
     raise ValueError(f"unsupported weighting: {weighting}")
+
+
+def _validate_frame_axes(
+    *,
+    close: pd.DataFrame,
+    market_cap: pd.DataFrame,
+    universe: pd.DataFrame,
+    factors: Mapping[str, pd.DataFrame],
+) -> None:
+    frames: list[tuple[str, pd.DataFrame]] = [
+        ("close", close),
+        ("market_cap", market_cap),
+        ("universe", universe),
+    ]
+    frames.extend((f"factor '{name}'", frame) for name, frame in factors.items())
+    for frame_name, frame in frames:
+        if not frame.columns.is_unique:
+            duplicates = ", ".join(sorted({str(label) for label in frame.columns[frame.columns.duplicated()]}))
+            raise ValueError(f"duplicate ticker labels in {frame_name}: {duplicates}")
+
+        string_map: dict[str, list[Any]] = {}
+        for label in frame.columns.tolist():
+            string_map.setdefault(str(label), []).append(label)
+        ambiguous = {
+            ticker_text: labels
+            for ticker_text, labels in string_map.items()
+            if len(labels) > 1
+        }
+        if ambiguous:
+            details = ", ".join(
+                f"{ticker_text} <- {labels!r}"
+                for ticker_text, labels in sorted(ambiguous.items(), key=lambda item: item[0])
+            )
+            raise ValueError(f"ambiguous ticker labels in {frame_name}: {details}")
 
 
 def _spearman_rank_ic(signals: pd.Series, next_returns: pd.Series) -> float:

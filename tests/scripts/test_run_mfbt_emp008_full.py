@@ -19,10 +19,12 @@ from backtesting.strategies.emp008.run_backtest import (
     write_active_share,
 )
 from backtesting.strategies.emp008.run_weights import (
+    _parser as weights_parser,
     build_emp008_config,
     latest_common_end,
     write_target_weights_csv,
 )
+from backtesting.strategies.emp008.run_full import _parser as full_parser
 from backtesting.strategies.emp008.comparison import (
     active_weight_abs_sum_frame,
     build_emp008_comparison,
@@ -42,8 +44,10 @@ from backtesting.strategies.emp008.mfbt_emp008_data import (
     MfbtEmp008Config,
     _trim_non_forward_snapshot_frames,
     load_mfbt_emp008_market,
+    padded_snapshot_end,
     required_datasets,
 )
+from backtesting.strategies.emp008.mfbt_emp008_factor_registry import FactorSetId
 from backtesting.strategies.emp008.mfbt_emp008_optimize import optimize_active_weights_with_covariance
 from backtesting.strategies.emp008.mfbt_emp008_preprocess import preprocess_factor_frame
 
@@ -89,6 +93,13 @@ def test_required_datasets_includes_distinct_sector_neutral_dataset() -> None:
     assert len(datasets) == len(set(datasets))
 
 
+def test_factor_set_parser_choices_match_registry_values() -> None:
+    expected = tuple(member.value for member in FactorSetId)
+
+    assert tuple(weights_parser()._option_string_actions["--factor-set"].choices) == expected
+    assert tuple(full_parser()._option_string_actions["--factor-set"].choices) == expected
+
+
 @pytest.mark.parametrize(
     ("factor_set", "dividend_dataset"),
     [
@@ -116,10 +127,60 @@ def test_origin_required_datasets_include_only_inputs_used_by_the_strategy(
     }
 
 
+def test_required_datasets_follow_registry_dataset_selection_by_factor_set() -> None:
+    origin = required_datasets(MfbtEmp008Config(factor_set="origin"))
+    origin_new = required_datasets(MfbtEmp008Config(factor_set="origin_new_dividend"))
+    mfbt = required_datasets(MfbtEmp008Config())
+
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 in origin
+    assert DatasetId.QW_DPS_TTM not in origin
+    assert DatasetId.QW_DPS_TTM in origin_new
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 not in origin_new
+    assert DatasetId.QW_FCF in mfbt
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 not in mfbt
+
+
+def test_origin_required_datasets_with_wics_include_common_inputs_neutral_sector_and_selected_dividend_only() -> None:
+    config = MfbtEmp008Config(
+        factor_set="origin",
+        sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG,
+    )
+
+    assert required_datasets(config) == (
+        DatasetId.QW_ADJ_C,
+        DatasetId.QW_BM_WEIGHTS,
+        DatasetId.QW_DIVIDEND_YLD_FY0,
+        DatasetId.QW_WICS_SEC_BIG,
+        DatasetId.QW_MKTCAP,
+        DatasetId.QW_MKTCAP_FLT,
+        DatasetId.QW_K200_YN,
+    )
+
+
 def test_mfbt_required_datasets_omit_unused_raw_close() -> None:
     datasets = required_datasets(MfbtEmp008Config())
 
     assert DatasetId.QW_C not in datasets
+
+
+def test_mfbt_required_datasets_with_wics_include_both_construction_and_neutral_sector_datasets() -> None:
+    config = MfbtEmp008Config(sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG)
+
+    assert required_datasets(config) == (
+        DatasetId.QW_ADJ_C,
+        DatasetId.QW_BM_WEIGHTS,
+        DatasetId.QW_OP_FWD_12M,
+        DatasetId.QW_DPS_TTM,
+        DatasetId.QW_RETAIL,
+        DatasetId.QW_FCF,
+        DatasetId.QW_INT_BEARING_LIAB_NFQ0,
+        DatasetId.QW_QUICK_ASSETS_NFQ0,
+        DatasetId.QW_WI_SEC_26_BIG,
+        DatasetId.QW_WICS_SEC_BIG,
+        DatasetId.QW_MKTCAP,
+        DatasetId.QW_MKTCAP_FLT,
+        DatasetId.QW_K200_YN,
+    )
 
 
 def test_complete_benchmark_history_uses_float_cap_only_before_official_weights() -> None:
@@ -345,7 +406,7 @@ def test_build_emp008_config_rejects_unknown_risk_model() -> None:
 def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, factor_set="origin")
 
-    assert config.factor_set == "origin"
+    assert config.factor_set is FactorSetId.ORIGIN
     assert config.expected_alpha_policy == "origin_sign"
     assert config.rank_transform_factors == ("LnMktcap",)
     assert config.large_bm_neutral_factor_names == ()
@@ -357,7 +418,7 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
 def test_build_emp008_config_sets_origin_with_new_dividend_variant() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, factor_set="origin_new_dividend")
 
-    assert config.factor_set == "origin_new_dividend"
+    assert config.factor_set is FactorSetId.ORIGIN_NEW_DIVIDEND
     assert config.expected_alpha_policy == "origin_sign"
     assert config.rank_transform_factors == ("LnMktcap",)
     assert config.large_bm_neutral_factor_names == ()
@@ -369,7 +430,7 @@ def test_build_emp008_config_sets_origin_with_new_dividend_variant() -> None:
 def test_build_emp008_config_sets_mfbt_positivity_variant() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt_pos")
 
-    assert config.factor_set == "mfbt_pos"
+    assert config.factor_set is FactorSetId.MFBT_POS
     assert config.expected_alpha_policy == "mean"
     assert config.rank_transform_factors == ("ln_market_cap",)
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
@@ -381,7 +442,7 @@ def test_build_emp008_config_adds_only_origin_small_cap_policy_to_mfbt() -> None
 
     config = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt_origin_smallcap")
 
-    assert config.factor_set == "mfbt_origin_smallcap"
+    assert config.factor_set is FactorSetId.MFBT_ORIGIN_SMALLCAP
     assert config.expected_alpha_policy == "origin_small_cap"
     assert config.rank_transform_factors == baseline.rank_transform_factors
     assert config.large_bm_neutral_factor_names == baseline.large_bm_neutral_factor_names
@@ -400,7 +461,10 @@ def test_build_emp008_config_sets_wics_sector_neutral_dataset() -> None:
 
 
 def test_build_emp008_config_rejects_unknown_factor_set() -> None:
-    with pytest.raises(ValueError, match="factor_set"):
+    with pytest.raises(
+        ValueError,
+        match="unknown factor set 'legacy'. Supported values: mfbt, mfbt_pos, mfbt_origin_smallcap, origin, origin_new_dividend",
+    ):
         build_emp008_config(factor_set="legacy")
 
 
@@ -564,11 +628,18 @@ def test_origin_market_load_keeps_forward_snapshot_but_trims_price_frames_to_req
     result = _trim_non_forward_snapshot_frames(
         market,
         end="2026-05-28",
-        config=MfbtEmp008Config(factor_set="origin", monthly_snapshot_forward_days=7),
+        config=MfbtEmp008Config(factor_set="origin"),
     )
 
     assert result.frames["close"].index.max() == pd.Timestamp("2026-05-28")
     assert result.frames["dividend_yld_fy0"].index.max() == pd.Timestamp("2026-05-29")
+
+
+def test_origin_snapshot_padding_comes_from_registry_without_constructor_override() -> None:
+    config = MfbtEmp008Config(factor_set="origin")
+
+    assert config.monthly_snapshot_forward_days == 7
+    assert padded_snapshot_end("2026-05-28", config) == "2026-06-04"
 
 
 def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
@@ -583,7 +654,7 @@ def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
 
     result = _apply_expected_alpha_policy(
         expected_alpha,
-        MfbtEmp008Config(factor_set="origin", expected_alpha_policy="origin_sign"),
+        MfbtEmp008Config(factor_set="origin"),
     )
 
     assert result["LnMktcap"] == 0.0
@@ -597,7 +668,7 @@ def test_origin_expected_alpha_policy_applies_dividend_direction_to_new_dividend
 
     result = _apply_expected_alpha_policy(
         expected_alpha,
-        MfbtEmp008Config(factor_set="origin_new_dividend", expected_alpha_policy="origin_sign"),
+        MfbtEmp008Config(factor_set="origin_new_dividend"),
     )
 
     assert result["LnMktcap"] == pytest.approx(-0.01)
@@ -620,10 +691,7 @@ def test_mfbt_origin_small_cap_policy_preserves_origin_factor_directions() -> No
 
     result = _apply_expected_alpha_policy(
         expected_alpha,
-        MfbtEmp008Config(
-            factor_set="mfbt_origin_smallcap",
-            expected_alpha_policy="origin_small_cap",
-        ),
+        MfbtEmp008Config(factor_set="mfbt_origin_smallcap"),
     )
 
     assert result["ln_market_cap"] == 0.0
@@ -635,10 +703,7 @@ def test_mfbt_origin_small_cap_policy_keeps_negative_size_alpha() -> None:
 
     result = _apply_expected_alpha_policy(
         expected_alpha,
-        MfbtEmp008Config(
-            factor_set="mfbt_origin_smallcap",
-            expected_alpha_policy="origin_small_cap",
-        ),
+        MfbtEmp008Config(factor_set="mfbt_origin_smallcap"),
     )
 
     assert result.equals(expected_alpha)

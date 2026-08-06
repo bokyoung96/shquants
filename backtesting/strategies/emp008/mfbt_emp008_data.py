@@ -7,6 +7,12 @@ import pandas as pd
 
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import DataLoader, LoadRequest, MarketData, ParquetStore
+from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
+    FactorSetId,
+    factor_definitions_for_set,
+    get_factor_set_definition,
+    parse_factor_set,
+)
 
 FORWARD_SNAPSHOT_FRAME_KEYS = frozenset({"dividend_yld_fy0"})
 
@@ -22,44 +28,65 @@ class MfbtEmp008Config:
     positivity_momentum_lookback_days: int = 252
     low_op_threshold: float = 100_000_000_000.0
     extreme_growth_threshold: float = 0.50
-    rank_transform_factors: tuple[str, ...] = ("ln_market_cap",)
-    large_bm_neutral_factor_names: tuple[str, ...] = ("ln_market_cap",)
     large_bm_neutral_weight_threshold: float = 0.10
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
     risk_model: str = "factor_idio"
-    factor_set: str = "mfbt"
-    expected_alpha_policy: str = "mean"
-    monthly_snapshot_forward_days: int = 0
+    factor_set: FactorSetId = FactorSetId.MFBT
     value_raw_winsor_quantile: float | None = None
     value_zscore_cap: float | None = None
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "factor_set", parse_factor_set(self.factor_set))
+
+    @property
+    def rank_transform_factors(self) -> tuple[str, ...]:
+        return tuple(
+            definition.id.value
+            for definition in factor_definitions_for_set(self.factor_set)
+            if definition.rank_transform
+        )
+
+    @property
+    def large_bm_neutral_factor_names(self) -> tuple[str, ...]:
+        return tuple(
+            definition.id.value
+            for definition in factor_definitions_for_set(self.factor_set)
+            if definition.neutralize_large_benchmark_weight
+        )
+
+    @property
+    def expected_alpha_policy(self) -> str:
+        factor_set_definition = get_factor_set_definition(self.factor_set)
+        if not factor_set_definition.constrain_expected_alpha_to_direction:
+            return "mean"
+        if self.factor_set is FactorSetId.MFBT_ORIGIN_SMALLCAP:
+            return "origin_small_cap"
+        return "origin_sign"
+
+    @property
+    def monthly_snapshot_forward_days(self) -> int:
+        return get_factor_set_definition(self.factor_set).snapshot_forward_days
+
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
-    if config.factor_set == "origin":
-        factor_datasets = [DatasetId.QW_DIVIDEND_YLD_FY0]
-    elif config.factor_set == "origin_new_dividend":
-        factor_datasets = [DatasetId.QW_DPS_TTM]
-    else:
-        factor_datasets = [
-            DatasetId.QW_OP_FWD_12M,
-            DatasetId.QW_DPS_TTM,
-            DatasetId.QW_RETAIL,
-            config.sector_dataset,
-            DatasetId.QW_FCF,
-            DatasetId.QW_INT_BEARING_LIAB_NFQ0,
-            DatasetId.QW_QUICK_ASSETS_NFQ0,
-        ]
-
+    factor_definitions = factor_definitions_for_set(config.factor_set)
+    factor_datasets = [dataset_id for definition in factor_definitions for dataset_id in definition.datasets]
     ordered = [
         DatasetId.QW_ADJ_C,
         config.bm_weights_dataset,
         *factor_datasets,
-        config.sector_neutral_dataset or config.sector_dataset,
-        DatasetId.QW_MKTCAP,
-        config.float_market_cap_dataset,
-        config.universe_dataset,
     ]
+    if any(definition.requires_construction_sector for definition in factor_definitions):
+        ordered.append(config.sector_dataset)
+    ordered.append(config.sector_neutral_dataset or config.sector_dataset)
+    ordered.extend(
+        [
+            DatasetId.QW_MKTCAP,
+            config.float_market_cap_dataset,
+            config.universe_dataset,
+        ]
+    )
     return tuple(dict.fromkeys(ordered))
 
 
@@ -100,11 +127,12 @@ def padded_history_start(start: str, config: MfbtEmp008Config) -> str:
 
 
 def padded_snapshot_end(end: str, config: MfbtEmp008Config) -> str:
-    return (pd.Timestamp(end) + pd.Timedelta(days=max(config.monthly_snapshot_forward_days, 0))).strftime("%Y-%m-%d")
+    forward_days = max(get_factor_set_definition(config.factor_set).snapshot_forward_days, 0)
+    return (pd.Timestamp(end) + pd.Timedelta(days=forward_days)).strftime("%Y-%m-%d")
 
 
 def _trim_non_forward_snapshot_frames(market: MarketData, *, end: str, config: MfbtEmp008Config) -> MarketData:
-    if config.monthly_snapshot_forward_days <= 0:
+    if get_factor_set_definition(config.factor_set).snapshot_forward_days <= 0:
         return market
 
     requested_end = pd.Timestamp(end)

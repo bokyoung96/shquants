@@ -172,6 +172,12 @@ def test_factor_set_values_returns_declared_order() -> None:
     )
 
 
+def test_emp008_config_normalizes_factor_set_to_enum_member() -> None:
+    config = MfbtEmp008Config(factor_set="origin")
+
+    assert config.factor_set is FactorSetId.ORIGIN
+
+
 def test_factor_definition_builders_share_config_signature() -> None:
     config = MfbtEmp008Config()
 

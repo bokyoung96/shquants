@@ -24,6 +24,7 @@ from backtesting.strategies.emp008.run_weights import (
     write_target_weights_csv,
 )
 from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
+from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values
 
 
 DEFAULT_NAME = "mfbt_emp008"
@@ -57,7 +58,7 @@ def main(argv: list[str] | None = None) -> None:
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
-        config.factor_set,
+        config.factor_set.value,
     )
     logger.info("output_root=%s backtests_root=%s reports_root=%s", args.output_root, backtests_root, reports_root)
     logger.info("log_file=%s", log_path)
@@ -71,7 +72,7 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_monthly": config.tracking_error,
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
-        "factor_set": config.factor_set,
+        "factor_set": config.factor_set.value,
         "sector_neutral_dataset": None if config.sector_neutral_dataset is None else config.sector_neutral_dataset.value,
     }
 
@@ -222,7 +223,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=("mfbt", "mfbt_pos", "mfbt_origin_smallcap", "origin", "origin_new_dividend"),
+        choices=factor_set_values(),
         help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
         "or 'origin_new_dividend' to replace origin DY with MFBT dividend yield.",

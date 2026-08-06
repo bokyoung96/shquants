@@ -14,6 +14,7 @@ from backtesting.catalog import DataCatalog
 from backtesting.catalog import DatasetId
 from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result, run_mfbt_emp008
 from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, required_datasets
+from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values, parse_factor_set
 
 
 DEFAULT_START = "2020-01-31"
@@ -33,28 +34,7 @@ def build_emp008_config(
             raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
         config = replace(config, risk_model=risk_model)
     if factor_set is not None:
-        if factor_set not in {"mfbt", "mfbt_pos", "mfbt_origin_smallcap", "origin", "origin_new_dividend"}:
-            raise ValueError(
-                "factor_set must be 'mfbt', 'mfbt_pos', 'mfbt_origin_smallcap', 'origin', "
-                "or 'origin_new_dividend'"
-            )
-        if factor_set in {"origin", "origin_new_dividend"}:
-            config = replace(
-                config,
-                factor_set=factor_set,
-                expected_alpha_policy="origin_sign",
-                rank_transform_factors=("LnMktcap",),
-                large_bm_neutral_factor_names=(),
-                monthly_snapshot_forward_days=7 if factor_set == "origin" else 0,
-            )
-        elif factor_set == "mfbt_origin_smallcap":
-            config = replace(
-                config,
-                factor_set=factor_set,
-                expected_alpha_policy="origin_small_cap",
-            )
-        else:
-            config = replace(config, factor_set=factor_set)
+        config = replace(config, factor_set=parse_factor_set(factor_set))
     if sector_neutral_dataset is not None:
         config = replace(config, sector_neutral_dataset=_resolve_sector_neutral_dataset(sector_neutral_dataset))
     if tracking_error_annual is None:
@@ -180,7 +160,7 @@ def main(argv: list[str] | None = None) -> None:
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
-        config.factor_set,
+        config.factor_set.value,
     )
     logger.info("weights_dir=%s log_file=%s", weights_dir, log_path)
 
@@ -193,7 +173,7 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_monthly": config.tracking_error,
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
-        "factor_set": config.factor_set,
+        "factor_set": config.factor_set.value,
     }
     try:
         with timed(logger, "weights"):
@@ -234,7 +214,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=("mfbt", "mfbt_pos", "mfbt_origin_smallcap", "origin", "origin_new_dividend"),
+        choices=factor_set_values(),
         help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
         "or 'origin_new_dividend' to replace origin DY with MFBT dividend yield.",

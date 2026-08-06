@@ -10,6 +10,7 @@ import pytest
 from backtesting.data import MarketData
 from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import PreparedEmp008Factors
 from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
+    Emp008FactorQuantilesUnavailableError,
     Emp008FactorQuantileResult,
     QuantileWeighting,
     evaluate_factor_quantiles,
@@ -278,6 +279,40 @@ def test_evaluate_factor_quantiles_reuses_membership_for_both_weightings() -> No
     assert equal_rows.loc["high_minus_low", "return"] == pytest.approx(0.45)
     assert equal_rows.loc["preferred_minus_avoided", "return"] == pytest.approx(0.45)
     assert equal_rows.loc["high_minus_low", "constituent_count"] == 3
+
+
+def test_evaluate_factor_quantiles_raises_unavailable_for_insufficient_monthly_dates() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+
+    with pytest.raises(Emp008FactorQuantilesUnavailableError, match="at least two monthly dates"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factors["high_factor"]},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close,
+            market_cap=market_cap,
+            universe=universe,
+            monthly_dates=monthly_dates[:1],
+            start="2024-01-31",
+            end="2024-01-31",
+            q=5,
+        )
+
+
+def test_evaluate_factor_quantiles_raises_unavailable_when_no_quantile_observations_exist() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+
+    with pytest.raises(Emp008FactorQuantilesUnavailableError, match="no factor quantile observations"):
+        evaluate_factor_quantiles(
+            factors={"high_factor": factors["high_factor"]},
+            directions={"high_factor": FactorDirection.HIGH},
+            close=close,
+            market_cap=market_cap,
+            universe=universe,
+            monthly_dates=monthly_dates,
+            start="2025-01-31",
+            end="2025-02-28",
+            q=5,
+        )
 
 
 def test_summarize_monthly_returns_computes_compounded_metrics() -> None:

@@ -25,7 +25,10 @@ from backtesting.strategies.emp008.run_weights import (
 )
 from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
 from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
-from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import run_emp008_factor_quantiles
+from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
+    Emp008FactorQuantilesUnavailableError,
+    run_emp008_factor_quantiles,
+)
 from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values
 
 
@@ -112,18 +115,19 @@ def main(argv: list[str] | None = None) -> None:
                         end=end,
                         q=args.factor_quantiles,
                     )
+                except Emp008FactorQuantilesUnavailableError as exc:
+                    summary["factor_quantiles"] = {
+                        "status": "skipped",
+                        "reason": str(exc),
+                    }
+                    logger.warning("factor_quantiles_skipped=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
+                else:
                     summary["factor_quantiles"] = quantile_result.write_outputs(
                         run_root / "factor_quantiles",
                         factor_set=config.factor_set,
                         q=args.factor_quantiles,
                     )
                     logger.info("factor_quantiles=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
-                except ValueError as exc:
-                    summary["factor_quantiles"] = {
-                        "status": "skipped",
-                        "reason": str(exc),
-                    }
-                    logger.warning("factor_quantiles_skipped=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
 
         with timed(logger, "backtest"):
             dates = tuple(pd.to_datetime(emp008_result.target_weights.index).strftime("%Y-%m-%d"))

@@ -57,6 +57,7 @@ from backtesting.strategies.emp008.mfbt_emp008_factor_registry import FactorSetI
 from backtesting.strategies.emp008.mfbt_emp008_optimize import optimize_active_weights_with_covariance
 from backtesting.strategies.emp008.mfbt_emp008_preprocess import preprocess_factor_frame
 from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import PreparedEmp008Factors
+from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import Emp008FactorQuantilesUnavailableError
 from backtesting.strategies.emp008.mfbt_emp008_factor_registry import get_factor_set_definition
 
 
@@ -410,14 +411,14 @@ def test_full_run_orders_quantiles_after_weights_and_before_backtest(
     assert events.index("backtest") < events.index("report")
 
 
-def test_full_run_skips_factor_quantiles_on_value_error_and_continues(
+def test_full_run_skips_factor_quantiles_on_unavailable_error_and_continues(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     prepared = make_prepared_bundle()
     prepare = Mock(return_value=prepared)
     optimizer = Mock(return_value=make_emp008_result())
-    quantiles = Mock(side_effect=ValueError("q must be at least 2"))
+    quantiles = Mock(side_effect=Emp008FactorQuantilesUnavailableError("no quantile observations in requested horizon"))
     attribution = Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")})
 
     monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", prepare)
@@ -435,11 +436,52 @@ def test_full_run_skips_factor_quantiles_on_value_error_and_continues(
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["factor_quantiles"] == {
         "status": "skipped",
-        "reason": "q must be at least 2",
+        "reason": "no quantile observations in requested horizon",
     }
     assert "backtest" in summary
     assert "report" in summary
     assert attribution.call_count == 1
+
+
+def test_full_run_propagates_quantile_value_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", Mock(return_value=prepared))
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", Mock(return_value=make_emp008_result()))
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", Mock(side_effect=ValueError("q must be at least 2")))
+    monkeypatch.setattr(
+        run_full,
+        "build_emp008_factor_attribution",
+        Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")}),
+    )
+    patch_backtest_report_and_attribution(monkeypatch, tmp_path)
+
+    with pytest.raises(ValueError, match="q must be at least 2"):
+        run_full.main(["--end", "2024-06-30", "--output-root", str(tmp_path), "--no-comparison"])
+
+
+def test_full_run_propagates_quantile_writer_value_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    writer_result = _FakeQuantileResult({"summary_csv": str(tmp_path / "factor_quantiles" / "summary.csv")})
+    writer_result.write_outputs.side_effect = ValueError("result must be nonempty before writing artifacts")
+
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", Mock(return_value=prepared))
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", Mock(return_value=make_emp008_result()))
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", Mock(return_value=writer_result))
+    monkeypatch.setattr(
+        run_full,
+        "build_emp008_factor_attribution",
+        Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")}),
+    )
+    patch_backtest_report_and_attribution(monkeypatch, tmp_path)
+
+    with pytest.raises(ValueError, match="result must be nonempty before writing artifacts"):
+        run_full.main(["--end", "2024-06-30", "--output-root", str(tmp_path), "--no-comparison"])
 
 
 @pytest.mark.parametrize(

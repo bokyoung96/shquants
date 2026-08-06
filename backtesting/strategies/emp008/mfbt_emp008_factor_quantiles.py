@@ -15,6 +15,10 @@ from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors
 from .mfbt_emp008_factor_registry import FactorDirection, FactorSetId, factor_definitions_for_set
 
 
+class Emp008FactorQuantilesUnavailableError(ValueError):
+    """Raised when quantile diagnostics are unavailable for an otherwise valid run."""
+
+
 @unique
 class QuantileWeighting(StrEnum):
     EQUAL = "equal_weight"
@@ -214,7 +218,7 @@ def evaluate_factor_quantiles(
 
     normalized_monthly_dates = tuple(pd.Timestamp(date) for date in monthly_dates)
     if len(normalized_monthly_dates) < 2:
-        raise ValueError("at least two monthly dates are required")
+        raise Emp008FactorQuantilesUnavailableError("at least two monthly dates are required")
     if len(set(normalized_monthly_dates)) != len(normalized_monthly_dates):
         raise ValueError("duplicate monthly dates are not allowed")
     if any(left >= right for left, right in zip(normalized_monthly_dates[:-1], normalized_monthly_dates[1:])):
@@ -358,7 +362,7 @@ def evaluate_factor_quantiles(
 
     if not monthly_return_rows:
         factor_text = ", ".join(factor_names)
-        raise ValueError(
+        raise Emp008FactorQuantilesUnavailableError(
             "no factor quantile observations for "
             f"{factor_text} in requested range {start_ts.date().isoformat()} to {end_ts.date().isoformat()}"
         )

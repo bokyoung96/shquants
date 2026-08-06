@@ -1144,9 +1144,16 @@ def _build_cumulative_quintile_figure(
 
     handles, labels = axes_array[0].get_legend_handles_labels()
     if handles:
-        fig.legend(handles, labels, loc="upper center", ncol=min(len(labels), 6), frameon=False)
-    fig.suptitle(f"Cumulative quintiles: {weighting.value}", y=0.995)
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
+        fig.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.975),
+            ncol=min(len(labels), 6),
+            frameon=False,
+        )
+    fig.suptitle(f"Cumulative quintiles: {weighting.value}", x=0.01, ha="left", y=0.995)
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.90))
     return fig
 
 

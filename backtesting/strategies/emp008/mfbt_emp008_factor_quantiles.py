@@ -273,6 +273,8 @@ def evaluate_factor_quantiles(
                 & signal_prices.map(np.isfinite)
                 & return_prices.map(np.isfinite)
                 & signal_prices.gt(0.0)
+                & signal_market_cap.map(np.isfinite)
+                & signal_market_cap.gt(0.0)
             )
             eligible_names = signal_values.index[base_eligibility]
             if len(eligible_names) == 0:
@@ -291,15 +293,12 @@ def evaluate_factor_quantiles(
                 quantile_counts: dict[str, int] = {}
                 for quantile, names in memberships.items():
                     quantile_counts[quantile] = len(names)
-                    quantile_weights = _quantile_weights(
-                        names,
-                        weighting=weighting,
-                        signal_market_cap=signal_market_cap,
+                    quantile_weights = _quantile_weights(names, weighting=weighting, signal_market_cap=signal_market_cap)
+                    quantile_return = (
+                        float("nan")
+                        if quantile_weights.empty
+                        else float(next_returns.loc[names].mul(quantile_weights).sum())
                     )
-                    if quantile_weights is None:
-                        quantile_return = float("nan")
-                    else:
-                        quantile_return = float(next_returns.loc[names].mul(quantile_weights).sum())
                     quantile_returns[quantile] = quantile_return
                     monthly_return_rows.append(
                         {
@@ -312,7 +311,7 @@ def evaluate_factor_quantiles(
                             "constituent_count": len(names),
                         }
                     )
-                    if quantile_weights is not None:
+                    if not quantile_weights.empty:
                         for ticker, weight in quantile_weights.items():
                             weight_rows.append(
                                 {
@@ -485,16 +484,12 @@ def _quantile_weights(
 ) -> pd.Series:
     index = pd.Index(names, dtype=object)
     if len(names) == 0:
-        return None
+        return pd.Series(dtype=float, index=index)
     if weighting is QuantileWeighting.EQUAL:
         return pd.Series(1.0 / len(names), index=index, dtype=float)
     if weighting is QuantileWeighting.MARKET_CAP:
         values = signal_market_cap.loc[names].astype(float)
-        if not values.map(np.isfinite).all() or not values.gt(0.0).all():
-            return None
         total = float(values.sum())
-        if not np.isfinite(total) or total <= 0.0:
-            return None
         return values.divide(total)
     raise ValueError(f"unsupported weighting: {weighting}")
 
@@ -824,9 +819,7 @@ def _validate_membership_parity(portfolio_weights: pd.DataFrame) -> None:
         .apply(lambda tickers: tuple(sorted(str(ticker) for ticker in tickers)))
         .sort_index()
     )
-    if not cap_membership.index.isin(equal_membership.index).all():
-        raise ValueError("market-cap membership cannot introduce buckets absent from equal weight")
-    if not equal_membership.loc[cap_membership.index].equals(cap_membership):
+    if not equal_membership.index.equals(cap_membership.index) or not equal_membership.equals(cap_membership):
         raise ValueError("equal and market-cap membership must match for each available factor/date/quantile")
 
 

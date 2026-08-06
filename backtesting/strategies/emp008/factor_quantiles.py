@@ -588,42 +588,6 @@ def _build_cumulative_returns(monthly_returns: pd.DataFrame) -> pd.DataFrame:
         observed=True,
         sort=False,
     )["return"].transform(lambda values: (1.0 + values).cumprod() - 1.0)
-    high_minus_low = cumulative[cumulative["portfolio"] == "high_minus_low"].loc[
-        :, ["signal_date", "return_date", "factor", "weighting", "return", "cumulative_return"]
-    ].rename(
-        columns={
-            "return": "high_minus_low_return",
-            "cumulative_return": "high_minus_low_cumulative_return",
-        }
-    )
-    preferred_mask = cumulative["portfolio"] == "preferred_minus_avoided"
-    preferred = cumulative.loc[preferred_mask].merge(
-        high_minus_low,
-        on=["signal_date", "return_date", "factor", "weighting"],
-        how="left",
-        validate="one_to_one",
-    )
-    same_direction = np.isclose(
-        preferred["return"].to_numpy(dtype=float),
-        preferred["high_minus_low_return"].to_numpy(dtype=float),
-        atol=1e-12,
-        rtol=0.0,
-        equal_nan=True,
-    )
-    reversed_direction = np.isclose(
-        preferred["return"].to_numpy(dtype=float),
-        preferred["high_minus_low_return"].mul(-1.0).to_numpy(dtype=float),
-        atol=1e-12,
-        rtol=0.0,
-        equal_nan=True,
-    )
-    preferred.loc[same_direction, "cumulative_return"] = preferred.loc[
-        same_direction, "high_minus_low_cumulative_return"
-    ].to_numpy(dtype=float)
-    preferred.loc[reversed_direction, "cumulative_return"] = preferred.loc[
-        reversed_direction, "high_minus_low_cumulative_return"
-    ].mul(-1.0).to_numpy(dtype=float)
-    cumulative.loc[preferred_mask, "cumulative_return"] = preferred["cumulative_return"].to_numpy(dtype=float)
     cumulative = cumulative.drop(columns="return")
     return cumulative.sort_values(
         ["factor", "weighting", "portfolio", "return_date", "signal_date"],
@@ -683,7 +647,7 @@ def _build_daily_cumulative_returns(
             )
         prior_quantile_wealth[wealth_key] = float(prior_wealth * period_nav.iloc[-1])
 
-    high_minus_low_rows: list[dict[str, object]] = []
+    spread_rows: list[dict[str, object]] = []
     prior_spread_wealth: dict[tuple[str, str, str], float] = {}
     period_coverage = (
         monthly_returns.loc[:, ["factor", "weighting", "signal_date", "return_date"]]
@@ -697,36 +661,30 @@ def _build_daily_cumulative_returns(
         if low_nav is None or high_nav is None:
             continue
         high_minus_low = high_nav.sub(low_nav)
-        wealth_key = (factor_name, str(weighting), "high_minus_low")
-        prior_wealth = prior_spread_wealth.get(wealth_key, 1.0)
-        emit_spread = high_minus_low if wealth_key not in prior_spread_wealth else high_minus_low.iloc[1:]
-        for date, spread_value in emit_spread.items():
-            high_minus_low_rows.append(
-                {
-                    "signal_date": signal_date,
-                    "date": pd.Timestamp(date),
-                    "factor": factor_name,
-                    "weighting": weighting,
-                    "portfolio": "high_minus_low",
-                    "cumulative_return": float((prior_wealth * (1.0 + spread_value)) - 1.0),
-                }
-            )
-        prior_spread_wealth[wealth_key] = float(prior_wealth * (1.0 + high_minus_low.iloc[-1]))
-
-    spread_rows = list(high_minus_low_rows)
-    for row in high_minus_low_rows:
-        direction = directions[str(row["factor"])]
-        spread_rows.append(
-            {
-                **row,
-                "portfolio": "preferred_minus_avoided",
-                "cumulative_return": (
-                    float(row["cumulative_return"])
-                    if direction is FactorDirection.HIGH
-                    else float(-float(row["cumulative_return"]))
-                ),
-            }
+        preferred_minus_avoided = (
+            high_minus_low
+            if directions[factor_name] is FactorDirection.HIGH
+            else high_minus_low.mul(-1.0)
         )
+        for portfolio_name, period_spread in (
+            ("high_minus_low", high_minus_low),
+            ("preferred_minus_avoided", preferred_minus_avoided),
+        ):
+            wealth_key = (factor_name, str(weighting), portfolio_name)
+            prior_wealth = prior_spread_wealth.get(wealth_key, 1.0)
+            emit_spread = period_spread if wealth_key not in prior_spread_wealth else period_spread.iloc[1:]
+            for date, spread_value in emit_spread.items():
+                spread_rows.append(
+                    {
+                        "signal_date": signal_date,
+                        "date": pd.Timestamp(date),
+                        "factor": factor_name,
+                        "weighting": weighting,
+                        "portfolio": portfolio_name,
+                        "cumulative_return": float((prior_wealth * (1.0 + spread_value)) - 1.0),
+                    }
+                )
+            prior_spread_wealth[wealth_key] = float(prior_wealth * (1.0 + period_spread.iloc[-1]))
 
     daily_cumulative_returns = pd.DataFrame(
         quantile_rows + spread_rows,

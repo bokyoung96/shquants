@@ -612,23 +612,27 @@ def test_evaluate_factor_quantiles_builds_low_direction_daily_spreads_with_rever
     spread = equal_daily[equal_daily["portfolio"] == "high_minus_low"].set_index("date").sort_index()
     preferred = equal_daily[equal_daily["portfolio"] == "preferred_minus_avoided"].set_index("date").sort_index()
 
-    expected_spread = pd.Series(
-        [-0.4, -0.3, 0.9, -0.525, -1.95],
-        index=pd.to_datetime(["2024-02-15", "2024-02-28", "2024-02-29", "2024-03-15", "2024-03-29"]),
-        dtype=float,
+    first_period_dates = pd.to_datetime(["2024-01-31", "2024-02-15", "2024-02-28", "2024-02-29"])
+    second_period_dates = pd.to_datetime(["2024-02-29", "2024-03-15", "2024-03-29"])
+    first_period_spread = spread.loc[first_period_dates, "cumulative_return"] - spread.loc[pd.Timestamp("2024-01-31"), "cumulative_return"]
+    first_period_preferred = preferred.loc[first_period_dates, "cumulative_return"] - preferred.loc[pd.Timestamp("2024-01-31"), "cumulative_return"]
+    second_period_spread = (
+        (1.0 + spread.loc[second_period_dates, "cumulative_return"])
+        / (1.0 + spread.loc[pd.Timestamp("2024-02-29"), "cumulative_return"])
+        - 1.0
     )
-    expected_preferred = -expected_spread
+    second_period_preferred = (
+        (1.0 + preferred.loc[second_period_dates, "cumulative_return"])
+        / (1.0 + preferred.loc[pd.Timestamp("2024-02-29"), "cumulative_return"])
+        - 1.0
+    )
+    pd.testing.assert_series_equal(first_period_preferred, -first_period_spread, check_names=False)
+    pd.testing.assert_series_equal(second_period_preferred, -second_period_spread, check_names=False)
 
-    pd.testing.assert_series_equal(
-        spread.loc[expected_spread.index, "cumulative_return"],
-        expected_spread,
-        check_names=False,
-    )
-    pd.testing.assert_series_equal(
-        preferred.loc[expected_preferred.index, "cumulative_return"],
-        expected_preferred,
-        check_names=False,
-    )
+    assert spread.loc[pd.Timestamp("2024-03-15"), "cumulative_return"] == pytest.approx(-0.525)
+    assert spread.loc[pd.Timestamp("2024-03-29"), "cumulative_return"] == pytest.approx(-1.95)
+    assert preferred.loc[pd.Timestamp("2024-03-15"), "cumulative_return"] == pytest.approx(-0.825)
+    assert preferred.loc[pd.Timestamp("2024-03-29"), "cumulative_return"] == pytest.approx(-0.75)
 
     monthly_endpoints = (
         result.daily_cumulative_returns[
@@ -647,6 +651,13 @@ def test_evaluate_factor_quantiles_builds_low_direction_daily_spreads_with_rever
         .loc[:, ["weighting", "portfolio", "return_date", "cumulative_return"]]
     )
     pd.testing.assert_frame_equal(monthly_endpoints, expected_endpoints)
+
+    monthly_low = result.cumulative_returns[
+        (result.cumulative_returns["factor"] == "daily_factor_low")
+        & (result.cumulative_returns["weighting"] == QuantileWeighting.EQUAL)
+        & (result.cumulative_returns["portfolio"] == "preferred_minus_avoided")
+    ].sort_values("return_date", kind="mergesort")
+    assert monthly_low["cumulative_return"].tolist() == pytest.approx([-0.9, -0.75])
 
 
 def test_evaluate_factor_quantiles_computes_turnover_for_buckets_and_spreads() -> None:

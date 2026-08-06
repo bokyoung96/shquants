@@ -68,6 +68,7 @@ class FactorSetDefinition:
     neutralize_large_benchmark_weight_factors: tuple[FactorId, ...] = ()
     constrain_expected_alpha_to_direction: bool = False
     snapshot_forward_days: int = 0
+    diagnostics_only: bool = False
 
 
 _FACTOR_DEFINITIONS = {
@@ -203,6 +204,7 @@ _FACTOR_SET_DEFINITIONS = {
         id=FactorSetId.ALL_FACTORS,
         factors=tuple(FactorId),
         snapshot_forward_days=7,
+        diagnostics_only=True,
     ),
 }
 
@@ -225,6 +227,14 @@ def factor_definitions_for_set(factor_set: FactorSetId | str) -> tuple[FactorDef
 
 def factor_set_values() -> tuple[str, ...]:
     return tuple(factor_set_id.value for factor_set_id in FactorSetId)
+
+
+def strategy_factor_set_values() -> tuple[str, ...]:
+    return tuple(
+        factor_set_id.value
+        for factor_set_id, definition in FACTOR_SET_DEFINITIONS.items()
+        if not definition.diagnostics_only
+    )
 
 
 def parse_factor_set(value: FactorSetId | str) -> FactorSetId:
@@ -286,4 +296,5 @@ __all__ = [
     "get_factor_definition",
     "get_factor_set_definition",
     "parse_factor_set",
+    "strategy_factor_set_values",
 ]

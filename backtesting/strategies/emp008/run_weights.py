@@ -14,7 +14,7 @@ from backtesting.catalog import DataCatalog
 from backtesting.catalog import DatasetId
 from backtesting.strategies.emp008.strategy import Emp008Result, run_emp008
 from backtesting.strategies.emp008.data import Emp008Config, required_datasets
-from backtesting.strategies.emp008.factor_registry import factor_set_values, parse_factor_set
+from backtesting.strategies.emp008.factor_registry import parse_factor_set, strategy_factor_set_values
 
 
 DEFAULT_START = "2020-01-31"
@@ -214,7 +214,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=factor_set_values(),
+        choices=strategy_factor_set_values(),
         help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
         "or 'origin_new_dividend' to replace dividend_yield_fy0 with dividend_yield_ttm.",

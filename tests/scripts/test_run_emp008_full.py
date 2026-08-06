@@ -257,7 +257,7 @@ def test_required_datasets_includes_distinct_sector_neutral_dataset() -> None:
 
 
 def test_factor_set_parser_choices_match_registry_values() -> None:
-    expected = tuple(member.value for member in FactorSetId)
+    expected = tuple(member.value for member in FactorSetId if member is not FactorSetId.ALL_FACTORS)
 
     assert tuple(weights_parser()._option_string_actions["--factor-set"].choices) == expected
     assert tuple(full_parser()._option_string_actions["--factor-set"].choices) == expected

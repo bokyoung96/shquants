@@ -543,6 +543,112 @@ def test_evaluate_factor_quantiles_builds_daily_cumulative_returns_from_fixed_sh
     assert len(boundary_rows) == len(list(QuantileWeighting)) * portfolios_per_weighting
 
 
+def test_evaluate_factor_quantiles_builds_low_direction_daily_spreads_with_reversed_preference() -> None:
+    dates = pd.to_datetime(
+        [
+            "2024-01-31",
+            "2024-02-15",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-15",
+            "2024-03-29",
+        ]
+    )
+    columns = ["A", "B"]
+    factor = _frame(
+        dates,
+        columns,
+        [
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+        ],
+    )
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 10.0],
+            [12.0, 8.0],
+            [np.nan, 9.0],
+            [11.0, 20.0],
+            [16.5, 15.0],
+            [22.0, 10.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+        ],
+    )
+    universe = _frame(dates, columns, [[True, True]] * len(dates)).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors={"daily_factor_low": factor},
+        directions={"daily_factor_low": FactorDirection.LOW},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29"])),
+        start="2024-02-29",
+        end="2024-03-29",
+        q=2,
+    )
+
+    equal_daily = result.daily_cumulative_returns[
+        (result.daily_cumulative_returns["factor"] == "daily_factor_low")
+        & (result.daily_cumulative_returns["weighting"] == QuantileWeighting.EQUAL)
+    ]
+    spread = equal_daily[equal_daily["portfolio"] == "high_minus_low"].set_index("date").sort_index()
+    preferred = equal_daily[equal_daily["portfolio"] == "preferred_minus_avoided"].set_index("date").sort_index()
+
+    expected_spread = pd.Series(
+        [-0.4, -0.3, 0.9, -0.525, -1.95],
+        index=pd.to_datetime(["2024-02-15", "2024-02-28", "2024-02-29", "2024-03-15", "2024-03-29"]),
+        dtype=float,
+    )
+    expected_preferred = -expected_spread
+
+    pd.testing.assert_series_equal(
+        spread.loc[expected_spread.index, "cumulative_return"],
+        expected_spread,
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        preferred.loc[expected_preferred.index, "cumulative_return"],
+        expected_preferred,
+        check_names=False,
+    )
+
+    monthly_endpoints = (
+        result.daily_cumulative_returns[
+            (result.daily_cumulative_returns["factor"] == "daily_factor_low")
+            & (result.daily_cumulative_returns["date"].isin(result.cumulative_returns["return_date"]))
+        ]
+        .sort_values(["weighting", "portfolio", "date"], kind="mergesort")
+        .reset_index(drop=True)
+        .loc[:, ["weighting", "portfolio", "date", "cumulative_return"]]
+        .rename(columns={"date": "return_date"})
+    )
+    expected_endpoints = (
+        result.cumulative_returns[result.cumulative_returns["factor"] == "daily_factor_low"]
+        .sort_values(["weighting", "portfolio", "return_date"], kind="mergesort")
+        .reset_index(drop=True)
+        .loc[:, ["weighting", "portfolio", "return_date", "cumulative_return"]]
+    )
+    pd.testing.assert_frame_equal(monthly_endpoints, expected_endpoints)
+
+
 def test_evaluate_factor_quantiles_computes_turnover_for_buckets_and_spreads() -> None:
     dates = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29", "2024-04-30"])
     columns = ["A", "B", "C", "D"]

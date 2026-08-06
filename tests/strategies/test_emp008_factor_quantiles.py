@@ -468,7 +468,13 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     ]:
         assert (tmp_path / name).exists()
 
-    assert {"monthly_returns_parquet", "weights_parquet", "rank_ic_parquet", "summary_json", "manifest"} <= set(payload)
+    assert {
+        "monthly_returns_parquet",
+        "portfolio_weights_parquet",
+        "rank_ic_parquet",
+        "summary_json",
+        "manifest_json",
+    } <= set(payload)
     summary_json = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
     assert isinstance(summary_json, list)
     assert summary_json

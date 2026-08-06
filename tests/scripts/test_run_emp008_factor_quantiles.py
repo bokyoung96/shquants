@@ -213,17 +213,17 @@ def test_main_real_quantile_run_writes_outputs_and_prints_json(
     for key in (
         "monthly_returns_csv",
         "monthly_returns_parquet",
-        "weights_parquet",
+        "portfolio_weights_parquet",
         "rank_ic_csv",
         "rank_ic_parquet",
         "cumulative_returns_csv",
         "summary_csv",
         "summary_json",
-        "manifest",
+        "manifest_json",
     ):
         assert Path(payload[key]).is_file()
     json.dumps(payload, ensure_ascii=False, indent=2)
 
-    manifest = json.loads(Path(payload["manifest"]).read_text(encoding="utf-8"))
+    manifest = json.loads(Path(payload["manifest_json"]).read_text(encoding="utf-8"))
     assert manifest["weighting_modes"] == ["equal_weight", "market_cap_weight"]
     assert manifest["selected_factors"] == [factor_id.value for factor_id in get_factor_set_definition("mfbt").factors]

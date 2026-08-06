@@ -410,6 +410,38 @@ def test_full_run_orders_quantiles_after_weights_and_before_backtest(
     assert events.index("backtest") < events.index("report")
 
 
+def test_full_run_skips_factor_quantiles_on_value_error_and_continues(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    prepare = Mock(return_value=prepared)
+    optimizer = Mock(return_value=make_emp008_result())
+    quantiles = Mock(side_effect=ValueError("q must be at least 2"))
+    attribution = Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")})
+
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", prepare)
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", optimizer)
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", quantiles)
+    monkeypatch.setattr(run_full, "build_emp008_factor_attribution", attribution)
+    patch_backtest_report_and_attribution(monkeypatch, tmp_path)
+
+    run_full.main(["--end", "2024-06-30", "--output-root", str(tmp_path), "--no-comparison"])
+
+    prepare.assert_called_once()
+    quantiles.assert_called_once()
+    summary_path = tmp_path / "mfbt_emp008" / "run_summary.json"
+    assert summary_path.is_file()
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["factor_quantiles"] == {
+        "status": "skipped",
+        "reason": "q must be at least 2",
+    }
+    assert "backtest" in summary
+    assert "report" in summary
+    assert attribution.call_count == 1
+
+
 @pytest.mark.parametrize(
     ("factor_set", "dividend_dataset"),
     [

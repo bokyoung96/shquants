@@ -7,14 +7,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .mfbt_emp008 import (
-    _common_month_end_dates,
-    _neutralize_large_benchmark_weight_factor_exposures,
-    _positive_benchmark_weights,
-)
-from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
-from .mfbt_emp008_factors import build_raw_mfbt_factors
-from .mfbt_emp008_preprocess import build_sector_active_exposures, combine_exposures, preprocess_factor_frame
+from .mfbt_emp008 import _positive_benchmark_weights
+from .mfbt_emp008_data import MfbtEmp008Config
+from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors, load_and_prepare_emp008_factors
+from .mfbt_emp008_preprocess import combine_exposures
 from .mfbt_emp008_risk import fit_cross_sectional_factor_returns
 
 
@@ -62,48 +58,27 @@ def build_emp008_factor_attribution(
     run_root: Path,
     output_dir: Path | None = None,
     config: MfbtEmp008Config | None = None,
+    prepared: PreparedEmp008Factors | None = None,
 ) -> dict[str, object]:
     active_weights = pd.read_parquet(run_root / "weights" / "active_weights.parquet").astype(float)
     active_weights.index = pd.to_datetime(active_weights.index)
     if active_weights.empty:
         raise ValueError("active weights are empty")
 
-    active_config = config or MfbtEmp008Config()
+    active_config = prepared.config if prepared is not None else (config or MfbtEmp008Config())
     start = active_weights.index.min().date().isoformat()
     end = active_weights.index.max().date().isoformat()
-    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=active_config)
-    raw_factors = build_raw_mfbt_factors(market, active_config)
-    alpha_factor_names = list(raw_factors)
-    monthly_dates = _common_month_end_dates(raw_factors)
-
-    close = market.frames["close"].astype(float)
-    float_mktcap = market.frames["float_market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
-    universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
-    sector = market.frames["sector_neutral_big"].reindex(index=close.index, columns=close.columns).ffill()
-    bm_weights = market.frames["bm_weights"].reindex(index=close.index, columns=close.columns).astype(float)
-
-    alpha_factors = {
-        name: preprocess_factor_frame(
-            frame,
-            float_mktcap,
-            universe,
-            rank_transform=name in active_config.rank_transform_factors,
-            winsor_quantile=active_config.value_raw_winsor_quantile if name == "value" else None,
-            zscore_cap=active_config.value_zscore_cap if name == "value" else None,
-        )
-        for name, frame in raw_factors.items()
-    }
-    alpha_factors = _neutralize_large_benchmark_weight_factor_exposures(alpha_factors, bm_weights, active_config)
-    sector_factors = build_sector_active_exposures(sector, float_mktcap, universe)
-    sector_factor_names = list(sector_factors)
+    factor_bundle = prepared or load_and_prepare_emp008_factors(parquet_dir, start, end, active_config)
+    alpha_factor_names = list(factor_bundle.raw_factors)
+    sector_factor_names = list(factor_bundle.sector_factors)
 
     result = _compute_attribution(
-        close=close,
-        bm_weights=bm_weights,
-        alpha_factors=alpha_factors,
-        sector_factors=sector_factors,
+        close=factor_bundle.close,
+        bm_weights=factor_bundle.benchmark_weights,
+        alpha_factors=factor_bundle.alpha_factors,
+        sector_factors=factor_bundle.sector_factors,
         active_weights=active_weights,
-        monthly_dates=monthly_dates,
+        monthly_dates=list(factor_bundle.monthly_dates),
         alpha_factor_names=alpha_factor_names,
         sector_factor_names=sector_factor_names,
     )

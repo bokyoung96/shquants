@@ -6,10 +6,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
-from .mfbt_emp008_factors import build_raw_mfbt_factors
+from .mfbt_emp008_data import MfbtEmp008Config
+from .mfbt_emp008_factor_pipeline import (
+    PreparedEmp008Factors,
+    common_month_end_dates,
+    complete_benchmark_history,
+    load_and_prepare_emp008_factors,
+    neutralize_large_benchmark_weight_exposures,
+)
+from .mfbt_emp008_factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
 from .mfbt_emp008_optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
-from .mfbt_emp008_preprocess import build_sector_active_exposures, combine_exposures, preprocess_factor_frame
+from .mfbt_emp008_preprocess import combine_exposures
 from .mfbt_emp008_risk import (
     compute_expected_alpha,
     factor_covariance,
@@ -70,38 +77,12 @@ def run_mfbt_emp008(
     end: str,
     config: MfbtEmp008Config | None = None,
     output_dir: Path | None = None,
+    prepared: PreparedEmp008Factors | None = None,
 ) -> MfbtEmp008Result:
-    active_config = config or MfbtEmp008Config()
-    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=active_config)
-    raw_factors = build_raw_mfbt_factors(market, active_config)
-    alpha_factor_names = list(raw_factors)
-
-    close = market.frames["close"].astype(float)
-    float_mktcap = market.frames["float_market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
-    universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
-    sector = market.frames["sector_neutral_big"].reindex(index=close.index, columns=close.columns).ffill()
-    bm_weights = market.frames["bm_weights"].reindex(index=close.index, columns=close.columns).astype(float)
-    bm_weights = _complete_benchmark_history(bm_weights, float_mktcap, universe)
-
-    monthly_dates = _common_month_end_dates(raw_factors)
-    alpha_factors = {
-        name: preprocess_factor_frame(
-            frame,
-            float_mktcap,
-            universe,
-            rank_transform=name in active_config.rank_transform_factors,
-            winsor_quantile=active_config.value_raw_winsor_quantile if name == "value" else None,
-            zscore_cap=active_config.value_zscore_cap if name == "value" else None,
-        )
-        for name, frame in raw_factors.items()
-    }
-    alpha_factors = _neutralize_large_benchmark_weight_factor_exposures(
-        alpha_factors,
-        bm_weights,
-        active_config,
-    )
-    sector_factors = build_sector_active_exposures(sector, float_mktcap, universe)
-    sector_factor_names = list(sector_factors)
+    active_config = prepared.config if prepared is not None else (config or MfbtEmp008Config())
+    factor_bundle = prepared or load_and_prepare_emp008_factors(parquet_dir, start, end, active_config)
+    alpha_factor_names = list(factor_bundle.raw_factors)
+    sector_factor_names = list(factor_bundle.sector_factors)
 
     factor_return_rows: list[pd.Series] = []
     residual_rows: list[pd.Series] = []
@@ -112,18 +93,18 @@ def run_mfbt_emp008(
     active_rows: list[pd.Series] = []
     diagnostics: list[dict[str, object]] = []
 
-    for idx in range(1, len(monthly_dates)):
-        factor_date = monthly_dates[idx - 1]
-        return_date = monthly_dates[idx]
+    for idx in range(1, len(factor_bundle.monthly_dates)):
+        factor_date = factor_bundle.monthly_dates[idx - 1]
+        return_date = factor_bundle.monthly_dates[idx]
         if return_date > pd.Timestamp(end):
             break
         should_output = return_date >= pd.Timestamp(start)
         try:
             optimization = _optimize_month(
-                close=close,
-                bm_weights=bm_weights,
-                alpha_factors=alpha_factors,
-                sector_factors=sector_factors,
+                close=factor_bundle.close,
+                bm_weights=factor_bundle.benchmark_weights,
+                alpha_factors=factor_bundle.alpha_factors,
+                sector_factors=factor_bundle.sector_factors,
                 factor_date=factor_date,
                 return_date=return_date,
                 factor_return_rows=factor_return_rows,
@@ -243,11 +224,7 @@ def _optimize_month(
     raise ValueError(f"unsupported risk_model: {config.risk_model}")
 
 
-def _common_month_end_dates(factors: dict[str, pd.DataFrame]) -> list[pd.Timestamp]:
-    non_empty = [set(frame.dropna(how="all").index) for frame in factors.values()]
-    if not non_empty:
-        return []
-    return sorted(set.intersection(*non_empty))
+_common_month_end_dates = common_month_end_dates
 
 
 def _validated_optimization(target_date: pd.Timestamp, result: OptimizationResult) -> OptimizationResult:
@@ -261,31 +238,19 @@ def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: MfbtEmp00
 
 
 def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: MfbtEmp008Config) -> pd.Series:
-    if config.expected_alpha_policy == "mean":
+    factor_set_definition = get_factor_set_definition(config.factor_set)
+    if not factor_set_definition.constrain_expected_alpha_to_direction:
         return expected_alpha
-    if config.expected_alpha_policy == "origin_small_cap":
-        adjusted = expected_alpha.copy()
-        for factor in (
-            "price_momentum",
-            "earnings_momentum",
-            "dividend_yield",
-            "retail_flow",
-            "value",
-        ):
-            if factor in adjusted and adjusted.loc[factor] < 0.0:
-                adjusted.loc[factor] = 0.0
-        if "ln_market_cap" in adjusted and adjusted.loc["ln_market_cap"] > 0.0:
-            adjusted.loc["ln_market_cap"] = 0.0
-        return adjusted
-    if config.expected_alpha_policy != "origin_sign":
-        raise ValueError(f"unsupported expected_alpha_policy: {config.expected_alpha_policy}")
 
     adjusted = expected_alpha.copy()
-    for factor in ("DY", "dividend_yield", "Momentum_12M"):
-        if factor in adjusted and adjusted.loc[factor] < 0.0:
-            adjusted.loc[factor] = 0.0
-    if "LnMktcap" in adjusted and adjusted.loc["LnMktcap"] > 0.0:
-        adjusted.loc["LnMktcap"] = 0.0
+    for definition in factor_definitions_for_set(config.factor_set):
+        factor_name = definition.id.value
+        if factor_name not in adjusted:
+            continue
+        if definition.direction is FactorDirection.HIGH and adjusted.loc[factor_name] < 0.0:
+            adjusted.loc[factor_name] = 0.0
+        if definition.direction is FactorDirection.LOW and adjusted.loc[factor_name] > 0.0:
+            adjusted.loc[factor_name] = 0.0
     return adjusted
 
 
@@ -298,22 +263,7 @@ def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:
     return positive.div(total)
 
 
-def _complete_benchmark_history(
-    bm_weights: pd.DataFrame,
-    float_mktcap: pd.DataFrame,
-    universe: pd.DataFrame,
-) -> pd.DataFrame:
-    completed = bm_weights.reindex(index=float_mktcap.index, columns=float_mktcap.columns).astype(float).copy()
-    official_rows = completed.fillna(0.0).sum(axis=1).gt(0.0)
-    if not official_rows.any():
-        return completed
-
-    first_official_date = official_rows.index[official_rows][0]
-    warmup_rows = completed.index < first_official_date
-    proxy_values = float_mktcap.astype(float).where(universe).clip(lower=0.0)
-    proxy_weights = proxy_values.div(proxy_values.sum(axis=1).replace(0.0, float("nan")), axis=0).fillna(0.0)
-    completed.loc[warmup_rows] = proxy_weights.loc[warmup_rows]
-    return completed
+_complete_benchmark_history = complete_benchmark_history
 
 
 def _neutralize_large_benchmark_weight_factor_exposures(
@@ -321,18 +271,12 @@ def _neutralize_large_benchmark_weight_factor_exposures(
     bm_weights: pd.DataFrame,
     config: MfbtEmp008Config,
 ) -> dict[str, pd.DataFrame]:
-    threshold = config.large_bm_neutral_weight_threshold
-    if threshold <= 0.0 or not config.large_bm_neutral_factor_names:
-        return alpha_factors
-
-    neutralized = dict(alpha_factors)
-    for name in config.large_bm_neutral_factor_names:
-        if name not in neutralized:
-            continue
-        frame = neutralized[name]
-        large_bm = bm_weights.reindex(index=frame.index, columns=frame.columns).fillna(0.0).ge(threshold)
-        neutralized[name] = frame.mask(large_bm, 0.0)
-    return neutralized
+    return neutralize_large_benchmark_weight_exposures(
+        alpha_factors,
+        bm_weights,
+        factor_definitions_for_set(config.factor_set),
+        threshold=config.large_bm_neutral_weight_threshold,
+    )
 
 
 def _residual_variance_for_target_universe(residual_var: pd.Series, target_tickers: pd.Index) -> pd.Series:

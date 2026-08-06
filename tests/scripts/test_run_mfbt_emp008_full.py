@@ -709,6 +709,19 @@ def test_mfbt_origin_small_cap_policy_keeps_negative_size_alpha() -> None:
     assert result.equals(expected_alpha)
 
 
+def test_expected_alpha_policy_ignores_unknown_and_sector_names() -> None:
+    expected_alpha = pd.Series({"mystery_factor": -0.5, "sector_tech": 0.1, "value": -0.02})
+
+    result = _apply_expected_alpha_policy(
+        expected_alpha,
+        MfbtEmp008Config(factor_set="mfbt_origin_smallcap"),
+    )
+
+    assert result["mystery_factor"] == pytest.approx(-0.5)
+    assert result["sector_tech"] == pytest.approx(0.1)
+    assert result["value"] == 0.0
+
+
 def test_direct_covariance_optimizer_uses_stock_covariance_risk_budget() -> None:
     exposures = pd.DataFrame(
         {

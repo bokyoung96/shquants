@@ -10,12 +10,12 @@ import pandas as pd
 
 from backtesting.strategies.emp008.mfbt_emp008 import (
     _apply_expected_alpha_policy,
-    _common_month_end_dates,
     _neutralize_large_benchmark_weight_factor_exposures,
     _positive_benchmark_weights,
     run_mfbt_emp008,
 )
 from backtesting.strategies.emp008.mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
+from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
 from backtesting.strategies.emp008.mfbt_emp008_factors import build_raw_mfbt_factors
 from backtesting.strategies.emp008.mfbt_emp008_preprocess import (
     build_sector_active_exposures,
@@ -24,6 +24,14 @@ from backtesting.strategies.emp008.mfbt_emp008_preprocess import (
 )
 from backtesting.strategies.emp008.mfbt_emp008_risk import compute_expected_alpha, fit_cross_sectional_factor_returns
 from backtesting.strategies.emp008.run_weights import build_emp008_config
+
+_LEGACY_RAW_PREPARE_COMPAT = (
+    load_mfbt_emp008_market,
+    build_raw_mfbt_factors,
+    preprocess_factor_frame,
+    build_sector_active_exposures,
+    _neutralize_large_benchmark_weight_factor_exposures,
+)
 
 
 DEFAULT_TICKERS = ("A005930", "A000660")
@@ -166,46 +174,28 @@ def factor_contribution_panel(
         tracking_error_annual=tracking_error_annual,
         risk_model=risk_model,
     )
-    market = load_mfbt_emp008_market(parquet_dir=parquet_dir, start=start, end=end, config=config)
-    raw_factors = build_raw_mfbt_factors(market, config)
-    alpha_factor_names = tuple(raw_factors)
-
-    close = market.frames["close"].astype(float)
-    float_mktcap = market.frames["float_market_cap"].reindex(index=close.index, columns=close.columns).astype(float)
-    universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
-    sector = market.frames["sector_neutral_big"].reindex(index=close.index, columns=close.columns).ffill()
-    bm_weights = market.frames["bm_weights"].reindex(index=close.index, columns=close.columns).astype(float)
-
-    alpha_factors = {
-        name: preprocess_factor_frame(
-            frame,
-            float_mktcap,
-            universe,
-            rank_transform=name in config.rank_transform_factors,
-            winsor_quantile=config.value_raw_winsor_quantile if name == "value" else None,
-            zscore_cap=config.value_zscore_cap if name == "value" else None,
-        )
-        for name, frame in raw_factors.items()
-    }
-    alpha_factors = _neutralize_large_benchmark_weight_factor_exposures(alpha_factors, bm_weights, config)
-    sector_factors = build_sector_active_exposures(sector, float_mktcap, universe)
-    sector_factor_names = list(sector_factors)
+    factor_bundle = load_and_prepare_emp008_factors(parquet_dir, start, end, config)
+    alpha_factor_names = tuple(factor_bundle.raw_factors)
+    sector_factor_names = list(factor_bundle.sector_factors)
 
     factor_return_rows: list[pd.Series] = []
     factor_return_dates: list[pd.Timestamp] = []
     contribution_rows: list[pd.Series] = []
-    monthly_dates = _common_month_end_dates(raw_factors)
     requested_start = pd.Timestamp(start)
     requested_end = pd.Timestamp(end)
 
-    for factor_date, return_date in zip(monthly_dates[:-1], monthly_dates[1:], strict=True):
+    for factor_date, return_date in zip(factor_bundle.monthly_dates[:-1], factor_bundle.monthly_dates[1:], strict=True):
         if return_date > requested_end:
             break
         try:
-            regression_exposures = combine_exposures(alpha_factors, sector_factors, factor_date)
-            stock_returns = close.loc[return_date].divide(close.loc[factor_date]).sub(1.0)
+            regression_exposures = combine_exposures(
+                factor_bundle.alpha_factors,
+                factor_bundle.sector_factors,
+                factor_date,
+            )
+            stock_returns = factor_bundle.close.loc[return_date].divide(factor_bundle.close.loc[factor_date]).sub(1.0)
             bm = _positive_benchmark_weights(
-                bm_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0]
+                factor_bundle.benchmark_weights.reindex(index=[return_date], columns=stock_returns.index).iloc[0]
             )
         except (KeyError, ValueError):
             continue
@@ -226,7 +216,11 @@ def factor_contribution_panel(
             window=config.risk_window,
         )
         expected_alpha = _apply_expected_alpha_policy(expected_alpha, config)
-        target_exposures = combine_exposures(alpha_factors, sector_factors, return_date).loc[:, list(alpha_factor_names)]
+        target_exposures = combine_exposures(
+            factor_bundle.alpha_factors,
+            factor_bundle.sector_factors,
+            return_date,
+        ).loc[:, list(alpha_factor_names)]
         stock_contributions = target_exposures.mul(expected_alpha.reindex(alpha_factor_names), axis=1)
         for ticker in tickers:
             row = stock_contributions.loc[ticker].rename((return_date, ticker))

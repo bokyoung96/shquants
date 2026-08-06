@@ -498,9 +498,9 @@ Default EMP008 run outputs are grouped under `results/emp008_runs/<name>/`.
 | `comparison/active_weight_sum.*` | Monthly `sum(abs(active weight))` data and chart |
 | `comparison_summary.json` | Comparison-stage summary |
 | `factor_quantiles/monthly_returns.csv` and `.parquet` | Long-form monthly return observations by signal date, return date, factor, weighting, and portfolio |
-| `factor_quantiles/portfolio_weights.parquet` | Long-form bucket holdings with signal date, factor, weighting, quantile, ticker, weight, and signal-date market cap |
+| `factor_quantiles/portfolio_weights.parquet` | Long-form bucket holdings with signal date, return date, factor, weighting, quantile, ticker, and weight |
 | `factor_quantiles/rank_ic.csv` and `.parquet` | Monthly raw and directional rank IC by factor and signal date |
-| `factor_quantiles/cumulative_returns.csv` and `.parquet` | Cumulative return path by factor, weighting, portfolio, and return date |
+| `factor_quantiles/cumulative_returns.csv` | Cumulative return path by signal date, return date, factor, weighting, and portfolio |
 | `factor_quantiles/summary.csv` and `.json` | Portfolio-level annualized return, volatility, Sharpe, drawdown, turnover, IC, and monotonicity metrics |
 | `factor_quantiles/manifest.json` | Registry-derived factor order, direction metadata, weighting modes, timing contract, and row counts |
 | `factor_attribution/factor_attribution.xlsx` | Monthly factor contribution, exposure, return, and reconciliation data |
@@ -520,12 +520,12 @@ reconstructing hidden pivots:
 
 - `monthly_returns`: `signal_date`, `return_date`, `factor`, `weighting`,
   `portfolio`, `return`, `constituent_count`
-- `portfolio_weights`: `signal_date`, `factor`, `weighting`, `quantile`,
-  `ticker`, `weight`, `market_cap`
+- `portfolio_weights`: `signal_date`, `return_date`, `factor`, `weighting`,
+  `quantile`, `ticker`, `weight`
 - `rank_ic`: `signal_date`, `return_date`, `factor`, `rank_ic`,
-  `directional_rank_ic`, `coverage`
-- `cumulative_returns`: `return_date`, `factor`, `weighting`, `portfolio`,
-  `cumulative_return`
+  `directional_rank_ic`, `n_obs`
+- `cumulative_returns`: `signal_date`, `return_date`, `factor`, `weighting`,
+  `portfolio`, `cumulative_return`
 - `summary`: `factor`, `weighting`, `portfolio`, plus annualization, drawdown,
   turnover, IC, and monotonicity fields
 

@@ -338,6 +338,78 @@ def test_full_run_can_skip_factor_quantiles(
     assert "factor_quantiles" not in summary
 
 
+def test_full_run_orders_quantiles_after_weights_and_before_backtest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    events: list[str] = []
+
+    def fake_prepare(**_: object) -> PreparedEmp008Factors:
+        events.append("prepare")
+        return prepared
+
+    def fake_optimize(**kwargs: object) -> MfbtEmp008Result:
+        assert kwargs["prepared"] is prepared
+        events.append("optimizer")
+        return make_emp008_result()
+
+    class _RecordingQuantileResult:
+        def write_outputs(self, *_: object, **__: object) -> dict[str, object]:
+            events.append("quantiles_write")
+            return {"summary_csv": str(tmp_path / "factor_quantiles" / "summary.csv")}
+
+    def fake_quantiles(**kwargs: object) -> _RecordingQuantileResult:
+        assert kwargs["prepared"] is prepared
+        events.append("quantiles")
+        return _RecordingQuantileResult()
+
+    report = SimpleNamespace(output_dir=tmp_path / "backtests" / "fake_run")
+
+    class _RecordingRunner:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def resolve_spec(self, spec: object) -> object:
+            return spec
+
+        def run_spec(self, spec: object) -> object:
+            del spec
+            events.append("backtest")
+            return report
+
+    class _RecordingReportCli:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def run(self, _: list[str]) -> dict[str, object]:
+            events.append("report")
+            return {"report_html": str(tmp_path / "reports" / "mfbt_emp008" / "report.html")}
+
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", fake_prepare)
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", fake_optimize)
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", fake_quantiles)
+    monkeypatch.setattr(run_full, "BacktestRunner", _RecordingRunner)
+    monkeypatch.setattr(run_full, "ReportCli", _RecordingReportCli)
+    monkeypatch.setattr(run_full, "backtest_summary", Mock(return_value={"output_dir": str(report.output_dir)}))
+    monkeypatch.setattr(
+        run_full,
+        "active_share_payload",
+        Mock(return_value={"active_share_csv": str(tmp_path / "weights" / "active_share.csv")}),
+    )
+    monkeypatch.setattr(
+        run_full,
+        "build_emp008_factor_attribution",
+        Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")}),
+    )
+
+    run_full.main(["--end", "2024-06-30", "--output-root", str(tmp_path), "--no-comparison"])
+
+    assert events[:5] == ["prepare", "optimizer", "quantiles", "quantiles_write", "backtest"]
+    assert events.index("quantiles_write") < events.index("backtest")
+    assert events.index("backtest") < events.index("report")
+
+
 @pytest.mark.parametrize(
     ("factor_set", "dividend_dataset"),
     [

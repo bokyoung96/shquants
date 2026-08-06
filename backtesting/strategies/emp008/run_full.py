@@ -103,6 +103,21 @@ def main(argv: list[str] | None = None) -> None:
             logger.info("weights_summary=%s", json.dumps(summary["weights"], ensure_ascii=False))
             logger.info("active_share=%s", json.dumps(summary["active_share"], ensure_ascii=False))
 
+        if not args.no_factor_quantiles:
+            with timed(logger, "factor_quantiles"):
+                quantile_result = run_emp008_factor_quantiles(
+                    prepared=prepared,
+                    start=args.start,
+                    end=end,
+                    q=args.factor_quantiles,
+                )
+                summary["factor_quantiles"] = quantile_result.write_outputs(
+                    run_root / "factor_quantiles",
+                    factor_set=config.factor_set,
+                    q=args.factor_quantiles,
+                )
+                logger.info("factor_quantiles=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
+
         with timed(logger, "backtest"):
             dates = tuple(pd.to_datetime(emp008_result.target_weights.index).strftime("%Y-%m-%d"))
             spec = build_target_weight_spec(
@@ -150,21 +165,6 @@ def main(argv: list[str] | None = None) -> None:
             )
             summary["report"] = report_payload
             logger.info("report_payload=%s", json.dumps(report_payload, ensure_ascii=False))
-
-        if not args.no_factor_quantiles:
-            with timed(logger, "factor_quantiles"):
-                quantile_result = run_emp008_factor_quantiles(
-                    prepared=prepared,
-                    start=args.start,
-                    end=end,
-                    q=args.factor_quantiles,
-                )
-                summary["factor_quantiles"] = quantile_result.write_outputs(
-                    run_root / "factor_quantiles",
-                    factor_set=config.factor_set,
-                    q=args.factor_quantiles,
-                )
-                logger.info("factor_quantiles=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
 
         if not args.no_comparison:
             with timed(logger, "costed_backtest"):

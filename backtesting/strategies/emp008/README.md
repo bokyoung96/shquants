@@ -462,6 +462,17 @@ Run the standalone factor quantile diagnostics:
 python -m backtesting.strategies.emp008.run_factor_quantiles --factor-set mfbt --start 2020-01-31 --end 2026-06-30
 ```
 
+Run all registered single-factor diagnostics with 5-quantile subplot outputs:
+
+```powershell
+python -m backtesting.strategies.emp008.run_factor_quantiles `
+  --factor-set all_factors `
+  --quantiles 5 `
+  --start 2020-01-31 `
+  --end 2026-06-30 `
+  --output-dir results\emp008_factor_quantiles\all_factors
+```
+
 Run the full pipeline with explicit quantile bucket count:
 
 ```powershell
@@ -514,6 +525,8 @@ Default EMP008 run outputs are grouped under `results/emp008_runs/<name>/`.
 | `factor_quantiles/portfolio_weights.parquet` | Long-form bucket holdings with signal date, return date, factor, weighting, quantile, ticker, and weight |
 | `factor_quantiles/rank_ic.csv` and `.parquet` | Monthly raw and directional rank IC by factor and signal date |
 | `factor_quantiles/cumulative_returns.csv` | Cumulative return path by signal date, return date, factor, weighting, and portfolio |
+| `factor_quantiles/cumulative_quintiles_equal_weight.png` | Equal-weight cumulative quintile subplots for each factor with preferred-minus-avoided spread |
+| `factor_quantiles/cumulative_quintiles_market_cap_weight.png` | Market-cap-weight cumulative quintile subplots for each factor with preferred-minus-avoided spread |
 | `factor_quantiles/summary.csv` and `.json` | Portfolio-level annualized return, volatility, Sharpe, drawdown, turnover, IC, and monotonicity metrics |
 | `factor_quantiles/manifest.json` | Registry-derived factor order, direction metadata, weighting modes, timing contract, and row counts |
 | `factor_attribution/factor_attribution.xlsx` | Monthly factor contribution, exposure, return, and reconciliation data |

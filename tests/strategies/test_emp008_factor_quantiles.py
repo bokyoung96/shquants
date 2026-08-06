@@ -13,6 +13,7 @@ from backtesting.strategies.emp008.factor_quantiles import (
     Emp008FactorQuantilesUnavailableError,
     Emp008FactorQuantileResult,
     QuantileWeighting,
+    _build_cumulative_quintile_figure,
     evaluate_factor_quantiles,
     run_emp008_factor_quantiles,
     summarize_monthly_returns,
@@ -497,6 +498,8 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
         "rank_ic.csv",
         "rank_ic.parquet",
         "cumulative_returns.csv",
+        "cumulative_quintiles_equal_weight.png",
+        "cumulative_quintiles_market_cap_weight.png",
         "summary.csv",
         "summary.json",
         "manifest.json",
@@ -507,9 +510,13 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
         "monthly_returns_parquet",
         "portfolio_weights_parquet",
         "rank_ic_parquet",
+        "cumulative_quintiles_equal_weight_png",
+        "cumulative_quintiles_market_cap_weight_png",
         "summary_json",
         "manifest_json",
     } <= set(payload)
+    assert (tmp_path / "cumulative_quintiles_equal_weight.png").stat().st_size > 0
+    assert (tmp_path / "cumulative_quintiles_market_cap_weight.png").stat().st_size > 0
     summary_json = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
     assert isinstance(summary_json, list)
     assert summary_json
@@ -527,6 +534,8 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     assert manifest["selected_factors"] == ["price_to_252d_high", "earnings_momentum", "dividend_yield_ttm", "retail_flow", "value", "ln_market_cap"]
     assert manifest["directions"]["ln_market_cap"] == "low"
     assert manifest["artifacts"]["summary.json"]["rows"] == len(result.summary)
+    assert manifest["artifacts"]["cumulative_quintiles_equal_weight.png"]["rows"] == 2
+    assert manifest["artifacts"]["cumulative_quintiles_market_cap_weight.png"]["rows"] == 2
 
     invalid_dir = tmp_path / "invalid"
     invalid_monthly = result.monthly_returns.copy()
@@ -544,6 +553,50 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     with pytest.raises(ValueError, match="finite"):
         invalid.write_outputs(invalid_dir, factor_set="mfbt", q=2)
     assert not invalid_dir.exists() or list(invalid_dir.iterdir()) == []
+
+
+def test_build_cumulative_quintile_figure_creates_one_subplot_per_factor() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+    result = evaluate_factor_quantiles(
+        factors={
+            "price_to_252d_high": factors["high_factor"],
+            "ln_market_cap": factors["low_factor"],
+            "momentum_12_1m": factors["sparse_factor"],
+        },
+        directions={
+            "price_to_252d_high": FactorDirection.HIGH,
+            "ln_market_cap": FactorDirection.LOW,
+            "momentum_12_1m": FactorDirection.HIGH,
+        },
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:4],
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+
+    figure = _build_cumulative_quintile_figure(
+        cumulative_returns=result.cumulative_returns,
+        directions={
+            "price_to_252d_high": FactorDirection.HIGH,
+            "ln_market_cap": FactorDirection.LOW,
+            "momentum_12_1m": FactorDirection.HIGH,
+        },
+        weighting=QuantileWeighting.EQUAL,
+        q=2,
+    )
+    try:
+        assert len(figure.axes) == 4
+        titled_axes = [axis for axis in figure.axes if axis.get_title()]
+        assert [axis.get_title() for axis in titled_axes] == [
+            "price_to_252d_high",
+            "ln_market_cap",
+            "momentum_12_1m",
+        ]
+    finally:
+        figure.clf()
 
 
 def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path) -> None:

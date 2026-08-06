@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Mapping, Sequence
 
+import matplotlib
+matplotlib.use("Agg")
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from pandas.testing import assert_frame_equal
 
 from .factor_pipeline import PreparedEmp008Factors
@@ -55,6 +59,8 @@ class Emp008FactorQuantileResult:
             rank_ic_csv = staging_dir / "rank_ic.csv"
             rank_ic_parquet = staging_dir / "rank_ic.parquet"
             cumulative_returns_csv = staging_dir / "cumulative_returns.csv"
+            cumulative_quintiles_equal_weight_png = staging_dir / "cumulative_quintiles_equal_weight.png"
+            cumulative_quintiles_market_cap_weight_png = staging_dir / "cumulative_quintiles_market_cap_weight.png"
             summary_csv = staging_dir / "summary.csv"
             summary_json = staging_dir / "summary.json"
             manifest_json = staging_dir / "manifest.json"
@@ -65,6 +71,24 @@ class Emp008FactorQuantileResult:
             self.rank_ic.to_csv(rank_ic_csv, index=False)
             self.rank_ic.to_parquet(rank_ic_parquet, engine="pyarrow", index=False)
             self.cumulative_returns.to_csv(cumulative_returns_csv, index=False)
+            directions = {
+                definition.id.value: definition.direction
+                for definition in factor_definitions_for_set(factor_set)
+            }
+            _write_cumulative_quintile_plot(
+                path=cumulative_quintiles_equal_weight_png,
+                cumulative_returns=self.cumulative_returns,
+                directions=directions,
+                weighting=QuantileWeighting.EQUAL,
+                q=q,
+            )
+            _write_cumulative_quintile_plot(
+                path=cumulative_quintiles_market_cap_weight_png,
+                cumulative_returns=self.cumulative_returns,
+                directions=directions,
+                weighting=QuantileWeighting.MARKET_CAP,
+                q=q,
+            )
             self.summary.to_csv(summary_csv, index=False)
             summary_json.write_text(
                 json.dumps(_json_safe_records(self.summary), ensure_ascii=False, indent=2),
@@ -79,6 +103,8 @@ class Emp008FactorQuantileResult:
                 rank_ic_csv,
                 rank_ic_parquet,
                 cumulative_returns_csv,
+                cumulative_quintiles_equal_weight_png,
+                cumulative_quintiles_market_cap_weight_png,
                 summary_csv,
                 summary_json,
                 manifest_json,
@@ -92,6 +118,8 @@ class Emp008FactorQuantileResult:
             "rank_ic_csv": str(destination / "rank_ic.csv"),
             "rank_ic_parquet": str(destination / "rank_ic.parquet"),
             "cumulative_returns_csv": str(destination / "cumulative_returns.csv"),
+            "cumulative_quintiles_equal_weight_png": str(destination / "cumulative_quintiles_equal_weight.png"),
+            "cumulative_quintiles_market_cap_weight_png": str(destination / "cumulative_quintiles_market_cap_weight.png"),
             "summary_csv": str(destination / "summary.csv"),
             "summary_json": str(destination / "summary.json"),
             "manifest_json": str(destination / "manifest.json"),
@@ -163,6 +191,8 @@ _ARTIFACT_FILENAMES = (
     "rank_ic.csv",
     "rank_ic.parquet",
     "cumulative_returns.csv",
+    "cumulative_quintiles_equal_weight.png",
+    "cumulative_quintiles_market_cap_weight.png",
     "summary.csv",
     "summary.json",
     "manifest.json",
@@ -934,6 +964,11 @@ def _build_manifest(
     output_dir: Path,
 ) -> dict[str, object]:
     definitions = factor_definitions_for_set(factor_set)
+    plotted_factor_count = int(
+        result.cumulative_returns.loc[:, "factor"].drop_duplicates().shape[0]
+        if not result.cumulative_returns.empty
+        else 0
+    )
     artifacts = {
         "monthly_returns.csv": {"path": str(output_dir / "monthly_returns.csv"), "rows": int(len(result.monthly_returns))},
         "monthly_returns.parquet": {"path": str(output_dir / "monthly_returns.parquet"), "rows": int(len(result.monthly_returns))},
@@ -941,6 +976,14 @@ def _build_manifest(
         "rank_ic.csv": {"path": str(output_dir / "rank_ic.csv"), "rows": int(len(result.rank_ic))},
         "rank_ic.parquet": {"path": str(output_dir / "rank_ic.parquet"), "rows": int(len(result.rank_ic))},
         "cumulative_returns.csv": {"path": str(output_dir / "cumulative_returns.csv"), "rows": int(len(result.cumulative_returns))},
+        "cumulative_quintiles_equal_weight.png": {
+            "path": str(output_dir / "cumulative_quintiles_equal_weight.png"),
+            "rows": plotted_factor_count,
+        },
+        "cumulative_quintiles_market_cap_weight.png": {
+            "path": str(output_dir / "cumulative_quintiles_market_cap_weight.png"),
+            "rows": plotted_factor_count,
+        },
         "summary.csv": {"path": str(output_dir / "summary.csv"), "rows": int(len(result.summary))},
         "summary.json": {"path": str(output_dir / "summary.json"), "rows": int(len(result.summary))},
         "manifest.json": {"path": str(output_dir / "manifest.json"), "rows": 1},
@@ -1014,6 +1057,97 @@ def _json_safe_value(value: object) -> object:
     if isinstance(value, np.bool_):
         return bool(value)
     return value
+
+
+def _write_cumulative_quintile_plot(
+    *,
+    path: Path,
+    cumulative_returns: pd.DataFrame,
+    directions: Mapping[str, FactorDirection],
+    weighting: QuantileWeighting,
+    q: int,
+) -> None:
+    figure = _build_cumulative_quintile_figure(
+        cumulative_returns=cumulative_returns,
+        directions=directions,
+        weighting=weighting,
+        q=q,
+    )
+    try:
+        figure.savefig(path, dpi=180, bbox_inches="tight")
+    finally:
+        plt.close(figure)
+
+
+def _build_cumulative_quintile_figure(
+    *,
+    cumulative_returns: pd.DataFrame,
+    directions: Mapping[str, FactorDirection],
+    weighting: QuantileWeighting,
+    q: int,
+):
+    filtered = cumulative_returns[cumulative_returns["weighting"] == weighting].copy()
+    if filtered.empty:
+        raise ValueError(f"no cumulative returns available for weighting '{weighting.value}'")
+
+    filtered["return_date"] = pd.to_datetime(filtered["return_date"])
+    available_factors = set(filtered["factor"].astype(str))
+    factor_names = [factor_name for factor_name in directions if factor_name in available_factors]
+    if not factor_names:
+        raise ValueError(f"no cumulative returns available for requested factors under '{weighting.value}'")
+
+    ncols = 2 if len(factor_names) <= 4 else 3
+    nrows = math.ceil(len(factor_names) / ncols)
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(7.0 * ncols, 3.8 * nrows),
+        sharex=False,
+        sharey=False,
+    )
+    axes_array = np.atleast_1d(axes).ravel()
+    quantile_portfolios = [f"Q{bucket}" for bucket in range(1, q + 1)]
+    palette = plt.get_cmap("tab10")
+
+    for index, factor_name in enumerate(factor_names):
+        axis = axes_array[index]
+        factor_rows = filtered[filtered["factor"] == factor_name]
+        for color_index, portfolio in enumerate(quantile_portfolios):
+            portfolio_rows = factor_rows[factor_rows["portfolio"] == portfolio].sort_values("return_date")
+            if portfolio_rows.empty:
+                continue
+            axis.plot(
+                portfolio_rows["return_date"],
+                portfolio_rows["cumulative_return"] * 100.0,
+                color=palette(color_index % 10),
+                linewidth=1.8,
+                label=portfolio,
+            )
+        spread_rows = factor_rows[factor_rows["portfolio"] == "preferred_minus_avoided"].sort_values("return_date")
+        if not spread_rows.empty:
+            axis.plot(
+                spread_rows["return_date"],
+                spread_rows["cumulative_return"] * 100.0,
+                color="black",
+                linewidth=2.2,
+                linestyle="--",
+                label="preferred_minus_avoided",
+            )
+        axis.axhline(0.0, color="#9aa0a6", linewidth=0.8)
+        axis.grid(True, alpha=0.25, linewidth=0.6)
+        axis.set_title(factor_name)
+        axis.set_ylabel("Cumulative return (%)")
+        axis.tick_params(axis="x", rotation=30)
+
+    for axis in axes_array[len(factor_names) :]:
+        axis.set_visible(False)
+
+    handles, labels = axes_array[0].get_legend_handles_labels()
+    if handles:
+        fig.legend(handles, labels, loc="upper center", ncol=min(len(labels), 6), frameon=False)
+    fig.suptitle(f"Cumulative quintiles: {weighting.value}", y=0.995)
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
+    return fig
 
 
 def _empty_cumulative_returns_frame() -> pd.DataFrame:

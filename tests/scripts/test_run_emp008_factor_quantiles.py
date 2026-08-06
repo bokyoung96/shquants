@@ -125,9 +125,9 @@ def test_parser_exposes_registry_factor_sets_and_quantile_count() -> None:
     factor_action = next(action for action in parser._actions if action.dest == "factor_set")
     assert tuple(factor_action.choices) == tuple(member.value for member in FactorSetId)
 
-    args = parser.parse_args(["--factor-set", "origin", "--quantiles", "4"])
+    args = parser.parse_args(["--factor-set", "all_factors", "--quantiles", "4"])
 
-    assert args.factor_set == "origin"
+    assert args.factor_set == "all_factors"
     assert args.quantiles == 4
 
 
@@ -217,6 +217,8 @@ def test_main_real_quantile_run_writes_outputs_and_prints_json(
         "rank_ic_csv",
         "rank_ic_parquet",
         "cumulative_returns_csv",
+        "cumulative_quintiles_equal_weight_png",
+        "cumulative_quintiles_market_cap_weight_png",
         "summary_csv",
         "summary_json",
         "manifest_json",

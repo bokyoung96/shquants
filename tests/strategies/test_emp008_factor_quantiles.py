@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -11,6 +13,7 @@ from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import (
     QuantileWeighting,
     evaluate_factor_quantiles,
     run_emp008_factor_quantiles,
+    summarize_monthly_returns,
 )
 from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
     FactorDirection,
@@ -189,6 +192,22 @@ def _sample_prepared() -> PreparedEmp008Factors:
     )
 
 
+def _summary_row(
+    summary: pd.DataFrame,
+    *,
+    factor: str,
+    weighting: QuantileWeighting,
+    portfolio: str,
+) -> pd.Series:
+    rows = summary[
+        (summary["factor"] == factor)
+        & (summary["weighting"] == weighting)
+        & (summary["portfolio"] == portfolio)
+    ]
+    assert len(rows) == 1
+    return rows.iloc[0]
+
+
 def test_evaluate_factor_quantiles_reuses_membership_for_both_weightings() -> None:
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
 
@@ -258,6 +277,231 @@ def test_evaluate_factor_quantiles_reuses_membership_for_both_weightings() -> No
     assert equal_rows.loc["high_minus_low", "return"] == pytest.approx(0.45)
     assert equal_rows.loc["preferred_minus_avoided", "return"] == pytest.approx(0.45)
     assert equal_rows.loc["high_minus_low", "constituent_count"] == 3
+
+
+def test_summarize_monthly_returns_computes_compounded_metrics() -> None:
+    summary = summarize_monthly_returns(pd.Series([0.01] * 12, dtype=float))
+
+    assert summary["observations"] == 12
+    assert summary["annualized_return"] == pytest.approx((1.01**12) - 1.0)
+    assert summary["annualized_volatility"] == pytest.approx(0.0)
+    assert summary["sharpe"] == pytest.approx(0.0)
+    assert summary["max_drawdown"] == pytest.approx(0.0)
+    assert summary["positive_month_rate"] == pytest.approx(1.0)
+    assert summary["mean_monthly_return"] == pytest.approx(0.01)
+
+
+def test_summarize_monthly_returns_handles_drawdown_volatility_and_empty_inputs() -> None:
+    first_loss = summarize_monthly_returns(pd.Series([-0.10, 0.05], dtype=float))
+    assert first_loss["max_drawdown"] == pytest.approx(-0.10)
+
+    varying = summarize_monthly_returns(pd.Series([0.02, -0.01, 0.03], dtype=float))
+    expected_vol = float(np.std([0.02, -0.01, 0.03], ddof=0) * np.sqrt(12.0))
+    expected_sharpe = float((np.mean([0.02, -0.01, 0.03]) / np.std([0.02, -0.01, 0.03], ddof=0)) * np.sqrt(12.0))
+    assert varying["annualized_volatility"] == pytest.approx(expected_vol)
+    assert varying["sharpe"] == pytest.approx(expected_sharpe)
+
+    constant = summarize_monthly_returns(pd.Series([0.03, 0.03], dtype=float))
+    assert constant["sharpe"] == pytest.approx(0.0)
+
+    empty = summarize_monthly_returns(pd.Series([np.nan, None], dtype=float))
+    assert empty["observations"] == 0
+    for key, value in empty.items():
+        if key != "observations":
+            assert pd.isna(value)
+
+
+def test_evaluate_factor_quantiles_populates_cumulative_returns_and_summary_metrics() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+
+    result = evaluate_factor_quantiles(
+        factors={
+            "high_factor": factors["high_factor"],
+            "low_factor": factors["low_factor"],
+        },
+        directions={
+            "high_factor": FactorDirection.HIGH,
+            "low_factor": FactorDirection.LOW,
+        },
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:4],
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+
+    cumulative = result.cumulative_returns
+    assert {"factor", "weighting", "portfolio", "return_date", "cumulative_return"} <= set(cumulative.columns)
+    q1_path = cumulative[
+        (cumulative["factor"] == "high_factor")
+        & (cumulative["weighting"] == QuantileWeighting.EQUAL)
+        & (cumulative["portfolio"] == "Q1")
+    ].sort_values("return_date", kind="mergesort")
+    assert q1_path["cumulative_return"].tolist() == pytest.approx([0.2, 0.32, 0.3935564435564436])
+
+    high_q1 = _summary_row(
+        result.summary,
+        factor="high_factor",
+        weighting=QuantileWeighting.EQUAL,
+        portfolio="Q1",
+    )
+    high_ic = result.rank_ic[result.rank_ic["factor"] == "high_factor"]
+    assert high_q1["observations"] == 3
+    assert high_q1["average_constituent_count"] == pytest.approx(11.0 / 3.0)
+    assert high_q1["average_one_way_turnover"] == pytest.approx(0.125)
+    assert high_q1["mean_rank_ic"] == pytest.approx(high_ic["rank_ic"].dropna().mean())
+    assert high_q1["directional_mean_rank_ic"] == pytest.approx(high_ic["directional_rank_ic"].dropna().mean())
+    expected_high_ir = (
+        high_ic["directional_rank_ic"].dropna().mean()
+        / high_ic["directional_rank_ic"].dropna().std(ddof=0)
+        * np.sqrt(12.0)
+    )
+    assert high_q1["ic_information_ratio"] == pytest.approx(expected_high_ir)
+    assert high_q1["ic_positive_rate"] == pytest.approx(high_ic["directional_rank_ic"].dropna().gt(0.0).mean())
+    assert high_q1["quantile_monotonicity"] == pytest.approx(1.0)
+
+    low_q1 = _summary_row(
+        result.summary,
+        factor="low_factor",
+        weighting=QuantileWeighting.EQUAL,
+        portfolio="Q1",
+    )
+    low_ic = result.rank_ic[result.rank_ic["factor"] == "low_factor"]
+    assert low_q1["directional_mean_rank_ic"] == pytest.approx(low_ic["directional_rank_ic"].dropna().mean())
+    assert low_q1["ic_positive_rate"] == pytest.approx(low_ic["directional_rank_ic"].dropna().gt(0.0).mean())
+    assert low_q1["quantile_monotonicity"] == pytest.approx(-1.0)
+
+
+def test_evaluate_factor_quantiles_computes_turnover_for_buckets_and_spreads() -> None:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29", "2024-04-30"])
+    columns = ["A", "B", "C", "D"]
+    factor = _frame(
+        dates,
+        columns,
+        [
+            [1.0, 2.0, 3.0, 4.0],
+            [1.0, 3.0, 2.0, 4.0],
+            [3.0, 1.0, 4.0, 2.0],
+            [2.0, 4.0, 1.0, 3.0],
+        ],
+    )
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 10.0, 10.0, 10.0],
+            [11.0, 12.0, 13.0, 14.0],
+            [12.1, 13.2, 14.3, 15.4],
+            [13.31, 14.52, 15.73, 16.94],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [[10.0, 20.0, 30.0, 40.0]] * len(dates),
+    )
+    universe = _frame(dates, columns, [[True, True, True, True]] * len(dates)).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors={"turnover_factor": factor},
+        directions={"turnover_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(dates),
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+
+    q1_row = _summary_row(
+        result.summary,
+        factor="turnover_factor",
+        weighting=QuantileWeighting.EQUAL,
+        portfolio="Q1",
+    )
+    spread_row = _summary_row(
+        result.summary,
+        factor="turnover_factor",
+        weighting=QuantileWeighting.EQUAL,
+        portfolio="high_minus_low",
+    )
+    assert q1_row["average_one_way_turnover"] == pytest.approx(0.75)
+    assert spread_row["average_one_way_turnover"] == pytest.approx(1.5)
+
+
+def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(tmp_path) -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+    result = evaluate_factor_quantiles(
+        factors={
+            "high_factor": factors["high_factor"],
+            "low_factor": factors["low_factor"],
+        },
+        directions={
+            "high_factor": FactorDirection.HIGH,
+            "low_factor": FactorDirection.LOW,
+        },
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:4],
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+
+    payload = result.write_outputs(tmp_path, factor_set="mfbt", q=2)
+
+    for name in [
+        "monthly_returns.csv",
+        "monthly_returns.parquet",
+        "portfolio_weights.parquet",
+        "rank_ic.csv",
+        "rank_ic.parquet",
+        "cumulative_returns.csv",
+        "summary.csv",
+        "summary.json",
+        "manifest.json",
+    ]:
+        assert (tmp_path / name).exists()
+
+    assert {"monthly_returns_parquet", "weights_parquet", "rank_ic_parquet", "summary_json", "manifest"} <= set(payload)
+    summary_json = json.loads((tmp_path / "summary.json").read_text(encoding="utf-8"))
+    assert isinstance(summary_json, list)
+    assert summary_json
+    assert summary_json[0]["weighting"] in {mode.value for mode in QuantileWeighting}
+    assert summary_json[0]["weighting"] == "equal_weight"
+    assert summary_json[0]["portfolio"]
+    assert summary_json[0]["observations"] >= 1
+
+    manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["factor_set"] == "mfbt"
+    assert manifest["weighting_modes"] == ["equal_weight", "market_cap_weight"]
+    assert manifest["q"] == 2
+    assert manifest["timing"] == "month_end_t_to_next_month_end"
+    assert manifest["market_cap_field"] == "market_cap"
+    assert manifest["selected_factors"] == ["price_momentum", "earnings_momentum", "dividend_yield", "retail_flow", "value", "ln_market_cap"]
+    assert manifest["directions"]["ln_market_cap"] == "low"
+    assert manifest["artifacts"]["summary.json"]["rows"] == len(result.summary)
+
+    invalid_dir = tmp_path / "invalid"
+    invalid_monthly = result.monthly_returns.copy()
+    invalid_monthly.loc[
+        invalid_monthly["portfolio"].eq("Q1"),
+        "return",
+    ] = float("inf")
+    invalid = Emp008FactorQuantileResult(
+        monthly_returns=invalid_monthly,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=result.rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    with pytest.raises(ValueError, match="finite"):
+        invalid.write_outputs(invalid_dir, factor_set="mfbt", q=2)
+    assert not invalid_dir.exists() or list(invalid_dir.iterdir()) == []
 
 
 def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_ic() -> None:

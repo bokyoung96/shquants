@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from enum import StrEnum, unique
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
 
 from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors
-from .mfbt_emp008_factor_registry import FactorDirection, factor_definitions_for_set
+from .mfbt_emp008_factor_registry import FactorDirection, FactorSetId, factor_definitions_for_set
 
 
 @unique
@@ -24,6 +27,128 @@ class Emp008FactorQuantileResult:
     rank_ic: pd.DataFrame
     cumulative_returns: pd.DataFrame
     summary: pd.DataFrame
+
+    def write_outputs(
+        self,
+        output_dir: Path | str,
+        *,
+        factor_set: FactorSetId | str,
+        q: int,
+    ) -> dict[str, object]:
+        destination = Path(output_dir)
+        _validate_result_for_output(self, factor_set=factor_set, q=q)
+        manifest = _build_manifest(self, factor_set=factor_set, q=q, output_dir=destination)
+
+        destination.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=destination.parent) as tmp_dir:
+            staging_dir = Path(tmp_dir)
+            monthly_returns_csv = staging_dir / "monthly_returns.csv"
+            monthly_returns_parquet = staging_dir / "monthly_returns.parquet"
+            portfolio_weights_parquet = staging_dir / "portfolio_weights.parquet"
+            rank_ic_csv = staging_dir / "rank_ic.csv"
+            rank_ic_parquet = staging_dir / "rank_ic.parquet"
+            cumulative_returns_csv = staging_dir / "cumulative_returns.csv"
+            summary_csv = staging_dir / "summary.csv"
+            summary_json = staging_dir / "summary.json"
+            manifest_json = staging_dir / "manifest.json"
+
+            self.monthly_returns.to_csv(monthly_returns_csv, index=False)
+            self.monthly_returns.to_parquet(monthly_returns_parquet, engine="pyarrow", index=False)
+            self.portfolio_weights.to_parquet(portfolio_weights_parquet, engine="pyarrow", index=False)
+            self.rank_ic.to_csv(rank_ic_csv, index=False)
+            self.rank_ic.to_parquet(rank_ic_parquet, engine="pyarrow", index=False)
+            self.cumulative_returns.to_csv(cumulative_returns_csv, index=False)
+            self.summary.to_csv(summary_csv, index=False)
+            summary_json.write_text(
+                json.dumps(_json_safe_records(self.summary), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            manifest_json.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            for path in [
+                monthly_returns_csv,
+                monthly_returns_parquet,
+                portfolio_weights_parquet,
+                rank_ic_csv,
+                rank_ic_parquet,
+                cumulative_returns_csv,
+                summary_csv,
+                summary_json,
+                manifest_json,
+            ]:
+                path.replace(destination / path.name)
+
+        return {
+            "monthly_returns_csv": str(destination / "monthly_returns.csv"),
+            "monthly_returns_parquet": str(destination / "monthly_returns.parquet"),
+            "weights_parquet": str(destination / "portfolio_weights.parquet"),
+            "rank_ic_csv": str(destination / "rank_ic.csv"),
+            "rank_ic_parquet": str(destination / "rank_ic.parquet"),
+            "cumulative_returns_csv": str(destination / "cumulative_returns.csv"),
+            "summary_csv": str(destination / "summary.csv"),
+            "summary_json": str(destination / "summary.json"),
+            "manifest": str(destination / "manifest.json"),
+            "monthly_returns_rows": int(len(self.monthly_returns)),
+            "weights_rows": int(len(self.portfolio_weights)),
+            "rank_ic_rows": int(len(self.rank_ic)),
+            "cumulative_returns_rows": int(len(self.cumulative_returns)),
+            "summary_rows": int(len(self.summary)),
+        }
+
+
+_MONTHLY_RETURNS_COLUMNS = (
+    "signal_date",
+    "return_date",
+    "factor",
+    "weighting",
+    "portfolio",
+    "return",
+    "constituent_count",
+)
+_PORTFOLIO_WEIGHTS_COLUMNS = (
+    "signal_date",
+    "return_date",
+    "factor",
+    "weighting",
+    "quantile",
+    "ticker",
+    "weight",
+)
+_RANK_IC_COLUMNS = (
+    "signal_date",
+    "return_date",
+    "factor",
+    "rank_ic",
+    "directional_rank_ic",
+    "n_obs",
+)
+_CUMULATIVE_RETURNS_COLUMNS = (
+    "signal_date",
+    "return_date",
+    "factor",
+    "weighting",
+    "portfolio",
+    "cumulative_return",
+)
+_SUMMARY_COLUMNS = (
+    "factor",
+    "weighting",
+    "portfolio",
+    "observations",
+    "annualized_return",
+    "annualized_volatility",
+    "sharpe",
+    "max_drawdown",
+    "positive_month_rate",
+    "mean_monthly_return",
+    "average_constituent_count",
+    "average_one_way_turnover",
+    "mean_rank_ic",
+    "directional_mean_rank_ic",
+    "ic_information_ratio",
+    "ic_positive_rate",
+    "quantile_monotonicity",
+)
 
 
 def run_emp008_factor_quantiles(
@@ -86,6 +211,7 @@ def evaluate_factor_quantiles(
     if missing_directions:
         missing_text = ", ".join(missing_directions)
         raise ValueError(f"missing directions for factor(s): {missing_text}")
+    normalized_directions = {name: FactorDirection(directions[name]) for name in factor_names}
 
     _validate_frame_axes(
         close=close,
@@ -113,7 +239,7 @@ def evaluate_factor_quantiles(
         signal_market_cap = aligned_market_cap.loc[signal_date]
         signal_universe = aligned_universe.loc[signal_date]
         for factor_name, frame in aligned_factors.items():
-            direction = FactorDirection(directions[factor_name])
+            direction = normalized_directions[factor_name]
             signal_values = frame.loc[signal_date]
             eligibility = (
                 signal_universe
@@ -235,14 +361,66 @@ def evaluate_factor_quantiles(
         ["signal_date", "return_date", "factor"],
         kind="mergesort",
     ).reset_index(drop=True)
+    cumulative_returns = _build_cumulative_returns(monthly_returns)
+    summary = _build_summary(
+        monthly_returns=monthly_returns,
+        portfolio_weights=portfolio_weights,
+        rank_ic=rank_ic,
+        directions=normalized_directions,
+        q=q,
+    )
 
     return Emp008FactorQuantileResult(
         monthly_returns=monthly_returns,
         portfolio_weights=portfolio_weights,
         rank_ic=rank_ic,
-        cumulative_returns=_empty_cumulative_returns_frame(),
-        summary=_empty_summary_frame(),
+        cumulative_returns=cumulative_returns,
+        summary=summary,
     )
+
+
+def summarize_monthly_returns(returns: pd.Series) -> dict[str, float | int]:
+    clean_returns = pd.Series(returns, dtype=float).dropna()
+    observations = int(len(clean_returns))
+    if observations == 0:
+        return {
+            "observations": 0,
+            "annualized_return": float("nan"),
+            "annualized_volatility": float("nan"),
+            "sharpe": float("nan"),
+            "max_drawdown": float("nan"),
+            "positive_month_rate": float("nan"),
+            "mean_monthly_return": float("nan"),
+        }
+
+    mean_monthly_return = float(clean_returns.mean())
+    monthly_volatility = float(clean_returns.std(ddof=0))
+    annualized_volatility = float(monthly_volatility * np.sqrt(12.0))
+    compounded_growth = float((1.0 + clean_returns).prod())
+    if compounded_growth <= 0.0:
+        annualized_return = -1.0
+    else:
+        annualized_return = float(compounded_growth ** (12.0 / observations) - 1.0)
+    if np.isclose(monthly_volatility, 0.0) or not np.isfinite(monthly_volatility):
+        sharpe = 0.0
+    else:
+        sharpe = float((mean_monthly_return / monthly_volatility) * np.sqrt(12.0))
+
+    equity_curve = (1.0 + clean_returns).cumprod()
+    equity_with_start = pd.concat([pd.Series([1.0], dtype=float), equity_curve], ignore_index=True)
+    running_peak = equity_with_start.cummax().clip(lower=1.0)
+    drawdown = equity_with_start.divide(running_peak).sub(1.0)
+    max_drawdown = float(drawdown.min())
+
+    return {
+        "observations": observations,
+        "annualized_return": annualized_return,
+        "annualized_volatility": annualized_volatility,
+        "sharpe": sharpe,
+        "max_drawdown": max_drawdown,
+        "positive_month_rate": float(clean_returns.gt(0.0).mean()),
+        "mean_monthly_return": mean_monthly_return,
+    }
 
 
 def _build_quantile_memberships(signals: pd.Series, *, q: int) -> dict[str, list[Any]]:
@@ -322,29 +500,332 @@ def _spearman_rank_ic(signals: pd.Series, next_returns: pd.Series) -> float:
     return float(signals.corr(next_returns, method="spearman"))
 
 
-def _empty_cumulative_returns_frame() -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "signal_date": pd.Series(dtype="datetime64[ns]"),
-            "return_date": pd.Series(dtype="datetime64[ns]"),
-            "factor": pd.Series(dtype="object"),
-            "weighting": pd.Series(dtype="object"),
-            "portfolio": pd.Series(dtype="object"),
-            "cumulative_return": pd.Series(dtype="float64"),
+def _build_cumulative_returns(monthly_returns: pd.DataFrame) -> pd.DataFrame:
+    cumulative = monthly_returns.loc[:, ["signal_date", "return_date", "factor", "weighting", "portfolio", "return"]].copy()
+    cumulative["cumulative_return"] = cumulative.groupby(
+        ["factor", "weighting", "portfolio"],
+        observed=True,
+        sort=False,
+    )["return"].transform(lambda values: (1.0 + values).cumprod() - 1.0)
+    cumulative = cumulative.drop(columns="return")
+    return cumulative.sort_values(
+        ["factor", "weighting", "portfolio", "return_date", "signal_date"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+
+
+def _build_summary(
+    *,
+    monthly_returns: pd.DataFrame,
+    portfolio_weights: pd.DataFrame,
+    rank_ic: pd.DataFrame,
+    directions: Mapping[str, FactorDirection],
+    q: int,
+) -> pd.DataFrame:
+    turnover = _calculate_one_way_turnover(portfolio_weights, directions=directions, q=q)
+    ic_stats = _calculate_ic_stats(rank_ic)
+    monotonicity = _calculate_quantile_monotonicity(monthly_returns, directions=directions)
+
+    summary_rows: list[dict[str, object]] = []
+    for group_key, group in monthly_returns.groupby(["factor", "weighting", "portfolio"], observed=True, sort=False):
+        factor_name, weighting, portfolio = group_key
+        performance = summarize_monthly_returns(group["return"])
+        turnover_value = turnover.get((factor_name, str(weighting), portfolio), float("nan"))
+        ic_row = ic_stats.loc[factor_name] if factor_name in ic_stats.index else None
+        monotonicity_value = monotonicity.get((factor_name, str(weighting)), float("nan"))
+        summary_rows.append(
+            {
+                "factor": factor_name,
+                "weighting": weighting,
+                "portfolio": portfolio,
+                **performance,
+                "average_constituent_count": float(group["constituent_count"].mean()) if not group.empty else float("nan"),
+                "average_one_way_turnover": float(turnover_value),
+                "mean_rank_ic": float(ic_row["mean_rank_ic"]) if ic_row is not None else float("nan"),
+                "directional_mean_rank_ic": float(ic_row["directional_mean_rank_ic"]) if ic_row is not None else float("nan"),
+                "ic_information_ratio": float(ic_row["ic_information_ratio"]) if ic_row is not None else float("nan"),
+                "ic_positive_rate": float(ic_row["ic_positive_rate"]) if ic_row is not None else float("nan"),
+                "quantile_monotonicity": float(monotonicity_value),
+            }
+        )
+
+    return pd.DataFrame(summary_rows, columns=_SUMMARY_COLUMNS).sort_values(
+        ["factor", "weighting", "portfolio"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+
+
+def _calculate_one_way_turnover(
+    portfolio_weights: pd.DataFrame,
+    *,
+    directions: Mapping[str, FactorDirection],
+    q: int,
+) -> dict[tuple[str, str, str], float]:
+    base_vectors = _collect_weight_vectors(portfolio_weights)
+    turnover: dict[tuple[str, str, str], float] = {}
+    for key, dated_weights in base_vectors.items():
+        turnover[(key[0], key[1], key[2])] = _average_turnover_from_vectors(dated_weights)
+
+    for factor_name, weighting in portfolio_weights[["factor", "weighting"]].drop_duplicates().itertuples(index=False):
+        low_key = (factor_name, str(weighting), "Q1")
+        high_key = (factor_name, str(weighting), f"Q{q}")
+        low_vectors = base_vectors.get(low_key)
+        high_vectors = base_vectors.get(high_key)
+        if not low_vectors or not high_vectors:
+            continue
+        shared_dates = sorted(set(low_vectors).intersection(high_vectors))
+        if not shared_dates:
+            continue
+        high_minus_low_vectors = {
+            date: high_vectors[date].mul(1.0, fill_value=0.0).sub(low_vectors[date], fill_value=0.0)
+            for date in shared_dates
         }
+        turnover[(factor_name, str(weighting), "high_minus_low")] = _average_turnover_from_vectors(high_minus_low_vectors)
+        direction = directions[factor_name]
+        if direction is FactorDirection.HIGH:
+            preferred_vectors = high_minus_low_vectors
+        else:
+            preferred_vectors = {date: vector.mul(-1.0) for date, vector in high_minus_low_vectors.items()}
+        turnover[(factor_name, str(weighting), "preferred_minus_avoided")] = _average_turnover_from_vectors(preferred_vectors)
+    return turnover
+
+
+def _collect_weight_vectors(portfolio_weights: pd.DataFrame) -> dict[tuple[str, str, str], dict[pd.Timestamp, pd.Series]]:
+    vectors: dict[tuple[str, str, str], dict[pd.Timestamp, pd.Series]] = {}
+    for group_key, group in portfolio_weights.groupby(["factor", "weighting", "quantile", "return_date"], observed=True, sort=False):
+        factor_name, weighting, quantile, return_date = group_key
+        vector = pd.Series(group["weight"].to_numpy(dtype=float), index=group["ticker"].astype(str), dtype=float).sort_index()
+        vectors.setdefault((factor_name, str(weighting), quantile), {})[pd.Timestamp(return_date)] = vector
+    return vectors
+
+
+def _average_turnover_from_vectors(dated_weights: Mapping[pd.Timestamp, pd.Series]) -> float:
+    ordered_dates = sorted(dated_weights)
+    if len(ordered_dates) < 2:
+        return float("nan")
+
+    turnovers: list[float] = []
+    previous = dated_weights[ordered_dates[0]]
+    for date in ordered_dates[1:]:
+        current = dated_weights[date]
+        aligned_index = previous.index.union(current.index)
+        diff = current.reindex(aligned_index, fill_value=0.0).sub(previous.reindex(aligned_index, fill_value=0.0))
+        turnovers.append(float(0.5 * diff.abs().sum()))
+        previous = current
+    return float(np.mean(turnovers)) if turnovers else float("nan")
+
+
+def _calculate_ic_stats(rank_ic: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    for factor_name, group in rank_ic.groupby("factor", observed=True, sort=False):
+        directional = group["directional_rank_ic"].astype(float).dropna()
+        raw = group["rank_ic"].astype(float).dropna()
+        directional_mean = float(directional.mean()) if not directional.empty else float("nan")
+        raw_mean = float(raw.mean()) if not raw.empty else float("nan")
+        if directional.empty:
+            information_ratio = float("nan")
+            positive_rate = float("nan")
+        else:
+            directional_std = float(directional.std(ddof=0))
+            if directional_std == 0.0 and np.isfinite(directional_mean):
+                information_ratio = 0.0
+            elif directional_std == 0.0 or not np.isfinite(directional_std):
+                information_ratio = float("nan")
+            else:
+                information_ratio = float((directional_mean / directional_std) * np.sqrt(12.0))
+            positive_rate = float(directional.gt(0.0).mean())
+        rows.append(
+            {
+                "factor": factor_name,
+                "mean_rank_ic": raw_mean,
+                "directional_mean_rank_ic": directional_mean,
+                "ic_information_ratio": information_ratio,
+                "ic_positive_rate": positive_rate,
+            }
+        )
+    return pd.DataFrame(rows).set_index("factor") if rows else pd.DataFrame(columns=["mean_rank_ic"]).set_index(pd.Index([], name="factor"))
+
+
+def _calculate_quantile_monotonicity(
+    monthly_returns: pd.DataFrame,
+    *,
+    directions: Mapping[str, FactorDirection],
+) -> dict[tuple[str, str], float]:
+    quantile_rows = monthly_returns[monthly_returns["portfolio"].astype(str).str.match(r"^Q\d+$", na=False)].copy()
+    if quantile_rows.empty:
+        return {}
+    quantile_rows["quantile_number"] = quantile_rows["portfolio"].astype(str).str[1:].astype(int)
+
+    monotonicity: dict[tuple[str, str], float] = {}
+    for (factor_name, weighting), group in quantile_rows.groupby(["factor", "weighting"], observed=True, sort=False):
+        averages = group.groupby("quantile_number", observed=True, sort=True)["return"].mean()
+        valid = averages.dropna()
+        if len(valid) < 2 or valid.nunique(dropna=True) < 2:
+            monotonicity[(factor_name, str(weighting))] = float("nan")
+            continue
+        ordinal = pd.Series(valid.index.to_numpy(dtype=float), index=valid.index, dtype=float)
+        correlation = ordinal.corr(valid.astype(float), method="spearman")
+        if pd.isna(correlation):
+            monotonicity[(factor_name, str(weighting))] = float("nan")
+            continue
+        direction_sign = 1.0 if directions[factor_name] is FactorDirection.HIGH else -1.0
+        monotonicity[(factor_name, str(weighting))] = float(direction_sign * correlation)
+    return monotonicity
+
+
+def _validate_result_for_output(
+    result: Emp008FactorQuantileResult,
+    *,
+    factor_set: FactorSetId | str,
+    q: int,
+) -> None:
+    if q < 2:
+        raise ValueError("q must be at least 2")
+    if result.monthly_returns.empty or result.portfolio_weights.empty or result.rank_ic.empty or result.cumulative_returns.empty or result.summary.empty:
+        raise ValueError("result must be nonempty before writing artifacts")
+
+    _require_columns(result.monthly_returns, _MONTHLY_RETURNS_COLUMNS, "monthly_returns")
+    _require_columns(result.portfolio_weights, _PORTFOLIO_WEIGHTS_COLUMNS, "portfolio_weights")
+    _require_columns(result.rank_ic, _RANK_IC_COLUMNS, "rank_ic")
+    _require_columns(result.cumulative_returns, _CUMULATIVE_RETURNS_COLUMNS, "cumulative_returns")
+    _require_columns(result.summary, _SUMMARY_COLUMNS, "summary")
+
+    quantile_weights = result.portfolio_weights.copy()
+    if not quantile_weights["weight"].map(np.isfinite).all():
+        raise ValueError("portfolio weight values must be finite")
+    if not quantile_weights["weight"].gt(0.0).all():
+        raise ValueError("portfolio weight values must be positive")
+    if quantile_weights.duplicated(["signal_date", "return_date", "factor", "weighting", "quantile", "ticker"]).any():
+        raise ValueError("duplicate weight rows are not allowed")
+    weight_sums = quantile_weights.groupby(
+        ["signal_date", "return_date", "factor", "weighting", "quantile"],
+        observed=True,
+        sort=False,
+    )["weight"].sum()
+    if not np.allclose(weight_sums.to_numpy(dtype=float), 1.0, atol=1e-10, rtol=0.0):
+        raise ValueError("portfolio weight groups must sum to 1 within tolerance")
+
+    if not result.monthly_returns["return"].map(np.isfinite).all():
+        raise ValueError("monthly return values must be finite")
+    quantile_monthly = result.monthly_returns[result.monthly_returns["portfolio"].astype(str).str.match(r"^Q\d+$", na=False)]
+    if not quantile_monthly["return"].map(np.isfinite).all():
+        raise ValueError("quantile monthly return values must be finite")
+    if not result.rank_ic["n_obs"].map(np.isfinite).all():
+        raise ValueError("rank_ic n_obs values must be finite")
+    if not result.cumulative_returns["cumulative_return"].map(np.isfinite).all():
+        raise ValueError("cumulative return values must be finite")
+
+    if set(result.monthly_returns["factor"]) != set(result.rank_ic["factor"]):
+        raise ValueError("monthly_returns and rank_ic factors must match")
+    if not set(result.summary["factor"]).issubset(set(result.monthly_returns["factor"])):
+        raise ValueError("summary factors must be present in monthly_returns")
+
+    summary_keys = set(result.summary[["factor", "weighting", "portfolio"]].itertuples(index=False, name=None))
+    monthly_keys = set(result.monthly_returns[["factor", "weighting", "portfolio"]].itertuples(index=False, name=None))
+    if summary_keys != monthly_keys:
+        raise ValueError("summary rows must align with monthly_returns portfolios")
+
+    cumulative_keys = set(result.cumulative_returns[["factor", "weighting", "portfolio"]].itertuples(index=False, name=None))
+    if cumulative_keys != monthly_keys:
+        raise ValueError("cumulative_returns rows must align with monthly_returns portfolios")
+
+    _validate_membership_parity(result.portfolio_weights)
+
+
+def _require_columns(frame: pd.DataFrame, columns: Sequence[str], frame_name: str) -> None:
+    if tuple(frame.columns) != tuple(columns):
+        raise ValueError(f"{frame_name} schema mismatch")
+
+
+def _validate_membership_parity(portfolio_weights: pd.DataFrame) -> None:
+    equal = portfolio_weights[portfolio_weights["weighting"] == QuantileWeighting.EQUAL]
+    cap = portfolio_weights[portfolio_weights["weighting"] == QuantileWeighting.MARKET_CAP]
+    equal_membership = (
+        equal.groupby(["factor", "signal_date", "return_date", "quantile"], observed=True, sort=False)["ticker"]
+        .apply(lambda tickers: tuple(sorted(str(ticker) for ticker in tickers)))
+        .sort_index()
+    )
+    cap_membership = (
+        cap.groupby(["factor", "signal_date", "return_date", "quantile"], observed=True, sort=False)["ticker"]
+        .apply(lambda tickers: tuple(sorted(str(ticker) for ticker in tickers)))
+        .sort_index()
+    )
+    if not equal_membership.index.equals(cap_membership.index) or not equal_membership.equals(cap_membership):
+        raise ValueError("equal and market-cap membership must match for each factor/date/quantile")
+
+
+def _build_manifest(
+    result: Emp008FactorQuantileResult,
+    *,
+    factor_set: FactorSetId | str,
+    q: int,
+    output_dir: Path,
+) -> dict[str, object]:
+    definitions = factor_definitions_for_set(factor_set)
+    artifacts = {
+        "monthly_returns.csv": {"path": str(output_dir / "monthly_returns.csv"), "rows": int(len(result.monthly_returns))},
+        "monthly_returns.parquet": {"path": str(output_dir / "monthly_returns.parquet"), "rows": int(len(result.monthly_returns))},
+        "portfolio_weights.parquet": {"path": str(output_dir / "portfolio_weights.parquet"), "rows": int(len(result.portfolio_weights))},
+        "rank_ic.csv": {"path": str(output_dir / "rank_ic.csv"), "rows": int(len(result.rank_ic))},
+        "rank_ic.parquet": {"path": str(output_dir / "rank_ic.parquet"), "rows": int(len(result.rank_ic))},
+        "cumulative_returns.csv": {"path": str(output_dir / "cumulative_returns.csv"), "rows": int(len(result.cumulative_returns))},
+        "summary.csv": {"path": str(output_dir / "summary.csv"), "rows": int(len(result.summary))},
+        "summary.json": {"path": str(output_dir / "summary.json"), "rows": int(len(result.summary))},
+        "manifest.json": {"path": str(output_dir / "manifest.json"), "rows": 1},
+    }
+    return {
+        "factor_set": str(factor_set),
+        "selected_factors": [definition.id.value for definition in definitions],
+        "directions": {definition.id.value: definition.direction.value for definition in definitions},
+        "weighting_modes": [QuantileWeighting.EQUAL.value, QuantileWeighting.MARKET_CAP.value],
+        "q": int(q),
+        "min_signal_date": pd.Timestamp(result.monthly_returns["signal_date"].min()).date().isoformat(),
+        "max_return_date": pd.Timestamp(result.monthly_returns["return_date"].max()).date().isoformat(),
+        "timing": "month_end_t_to_next_month_end",
+        "market_cap_field": "market_cap",
+        "artifacts": artifacts,
+    }
+
+
+def _json_safe_records(frame: pd.DataFrame) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    for row in frame.to_dict(orient="records"):
+        converted: dict[str, object] = {}
+        for key, value in row.items():
+            converted[key] = _json_safe_value(value)
+        records.append(converted)
+    return records
+
+
+def _json_safe_value(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    if isinstance(value, (np.floating, float)):
+        return None if not np.isfinite(value) else float(value)
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if isinstance(value, StrEnum):
+        return value.value
+    if isinstance(value, np.bool_):
+        return bool(value)
+    return value
+
+
+def _empty_cumulative_returns_frame() -> pd.DataFrame:
+    return pd.DataFrame({column: pd.Series(dtype="float64" if column == "cumulative_return" else "object") for column in _CUMULATIVE_RETURNS_COLUMNS}).astype(
+        {"signal_date": "datetime64[ns]", "return_date": "datetime64[ns]", "cumulative_return": "float64"}
     )
 
 
 def _empty_summary_frame() -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "factor": pd.Series(dtype="object"),
-            "weighting": pd.Series(dtype="object"),
-            "portfolio": pd.Series(dtype="object"),
-            "metric": pd.Series(dtype="object"),
-            "value": pd.Series(dtype="float64"),
-        }
-    )
+    frame = pd.DataFrame({column: pd.Series(dtype="float64") for column in _SUMMARY_COLUMNS if column not in {"factor", "weighting", "portfolio"}})
+    frame.insert(0, "portfolio", pd.Series(dtype="object"))
+    frame.insert(0, "weighting", pd.Series(dtype="object"))
+    frame.insert(0, "factor", pd.Series(dtype="object"))
+    frame["observations"] = frame["observations"].astype("int64")
+    return frame.loc[:, _SUMMARY_COLUMNS]
 
 
 __all__ = [
@@ -352,4 +833,5 @@ __all__ = [
     "QuantileWeighting",
     "evaluate_factor_quantiles",
     "run_emp008_factor_quantiles",
+    "summarize_monthly_returns",
 ]

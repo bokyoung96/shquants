@@ -24,6 +24,8 @@ from backtesting.strategies.emp008.run_weights import (
     write_target_weights_csv,
 )
 from backtesting.strategies.emp008.mfbt_emp008 import run_mfbt_emp008
+from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import load_and_prepare_emp008_factors
+from backtesting.strategies.emp008.mfbt_emp008_factor_quantiles import run_emp008_factor_quantiles
 from backtesting.strategies.emp008.mfbt_emp008_factor_registry import factor_set_values
 
 
@@ -77,6 +79,14 @@ def main(argv: list[str] | None = None) -> None:
     }
 
     try:
+        with timed(logger, "factor_preparation"):
+            prepared = load_and_prepare_emp008_factors(
+                parquet_dir=args.parquet_dir,
+                start=args.start,
+                end=end,
+                config=config,
+            )
+
         with timed(logger, "weights"):
             emp008_result = run_mfbt_emp008(
                 parquet_dir=args.parquet_dir,
@@ -84,6 +94,7 @@ def main(argv: list[str] | None = None) -> None:
                 end=end,
                 config=config,
                 output_dir=weights_dir,
+                prepared=prepared,
             )
             weights_csv = write_target_weights_csv(emp008_result.target_weights, weights_dir / "target_weights.csv")
             summary["weights"] = weights_summary(emp008_result, weights_csv)
@@ -140,6 +151,21 @@ def main(argv: list[str] | None = None) -> None:
             summary["report"] = report_payload
             logger.info("report_payload=%s", json.dumps(report_payload, ensure_ascii=False))
 
+        if not args.no_factor_quantiles:
+            with timed(logger, "factor_quantiles"):
+                quantile_result = run_emp008_factor_quantiles(
+                    prepared=prepared,
+                    start=args.start,
+                    end=end,
+                    q=args.factor_quantiles,
+                )
+                summary["factor_quantiles"] = quantile_result.write_outputs(
+                    run_root / "factor_quantiles",
+                    factor_set=config.factor_set,
+                    q=args.factor_quantiles,
+                )
+                logger.info("factor_quantiles=%s", json.dumps(summary["factor_quantiles"], ensure_ascii=False))
+
         if not args.no_comparison:
             with timed(logger, "costed_backtest"):
                 costed_spec = build_target_weight_spec(
@@ -184,6 +210,7 @@ def main(argv: list[str] | None = None) -> None:
                     parquet_dir=args.parquet_dir,
                     run_root=run_root,
                     config=config,
+                    prepared=prepared,
                 )
                 summary["factor_attribution"] = attribution_payload
                 logger.info("factor_attribution=%s", json.dumps(attribution_payload, ensure_ascii=False))
@@ -238,6 +265,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--comparison-sell-tax", type=float, default=0.0015)
     parser.add_argument("--comparison-slippage", type=float, default=0.0005)
     parser.add_argument("--benchmark-parquet", type=Path, default=Path("parquet") / "qw_BM.parquet")
+    parser.add_argument(
+        "--factor-quantiles",
+        type=int,
+        default=5,
+        help="Number of quantile buckets to evaluate for standalone factor diagnostics. Default: 5.",
+    )
+    parser.add_argument("--no-factor-quantiles", action="store_true", help="Skip factor quantile artifacts.")
     parser.add_argument("--no-factor-attribution", action="store_true", help="Skip factor attribution artifacts.")
     return parser
 

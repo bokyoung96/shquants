@@ -1,4 +1,8 @@
+import json
+from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -24,6 +28,7 @@ from backtesting.strategies.emp008.run_weights import (
     latest_common_end,
     write_target_weights_csv,
 )
+from backtesting.strategies.emp008 import run_full
 from backtesting.strategies.emp008.run_full import _parser as full_parser
 from backtesting.strategies.emp008.comparison import (
     active_weight_abs_sum_frame,
@@ -34,6 +39,7 @@ from backtesting.strategies.emp008.comparison import (
     performance_metrics,
 )
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
+from backtesting.strategies.emp008.mfbt_emp008 import MfbtEmp008Result
 from backtesting.strategies.emp008.mfbt_emp008_factors import _sector_relative_retail_flow, build_raw_mfbt_factors
 from backtesting.strategies.emp008.mfbt_emp008 import (
     _apply_expected_alpha_policy,
@@ -50,6 +56,163 @@ from backtesting.strategies.emp008.mfbt_emp008_data import (
 from backtesting.strategies.emp008.mfbt_emp008_factor_registry import FactorSetId
 from backtesting.strategies.emp008.mfbt_emp008_optimize import optimize_active_weights_with_covariance
 from backtesting.strategies.emp008.mfbt_emp008_preprocess import preprocess_factor_frame
+from backtesting.strategies.emp008.mfbt_emp008_factor_pipeline import PreparedEmp008Factors
+from backtesting.strategies.emp008.mfbt_emp008_factor_registry import get_factor_set_definition
+
+
+def _frame(
+    dates: pd.DatetimeIndex,
+    columns: list[str],
+    rows: list[list[object]],
+) -> pd.DataFrame:
+    return pd.DataFrame(rows, index=dates, columns=columns)
+
+
+def make_prepared_bundle() -> PreparedEmp008Factors:
+    dates = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29"])
+    columns = ["A", "B", "C", "D"]
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 20.0, 30.0, 40.0],
+            [11.0, 19.0, 33.0, 38.0],
+            [12.0, 18.0, 36.0, 37.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [100.0, 300.0, 200.0, 400.0],
+            [110.0, 290.0, 210.0, 390.0],
+            [120.0, 280.0, 220.0, 380.0],
+        ],
+    )
+    universe = _frame(
+        dates,
+        columns,
+        [
+            [True, True, True, True],
+            [True, True, True, True],
+            [True, True, True, True],
+        ],
+    ).astype(bool)
+    factor_names = [factor_id.value for factor_id in get_factor_set_definition("mfbt").factors]
+    alpha_factors = {
+        factor_name: _frame(
+            dates,
+            columns,
+            [
+                [0.1, 0.2, 0.3, 0.4],
+                [0.2, 0.3, 0.4, 0.5],
+                [0.3, 0.4, 0.5, 0.6],
+            ],
+        )
+        for factor_name in factor_names
+    }
+    sectors = _frame(
+        dates,
+        columns,
+        [
+            ["Tech", "Finance", "Health", "Utilities"],
+            ["Tech", "Finance", "Health", "Utilities"],
+            ["Tech", "Finance", "Health", "Utilities"],
+        ],
+    )
+    benchmark_weights = _frame(
+        dates,
+        columns,
+        [
+            [0.10, 0.20, 0.30, 0.40],
+            [0.10, 0.20, 0.30, 0.40],
+            [0.10, 0.20, 0.30, 0.40],
+        ],
+    )
+    market = MarketData(
+        frames={
+            "close": close,
+            "market_cap": market_cap,
+            "float_market_cap": market_cap,
+            "k200_yn": universe,
+            "sector_neutral_big": sectors,
+            "bm_weights": benchmark_weights,
+        },
+        universe=None,
+        benchmark=None,
+    )
+    return PreparedEmp008Factors(
+        config=MfbtEmp008Config(),
+        market=market,
+        factor_set_definition=get_factor_set_definition("mfbt"),
+        raw_factors=dict(alpha_factors),
+        alpha_factors=alpha_factors,
+        sector_factors={},
+        close=close,
+        market_cap=market_cap,
+        float_market_cap=market_cap,
+        universe=universe,
+        sector=sectors,
+        benchmark_weights=benchmark_weights,
+        monthly_dates=tuple(dates),
+    )
+
+
+def make_emp008_result() -> MfbtEmp008Result:
+    index = pd.to_datetime(["2024-01-31", "2024-02-29"])
+    target_weights = pd.DataFrame({"A": [0.6, 0.55], "B": [0.4, 0.45]}, index=index)
+    active_weights = pd.DataFrame({"A": [0.1, 0.05], "B": [-0.1, -0.05]}, index=index)
+    diagnostics = pd.DataFrame(
+        {
+            "target_date": index,
+            "success": [True, True],
+        }
+    )
+    return MfbtEmp008Result(
+        target_weights=target_weights,
+        active_weights=active_weights,
+        diagnostics=diagnostics,
+    )
+
+
+class _FakeQuantileResult:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self.write_outputs = Mock(return_value=payload)
+
+
+@dataclass(frozen=True)
+class _FakeBacktestConfig:
+    name: str = "mfbt_emp008"
+
+
+def patch_backtest_report_and_attribution(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    report = SimpleNamespace(output_dir=tmp_path / "backtests" / "fake_run")
+
+    class _FakeRunner:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def resolve_spec(self, spec: object) -> object:
+            return spec
+
+        def run_spec(self, spec: object) -> object:
+            return report
+
+    class _FakeReportCli:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def run(self, _: list[str]) -> dict[str, object]:
+            return {"report_html": str(tmp_path / "reports" / "mfbt_emp008" / "report.html")}
+
+    monkeypatch.setattr(run_full, "BacktestRunner", _FakeRunner)
+    monkeypatch.setattr(run_full, "ReportCli", _FakeReportCli)
+    monkeypatch.setattr(run_full, "backtest_summary", Mock(return_value={"output_dir": str(report.output_dir)}))
+    monkeypatch.setattr(
+        run_full,
+        "active_share_payload",
+        Mock(return_value={"active_share_csv": str(tmp_path / "weights" / "active_share.csv")}),
+    )
 
 
 def test_latest_common_end_uses_required_dataset_minimum_end_date(tmp_path: Path) -> None:
@@ -98,6 +261,81 @@ def test_factor_set_parser_choices_match_registry_values() -> None:
 
     assert tuple(weights_parser()._option_string_actions["--factor-set"].choices) == expected
     assert tuple(full_parser()._option_string_actions["--factor-set"].choices) == expected
+
+
+def test_full_parser_exposes_factor_quantile_flags() -> None:
+    args = full_parser().parse_args(["--factor-quantiles", "7", "--no-factor-quantiles"])
+
+    assert args.factor_quantiles == 7
+    assert args.no_factor_quantiles is True
+
+
+def test_full_run_prepares_once_and_runs_factor_quantiles_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    prepare = Mock(return_value=prepared)
+    optimizer = Mock(return_value=make_emp008_result())
+    quantiles = Mock(return_value=_FakeQuantileResult({"summary_csv": str(tmp_path / "factor_quantiles" / "summary.csv")}))
+    attribution = Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")})
+
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", prepare)
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", optimizer)
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", quantiles)
+    monkeypatch.setattr(run_full, "build_emp008_factor_attribution", attribution)
+    patch_backtest_report_and_attribution(monkeypatch, tmp_path)
+
+    run_full.main(["--end", "2024-06-30", "--output-root", str(tmp_path), "--no-comparison"])
+
+    prepare.assert_called_once()
+    assert optimizer.call_args.kwargs["prepared"] is prepared
+    assert quantiles.call_args.kwargs == {
+        "prepared": prepared,
+        "start": run_full.DEFAULT_START,
+        "end": "2024-06-30",
+        "q": 5,
+    }
+    assert attribution.call_args.kwargs["prepared"] is prepared
+    summary = json.loads((tmp_path / "mfbt_emp008" / "run_summary.json").read_text(encoding="utf-8"))
+    assert "factor_quantiles" in summary
+
+
+def test_full_run_can_skip_factor_quantiles(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    prepared = make_prepared_bundle()
+    prepare = Mock(return_value=prepared)
+    optimizer = Mock(return_value=make_emp008_result())
+    quantiles = Mock()
+
+    monkeypatch.setattr(run_full, "load_and_prepare_emp008_factors", prepare)
+    monkeypatch.setattr(run_full, "run_mfbt_emp008", optimizer)
+    monkeypatch.setattr(run_full, "run_emp008_factor_quantiles", quantiles)
+    monkeypatch.setattr(
+        run_full,
+        "build_emp008_factor_attribution",
+        Mock(return_value={"excel": str(tmp_path / "factor_attribution" / "factor_attribution.xlsx")}),
+    )
+    patch_backtest_report_and_attribution(monkeypatch, tmp_path)
+
+    run_full.main(
+        [
+            "--end",
+            "2024-06-30",
+            "--output-root",
+            str(tmp_path),
+            "--no-comparison",
+            "--no-factor-quantiles",
+        ]
+    )
+
+    prepare.assert_called_once()
+    assert optimizer.call_args.kwargs["prepared"] is prepared
+    quantiles.assert_not_called()
+    summary = json.loads((tmp_path / "mfbt_emp008" / "run_summary.json").read_text(encoding="utf-8"))
+    assert "factor_quantiles" not in summary
 
 
 @pytest.mark.parametrize(

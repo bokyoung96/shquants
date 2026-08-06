@@ -63,11 +63,40 @@ common portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
 | `risk_model` | `factor_idio` | TE covariance model: `factor_idio` or `direct_covariance` |
 | `expected_alpha_policy` | `mean` | Optional Origin-style directional guard applied after the 36-month mean |
 
+Factor-set choices and dataset loading are registry-derived. `run_weights.py`,
+`run_full.py`, and `run_factor_quantiles.py` all expose the same
+`FactorSetId` values, and `required_datasets()` derives its parquet inputs from
+the registered factor definitions instead of maintaining duplicated CLI lists.
+
 `QW_BM_WEIGHTS` is used without modification from its first positive row
 onward. When the requested 36-month warmup reaches dates before the official
 series begins, EMP008 uses contemporaneous `QW_MKTCAP_FLT` normalized within
 `QW_K200_YN` as a benchmark proxy. This proxy is limited to the missing prefix;
 it is not allowed to replace or fill official benchmark rows.
+
+## Registry Extension Contract
+
+New factors are added through `mfbt_emp008_factor_registry.py`, not by appending
+ad hoc branches to individual runners. Each `FactorDefinition` must declare:
+
+- `id`: stable public factor name used in outputs
+- `builder`: raw monthly factor constructor
+- `datasets`: extra parquet dependencies beyond the common EMP008 inputs
+- `direction`: `HIGH` when larger exposure is preferred, `LOW` when smaller is preferred
+- `rank_transform`: whether the post-fill cross section is ranked before z-scoring
+- `winsor_config_attr`: optional `MfbtEmp008Config` attribute used to winsorize raw values
+- `zscore_cap_config_attr`: optional `MfbtEmp008Config` attribute used to cap final z-scores
+- `neutralize_large_benchmark_weight`: whether very large benchmark names are forced to neutral exposure
+- `requires_construction_sector`: whether raw construction needs `sector_dataset`
+
+`FactorSetDefinition` then derives:
+
+- ordered factor membership for each CLI variant
+- optimizer direction constraints
+- forward snapshot allowance for month-only data
+
+That one registry drives builder selection, dataset requirements, CLI
+`--factor-set` choices, preprocessing policy, and quantile manifest metadata.
 
 ## Raw Factors
 
@@ -308,6 +337,55 @@ expected alpha is constrained to zero in optimization and their active
 contribution should be interpreted as a constraint/model residual rather than a
 standalone alpha signal.
 
+## Factor Quantile Diagnostics
+
+EMP008 also exposes a standalone single-factor diagnostic surface through
+`run_factor_quantiles.py`, and `run_full.py` runs it by default after the
+optimizer and before the optional costed comparison backtest.
+
+The evaluator uses the same prepared bundle as optimization and attribution, so
+all three surfaces share identical monthly factor exposures, benchmark
+completion, sector preprocessing, and factor-set semantics.
+
+### Timing And Eligibility
+
+- Signal dates are EMP008 rebalance month-ends drawn from the prepared monthly panel.
+- Eligibility is limited to stocks inside the KOSPI200 universe on the signal date.
+- Membership and any market-cap weighting are determined on the signal date only.
+- Returns are measured from month-end `t` to the next month-end `t+1`; no return-date information is used for portfolio formation.
+- For Origin's forward-snapshot case, factor preparation still honors the
+  registered next-month allowance before the common month-end panel is built.
+
+### Portfolio Construction
+
+Each factor is evaluated in `q` quantile buckets, default `q=5`, with two
+weighting modes over the same exact bucket membership:
+
+- `equal_weight`: every stock in the bucket receives `1 / n`
+- `market_cap_weight`: every stock is weighted by signal-date total market cap
+  from `QW_MKTCAP`, normalized within the bucket
+
+Direction-aware spreads are written alongside the raw quantiles:
+
+- `high_minus_low`: `Qq - Q1` using the raw bucket order
+- `preferred_minus_avoided`: best-direction bucket minus worst-direction bucket
+  using the registered factor direction (`HIGH` prefers `Qq`, `LOW` prefers `Q1`)
+
+Rank IC is reported in both raw and directional form. `directional_rank_ic`
+equals raw Spearman rank IC for `HIGH` factors and its negation for `LOW`
+factors.
+
+### Diagnostic Limits
+
+The quantile artifacts are research diagnostics only:
+
+- no transaction costs
+- no sector-neutral portfolio construction inside the quantile buckets
+- no automatic factor-weight optimization
+
+They are intended to put single-factor evidence beside the optimizer, not to
+replace the production benchmark-relative portfolio construction path.
+
 ## Run Files
 
 Use the top-level wrappers under `scripts/` for normal execution:
@@ -317,6 +395,7 @@ Use the top-level wrappers under `scripts/` for normal execution:
 | `scripts/run_mfbt_emp008_weights.py` | `run_weights.py` | Generate target weights only |
 | `scripts/run_mfbt_emp008_backtest.py` | `run_backtest.py` | Backtest existing weights and optionally create a report |
 | `scripts/run_mfbt_emp008_full.py` | `run_full.py` | Generate weights, backtest, report, and comparison artifacts in one command |
+| `python -m backtesting.strategies.emp008.run_factor_quantiles` | `run_factor_quantiles.py` | Run standalone factor quantile diagnostics |
 
 There is no separate `cli_common.py`. Shared runner helpers live in the concrete
 runner modules that use them:
@@ -364,6 +443,18 @@ uv run python scripts\run_mfbt_emp008_full.py `
   --name mfbt_emp008
 ```
 
+Run the standalone factor quantile diagnostics:
+
+```powershell
+python -m backtesting.strategies.emp008.run_factor_quantiles --factor-set mfbt --start 2020-01-31 --end 2026-06-30
+```
+
+Run the full pipeline with explicit quantile bucket count:
+
+```powershell
+python -m backtesting.strategies.emp008.run_full --factor-set mfbt --factor-quantiles 5 --end 2026-06-30
+```
+
 The backtest-only runner accepts `--capital`, `--fill-mode`, `--fee`,
 `--sell-tax`, `--slippage`, `--no-fractional`, `--start`, `--end`, and
 `--no-report`. Reusing one weights run is faster when only execution assumptions
@@ -372,7 +463,9 @@ change.
 The full runner also creates a second costed backtest for comparison by default.
 The default comparison costs are `--comparison-fee 0.0002`,
 `--comparison-sell-tax 0.0015`, and `--comparison-slippage 0.0005`. Pass
-`--no-comparison` to skip this stage.
+`--no-comparison` to skip this stage. Factor quantiles default to `5` buckets;
+pass `--factor-quantiles <int>` to change the count or
+`--no-factor-quantiles` to skip this diagnostic stage.
 
 If a saved backtest run already exists, build a report directly:
 
@@ -404,6 +497,12 @@ Default EMP008 run outputs are grouped under `results/emp008_runs/<name>/`.
 | `comparison/monthly_excess_heatmap.png` | Gross and costed monthly excess-return heatmap |
 | `comparison/active_weight_sum.*` | Monthly `sum(abs(active weight))` data and chart |
 | `comparison_summary.json` | Comparison-stage summary |
+| `factor_quantiles/monthly_returns.csv` and `.parquet` | Long-form monthly return observations by signal date, return date, factor, weighting, and portfolio |
+| `factor_quantiles/portfolio_weights.parquet` | Long-form bucket holdings with signal date, factor, weighting, quantile, ticker, weight, and signal-date market cap |
+| `factor_quantiles/rank_ic.csv` and `.parquet` | Monthly raw and directional rank IC by factor and signal date |
+| `factor_quantiles/cumulative_returns.csv` and `.parquet` | Cumulative return path by factor, weighting, portfolio, and return date |
+| `factor_quantiles/summary.csv` and `.json` | Portfolio-level annualized return, volatility, Sharpe, drawdown, turnover, IC, and monotonicity metrics |
+| `factor_quantiles/manifest.json` | Registry-derived factor order, direction metadata, weighting modes, timing contract, and row counts |
 | `factor_attribution/factor_attribution.xlsx` | Monthly factor contribution, exposure, return, and reconciliation data |
 | `factor_attribution/*.png` | Cumulative, monthly heatmap, and yearly factor-contribution charts |
 | `factor_attribution_summary.json` | Factor-attribution-stage summary |
@@ -415,6 +514,20 @@ Default EMP008 run outputs are grouped under `results/emp008_runs/<name>/`.
 Saved backtest runs and reports are written inside `results/emp008_runs/<name>/`
 by default. Pass `--backtests-root` or `--reports-root` only when a global output
 root is explicitly desired.
+
+The quantile artifacts use long-form schemas so they can be audited without
+reconstructing hidden pivots:
+
+- `monthly_returns`: `signal_date`, `return_date`, `factor`, `weighting`,
+  `portfolio`, `return`, `constituent_count`
+- `portfolio_weights`: `signal_date`, `factor`, `weighting`, `quantile`,
+  `ticker`, `weight`, `market_cap`
+- `rank_ic`: `signal_date`, `return_date`, `factor`, `rank_ic`,
+  `directional_rank_ic`, `coverage`
+- `cumulative_returns`: `return_date`, `factor`, `weighting`, `portfolio`,
+  `cumulative_return`
+- `summary`: `factor`, `weighting`, `portfolio`, plus annualization, drawdown,
+  turnover, IC, and monotonicity fields
 
 ## Current Issues And Gaps
 

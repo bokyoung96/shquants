@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Iterable
 
@@ -45,10 +45,16 @@ def validate_prepared_emp008_factors(
     required_dates: Iterable[str | pd.Timestamp] = (),
 ) -> None:
     if config is not None and config != prepared.config:
+        diff_parts: list[str] = []
+        for field in fields(MfbtEmp008Config):
+            prepared_value = getattr(prepared.config, field.name)
+            requested_value = getattr(config, field.name)
+            if prepared_value != requested_value:
+                diff_parts.append(
+                    f"{field.name}: prepared={prepared_value!r} requested={requested_value!r}"
+                )
         raise ValueError(
-            "prepared/config mismatch: "
-            f"prepared factor_set='{prepared.config.factor_set.value}' "
-            f"requested factor_set='{config.factor_set.value}'"
+            "prepared/config mismatch: " + "; ".join(diff_parts)
         )
 
     if prepared.close.empty or not prepared.monthly_dates:
@@ -84,11 +90,21 @@ def validate_prepared_emp008_factors(
             )
     if end is not None:
         requested_end = pd.Timestamp(end)
-        if requested_end > available_end:
+        if (
+            requested_end > available_end
+            and requested_end.to_period("M") != available_end.to_period("M")
+        ):
             raise ValueError(
                 "prepared data range does not cover requested end: "
                 f"requested {requested_end.date().isoformat()} "
                 f"but available range is {available_start.date().isoformat()} to {available_end.date().isoformat()}"
+            )
+        available_monthly_end = max(monthly_dates)
+        if requested_end.to_period("M") > available_monthly_end.to_period("M"):
+            raise ValueError(
+                "prepared monthly output range does not cover requested end month: "
+                f"requested {requested_end.strftime('%Y-%m')} "
+                f"but available monthly range ends at {available_monthly_end.strftime('%Y-%m-%d')}"
             )
 
 

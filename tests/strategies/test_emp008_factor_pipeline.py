@@ -76,6 +76,30 @@ def _sample_prepared(config: MfbtEmp008Config | None = None) -> PreparedEmp008Fa
     )
 
 
+def _replace_prepared(
+    prepared: PreparedEmp008Factors,
+    *,
+    close: pd.DataFrame | None = None,
+    benchmark_weights: pd.DataFrame | None = None,
+    monthly_dates: tuple[pd.Timestamp, ...] | None = None,
+) -> PreparedEmp008Factors:
+    return PreparedEmp008Factors(
+        config=prepared.config,
+        market=prepared.market,
+        factor_set_definition=prepared.factor_set_definition,
+        raw_factors=prepared.raw_factors,
+        alpha_factors=prepared.alpha_factors,
+        sector_factors=prepared.sector_factors,
+        close=close if close is not None else prepared.close,
+        market_cap=prepared.market_cap,
+        float_market_cap=prepared.float_market_cap,
+        universe=prepared.universe,
+        sector=prepared.sector,
+        benchmark_weights=benchmark_weights if benchmark_weights is not None else prepared.benchmark_weights,
+        monthly_dates=monthly_dates if monthly_dates is not None else prepared.monthly_dates,
+    )
+
+
 def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -284,6 +308,19 @@ def test_run_mfbt_emp008_rejects_mismatched_config_for_prepared_bundle() -> None
         )
 
 
+def test_run_mfbt_emp008_reports_non_factor_set_config_differences() -> None:
+    prepared = _sample_prepared(MfbtEmp008Config(risk_model="factor_idio"))
+
+    with pytest.raises(ValueError, match="risk_model"):
+        run_mfbt_emp008(
+            parquet_dir=Path("parquet"),
+            start="2024-02-29",
+            end="2024-03-29",
+            config=MfbtEmp008Config(risk_model="direct_covariance"),
+            prepared=prepared,
+        )
+
+
 def test_run_mfbt_emp008_rejects_prepared_bundle_with_insufficient_end_coverage() -> None:
     prepared = _sample_prepared()
 
@@ -294,6 +331,82 @@ def test_run_mfbt_emp008_rejects_prepared_bundle_with_insufficient_end_coverage(
             end="2024-04-30",
             prepared=prepared,
         )
+
+
+def test_run_mfbt_emp008_rejects_prepared_bundle_when_monthly_dates_stop_before_requested_end_month() -> None:
+    prepared = _sample_prepared()
+    april_index = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29", "2024-04-30"])
+    extended_close = pd.DataFrame(
+        [[10.0, 20.0], [11.0, 21.0], [12.0, 22.0], [13.0, 23.0]],
+        index=april_index,
+        columns=prepared.close.columns,
+    )
+    extended_bm = pd.DataFrame(
+        [[0.25, 0.75], [0.11, 0.89], [0.20, 0.80], [0.22, 0.78]],
+        index=april_index,
+        columns=prepared.benchmark_weights.columns,
+    )
+    extended_prepared = _replace_prepared(
+        prepared,
+        close=extended_close,
+        benchmark_weights=extended_bm,
+        monthly_dates=tuple(pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29"])),
+    )
+
+    with pytest.raises(ValueError, match="monthly output range"):
+        run_mfbt_emp008(
+            parquet_dir=Path("parquet"),
+            start="2024-02-29",
+            end="2024-04-30",
+            prepared=extended_prepared,
+        )
+
+
+def test_run_mfbt_emp008_accepts_last_business_day_in_requested_end_month(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prepared = _sample_prepared()
+    june_index = pd.to_datetime(["2024-04-30", "2024-05-31", "2024-06-28"])
+    close = pd.DataFrame(
+        [[10.0, 20.0], [11.0, 21.0], [12.0, 22.0]],
+        index=june_index,
+        columns=prepared.close.columns,
+    )
+    bm = pd.DataFrame(
+        [[0.30, 0.70], [0.25, 0.75], [0.20, 0.80]],
+        index=june_index,
+        columns=prepared.benchmark_weights.columns,
+    )
+    valid_prepared = _replace_prepared(
+        prepared,
+        close=close,
+        benchmark_weights=bm,
+        monthly_dates=tuple(june_index),
+    )
+    calls: list[pd.Timestamp] = []
+
+    def fake_optimize_month(**kwargs: object) -> OptimizationResult:
+        calls.append(kwargs["return_date"])
+        return OptimizationResult(
+            success=True,
+            final_weights=pd.Series({"A": 0.6, "B": 0.4}),
+            active_weights=pd.Series({"A": 0.1, "B": -0.1}),
+            objective_value=1.0,
+            tracking_error=0.02,
+            sector_active_exposure_abs_max=0.0,
+        )
+
+    monkeypatch.setattr("backtesting.strategies.emp008.mfbt_emp008._optimize_month", fake_optimize_month)
+
+    result = run_mfbt_emp008(
+        parquet_dir=Path("parquet"),
+        start="2024-05-31",
+        end="2024-06-30",
+        prepared=valid_prepared,
+    )
+
+    assert calls == [pd.Timestamp("2024-05-31"), pd.Timestamp("2024-06-28")]
+    assert result.target_weights.index.tolist() == [pd.Timestamp("2024-05-31"), pd.Timestamp("2024-06-28")]
 
 
 def test_build_emp008_factor_attribution_uses_supplied_prepared_bundle_without_reload(

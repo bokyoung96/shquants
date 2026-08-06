@@ -21,6 +21,7 @@ from backtesting.strategies.emp008.factor_registry import (
     get_factor_definition,
     get_factor_set_definition,
     parse_factor_set,
+    strategy_factor_set_values,
 )
 
 
@@ -87,6 +88,7 @@ def test_strategy_sets_select_independent_factor_ids_and_own_neutralization_poli
     assert origin_12_1m.neutralize_large_benchmark_weight_factors == ()
     assert all_factors.factors == tuple(FactorId)
     assert len(all_factors.factors) == len(set(all_factors.factors))
+    assert all_factors.diagnostics_only is True
 
 
 def test_registry_exposes_read_only_complete_mappings() -> None:
@@ -193,6 +195,7 @@ def test_factor_set_membership_order_and_metadata_match_expected_contract() -> N
         id=FactorSetId.ALL_FACTORS,
         factors=tuple(FactorId),
         snapshot_forward_days=7,
+        diagnostics_only=True,
     )
 
 
@@ -227,6 +230,17 @@ def test_factor_set_values_returns_declared_order() -> None:
         "origin_new_dividend",
         "origin_12_1m",
         "all_factors",
+    )
+
+
+def test_strategy_factor_set_values_excludes_diagnostics_only_sets() -> None:
+    assert strategy_factor_set_values() == (
+        "mfbt",
+        "mfbt_pos",
+        "mfbt_origin_smallcap",
+        "origin",
+        "origin_new_dividend",
+        "origin_12_1m",
     )
 
 

@@ -26,6 +26,12 @@ def build_raw_mfbt_factors(market: MarketData, config: MfbtEmp008Config) -> dict
             "Momentum_12M": _origin_momentum_12m(close),
             "DY": _origin_dividend_yield(market),
         }
+    if config.factor_set == "origin_new_dividend":
+        return {
+            "LnMktcap": _ln_market_cap(market),
+            "Momentum_12M": _origin_momentum_12m(close),
+            "dividend_yield": _dividend_yield(market),
+        }
     momentum_name = "positivity_momentum" if config.factor_set == "mfbt_pos" else "price_momentum"
     momentum = _positivity_momentum(close, config) if config.factor_set == "mfbt_pos" else _price_momentum(close)
     return {

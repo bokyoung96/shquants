@@ -33,16 +33,25 @@ def build_emp008_config(
             raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
         config = replace(config, risk_model=risk_model)
     if factor_set is not None:
-        if factor_set not in {"mfbt", "mfbt_pos", "origin"}:
-            raise ValueError("factor_set must be 'mfbt', 'mfbt_pos', or 'origin'")
-        if factor_set == "origin":
+        if factor_set not in {"mfbt", "mfbt_pos", "mfbt_origin_smallcap", "origin", "origin_new_dividend"}:
+            raise ValueError(
+                "factor_set must be 'mfbt', 'mfbt_pos', 'mfbt_origin_smallcap', 'origin', "
+                "or 'origin_new_dividend'"
+            )
+        if factor_set in {"origin", "origin_new_dividend"}:
             config = replace(
                 config,
                 factor_set=factor_set,
                 expected_alpha_policy="origin_sign",
                 rank_transform_factors=("LnMktcap",),
                 large_bm_neutral_factor_names=(),
-                monthly_snapshot_forward_days=7,
+                monthly_snapshot_forward_days=7 if factor_set == "origin" else 0,
+            )
+        elif factor_set == "mfbt_origin_smallcap":
+            config = replace(
+                config,
+                factor_set=factor_set,
+                expected_alpha_policy="origin_small_cap",
             )
         else:
             config = replace(config, factor_set=factor_set)
@@ -75,7 +84,10 @@ def latest_common_end(parquet_dir: Path, config: MfbtEmp008Config) -> str:
         frame = pd.read_parquet(path)
         if frame.empty:
             raise ValueError(f"empty required parquet dataset: {path}")
-        ends.append(pd.to_datetime(frame.index).max())
+        dataset_end = pd.to_datetime(frame.index).max()
+        if spec.validity == "month_only":
+            dataset_end = dataset_end.to_period("M").end_time.normalize()
+        ends.append(dataset_end)
     return min(ends).date().isoformat()
 
 
@@ -222,8 +234,10 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--factor-set",
-        choices=("mfbt", "mfbt_pos", "origin"),
-        help="Alpha factor set. Use 'mfbt_pos' to replace price momentum with positivity, or 'origin' for LnMktcap, Momentum_12M, DY.",
+        choices=("mfbt", "mfbt_pos", "mfbt_origin_smallcap", "origin", "origin_new_dividend"),
+        help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
+        "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
+        "or 'origin_new_dividend' to replace origin DY with MFBT dividend yield.",
     )
     parser.add_argument(
         "--sector-neutral-dataset",

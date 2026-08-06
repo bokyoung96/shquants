@@ -32,7 +32,6 @@ The pipeline reads shquants catalog datasets from a parquet directory.
 | Role | Dataset |
 | --- | --- |
 | Return and factor price base | `QW_ADJ_C` |
-| Benchmark-weight source support | `QW_C` |
 | Benchmark weights | `QW_BM_WEIGHTS` |
 | Earnings momentum | `QW_OP_FWD_12M` |
 | Dividend yield | `QW_DPS_TTM` |
@@ -42,6 +41,10 @@ The pipeline reads shquants catalog datasets from a parquet directory.
 | Preprocessing weight | `QW_MKTCAP_FLT` |
 | Value factor | `QW_FCF`, `QW_INT_BEARING_LIAB_NFQ0`, `QW_QUICK_ASSETS_NFQ0` |
 | Tradable universe | `QW_K200_YN` |
+
+The MFBT factor sets use all factor inputs above. `origin` loads only the
+common portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
+`QW_DPS_TTM` instead. Raw close (`QW_C`) is not part of the EMP008 calculation.
 
 `MfbtEmp008Config` controls dataset choices and key parameters:
 
@@ -58,6 +61,13 @@ The pipeline reads shquants catalog datasets from a parquet directory.
 | `risk_window` | `36` | Rolling monthly factor-risk window |
 | `tracking_error` | `0.007 / sqrt(12)` | Monthly active-risk budget |
 | `risk_model` | `factor_idio` | TE covariance model: `factor_idio` or `direct_covariance` |
+| `expected_alpha_policy` | `mean` | Optional Origin-style directional guard applied after the 36-month mean |
+
+`QW_BM_WEIGHTS` is used without modification from its first positive row
+onward. When the requested 36-month warmup reaches dates before the official
+series begins, EMP008 uses contemporaneous `QW_MKTCAP_FLT` normalized within
+`QW_K200_YN` as a benchmark proxy. This proxy is limited to the missing prefix;
+it is not allowed to replace or fill official benchmark rows.
 
 ## Raw Factors
 
@@ -127,8 +137,10 @@ stock_excess_return_t = Z_(t-1) * f_t + e_t
 This produces one realized return per factor plus a residual per stock. These
 monthly `f_t` and `e_t` observations are accumulated through the warmup period.
 Optimization starts only after `risk_window = 36` monthly factor-return
-observations are available. With the current data, the requested run starts from
-`2020-01-31`, but the first optimized portfolio is `2022-12-29`.
+observations are available. The loader retrieves those observations before the
+requested output period. For example, a run requested from December 2019 uses
+the preceding history and produces its first optimized portfolio on the last
+2019 trading day, `2019-12-30`.
 
 ### Expected Alpha
 
@@ -145,6 +157,20 @@ The six alpha factors contribute to `a`. Sector dummy factors are still present
 in `Z_t`, but their expected alpha is forced to zero. They are included so the
 same exposure matrix can both explain returns and enforce sector active
 neutrality.
+
+The `mfbt_origin_smallcap` variant applies Origin's directional policy after
+the rolling mean is estimated. It does not alter raw factors, z-scores,
+realized factor returns, or the risk model:
+
+```text
+price_momentum, earnings_momentum, dividend_yield, retail_flow, value:
+    adjusted alpha = max(mean(last 36 monthly f_t), 0)
+ln_market_cap:
+    adjusted alpha = min(mean(last 36 monthly f_t), 0)
+```
+
+A disabled factor therefore contributes no expected return to the objective,
+while its exposure and covariance remain in the TE risk calculation.
 
 `ln_market_cap` has one additional guardrail: if a stock has benchmark weight at
 least `10%`, its `ln_market_cap` exposure is set to `0.0` for that date. That
@@ -406,6 +432,9 @@ root is explicitly desired.
 - The optimizer uses median residual-variance fallback for new benchmark
   entrants. This is conservative enough for continuity, but it is still a model
   assumption that should be reviewed before production use.
+- Factor-return warmup before the first official `QW_BM_WEIGHTS` row uses a
+  normalized float-market-cap proxy. Official benchmark weights remain the
+  optimization anchor as soon as they are available.
 - Sector neutrality depends on the configured sector dataset and float-market-cap
   weights. Changes to sector taxonomy can change active constraints.
 - Legacy EMP008 surfaces are not the public path for this strategy. The supported

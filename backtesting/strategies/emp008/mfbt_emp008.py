@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_bm_weights, load_mfbt_emp008_market
+from .mfbt_emp008_data import MfbtEmp008Config, load_mfbt_emp008_market
 from .mfbt_emp008_factors import build_raw_mfbt_factors
 from .mfbt_emp008_optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
 from .mfbt_emp008_preprocess import build_sector_active_exposures, combine_exposures, preprocess_factor_frame
@@ -36,25 +36,6 @@ class MfbtEmp008Result:
             self.weights_for_export().to_excel(writer, sheet_name="weights_ticker_by_date")
             self.diagnostics.to_excel(writer, sheet_name="summary", index=False)
             self.active_weights.T.to_excel(writer, sheet_name="active_ticker_by_date")
-
-
-def run_mfbt_emp008_smoke(*, parquet_dir: Path, start: str, end: str) -> MfbtEmp008Result:
-    config = MfbtEmp008Config()
-    bm = load_mfbt_emp008_bm_weights(parquet_dir=parquet_dir, start=start, end=end, config=config).astype(float).copy()
-    row_sum = bm.sum(axis=1)
-    usable = row_sum.gt(0.0)
-    if not usable.any():
-        raise ValueError("no usable benchmark weight rows")
-    bm = bm.loc[usable].div(row_sum.loc[usable], axis=0)
-    diagnostics = pd.DataFrame(
-        {
-            "target_date": bm.index,
-            "success": True,
-            "sum_final_weight": bm.sum(axis=1).to_numpy(),
-            "n_active_positions": bm.gt(0.0).sum(axis=1).to_numpy(),
-        }
-    )
-    return MfbtEmp008Result(target_weights=bm, active_weights=bm * 0.0, diagnostics=diagnostics)
 
 
 def build_diagnostics_row(
@@ -100,6 +81,7 @@ def run_mfbt_emp008(
     universe = market.frames["k200_yn"].reindex(index=close.index, columns=close.columns).fillna(0).astype(bool)
     sector = market.frames["sector_neutral_big"].reindex(index=close.index, columns=close.columns).ffill()
     bm_weights = market.frames["bm_weights"].reindex(index=close.index, columns=close.columns).astype(float)
+    bm_weights = _complete_benchmark_history(bm_weights, float_mktcap, universe)
 
     monthly_dates = _common_month_end_dates(raw_factors)
     alpha_factors = {
@@ -281,11 +263,25 @@ def _has_sufficient_risk_history(factor_returns: pd.DataFrame, config: MfbtEmp00
 def _apply_expected_alpha_policy(expected_alpha: pd.Series, config: MfbtEmp008Config) -> pd.Series:
     if config.expected_alpha_policy == "mean":
         return expected_alpha
+    if config.expected_alpha_policy == "origin_small_cap":
+        adjusted = expected_alpha.copy()
+        for factor in (
+            "price_momentum",
+            "earnings_momentum",
+            "dividend_yield",
+            "retail_flow",
+            "value",
+        ):
+            if factor in adjusted and adjusted.loc[factor] < 0.0:
+                adjusted.loc[factor] = 0.0
+        if "ln_market_cap" in adjusted and adjusted.loc["ln_market_cap"] > 0.0:
+            adjusted.loc["ln_market_cap"] = 0.0
+        return adjusted
     if config.expected_alpha_policy != "origin_sign":
         raise ValueError(f"unsupported expected_alpha_policy: {config.expected_alpha_policy}")
 
     adjusted = expected_alpha.copy()
-    for factor in ("DY", "Momentum_12M"):
+    for factor in ("DY", "dividend_yield", "Momentum_12M"):
         if factor in adjusted and adjusted.loc[factor] < 0.0:
             adjusted.loc[factor] = 0.0
     if "LnMktcap" in adjusted and adjusted.loc["LnMktcap"] > 0.0:
@@ -300,6 +296,24 @@ def _positive_benchmark_weights(weights: pd.Series) -> pd.Series:
     if total <= 0.0:
         raise ValueError("no positive benchmark weights")
     return positive.div(total)
+
+
+def _complete_benchmark_history(
+    bm_weights: pd.DataFrame,
+    float_mktcap: pd.DataFrame,
+    universe: pd.DataFrame,
+) -> pd.DataFrame:
+    completed = bm_weights.reindex(index=float_mktcap.index, columns=float_mktcap.columns).astype(float).copy()
+    official_rows = completed.fillna(0.0).sum(axis=1).gt(0.0)
+    if not official_rows.any():
+        return completed
+
+    first_official_date = official_rows.index[official_rows][0]
+    warmup_rows = completed.index < first_official_date
+    proxy_values = float_mktcap.astype(float).where(universe).clip(lower=0.0)
+    proxy_weights = proxy_values.div(proxy_values.sum(axis=1).replace(0.0, float("nan")), axis=0).fillna(0.0)
+    completed.loc[warmup_rows] = proxy_weights.loc[warmup_rows]
+    return completed
 
 
 def _neutralize_large_benchmark_weight_factor_exposures(

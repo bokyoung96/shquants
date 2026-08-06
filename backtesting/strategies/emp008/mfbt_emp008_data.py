@@ -36,29 +36,31 @@ class MfbtEmp008Config:
 
 
 def required_datasets(config: MfbtEmp008Config) -> tuple[DatasetId, ...]:
+    if config.factor_set == "origin":
+        factor_datasets = [DatasetId.QW_DIVIDEND_YLD_FY0]
+    elif config.factor_set == "origin_new_dividend":
+        factor_datasets = [DatasetId.QW_DPS_TTM]
+    else:
+        factor_datasets = [
+            DatasetId.QW_OP_FWD_12M,
+            DatasetId.QW_DPS_TTM,
+            DatasetId.QW_RETAIL,
+            config.sector_dataset,
+            DatasetId.QW_FCF,
+            DatasetId.QW_INT_BEARING_LIAB_NFQ0,
+            DatasetId.QW_QUICK_ASSETS_NFQ0,
+        ]
+
     ordered = [
         DatasetId.QW_ADJ_C,
-        DatasetId.QW_C,
         config.bm_weights_dataset,
-        DatasetId.QW_OP_FWD_12M,
-        DatasetId.QW_DPS_TTM,
-        DatasetId.QW_RETAIL,
-        config.sector_dataset,
+        *factor_datasets,
         config.sector_neutral_dataset or config.sector_dataset,
         DatasetId.QW_MKTCAP,
         config.float_market_cap_dataset,
-        DatasetId.QW_FCF,
-        DatasetId.QW_INT_BEARING_LIAB_NFQ0,
-        DatasetId.QW_QUICK_ASSETS_NFQ0,
         config.universe_dataset,
     ]
-    if config.factor_set == "origin":
-        ordered.append(DatasetId.QW_DIVIDEND_YLD_FY0)
-    deduped: list[DatasetId] = []
-    for dataset in ordered:
-        if dataset not in deduped:
-            deduped.append(dataset)
-    return tuple(deduped)
+    return tuple(dict.fromkeys(ordered))
 
 
 def load_mfbt_emp008_market(
@@ -90,18 +92,6 @@ def load_mfbt_emp008_market(
             benchmark=market.benchmark,
         )
     return _trim_non_forward_snapshot_frames(market, end=end, config=config)
-
-
-def load_mfbt_emp008_bm_weights(
-    *,
-    parquet_dir: Path,
-    start: str,
-    end: str,
-    config: MfbtEmp008Config,
-) -> pd.DataFrame:
-    loader = DataLoader(DataCatalog.default(), ParquetStore(parquet_dir))
-    market = loader.load(LoadRequest(datasets=[config.bm_weights_dataset], start=start, end=end))
-    return market.frames["bm_weights"]
 
 
 def padded_history_start(start: str, config: MfbtEmp008Config) -> str:

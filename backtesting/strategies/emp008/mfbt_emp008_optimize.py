@@ -7,6 +7,9 @@ import pandas as pd
 from scipy.optimize import minimize
 
 
+MIN_FINAL_WEIGHT = 1e-8
+
+
 @dataclass(frozen=True, slots=True)
 class OptimizationResult:
     success: bool
@@ -112,23 +115,32 @@ def _solve_active_weight_problem(
     z_array = exposures.to_numpy()
     alpha_array = expected_alpha.to_numpy()
     bm_array = bm_weights.to_numpy()
+    final_weight_floor = np.minimum(bm_array * 0.5, MIN_FINAL_WEIGHT)
     constraints = [
         {"type": "eq", "fun": lambda x: np.sum(x)},
         {"type": "ineq", "fun": lambda x: tracking_error**2 - float(x.T @ covariance @ x)},
     ]
-    for sector_name in sector_factor_names:
-        if sector_name in exposures.columns:
-            sector_vector = exposures[sector_name].to_numpy()
-            constraints.append({"type": "eq", "fun": lambda x, v=sector_vector: float(v @ x)})
+    for sector_name in _independent_sector_factor_names(exposures, sector_factor_names):
+        sector_vector = exposures[sector_name].to_numpy()
+        constraints.append({"type": "eq", "fun": lambda x, v=sector_vector: float(v @ x)})
 
+    minimize_kwargs = {
+        "fun": lambda x: -float(alpha_array.T @ z_array.T @ x),
+        "x0": np.zeros(len(exposures)),
+        "method": "SLSQP",
+        "bounds": [(-weight + floor, None) for weight, floor in zip(bm_array, final_weight_floor, strict=True)],
+    }
     result = minimize(
-        fun=lambda x: -float(alpha_array.T @ z_array.T @ x),
-        x0=np.zeros(len(exposures)),
-        method="SLSQP",
-        bounds=[(-weight, None) for weight in bm_array],
+        **minimize_kwargs,
         constraints=constraints,
         options={"maxiter": 1000, "ftol": 1e-12},
     )
+    if not result.success:
+        result = minimize(
+            **minimize_kwargs,
+            constraints=constraints,
+            options={"maxiter": 1000, "ftol": 1e-9},
+        )
     active = pd.Series(result.x, index=exposures.index, dtype=float)
     final = bm_weights.add(active, fill_value=0.0)
     sector_residual = 0.0
@@ -144,6 +156,26 @@ def _solve_active_weight_problem(
         tracking_error=float((active.to_numpy().T @ covariance @ active.to_numpy()) ** 0.5),
         sector_active_exposure_abs_max=sector_residual,
     )
+
+
+def _independent_sector_factor_names(
+    exposures: pd.DataFrame,
+    sector_factor_names: list[str],
+) -> list[str]:
+    basis = np.ones((1, len(exposures)), dtype=float)
+    rank = int(np.linalg.matrix_rank(basis))
+    independent: list[str] = []
+    for name in sector_factor_names:
+        if name not in exposures.columns:
+            continue
+        candidate = np.vstack([basis, exposures[name].to_numpy(dtype=float)])
+        candidate_rank = int(np.linalg.matrix_rank(candidate))
+        if candidate_rank <= rank:
+            continue
+        independent.append(name)
+        basis = candidate
+        rank = candidate_rank
+    return independent
 
 
 def _full_covariance(exposures: pd.DataFrame, factor_cov: pd.DataFrame, residual_var: pd.Series) -> np.ndarray:

@@ -4,6 +4,9 @@ import numpy as np
 import pytest
 import pandas as pd
 
+import backtesting.strategies.emp008.mfbt_emp008 as emp008
+import backtesting.strategies.emp008.mfbt_emp008_optimize as emp008_optimize
+
 from backtesting.catalog import DataCatalog, DatasetId
 from backtesting.data import MarketData
 from backtesting.strategies.emp008.run_backtest import (
@@ -21,15 +24,12 @@ from backtesting.strategies.emp008.run_weights import (
     write_target_weights_csv,
 )
 from backtesting.strategies.emp008.comparison import (
-    _pair_active_weight_display_frame,
     active_weight_abs_sum_frame,
     build_emp008_comparison,
     excess_summary_bps,
     monthly_compounded_returns,
     monthly_excess_heatmap_frame,
-    pair_return_display_frame,
     performance_metrics,
-    yearly_compounded_returns,
 )
 from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
 from backtesting.strategies.emp008.mfbt_emp008_factors import _sector_relative_retail_flow, build_raw_mfbt_factors
@@ -62,6 +62,23 @@ def test_latest_common_end_uses_required_dataset_minimum_end_date(tmp_path: Path
     assert latest_common_end(tmp_path, config) == "2024-01-02"
 
 
+def test_latest_common_end_treats_month_only_data_as_valid_through_month_end(tmp_path: Path) -> None:
+    catalog = DataCatalog.default()
+    config = MfbtEmp008Config(
+        factor_set="origin",
+        sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG,
+    )
+
+    for dataset_id in required_datasets(config):
+        spec = catalog.get(dataset_id)
+        date = "2024-01-15" if spec.validity == "month_only" else "2024-01-31"
+        pd.DataFrame({"A": [1.0]}, index=pd.to_datetime([date])).to_parquet(
+            tmp_path / f"{spec.stem}.parquet"
+        )
+
+    assert latest_common_end(tmp_path, config) == "2024-01-31"
+
+
 def test_required_datasets_includes_distinct_sector_neutral_dataset() -> None:
     config = MfbtEmp008Config(sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG)
 
@@ -70,6 +87,60 @@ def test_required_datasets_includes_distinct_sector_neutral_dataset() -> None:
     assert DatasetId.QW_WI_SEC_26_BIG in datasets
     assert DatasetId.QW_WICS_SEC_BIG in datasets
     assert len(datasets) == len(set(datasets))
+
+
+@pytest.mark.parametrize(
+    ("factor_set", "dividend_dataset"),
+    [
+        ("origin", DatasetId.QW_DIVIDEND_YLD_FY0),
+        ("origin_new_dividend", DatasetId.QW_DPS_TTM),
+    ],
+)
+def test_origin_required_datasets_include_only_inputs_used_by_the_strategy(
+    factor_set: str,
+    dividend_dataset: DatasetId,
+) -> None:
+    config = MfbtEmp008Config(
+        factor_set=factor_set,
+        sector_neutral_dataset=DatasetId.QW_WICS_SEC_BIG,
+    )
+
+    assert set(required_datasets(config)) == {
+        DatasetId.QW_ADJ_C,
+        DatasetId.QW_BM_WEIGHTS,
+        DatasetId.QW_WICS_SEC_BIG,
+        DatasetId.QW_MKTCAP,
+        DatasetId.QW_MKTCAP_FLT,
+        DatasetId.QW_K200_YN,
+        dividend_dataset,
+    }
+
+
+def test_mfbt_required_datasets_omit_unused_raw_close() -> None:
+    datasets = required_datasets(MfbtEmp008Config())
+
+    assert DatasetId.QW_C not in datasets
+
+
+def test_complete_benchmark_history_uses_float_cap_only_before_official_weights() -> None:
+    dates = pd.to_datetime(["2019-11-29", "2019-12-30", "2020-01-02"])
+    bm_weights = pd.DataFrame(
+        {"A": [np.nan, np.nan, 0.7], "B": [np.nan, np.nan, 0.3]},
+        index=dates,
+    )
+    float_mktcap = pd.DataFrame(
+        {"A": [60.0, 80.0, 90.0], "B": [40.0, 20.0, 10.0]},
+        index=dates,
+    )
+    universe = pd.DataFrame(True, index=dates, columns=["A", "B"])
+    complete = getattr(emp008, "_complete_benchmark_history", None)
+
+    assert callable(complete)
+    result = complete(bm_weights, float_mktcap, universe)
+
+    assert result.loc["2019-11-29"].tolist() == pytest.approx([0.6, 0.4])
+    assert result.loc["2019-12-30"].tolist() == pytest.approx([0.8, 0.2])
+    assert result.loc["2020-01-02"].tolist() == pytest.approx([0.7, 0.3])
 
 
 def test_load_market_keeps_retail_and_sector_neutral_frames_separate(tmp_path: Path) -> None:
@@ -283,6 +354,18 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in required_datasets(config)
 
 
+def test_build_emp008_config_sets_origin_with_new_dividend_variant() -> None:
+    config = build_emp008_config(tracking_error_annual=0.007, factor_set="origin_new_dividend")
+
+    assert config.factor_set == "origin_new_dividend"
+    assert config.expected_alpha_policy == "origin_sign"
+    assert config.rank_transform_factors == ("LnMktcap",)
+    assert config.large_bm_neutral_factor_names == ()
+    assert config.monthly_snapshot_forward_days == 0
+    assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
+    assert DatasetId.QW_DIVIDEND_YLD_FY0 not in required_datasets(config)
+
+
 def test_build_emp008_config_sets_mfbt_positivity_variant() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt_pos")
 
@@ -291,6 +374,20 @@ def test_build_emp008_config_sets_mfbt_positivity_variant() -> None:
     assert config.rank_transform_factors == ("ln_market_cap",)
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
     assert DatasetId.QW_DIVIDEND_YLD_FY0 not in required_datasets(config)
+
+
+def test_build_emp008_config_adds_only_origin_small_cap_policy_to_mfbt() -> None:
+    baseline = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt")
+
+    config = build_emp008_config(tracking_error_annual=0.007, factor_set="mfbt_origin_smallcap")
+
+    assert config.factor_set == "mfbt_origin_smallcap"
+    assert config.expected_alpha_policy == "origin_small_cap"
+    assert config.rank_transform_factors == baseline.rank_transform_factors
+    assert config.large_bm_neutral_factor_names == baseline.large_bm_neutral_factor_names
+    assert config.monthly_snapshot_forward_days == baseline.monthly_snapshot_forward_days
+    assert config.tracking_error == baseline.tracking_error
+    assert required_datasets(config) == required_datasets(baseline)
 
 
 def test_build_emp008_config_sets_wics_sector_neutral_dataset() -> None:
@@ -362,6 +459,25 @@ def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend
     assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
     assert factors["Momentum_12M"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
     assert factors["DY"].loc["2024-02-29", "A"] == pytest.approx(0.65)
+
+
+def test_origin_new_dividend_keeps_origin_size_and_momentum_but_uses_ttm_dividend_yield() -> None:
+    dates = pd.date_range("2023-01-31", "2024-02-29", freq="ME")
+    close = pd.DataFrame({"A": [100.0, *([101.0] * 11), 120.0, 100.0]}, index=dates)
+    market_cap = pd.DataFrame({"A": [1000.0, *([1100.0] * 11), 1300.0, 1500.0]}, index=dates)
+    dps_ttm = pd.DataFrame({"A": [2.0, *([2.0] * 11), 3.0, 4.0]}, index=dates)
+    market = MarketData(
+        frames={"close": close, "market_cap": market_cap, "dps_ttm": dps_ttm},
+        universe=None,
+        benchmark=None,
+    )
+
+    factors = build_raw_mfbt_factors(market, MfbtEmp008Config(factor_set="origin_new_dividend"))
+
+    assert list(factors) == ["LnMktcap", "Momentum_12M", "dividend_yield"]
+    assert factors["LnMktcap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
+    assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
+    assert factors["dividend_yield"].loc["2024-02-29", "A"] == pytest.approx(0.04)
 
 
 def test_mfbt_positivity_raw_factors_replace_price_high_ratio_with_rolling_positivity() -> None:
@@ -476,6 +592,58 @@ def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
     assert result["sector_tech"] == 0.0
 
 
+def test_origin_expected_alpha_policy_applies_dividend_direction_to_new_dividend_name() -> None:
+    expected_alpha = pd.Series({"LnMktcap": -0.01, "Momentum_12M": 0.02, "dividend_yield": -0.03})
+
+    result = _apply_expected_alpha_policy(
+        expected_alpha,
+        MfbtEmp008Config(factor_set="origin_new_dividend", expected_alpha_policy="origin_sign"),
+    )
+
+    assert result["LnMktcap"] == pytest.approx(-0.01)
+    assert result["Momentum_12M"] == pytest.approx(0.02)
+    assert result["dividend_yield"] == 0.0
+
+
+def test_mfbt_origin_small_cap_policy_preserves_origin_factor_directions() -> None:
+    expected_alpha = pd.Series(
+        {
+            "ln_market_cap": 0.01,
+            "price_momentum": -0.02,
+            "earnings_momentum": -0.025,
+            "dividend_yield": -0.03,
+            "retail_flow": -0.035,
+            "value": -0.04,
+            "sector_tech": 0.0,
+        }
+    )
+
+    result = _apply_expected_alpha_policy(
+        expected_alpha,
+        MfbtEmp008Config(
+            factor_set="mfbt_origin_smallcap",
+            expected_alpha_policy="origin_small_cap",
+        ),
+    )
+
+    assert result["ln_market_cap"] == 0.0
+    assert result.eq(0.0).all()
+
+
+def test_mfbt_origin_small_cap_policy_keeps_negative_size_alpha() -> None:
+    expected_alpha = pd.Series({"ln_market_cap": -0.01, "value": 0.04})
+
+    result = _apply_expected_alpha_policy(
+        expected_alpha,
+        MfbtEmp008Config(
+            factor_set="mfbt_origin_smallcap",
+            expected_alpha_policy="origin_small_cap",
+        ),
+    )
+
+    assert result.equals(expected_alpha)
+
+
 def test_direct_covariance_optimizer_uses_stock_covariance_risk_budget() -> None:
     exposures = pd.DataFrame(
         {
@@ -507,6 +675,85 @@ def test_direct_covariance_optimizer_uses_stock_covariance_risk_budget() -> None
     assert result.active_weights.sum() == pytest.approx(0.0, abs=1e-8)
     assert realized_te <= 0.0300001
     assert result.tracking_error == pytest.approx(realized_te)
+
+
+def test_optimizer_keeps_every_benchmark_constituent_above_holding_floor() -> None:
+    exposures = pd.DataFrame(
+        {"value": {"A": 1.0, "B": 0.0, "C": -1.0}}
+    )
+    benchmark_weights = pd.Series({"A": 0.4, "B": 0.3, "C": 0.3})
+
+    result = optimize_active_weights_with_covariance(
+        exposures=exposures,
+        stock_cov=pd.DataFrame(np.eye(3), index=exposures.index, columns=exposures.index),
+        expected_alpha=pd.Series({"value": 1.0}),
+        bm_weights=benchmark_weights,
+        sector_factor_names=[],
+        tracking_error=10.0,
+    )
+
+    assert result.success is True
+    assert result.final_weights.gt(1e-12).all()
+    assert result.final_weights.sum() == pytest.approx(1.0)
+    assert result.active_weights.sum() == pytest.approx(0.0)
+
+
+def test_optimizer_selects_only_independent_sector_constraints() -> None:
+    exposures = pd.DataFrame(
+        {
+            "value": {"A": 1.0, "B": -1.0, "C": 0.0},
+            "sector_tech": {"A": 0.5, "B": 0.5, "C": -1.0},
+            "sector_other": {"A": -0.5, "B": -0.5, "C": 1.0},
+        }
+    )
+    selector = getattr(emp008_optimize, "_independent_sector_factor_names", None)
+
+    assert callable(selector)
+    assert selector(exposures, ["sector_tech", "sector_other"]) == ["sector_tech"]
+
+
+def test_optimizer_retries_numeric_failure_with_relaxed_ftol(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[float] = []
+    constraint_counts: list[int] = []
+
+    def fake_minimize(**kwargs: object) -> object:
+        options = kwargs["options"]
+        constraints = kwargs["constraints"]
+        assert isinstance(options, dict)
+        assert isinstance(constraints, list)
+        calls.append(float(options["ftol"]))
+        constraint_counts.append(len(constraints))
+        return type(
+            "Result",
+            (),
+            {
+                "success": len(calls) == 2,
+                "x": np.zeros(3),
+                "fun": 0.0,
+            },
+        )()
+
+    monkeypatch.setattr(emp008_optimize, "minimize", fake_minimize)
+    exposures = pd.DataFrame(
+        {
+            "value": {"A": 1.0, "B": -1.0, "C": 0.0},
+            "sector_tech": {"A": 0.5, "B": 0.5, "C": -1.0},
+            "sector_other": {"A": -0.5, "B": -0.5, "C": 1.0},
+        }
+    )
+
+    result = optimize_active_weights_with_covariance(
+        exposures=exposures,
+        stock_cov=pd.DataFrame(np.eye(3), index=exposures.index, columns=exposures.index),
+        expected_alpha=pd.Series({"value": 0.1, "sector_tech": 0.0, "sector_other": 0.0}),
+        bm_weights=pd.Series({"A": 0.4, "B": 0.4, "C": 0.2}),
+        sector_factor_names=["sector_tech", "sector_other"],
+        tracking_error=0.03,
+    )
+
+    assert result.success is True
+    assert calls == [1e-12, 1e-9]
+    assert constraint_counts == [3, 3]
 
 
 def test_stock_excess_covariance_fills_returns_before_covariance_to_keep_psd() -> None:
@@ -563,36 +810,6 @@ def test_monthly_compounded_returns_uses_within_month_compounding() -> None:
     assert result["Gross excess"].tolist() == pytest.approx([(1.01 * 1.02) - 1.0, -0.01])
 
 
-def test_yearly_compounded_returns_uses_calendar_year_compounding() -> None:
-    returns = pd.DataFrame(
-        {"MFBT": [0.01, 0.02, -0.01]},
-        index=pd.to_datetime(["2024-01-02", "2024-12-31", "2025-01-02"]),
-    )
-
-    result = yearly_compounded_returns(returns)
-
-    assert result.index.tolist() == [2024, 2025]
-    assert result["MFBT"].tolist() == pytest.approx([(1.01 * 1.02) - 1.0, -0.01])
-
-
-def test_pair_return_display_frame_keeps_only_gross_strategy_and_benchmark_lines() -> None:
-    returns = pd.DataFrame(
-        {
-            "mfbt_emp008_70bp_36m gross": [0.01],
-            "mfbt_emp008_70bp_36m costed": [0.02],
-            "origin_emp008 gross": [0.03],
-            "origin_emp008 costed": [0.04],
-            "KOSPI200 BM": [0.05],
-        },
-        index=pd.to_datetime(["2024-01-02"]),
-    )
-
-    result = pair_return_display_frame(returns)
-
-    assert result.columns.tolist() == ["MFBT", "Origin", "KOSPI200 BM"]
-    assert result.iloc[0].tolist() == pytest.approx([0.01, 0.03, 0.05])
-
-
 def test_excess_summary_bps_reports_total_and_monthly_bps() -> None:
     active_returns = pd.DataFrame(
         {"Gross excess": [0.01, 0.02, -0.01]},
@@ -618,19 +835,6 @@ def test_monthly_excess_heatmap_frame_pivots_year_by_month() -> None:
     assert result.loc[2024, 1] == pytest.approx(1.0)
     assert result.loc[2025, 3] == pytest.approx(-2.0)
     assert pd.isna(result.loc[2024, 2])
-
-
-def test_pair_active_weight_display_frame_accepts_single_strategy_schema() -> None:
-    frame = pd.DataFrame(
-        {"sum_abs_active_weight_pct": [14.0, 0.5]},
-        index=pd.to_datetime(["2023-01-31", "2023-02-28"]),
-    )
-
-    result = _pair_active_weight_display_frame(frame)
-
-    assert result.columns.tolist() == ["MFBT"]
-    assert result.index.tolist() == [pd.Timestamp("2023-01-31")]
-    assert result.loc[pd.Timestamp("2023-01-31"), "MFBT"] == pytest.approx(14.0)
 
 
 def test_build_emp008_comparison_writes_core_artifacts(tmp_path: Path) -> None:

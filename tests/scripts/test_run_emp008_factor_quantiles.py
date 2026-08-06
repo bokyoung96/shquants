@@ -209,6 +209,7 @@ def test_main_real_quantile_run_writes_outputs_and_prints_json(
     assert payload["monthly_returns_rows"] > 0
     assert payload["weights_rows"] > 0
     assert payload["rank_ic_rows"] > 0
+    assert payload["daily_cumulative_returns_rows"] > payload["cumulative_returns_rows"]
     assert payload["summary_rows"] > 0
     for key in (
         "monthly_returns_csv",
@@ -217,6 +218,8 @@ def test_main_real_quantile_run_writes_outputs_and_prints_json(
         "rank_ic_csv",
         "rank_ic_parquet",
         "cumulative_returns_csv",
+        "daily_cumulative_returns_csv",
+        "daily_cumulative_returns_parquet",
         "cumulative_quintiles_equal_weight_png",
         "cumulative_quintiles_market_cap_weight_png",
         "summary_csv",
@@ -228,4 +231,6 @@ def test_main_real_quantile_run_writes_outputs_and_prints_json(
 
     manifest = json.loads(Path(payload["manifest_json"]).read_text(encoding="utf-8"))
     assert manifest["weighting_modes"] == ["equal_weight", "market_cap_weight"]
+    assert manifest["rebalance_frequency"] == "monthly"
+    assert manifest["nav_frequency"] == "daily"
     assert manifest["selected_factors"] == [factor_id.value for factor_id in get_factor_set_definition("mfbt").factors]

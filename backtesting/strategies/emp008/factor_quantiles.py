@@ -60,6 +60,8 @@ class Emp008FactorQuantileResult:
             rank_ic_csv = staging_dir / "rank_ic.csv"
             rank_ic_parquet = staging_dir / "rank_ic.parquet"
             cumulative_returns_csv = staging_dir / "cumulative_returns.csv"
+            daily_cumulative_returns_csv = staging_dir / "daily_cumulative_returns.csv"
+            daily_cumulative_returns_parquet = staging_dir / "daily_cumulative_returns.parquet"
             cumulative_quintiles_equal_weight_png = staging_dir / "cumulative_quintiles_equal_weight.png"
             cumulative_quintiles_market_cap_weight_png = staging_dir / "cumulative_quintiles_market_cap_weight.png"
             summary_csv = staging_dir / "summary.csv"
@@ -72,20 +74,22 @@ class Emp008FactorQuantileResult:
             self.rank_ic.to_csv(rank_ic_csv, index=False)
             self.rank_ic.to_parquet(rank_ic_parquet, engine="pyarrow", index=False)
             self.cumulative_returns.to_csv(cumulative_returns_csv, index=False)
+            self.daily_cumulative_returns.to_csv(daily_cumulative_returns_csv, index=False)
+            self.daily_cumulative_returns.to_parquet(daily_cumulative_returns_parquet, engine="pyarrow", index=False)
             directions = {
                 definition.id.value: definition.direction
                 for definition in factor_definitions_for_set(factor_set)
             }
             _write_cumulative_quintile_plot(
                 path=cumulative_quintiles_equal_weight_png,
-                cumulative_returns=self.cumulative_returns,
+                cumulative_returns=self.daily_cumulative_returns,
                 directions=directions,
                 weighting=QuantileWeighting.EQUAL,
                 q=q,
             )
             _write_cumulative_quintile_plot(
                 path=cumulative_quintiles_market_cap_weight_png,
-                cumulative_returns=self.cumulative_returns,
+                cumulative_returns=self.daily_cumulative_returns,
                 directions=directions,
                 weighting=QuantileWeighting.MARKET_CAP,
                 q=q,
@@ -104,6 +108,8 @@ class Emp008FactorQuantileResult:
                 rank_ic_csv,
                 rank_ic_parquet,
                 cumulative_returns_csv,
+                daily_cumulative_returns_csv,
+                daily_cumulative_returns_parquet,
                 cumulative_quintiles_equal_weight_png,
                 cumulative_quintiles_market_cap_weight_png,
                 summary_csv,
@@ -119,6 +125,8 @@ class Emp008FactorQuantileResult:
             "rank_ic_csv": str(destination / "rank_ic.csv"),
             "rank_ic_parquet": str(destination / "rank_ic.parquet"),
             "cumulative_returns_csv": str(destination / "cumulative_returns.csv"),
+            "daily_cumulative_returns_csv": str(destination / "daily_cumulative_returns.csv"),
+            "daily_cumulative_returns_parquet": str(destination / "daily_cumulative_returns.parquet"),
             "cumulative_quintiles_equal_weight_png": str(destination / "cumulative_quintiles_equal_weight.png"),
             "cumulative_quintiles_market_cap_weight_png": str(destination / "cumulative_quintiles_market_cap_weight.png"),
             "summary_csv": str(destination / "summary.csv"),
@@ -128,6 +136,7 @@ class Emp008FactorQuantileResult:
             "weights_rows": int(len(self.portfolio_weights)),
             "rank_ic_rows": int(len(self.rank_ic)),
             "cumulative_returns_rows": int(len(self.cumulative_returns)),
+            "daily_cumulative_returns_rows": int(len(self.daily_cumulative_returns)),
             "summary_rows": int(len(self.summary)),
         }
 
@@ -200,6 +209,8 @@ _ARTIFACT_FILENAMES = (
     "rank_ic.csv",
     "rank_ic.parquet",
     "cumulative_returns.csv",
+    "daily_cumulative_returns.csv",
+    "daily_cumulative_returns.parquet",
     "cumulative_quintiles_equal_weight.png",
     "cumulative_quintiles_market_cap_weight.png",
     "summary.csv",
@@ -927,13 +938,14 @@ def _validate_result_for_output(
 ) -> None:
     if q < 2:
         raise ValueError("q must be at least 2")
-    if result.monthly_returns.empty or result.portfolio_weights.empty or result.rank_ic.empty or result.cumulative_returns.empty or result.summary.empty:
+    if result.monthly_returns.empty or result.portfolio_weights.empty or result.rank_ic.empty or result.cumulative_returns.empty or result.daily_cumulative_returns.empty or result.summary.empty:
         raise ValueError("result must be nonempty before writing artifacts")
 
     _require_columns(result.monthly_returns, _MONTHLY_RETURNS_COLUMNS, "monthly_returns")
     _require_columns(result.portfolio_weights, _PORTFOLIO_WEIGHTS_COLUMNS, "portfolio_weights")
     _require_columns(result.rank_ic, _RANK_IC_COLUMNS, "rank_ic")
     _require_columns(result.cumulative_returns, _CUMULATIVE_RETURNS_COLUMNS, "cumulative_returns")
+    _require_columns(result.daily_cumulative_returns, _DAILY_CUMULATIVE_RETURNS_COLUMNS, "daily_cumulative_returns")
     _require_columns(result.summary, _SUMMARY_COLUMNS, "summary")
 
     factor_definitions = factor_definitions_for_set(factor_set)
@@ -971,6 +983,10 @@ def _validate_result_for_output(
         raise ValueError("rank_ic n_obs values must be finite")
     if not result.cumulative_returns["cumulative_return"].dropna().map(np.isfinite).all():
         raise ValueError("cumulative return values must be finite when present")
+    if not result.daily_cumulative_returns["cumulative_return"].dropna().map(np.isfinite).all():
+        raise ValueError("daily cumulative return values must be finite when present")
+    if result.daily_cumulative_returns.duplicated(["date", "factor", "weighting", "portfolio"]).any():
+        raise ValueError("duplicate daily cumulative return rows are not allowed")
 
     if set(result.monthly_returns["factor"]) != set(result.rank_ic["factor"]):
         raise ValueError("monthly_returns and rank_ic factors must match")
@@ -985,6 +1001,9 @@ def _validate_result_for_output(
     cumulative_keys = set(result.cumulative_returns[["factor", "weighting", "portfolio"]].itertuples(index=False, name=None))
     if cumulative_keys != monthly_keys:
         raise ValueError("cumulative_returns rows must align with monthly_returns portfolios")
+    daily_keys = set(result.daily_cumulative_returns[["factor", "weighting", "portfolio"]].itertuples(index=False, name=None))
+    if daily_keys != monthly_keys:
+        raise ValueError("daily_cumulative_returns rows must align with monthly_returns portfolios")
 
     _validate_membership_parity(result.portfolio_weights)
     _validate_rank_ic(
@@ -998,6 +1017,22 @@ def _validate_result_for_output(
         actual=result.cumulative_returns,
         expected=expected_cumulative,
         frame_name="cumulative_returns",
+    )
+    return_dates = set(pd.to_datetime(result.cumulative_returns["return_date"]))
+    daily_endpoints = (
+        result.daily_cumulative_returns[result.daily_cumulative_returns["date"].isin(return_dates)]
+        .loc[:, ["factor", "weighting", "portfolio", "date", "cumulative_return"]]
+        .rename(columns={"date": "return_date"})
+        .sort_values(["factor", "weighting", "portfolio", "return_date"], kind="mergesort")
+        .reset_index(drop=True)
+    )
+    expected_endpoints = result.cumulative_returns.loc[
+        :, ["factor", "weighting", "portfolio", "return_date", "cumulative_return"]
+    ].sort_values(["factor", "weighting", "portfolio", "return_date"], kind="mergesort").reset_index(drop=True)
+    _compare_derived_frame(
+        actual=daily_endpoints,
+        expected=expected_endpoints,
+        frame_name="daily_cumulative_returns endpoints",
     )
     expected_summary = _build_summary(
         monthly_returns=result.monthly_returns,
@@ -1158,6 +1193,8 @@ def _build_manifest(
         "rank_ic.csv": {"path": str(output_dir / "rank_ic.csv"), "rows": int(len(result.rank_ic))},
         "rank_ic.parquet": {"path": str(output_dir / "rank_ic.parquet"), "rows": int(len(result.rank_ic))},
         "cumulative_returns.csv": {"path": str(output_dir / "cumulative_returns.csv"), "rows": int(len(result.cumulative_returns))},
+        "daily_cumulative_returns.csv": {"path": str(output_dir / "daily_cumulative_returns.csv"), "rows": int(len(result.daily_cumulative_returns))},
+        "daily_cumulative_returns.parquet": {"path": str(output_dir / "daily_cumulative_returns.parquet"), "rows": int(len(result.daily_cumulative_returns))},
         "cumulative_quintiles_equal_weight.png": {
             "path": str(output_dir / "cumulative_quintiles_equal_weight.png"),
             "rows": plotted_factor_count,
@@ -1179,6 +1216,8 @@ def _build_manifest(
         "min_signal_date": pd.Timestamp(result.monthly_returns["signal_date"].min()).date().isoformat(),
         "max_return_date": pd.Timestamp(result.monthly_returns["return_date"].max()).date().isoformat(),
         "timing": "month_end_t_to_next_month_end",
+        "rebalance_frequency": "monthly",
+        "nav_frequency": "daily",
         "market_cap_field": "market_cap",
         "artifacts": artifacts,
     }
@@ -1272,7 +1311,8 @@ def _build_cumulative_quintile_figure(
     if filtered.empty:
         raise ValueError(f"no cumulative returns available for weighting '{weighting.value}'")
 
-    filtered["return_date"] = pd.to_datetime(filtered["return_date"])
+    date_column = "date" if "date" in filtered.columns else "return_date"
+    filtered[date_column] = pd.to_datetime(filtered[date_column])
     available_factors = set(filtered["factor"].astype(str))
     factor_names = [factor_name for factor_name in directions if factor_name in available_factors]
     if not factor_names:
@@ -1295,20 +1335,20 @@ def _build_cumulative_quintile_figure(
         axis = axes_array[index]
         factor_rows = filtered[filtered["factor"] == factor_name]
         for color_index, portfolio in enumerate(quantile_portfolios):
-            portfolio_rows = factor_rows[factor_rows["portfolio"] == portfolio].sort_values("return_date")
+            portfolio_rows = factor_rows[factor_rows["portfolio"] == portfolio].sort_values(date_column)
             if portfolio_rows.empty:
                 continue
             axis.plot(
-                portfolio_rows["return_date"],
+                portfolio_rows[date_column],
                 portfolio_rows["cumulative_return"] * 100.0,
                 color=palette(color_index % 10),
                 linewidth=1.8,
                 label=portfolio,
             )
-        spread_rows = factor_rows[factor_rows["portfolio"] == "preferred_minus_avoided"].sort_values("return_date")
+        spread_rows = factor_rows[factor_rows["portfolio"] == "preferred_minus_avoided"].sort_values(date_column)
         if not spread_rows.empty:
             axis.plot(
-                spread_rows["return_date"],
+                spread_rows[date_column],
                 spread_rows["cumulative_return"] * 100.0,
                 color="black",
                 linewidth=2.2,

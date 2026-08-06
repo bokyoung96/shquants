@@ -747,6 +747,8 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
         "rank_ic.csv",
         "rank_ic.parquet",
         "cumulative_returns.csv",
+        "daily_cumulative_returns.csv",
+        "daily_cumulative_returns.parquet",
         "cumulative_quintiles_equal_weight.png",
         "cumulative_quintiles_market_cap_weight.png",
         "summary.csv",
@@ -759,6 +761,8 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
         "monthly_returns_parquet",
         "portfolio_weights_parquet",
         "rank_ic_parquet",
+        "daily_cumulative_returns_csv",
+        "daily_cumulative_returns_parquet",
         "cumulative_quintiles_equal_weight_png",
         "cumulative_quintiles_market_cap_weight_png",
         "summary_json",
@@ -779,10 +783,14 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     assert manifest["weighting_modes"] == ["equal_weight", "market_cap_weight"]
     assert manifest["q"] == 2
     assert manifest["timing"] == "month_end_t_to_next_month_end"
+    assert manifest["rebalance_frequency"] == "monthly"
+    assert manifest["nav_frequency"] == "daily"
     assert manifest["market_cap_field"] == "market_cap"
     assert manifest["selected_factors"] == ["price_to_252d_high", "earnings_momentum", "dividend_yield_ttm", "retail_flow", "value", "ln_market_cap"]
     assert manifest["directions"]["ln_market_cap"] == "low"
     assert manifest["artifacts"]["summary.json"]["rows"] == len(result.summary)
+    assert manifest["artifacts"]["daily_cumulative_returns.csv"]["rows"] == len(result.daily_cumulative_returns)
+    assert manifest["artifacts"]["daily_cumulative_returns.parquet"]["rows"] == len(result.daily_cumulative_returns)
     assert manifest["artifacts"]["cumulative_quintiles_equal_weight.png"]["rows"] == 2
     assert manifest["artifacts"]["cumulative_quintiles_market_cap_weight.png"]["rows"] == 2
 
@@ -828,7 +836,7 @@ def test_build_cumulative_quintile_figure_creates_one_subplot_per_factor() -> No
     )
 
     figure = _build_cumulative_quintile_figure(
-        cumulative_returns=result.cumulative_returns,
+        cumulative_returns=result.daily_cumulative_returns,
         directions={
             "price_to_252d_high": FactorDirection.HIGH,
             "ln_market_cap": FactorDirection.LOW,
@@ -845,6 +853,8 @@ def test_build_cumulative_quintile_figure_creates_one_subplot_per_factor() -> No
             "ln_market_cap",
             "momentum_12_1m",
         ]
+        first_line = titled_axes[0].lines[0]
+        assert len(first_line.get_xdata()) > len(result.cumulative_returns["return_date"].unique())
     finally:
         figure.clf()
 

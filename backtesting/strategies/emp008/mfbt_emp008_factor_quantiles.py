@@ -180,17 +180,25 @@ def run_emp008_factor_quantiles(
         definition.id.value: definition.direction
         for definition in factor_definitions_for_set(prepared.factor_set_definition.id)
     }
-    return evaluate_factor_quantiles(
-        factors=prepared.alpha_factors,
-        directions=directions,
-        close=prepared.close,
-        market_cap=prepared.market_cap,
-        universe=prepared.universe,
-        monthly_dates=prepared.monthly_dates,
-        start=start,
-        end=end,
-        q=q,
-    )
+    try:
+        return evaluate_factor_quantiles(
+            factors=prepared.alpha_factors,
+            directions=directions,
+            close=prepared.close,
+            market_cap=prepared.market_cap,
+            universe=prepared.universe,
+            monthly_dates=prepared.monthly_dates,
+            start=start,
+            end=end,
+            q=q,
+        )
+    except Emp008FactorQuantilesUnavailableError as exc:
+        start_ts = pd.Timestamp(start).date().isoformat()
+        end_ts = pd.Timestamp(end).date().isoformat()
+        raise Emp008FactorQuantilesUnavailableError(
+            f"no factor quantile observations for {prepared.factor_set_definition.id.value} "
+            f"in requested range {start_ts} to {end_ts}"
+        ) from exc
 
 
 def evaluate_factor_quantiles(
@@ -259,16 +267,14 @@ def evaluate_factor_quantiles(
         for factor_name, frame in aligned_factors.items():
             direction = normalized_directions[factor_name]
             signal_values = frame.loc[signal_date]
-            eligibility = (
+            base_eligibility = (
                 signal_universe
                 & signal_values.map(np.isfinite)
                 & signal_prices.map(np.isfinite)
                 & return_prices.map(np.isfinite)
                 & signal_prices.gt(0.0)
-                & signal_market_cap.map(np.isfinite)
-                & signal_market_cap.gt(0.0)
             )
-            eligible_names = signal_values.index[eligibility]
+            eligible_names = signal_values.index[base_eligibility]
             if len(eligible_names) == 0:
                 continue
 
@@ -284,14 +290,17 @@ def evaluate_factor_quantiles(
                 quantile_returns: dict[str, float] = {}
                 quantile_counts: dict[str, int] = {}
                 for quantile, names in memberships.items():
+                    quantile_counts[quantile] = len(names)
                     quantile_weights = _quantile_weights(
                         names,
                         weighting=weighting,
                         signal_market_cap=signal_market_cap,
                     )
-                    quantile_return = float(next_returns.loc[names].mul(quantile_weights).sum())
+                    if quantile_weights is None:
+                        quantile_return = float("nan")
+                    else:
+                        quantile_return = float(next_returns.loc[names].mul(quantile_weights).sum())
                     quantile_returns[quantile] = quantile_return
-                    quantile_counts[quantile] = len(names)
                     monthly_return_rows.append(
                         {
                             "signal_date": signal_date,
@@ -303,50 +312,60 @@ def evaluate_factor_quantiles(
                             "constituent_count": len(names),
                         }
                     )
-                    for ticker, weight in quantile_weights.items():
-                        weight_rows.append(
-                            {
-                                "signal_date": signal_date,
-                                "return_date": return_date,
-                                "factor": factor_name,
-                                "weighting": weighting,
-                                "quantile": quantile,
-                                "ticker": str(ticker),
-                                "weight": float(weight),
-                            }
-                        )
+                    if quantile_weights is not None:
+                        for ticker, weight in quantile_weights.items():
+                            weight_rows.append(
+                                {
+                                    "signal_date": signal_date,
+                                    "return_date": return_date,
+                                    "factor": factor_name,
+                                    "weighting": weighting,
+                                    "quantile": quantile,
+                                    "ticker": str(ticker),
+                                    "weight": float(weight),
+                                }
+                            )
 
                 low_quantile = "Q1"
                 high_quantile = f"Q{q}"
-                if low_quantile in quantile_returns and high_quantile in quantile_returns:
-                    high_minus_low = quantile_returns[high_quantile] - quantile_returns[low_quantile]
-                    monthly_return_rows.append(
-                        {
-                            "signal_date": signal_date,
-                            "return_date": return_date,
-                            "factor": factor_name,
-                            "weighting": weighting,
-                            "portfolio": "high_minus_low",
-                            "return": high_minus_low,
-                            "constituent_count": quantile_counts[low_quantile] + quantile_counts[high_quantile],
-                        }
+                high_return = quantile_returns[high_quantile]
+                low_return = quantile_returns[low_quantile]
+                high_minus_low = (
+                    high_return - low_return
+                    if pd.notna(high_return) and pd.notna(low_return)
+                    else float("nan")
+                )
+                monthly_return_rows.append(
+                    {
+                        "signal_date": signal_date,
+                        "return_date": return_date,
+                        "factor": factor_name,
+                        "weighting": weighting,
+                        "portfolio": "high_minus_low",
+                        "return": high_minus_low,
+                        "constituent_count": quantile_counts[low_quantile] + quantile_counts[high_quantile],
+                    }
+                )
+                preferred_minus_avoided = (
+                    high_minus_low
+                    if direction is FactorDirection.HIGH
+                    else (
+                        low_return - high_return
+                        if pd.notna(high_return) and pd.notna(low_return)
+                        else float("nan")
                     )
-                    preferred_minus_avoided = (
-                        high_minus_low
-                        if direction is FactorDirection.HIGH
-                        else quantile_returns[low_quantile] - quantile_returns[high_quantile]
-                    )
-                    monthly_return_rows.append(
-                        {
-                            "signal_date": signal_date,
-                            "return_date": return_date,
-                            "factor": factor_name,
-                            "weighting": weighting,
-                            "portfolio": "preferred_minus_avoided",
-                            "return": preferred_minus_avoided,
-                            "constituent_count": quantile_counts[low_quantile] + quantile_counts[high_quantile],
-                        }
-                    )
+                )
+                monthly_return_rows.append(
+                    {
+                        "signal_date": signal_date,
+                        "return_date": return_date,
+                        "factor": factor_name,
+                        "weighting": weighting,
+                        "portfolio": "preferred_minus_avoided",
+                        "return": preferred_minus_avoided,
+                        "constituent_count": quantile_counts[low_quantile] + quantile_counts[high_quantile],
+                    }
+                )
 
             rank_ic = _spearman_rank_ic(eligible_signals, next_returns)
             rank_ic_rows.append(
@@ -361,10 +380,8 @@ def evaluate_factor_quantiles(
             )
 
     if not monthly_return_rows:
-        factor_text = ", ".join(factor_names)
         raise Emp008FactorQuantilesUnavailableError(
-            "no factor quantile observations for "
-            f"{factor_text} in requested range {start_ts.date().isoformat()} to {end_ts.date().isoformat()}"
+            f"no factor quantile observations in requested range {start_ts.date().isoformat()} to {end_ts.date().isoformat()}"
         )
 
     monthly_returns = pd.DataFrame(monthly_return_rows).sort_values(
@@ -452,13 +469,11 @@ def _build_quantile_memberships(signals: pd.Series, *, q: int) -> dict[str, list
     ).sort_values(["signal", "ticker_key", "position_key"], kind="mergesort")
     ordered_names = ordered.index.tolist()
     if not ordered_names:
-        return {}
-    bucket_count = min(q, len(ordered_names))
-    buckets = np.array_split(np.array(ordered_names, dtype=object), bucket_count)
+        return {f"Q{bucket_index}": [] for bucket_index in range(1, q + 1)}
+    buckets = np.array_split(np.array(ordered_names, dtype=object), q)
     return {
         f"Q{bucket_index}": bucket.tolist()
         for bucket_index, bucket in enumerate(buckets, start=1)
-        if len(bucket) > 0
     }
 
 
@@ -469,11 +484,17 @@ def _quantile_weights(
     signal_market_cap: pd.Series,
 ) -> pd.Series:
     index = pd.Index(names, dtype=object)
+    if len(names) == 0:
+        return None
     if weighting is QuantileWeighting.EQUAL:
         return pd.Series(1.0 / len(names), index=index, dtype=float)
     if weighting is QuantileWeighting.MARKET_CAP:
         values = signal_market_cap.loc[names].astype(float)
+        if not values.map(np.isfinite).all() or not values.gt(0.0).all():
+            return None
         total = float(values.sum())
+        if not np.isfinite(total) or total <= 0.0:
+            return None
         return values.divide(total)
     raise ValueError(f"unsupported weighting: {weighting}")
 
@@ -734,15 +755,15 @@ def _validate_result_for_output(
     if not np.allclose(weight_sums.to_numpy(dtype=float), 1.0, atol=1e-10, rtol=0.0):
         raise ValueError("portfolio weight groups must sum to 1 within tolerance")
 
-    if not result.monthly_returns["return"].map(np.isfinite).all():
-        raise ValueError("monthly return values must be finite")
+    if not result.monthly_returns["return"].dropna().map(np.isfinite).all():
+        raise ValueError("monthly return values must be finite when present")
     quantile_monthly = result.monthly_returns[result.monthly_returns["portfolio"].astype(str).str.match(r"^Q\d+$", na=False)]
-    if not quantile_monthly["return"].map(np.isfinite).all():
-        raise ValueError("quantile monthly return values must be finite")
+    if not quantile_monthly["return"].dropna().map(np.isfinite).all():
+        raise ValueError("quantile monthly return values must be finite when present")
     if not result.rank_ic["n_obs"].map(np.isfinite).all():
         raise ValueError("rank_ic n_obs values must be finite")
-    if not result.cumulative_returns["cumulative_return"].map(np.isfinite).all():
-        raise ValueError("cumulative return values must be finite")
+    if not result.cumulative_returns["cumulative_return"].dropna().map(np.isfinite).all():
+        raise ValueError("cumulative return values must be finite when present")
 
     if set(result.monthly_returns["factor"]) != set(result.rank_ic["factor"]):
         raise ValueError("monthly_returns and rank_ic factors must match")
@@ -803,8 +824,10 @@ def _validate_membership_parity(portfolio_weights: pd.DataFrame) -> None:
         .apply(lambda tickers: tuple(sorted(str(ticker) for ticker in tickers)))
         .sort_index()
     )
-    if not equal_membership.index.equals(cap_membership.index) or not equal_membership.equals(cap_membership):
-        raise ValueError("equal and market-cap membership must match for each factor/date/quantile")
+    if not cap_membership.index.isin(equal_membership.index).all():
+        raise ValueError("market-cap membership cannot introduce buckets absent from equal weight")
+    if not equal_membership.loc[cap_membership.index].equals(cap_membership):
+        raise ValueError("equal and market-cap membership must match for each available factor/date/quantile")
 
 
 def _validate_rank_ic(

@@ -247,7 +247,10 @@ def test_evaluate_factor_quantiles_reuses_membership_for_both_weightings() -> No
         .sort_values(membership_columns, kind="mergesort")
         .reset_index(drop=True)
     )
-    pd.testing.assert_frame_equal(equal_membership, cap_membership)
+    pd.testing.assert_frame_equal(
+        equal_membership.loc[~equal_membership["ticker"].eq("Y")].reset_index(drop=True),
+        cap_membership,
+    )
 
     equal_q1 = weights[
         (weights["weighting"] == QuantileWeighting.EQUAL)
@@ -268,16 +271,16 @@ def test_evaluate_factor_quantiles_reuses_membership_for_both_weightings() -> No
         result.portfolio_weights.groupby(["weighting", "quantile"], observed=True)["weight"].sum().sort_index()
     )
     assert quantile_weight_sums.tolist() == pytest.approx([1.0] * len(quantile_weight_sums))
-    assert set(weights["ticker"]) == {"A", "B", "C", "D", "E", "F"}
-    assert not set(weights["ticker"]).intersection({"X", "Y", "Z"})
+    assert set(weights["ticker"]) == {"A", "B", "C", "D", "E", "F", "Y"}
+    assert not set(weights["ticker"]).intersection({"X", "Z"})
 
     equal_rows = result.monthly_returns[
         result.monthly_returns["weighting"] == QuantileWeighting.EQUAL
     ].set_index("portfolio")
     assert equal_rows.loc["Q1", "return"] == pytest.approx(0.15)
-    assert equal_rows.loc["Q5", "return"] == pytest.approx(0.6)
-    assert equal_rows.loc["high_minus_low", "return"] == pytest.approx(0.45)
-    assert equal_rows.loc["preferred_minus_avoided", "return"] == pytest.approx(0.45)
+    assert equal_rows.loc["Q5", "return"] == pytest.approx(0.8)
+    assert equal_rows.loc["high_minus_low", "return"] == pytest.approx(0.65)
+    assert equal_rows.loc["preferred_minus_avoided", "return"] == pytest.approx(0.65)
     assert equal_rows.loc["high_minus_low", "constituent_count"] == 3
 
 
@@ -375,7 +378,7 @@ def test_evaluate_factor_quantiles_populates_cumulative_returns_and_summary_metr
         & (cumulative["weighting"] == QuantileWeighting.EQUAL)
         & (cumulative["portfolio"] == "Q1")
     ].sort_values("return_date", kind="mergesort")
-    assert q1_path["cumulative_return"].tolist() == pytest.approx([0.2, 0.32, 0.3935564435564436])
+    assert q1_path["cumulative_return"].tolist() == pytest.approx([0.25, 0.375, 0.4516212953712955])
 
     high_q1 = _summary_row(
         result.summary,
@@ -385,8 +388,8 @@ def test_evaluate_factor_quantiles_populates_cumulative_returns_and_summary_metr
     )
     high_ic = result.rank_ic[result.rank_ic["factor"] == "high_factor"]
     assert high_q1["observations"] == 3
-    assert high_q1["average_constituent_count"] == pytest.approx(11.0 / 3.0)
-    assert high_q1["average_one_way_turnover"] == pytest.approx(0.125)
+    assert high_q1["average_constituent_count"] == pytest.approx(4.0)
+    assert high_q1["average_one_way_turnover"] == pytest.approx(0.0)
     assert high_q1["mean_rank_ic"] == pytest.approx(high_ic["rank_ic"].dropna().mean())
     assert high_q1["directional_mean_rank_ic"] == pytest.approx(high_ic["directional_rank_ic"].dropna().mean())
     expected_high_ir = (
@@ -768,15 +771,15 @@ def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_
         & (result.monthly_returns["weighting"] == QuantileWeighting.EQUAL)
         & (result.monthly_returns["return_date"] == pd.Timestamp("2024-02-29"))
     ].set_index("portfolio")
-    assert low_equal.loc["high_minus_low", "return"] == pytest.approx(0.45)
-    assert low_equal.loc["preferred_minus_avoided", "return"] == pytest.approx(-0.45)
+    assert low_equal.loc["high_minus_low", "return"] == pytest.approx(0.65)
+    assert low_equal.loc["preferred_minus_avoided", "return"] == pytest.approx(-0.65)
 
     rank_ic = result.rank_ic.set_index(["factor", "return_date"]).sort_index()
     assert rank_ic.loc[("high_factor", pd.Timestamp("2024-02-29")), "rank_ic"] > 0.0
     assert rank_ic.loc[("high_factor", pd.Timestamp("2024-02-29")), "directional_rank_ic"] > 0.0
     assert rank_ic.loc[("low_factor", pd.Timestamp("2024-02-29")), "rank_ic"] > 0.0
     assert rank_ic.loc[("low_factor", pd.Timestamp("2024-02-29")), "directional_rank_ic"] < 0.0
-    assert rank_ic.loc[("low_factor", pd.Timestamp("2024-02-29")), "n_obs"] == 6
+    assert rank_ic.loc[("low_factor", pd.Timestamp("2024-02-29")), "n_obs"] == 7
 
     sparse_weights = result.portfolio_weights[
         (result.portfolio_weights["factor"] == "sparse_factor")
@@ -788,11 +791,92 @@ def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_
     sparse_returns = result.monthly_returns[
         (result.monthly_returns["factor"] == "sparse_factor")
         & (result.monthly_returns["return_date"] == pd.Timestamp("2024-03-29"))
-    ]
-    assert "high_minus_low" not in set(sparse_returns["portfolio"])
+    ].set_index(["weighting", "portfolio"]).sort_index()
+    for weighting in QuantileWeighting:
+        assert sparse_returns.loc[(weighting, "Q1"), "constituent_count"] == 1
+        assert sparse_returns.loc[(weighting, "Q2"), "constituent_count"] == 1
+        assert sparse_returns.loc[(weighting, "Q3"), "constituent_count"] == 1
+        assert sparse_returns.loc[(weighting, "Q4"), "constituent_count"] == 0
+        assert sparse_returns.loc[(weighting, "Q5"), "constituent_count"] == 0
+        assert pd.isna(sparse_returns.loc[(weighting, "Q4"), "return"])
+        assert pd.isna(sparse_returns.loc[(weighting, "Q5"), "return"])
+        assert pd.isna(sparse_returns.loc[(weighting, "high_minus_low"), "return"])
+        assert pd.isna(sparse_returns.loc[(weighting, "preferred_minus_avoided"), "return"])
+        assert sparse_returns.loc[(weighting, "high_minus_low"), "constituent_count"] == 1
+        assert sparse_returns.loc[(weighting, "preferred_minus_avoided"), "constituent_count"] == 1
     assert pd.Timestamp("2024-02-29") in set(
         result.monthly_returns.loc[result.monthly_returns["factor"] == "high_factor", "return_date"]
     )
+
+
+def test_evaluate_factor_quantiles_keeps_equal_weight_rows_when_market_cap_bucket_is_unavailable() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+    market_cap.loc[pd.Timestamp("2024-01-31"), ["A", "B"]] = [10.0, 0.0]
+    market_cap.loc[pd.Timestamp("2024-01-31"), ["C", "D", "E", "F"]] = [20.0, 30.0, 40.0, 50.0]
+    universe.loc[pd.Timestamp("2024-01-31"), "Y"] = False
+    universe.loc[pd.Timestamp("2024-02-29"), "Y"] = False
+
+    result = evaluate_factor_quantiles(
+        factors={"high_factor": factors["high_factor"]},
+        directions={"high_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:2],
+        start="2024-02-29",
+        end="2024-02-29",
+        q=3,
+    )
+
+    equal_rows = result.monthly_returns[
+        result.monthly_returns["weighting"] == QuantileWeighting.EQUAL
+    ].set_index("portfolio")
+    cap_rows = result.monthly_returns[
+        result.monthly_returns["weighting"] == QuantileWeighting.MARKET_CAP
+    ].set_index("portfolio")
+
+    assert equal_rows.loc["Q1", "constituent_count"] == 2
+    assert equal_rows.loc["Q1", "return"] == pytest.approx(0.15)
+    assert cap_rows.loc["Q1", "constituent_count"] == 2
+    assert pd.isna(cap_rows.loc["Q1", "return"])
+    assert pd.isna(cap_rows.loc["high_minus_low", "return"])
+    assert cap_rows.loc["high_minus_low", "constituent_count"] == 4
+
+    cap_weights = result.portfolio_weights[
+        result.portfolio_weights["weighting"] == QuantileWeighting.MARKET_CAP
+    ]
+    assert "Q1" not in set(cap_weights["quantile"])
+    assert set(cap_weights["quantile"]) == {"Q2", "Q3"}
+
+
+def test_evaluate_factor_quantiles_emits_all_quantile_rows_when_names_are_fewer_than_q() -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+
+    result = evaluate_factor_quantiles(
+        factors={"sparse_factor": factors["sparse_factor"]},
+        directions={"sparse_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[1:3],
+        start="2024-03-29",
+        end="2024-03-29",
+        q=5,
+    )
+
+    monthly = result.monthly_returns.set_index(["weighting", "portfolio"]).sort_index()
+    for weighting in QuantileWeighting:
+        assert list(
+            result.monthly_returns.loc[result.monthly_returns["weighting"] == weighting, "portfolio"]
+        ) == ["Q1", "Q2", "Q3", "Q4", "Q5", "high_minus_low", "preferred_minus_avoided"]
+        assert monthly.loc[(weighting, "Q4"), "constituent_count"] == 0
+        assert monthly.loc[(weighting, "Q5"), "constituent_count"] == 0
+        assert pd.isna(monthly.loc[(weighting, "Q4"), "return"])
+        assert pd.isna(monthly.loc[(weighting, "Q5"), "return"])
+
+    cumulative = result.cumulative_returns.set_index(["weighting", "portfolio"]).sort_index()
+    assert pd.isna(cumulative.loc[(QuantileWeighting.EQUAL, "Q4"), "cumulative_return"])
+    assert pd.isna(cumulative.loc[(QuantileWeighting.MARKET_CAP, "Q5"), "cumulative_return"])
 
 
 def test_evaluate_factor_quantiles_filters_on_return_date_and_uses_consecutive_month_pairs() -> None:
@@ -859,13 +943,16 @@ def test_evaluate_factor_quantiles_excludes_nonfinite_inputs_from_both_weighting
         q=2,
     )
 
-    assert set(result.portfolio_weights["ticker"]) == {"A", "G"}
+    assert set(result.portfolio_weights["ticker"]) == {"A", "E", "F", "G"}
     for weighting in QuantileWeighting:
         weighted = result.portfolio_weights[result.portfolio_weights["weighting"] == weighting]
         assert weighted["weight"].map(np.isfinite).all()
         returns = result.monthly_returns[result.monthly_returns["weighting"] == weighting]
-        assert returns["return"].map(np.isfinite).all()
-        assert weighted["ticker"].tolist() == ["A", "G"]
+        assert returns["return"].dropna().map(np.isfinite).all()
+    assert result.portfolio_weights[result.portfolio_weights["weighting"] == QuantileWeighting.EQUAL][
+        "ticker"
+    ].tolist() == ["A", "E", "F", "G"]
+    assert result.portfolio_weights[result.portfolio_weights["weighting"] == QuantileWeighting.MARKET_CAP].empty
 
 
 def test_evaluate_factor_quantiles_supports_unique_integer_tickers() -> None:
@@ -1094,7 +1181,7 @@ def test_evaluate_factor_quantiles_validates_inputs_and_reports_empty_results() 
         )
 
     empty_factor = factors["high_factor"] * float("nan")
-    with pytest.raises(ValueError, match="high_factor"):
+    with pytest.raises(ValueError, match="no factor quantile observations"):
         evaluate_factor_quantiles(
             factors={"high_factor": empty_factor},
             directions={"high_factor": FactorDirection.HIGH},

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Mapping
 
 import pandas as pd
 
@@ -221,16 +221,26 @@ def parse_factor_set(value: FactorSetId | str) -> FactorSetId:
         raise ValueError(f"unknown factor set '{value}'. Supported values: {supported}") from exc
 
 
-def _validate_registry() -> None:
-    if tuple(FACTOR_DEFINITIONS) != tuple(FactorId):
+def _validate_registry(
+    *,
+    factor_definitions: Mapping[FactorId, FactorDefinition] = FACTOR_DEFINITIONS,
+    factor_set_definitions: Mapping[FactorSetId, FactorSetDefinition] = FACTOR_SET_DEFINITIONS,
+) -> None:
+    if tuple(factor_definitions) != tuple(FactorId):
         raise ValueError("every FactorId must have exactly one definition")
-    if tuple(FACTOR_SET_DEFINITIONS) != tuple(FactorSetId):
+    if tuple(factor_set_definitions) != tuple(FactorSetId):
         raise ValueError("every FactorSetId must have exactly one definition")
-    for factor_set_id, definition in FACTOR_SET_DEFINITIONS.items():
+    for factor_set_id, definition in factor_set_definitions.items():
         if not definition.factors:
             raise ValueError(f"factor set '{factor_set_id.value}' must not be empty")
+        seen: set[FactorId] = set()
         for factor_id in definition.factors:
-            if factor_id not in FACTOR_DEFINITIONS:
+            if factor_id in seen:
+                raise ValueError(
+                    f"duplicate factor ids in factor set '{factor_set_id.value}': {factor_id.value}"
+                )
+            seen.add(factor_id)
+            if factor_id not in factor_definitions:
                 raise ValueError(f"factor set '{factor_set_id.value}' references undefined factor '{factor_id.value}'")
 
 

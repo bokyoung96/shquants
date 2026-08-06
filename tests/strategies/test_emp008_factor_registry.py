@@ -15,6 +15,7 @@ from backtesting.strategies.emp008.mfbt_emp008_factor_registry import (
     FactorId,
     FactorSetDefinition,
     FactorSetId,
+    _validate_registry,
     factor_definitions_for_set,
     factor_set_values,
     get_factor_definition,
@@ -203,3 +204,20 @@ def test_factor_definition_builders_share_config_signature() -> None:
         assert definition.builder.__name__
         assert definition.builder.__globals__
         assert config is not None
+
+
+def test_validate_registry_rejects_duplicate_factor_ids_within_factor_set() -> None:
+    duplicate_set_definitions = dict(FACTOR_SET_DEFINITIONS)
+    duplicate_set_definitions[FactorSetId.MFBT] = FactorSetDefinition(
+        id=FactorSetId.MFBT,
+        factors=(
+            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_MOMENTUM,
+        ),
+    )
+
+    with pytest.raises(ValueError, match="duplicate factor ids.*mfbt.*price_momentum"):
+        _validate_registry(
+            factor_definitions=FACTOR_DEFINITIONS,
+            factor_set_definitions=duplicate_set_definitions,
+        )

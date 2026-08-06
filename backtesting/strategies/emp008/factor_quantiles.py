@@ -35,6 +35,7 @@ class Emp008FactorQuantileResult:
     portfolio_weights: pd.DataFrame
     rank_ic: pd.DataFrame
     cumulative_returns: pd.DataFrame
+    daily_cumulative_returns: pd.DataFrame
     summary: pd.DataFrame
 
     def write_outputs(
@@ -160,6 +161,14 @@ _RANK_IC_COLUMNS = (
 _CUMULATIVE_RETURNS_COLUMNS = (
     "signal_date",
     "return_date",
+    "factor",
+    "weighting",
+    "portfolio",
+    "cumulative_return",
+)
+_DAILY_CUMULATIVE_RETURNS_COLUMNS = (
+    "signal_date",
+    "date",
     "factor",
     "weighting",
     "portfolio",
@@ -426,6 +435,13 @@ def evaluate_factor_quantiles(
         kind="mergesort",
     ).reset_index(drop=True)
     cumulative_returns = _build_cumulative_returns(monthly_returns)
+    daily_cumulative_returns = _build_daily_cumulative_returns(
+        close=aligned_close,
+        monthly_returns=monthly_returns,
+        portfolio_weights=portfolio_weights,
+        directions=normalized_directions,
+        q=q,
+    )
     summary = _build_summary(
         monthly_returns=monthly_returns,
         portfolio_weights=portfolio_weights,
@@ -439,6 +455,7 @@ def evaluate_factor_quantiles(
         portfolio_weights=portfolio_weights,
         rank_ic=rank_ic,
         cumulative_returns=cumulative_returns,
+        daily_cumulative_returns=daily_cumulative_returns,
         summary=summary,
     )
 
@@ -576,6 +593,112 @@ def _build_cumulative_returns(monthly_returns: pd.DataFrame) -> pd.DataFrame:
         ["factor", "weighting", "portfolio", "return_date", "signal_date"],
         kind="mergesort",
     ).reset_index(drop=True)
+
+
+def _build_daily_cumulative_returns(
+    *,
+    close: pd.DataFrame,
+    monthly_returns: pd.DataFrame,
+    portfolio_weights: pd.DataFrame,
+    directions: Mapping[str, FactorDirection],
+    q: int,
+) -> pd.DataFrame:
+    if portfolio_weights.empty:
+        return _empty_daily_cumulative_returns_frame()
+
+    ordered_close = close.sort_index()
+    close_ticker_labels = {str(label): label for label in ordered_close.columns}
+    ordered_weights = portfolio_weights.sort_values(
+        ["factor", "weighting", "quantile", "signal_date", "return_date", "ticker"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    period_navs: dict[tuple[str, str, str, pd.Timestamp, pd.Timestamp], pd.Series] = {}
+    quantile_rows: list[dict[str, object]] = []
+    prior_quantile_wealth: dict[tuple[str, str, str], float] = {}
+
+    for group_key, group in ordered_weights.groupby(
+        ["factor", "weighting", "quantile", "signal_date", "return_date"],
+        observed=True,
+        sort=False,
+    ):
+        factor_name, weighting, quantile, signal_date, return_date = group_key
+        weights = group.set_index("ticker")["weight"].astype(float)
+        price_columns = [close_ticker_labels[str(ticker)] for ticker in weights.index]
+        period_dates = ordered_close.index[(ordered_close.index >= signal_date) & (ordered_close.index <= return_date)]
+        period_prices = ordered_close.loc[period_dates, price_columns].astype(float).ffill()
+        period_prices.columns = weights.index
+        signal_prices = period_prices.loc[signal_date].astype(float)
+        period_nav = period_prices.divide(signal_prices).mul(weights, axis=1).sum(axis=1)
+        period_navs[(factor_name, str(weighting), str(quantile), signal_date, return_date)] = period_nav
+
+        wealth_key = (factor_name, str(weighting), str(quantile))
+        prior_wealth = prior_quantile_wealth.get(wealth_key, 1.0)
+        emit_nav = period_nav if wealth_key not in prior_quantile_wealth else period_nav.iloc[1:]
+        for date, nav in emit_nav.items():
+            quantile_rows.append(
+                {
+                    "signal_date": signal_date,
+                    "date": pd.Timestamp(date),
+                    "factor": factor_name,
+                    "weighting": weighting,
+                    "portfolio": str(quantile),
+                    "cumulative_return": float((prior_wealth * nav) - 1.0),
+                }
+            )
+        prior_quantile_wealth[wealth_key] = float(prior_wealth * period_nav.iloc[-1])
+
+    spread_rows: list[dict[str, object]] = []
+    prior_spread_wealth: dict[tuple[str, str, str], float] = {}
+    period_coverage = (
+        monthly_returns.loc[:, ["factor", "weighting", "signal_date", "return_date"]]
+        .drop_duplicates()
+        .sort_values(["factor", "weighting", "signal_date", "return_date"], kind="mergesort")
+        .reset_index(drop=True)
+    )
+    for factor_name, weighting, signal_date, return_date in period_coverage.itertuples(index=False, name=None):
+        low_nav = period_navs.get((factor_name, str(weighting), "Q1", signal_date, return_date))
+        high_nav = period_navs.get((factor_name, str(weighting), f"Q{q}", signal_date, return_date))
+        if low_nav is None or high_nav is None:
+            continue
+        high_minus_low = high_nav.sub(low_nav)
+        preferred_minus_avoided = (
+            high_minus_low
+            if directions[factor_name] is FactorDirection.HIGH
+            else high_minus_low.mul(-1.0)
+        )
+        for portfolio_name, period_spread in (
+            ("high_minus_low", high_minus_low),
+            ("preferred_minus_avoided", preferred_minus_avoided),
+        ):
+            wealth_key = (factor_name, str(weighting), portfolio_name)
+            prior_wealth = prior_spread_wealth.get(wealth_key, 1.0)
+            emit_spread = period_spread if wealth_key not in prior_spread_wealth else period_spread.iloc[1:]
+            for date, spread_value in emit_spread.items():
+                spread_rows.append(
+                    {
+                        "signal_date": signal_date,
+                        "date": pd.Timestamp(date),
+                        "factor": factor_name,
+                        "weighting": weighting,
+                        "portfolio": portfolio_name,
+                        "cumulative_return": float((prior_wealth * (1.0 + spread_value)) - 1.0),
+                    }
+                )
+            prior_spread_wealth[wealth_key] = float(prior_wealth * (1.0 + period_spread.iloc[-1]))
+
+    daily_cumulative_returns = pd.DataFrame(
+        quantile_rows + spread_rows,
+        columns=_DAILY_CUMULATIVE_RETURNS_COLUMNS,
+    ).sort_values(
+        ["factor", "weighting", "portfolio", "date", "signal_date"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+
+    if daily_cumulative_returns.duplicated(["date", "factor", "weighting", "portfolio"]).any():
+        raise ValueError("daily_cumulative_returns must have unique date/factor/weighting/portfolio rows")
+    if not daily_cumulative_returns["cumulative_return"].map(np.isfinite).all():
+        raise ValueError("daily_cumulative_returns cumulative_return values must be finite")
+    return daily_cumulative_returns
 
 
 def _build_summary(
@@ -1161,6 +1284,15 @@ def _empty_cumulative_returns_frame() -> pd.DataFrame:
     return pd.DataFrame({column: pd.Series(dtype="float64" if column == "cumulative_return" else "object") for column in _CUMULATIVE_RETURNS_COLUMNS}).astype(
         {"signal_date": "datetime64[ns]", "return_date": "datetime64[ns]", "cumulative_return": "float64"}
     )
+
+
+def _empty_daily_cumulative_returns_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            column: pd.Series(dtype="float64" if column == "cumulative_return" else "object")
+            for column in _DAILY_CUMULATIVE_RETURNS_COLUMNS
+        }
+    ).astype({"signal_date": "datetime64[ns]", "date": "datetime64[ns]", "cumulative_return": "float64"})
 
 
 def _empty_summary_frame() -> pd.DataFrame:

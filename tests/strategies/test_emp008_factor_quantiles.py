@@ -114,6 +114,7 @@ def _empty_result() -> Emp008FactorQuantileResult:
         portfolio_weights=pd.DataFrame(),
         rank_ic=pd.DataFrame(),
         cumulative_returns=pd.DataFrame(),
+        daily_cumulative_returns=pd.DataFrame(),
         summary=pd.DataFrame(),
     )
 
@@ -411,6 +412,137 @@ def test_evaluate_factor_quantiles_populates_cumulative_returns_and_summary_metr
     assert low_q1["quantile_monotonicity"] == pytest.approx(-1.0)
 
 
+def test_evaluate_factor_quantiles_builds_daily_cumulative_returns_from_fixed_share_nav() -> None:
+    dates = pd.to_datetime(
+        [
+            "2024-01-31",
+            "2024-02-15",
+            "2024-02-28",
+            "2024-02-29",
+            "2024-03-15",
+            "2024-03-29",
+        ]
+    )
+    columns = ["A", "B"]
+    factor = _frame(
+        dates,
+        columns,
+        [
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+            [1.0, 2.0],
+        ],
+    )
+    close = _frame(
+        dates,
+        columns,
+        [
+            [10.0, 10.0],
+            [12.0, 8.0],
+            [np.nan, 9.0],
+            [11.0, 20.0],
+            [16.5, 15.0],
+            [22.0, 10.0],
+        ],
+    )
+    market_cap = _frame(
+        dates,
+        columns,
+        [
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+            [100.0, 200.0],
+        ],
+    )
+    universe = _frame(dates, columns, [[True, True]] * len(dates)).astype(bool)
+
+    result = evaluate_factor_quantiles(
+        factors={"daily_factor": factor},
+        directions={"daily_factor": FactorDirection.HIGH},
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=tuple(pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29"])),
+        start="2024-02-29",
+        end="2024-03-29",
+        q=2,
+    )
+
+    daily = result.daily_cumulative_returns.sort_values(
+        ["factor", "weighting", "portfolio", "date", "signal_date"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    assert tuple(daily.columns) == (
+        "signal_date",
+        "date",
+        "factor",
+        "weighting",
+        "portfolio",
+        "cumulative_return",
+    )
+    assert not daily.duplicated(["date", "factor", "weighting", "portfolio"]).any()
+    assert daily["cumulative_return"].map(np.isfinite).all()
+
+    equal_daily = daily[
+        (daily["factor"] == "daily_factor")
+        & (daily["weighting"] == QuantileWeighting.EQUAL)
+    ]
+    q1 = equal_daily[equal_daily["portfolio"] == "Q1"].set_index("date").sort_index()
+    q2 = equal_daily[equal_daily["portfolio"] == "Q2"].set_index("date").sort_index()
+    spread = equal_daily[equal_daily["portfolio"] == "high_minus_low"].set_index("date").sort_index()
+    preferred = equal_daily[equal_daily["portfolio"] == "preferred_minus_avoided"].set_index("date").sort_index()
+
+    assert q1.index.tolist() == pd.to_datetime(
+        ["2024-01-31", "2024-02-15", "2024-02-28", "2024-02-29", "2024-03-15", "2024-03-29"]
+    ).tolist()
+    assert q1.loc[pd.Timestamp("2024-01-31"), "cumulative_return"] == pytest.approx(0.0)
+    assert q1.loc[pd.Timestamp("2024-02-15"), "cumulative_return"] == pytest.approx(0.2)
+    assert q1.loc[pd.Timestamp("2024-02-28"), "cumulative_return"] == pytest.approx(0.2)
+    assert q1.loc[pd.Timestamp("2024-02-29"), "cumulative_return"] == pytest.approx(0.1)
+    assert q1.loc[pd.Timestamp("2024-03-15"), "cumulative_return"] == pytest.approx(0.65)
+    assert q1.loc[pd.Timestamp("2024-03-29"), "cumulative_return"] == pytest.approx(1.2)
+
+    assert q2.loc[pd.Timestamp("2024-02-15"), "cumulative_return"] == pytest.approx(-0.2)
+    assert q2.loc[pd.Timestamp("2024-02-28"), "cumulative_return"] == pytest.approx(-0.1)
+    assert q2.loc[pd.Timestamp("2024-02-29"), "cumulative_return"] == pytest.approx(1.0)
+    assert q2.loc[pd.Timestamp("2024-03-15"), "cumulative_return"] == pytest.approx(0.5)
+    assert q2.loc[pd.Timestamp("2024-03-29"), "cumulative_return"] == pytest.approx(0.0)
+
+    assert spread.loc[pd.Timestamp("2024-02-15"), "cumulative_return"] == pytest.approx(-0.4)
+    assert spread.loc[pd.Timestamp("2024-02-28"), "cumulative_return"] == pytest.approx(-0.3)
+    assert spread.loc[pd.Timestamp("2024-02-29"), "cumulative_return"] == pytest.approx(0.9)
+    assert spread.loc[pd.Timestamp("2024-03-15"), "cumulative_return"] == pytest.approx(-0.525)
+    assert spread.loc[pd.Timestamp("2024-03-29"), "cumulative_return"] == pytest.approx(-1.95)
+    pd.testing.assert_series_equal(
+        spread["cumulative_return"],
+        preferred["cumulative_return"],
+        check_names=False,
+    )
+
+    monthly_endpoints = (
+        daily[daily["date"].isin(result.cumulative_returns["return_date"])]
+        .sort_values(["factor", "weighting", "portfolio", "date"], kind="mergesort")
+        .reset_index(drop=True)
+        .loc[:, ["factor", "weighting", "portfolio", "date", "cumulative_return"]]
+        .rename(columns={"date": "return_date"})
+    )
+    expected_endpoints = result.cumulative_returns.sort_values(
+        ["factor", "weighting", "portfolio", "return_date"],
+        kind="mergesort",
+    ).reset_index(drop=True).loc[:, ["factor", "weighting", "portfolio", "return_date", "cumulative_return"]]
+    pd.testing.assert_frame_equal(monthly_endpoints, expected_endpoints)
+
+    boundary_rows = daily[daily["date"] == pd.Timestamp("2024-02-29")]
+    portfolios_per_weighting = result.monthly_returns["portfolio"].nunique()
+    assert len(boundary_rows) == len(list(QuantileWeighting)) * portfolios_per_weighting
+
+
 def test_evaluate_factor_quantiles_computes_turnover_for_buckets_and_spreads() -> None:
     dates = pd.to_datetime(["2024-01-31", "2024-02-29", "2024-03-29", "2024-04-30"])
     columns = ["A", "B", "C", "D"]
@@ -548,6 +680,7 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
         portfolio_weights=result.portfolio_weights,
         rank_ic=result.rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     with pytest.raises(ValueError, match="finite"):
@@ -626,6 +759,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=result.rank_ic,
         cumulative_returns=bad_cumulative,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     bad_cumulative_dir = tmp_path / "bad_cumulative"
@@ -640,6 +774,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=result.rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=bad_summary,
     )
     bad_summary_dir = tmp_path / "bad_summary"
@@ -654,6 +789,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=stale_rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     stale_rank_ic_dir = tmp_path / "stale_rank_ic"
@@ -667,6 +803,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=extra_rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     extra_rank_ic_dir = tmp_path / "extra_rank_ic"
@@ -680,6 +817,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=missing_rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     missing_rank_ic_dir = tmp_path / "missing_rank_ic"
@@ -697,6 +835,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=wrong_directional,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     wrong_directional_dir = tmp_path / "wrong_directional"
@@ -711,6 +850,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=wrong_n_obs,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     wrong_n_obs_dir = tmp_path / "wrong_n_obs"
@@ -726,6 +866,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=out_of_range_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     out_of_range_ic_dir = tmp_path / "out_of_range_ic"
@@ -742,6 +883,7 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         portfolio_weights=result.portfolio_weights,
         rank_ic=small_n_obs_rank_ic,
         cumulative_returns=result.cumulative_returns,
+        daily_cumulative_returns=result.daily_cumulative_returns,
         summary=result.summary,
     )
     small_n_obs_rank_ic_dir = tmp_path / "small_n_obs_rank_ic"

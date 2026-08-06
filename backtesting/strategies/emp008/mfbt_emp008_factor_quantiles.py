@@ -9,6 +9,7 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from .mfbt_emp008_factor_pipeline import PreparedEmp008Factors
 from .mfbt_emp008_factor_registry import FactorDirection, FactorSetId, factor_definitions_for_set
@@ -690,6 +691,17 @@ def _validate_result_for_output(
     _require_columns(result.cumulative_returns, _CUMULATIVE_RETURNS_COLUMNS, "cumulative_returns")
     _require_columns(result.summary, _SUMMARY_COLUMNS, "summary")
 
+    factor_definitions = factor_definitions_for_set(factor_set)
+    directions = {
+        definition.id.value: definition.direction
+        for definition in factor_definitions
+    }
+    observed_factors = set(result.monthly_returns["factor"])
+    if not observed_factors:
+        raise ValueError("monthly_returns must contain at least one factor")
+    if not observed_factors.issubset(set(directions)):
+        raise ValueError("monthly_returns factors must be compatible with the requested factor set")
+
     quantile_weights = result.portfolio_weights.copy()
     if not quantile_weights["weight"].map(np.isfinite).all():
         raise ValueError("portfolio weight values must be finite")
@@ -730,6 +742,25 @@ def _validate_result_for_output(
         raise ValueError("cumulative_returns rows must align with monthly_returns portfolios")
 
     _validate_membership_parity(result.portfolio_weights)
+    _validate_rank_ic(result.rank_ic, monthly_returns=result.monthly_returns, directions=directions)
+    expected_cumulative = _build_cumulative_returns(result.monthly_returns)
+    _compare_derived_frame(
+        actual=result.cumulative_returns,
+        expected=expected_cumulative,
+        frame_name="cumulative_returns",
+    )
+    expected_summary = _build_summary(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=result.rank_ic,
+        directions={factor: directions[factor] for factor in observed_factors},
+        q=q,
+    )
+    _compare_derived_frame(
+        actual=result.summary,
+        expected=expected_summary,
+        frame_name="summary",
+    )
 
 
 def _require_columns(frame: pd.DataFrame, columns: Sequence[str], frame_name: str) -> None:
@@ -752,6 +783,66 @@ def _validate_membership_parity(portfolio_weights: pd.DataFrame) -> None:
     )
     if not equal_membership.index.equals(cap_membership.index) or not equal_membership.equals(cap_membership):
         raise ValueError("equal and market-cap membership must match for each factor/date/quantile")
+
+
+def _validate_rank_ic(
+    rank_ic: pd.DataFrame,
+    *,
+    monthly_returns: pd.DataFrame,
+    directions: Mapping[str, FactorDirection],
+) -> None:
+    coverage = (
+        monthly_returns.loc[:, ["signal_date", "return_date", "factor"]]
+        .drop_duplicates()
+        .sort_values(["signal_date", "return_date", "factor"], kind="mergesort")
+        .reset_index(drop=True)
+    )
+    actual = rank_ic.loc[:, ["signal_date", "return_date", "factor"]].sort_values(
+        ["signal_date", "return_date", "factor"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    _compare_derived_frame(actual=actual, expected=coverage, frame_name="rank_ic coverage", check_dtype=False)
+
+    n_obs = rank_ic["n_obs"]
+    if not n_obs.map(lambda value: float(value).is_integer() if np.isfinite(value) else False).all():
+        raise ValueError("rank_ic n_obs must be integer valued")
+    if not n_obs.ge(0).all():
+        raise ValueError("rank_ic n_obs must be non-negative")
+
+    expected_directional = rank_ic["rank_ic"].astype(float).copy()
+    low_mask = rank_ic["factor"].map(lambda factor: directions[factor] is FactorDirection.LOW)
+    expected_directional.loc[low_mask] = expected_directional.loc[low_mask] * -1.0
+    equal_mask = (
+        rank_ic["directional_rank_ic"].isna() & expected_directional.isna()
+    ) | np.isclose(
+        rank_ic["directional_rank_ic"].astype(float),
+        expected_directional,
+        atol=1e-12,
+        rtol=0.0,
+        equal_nan=True,
+    )
+    if not bool(np.all(equal_mask)):
+        raise ValueError("rank_ic directional_rank_ic does not match factor directions")
+
+
+def _compare_derived_frame(
+    *,
+    actual: pd.DataFrame,
+    expected: pd.DataFrame,
+    frame_name: str,
+    check_dtype: bool = True,
+) -> None:
+    try:
+        assert_frame_equal(
+            actual.reset_index(drop=True),
+            expected.reset_index(drop=True),
+            check_dtype=check_dtype,
+            check_exact=False,
+            atol=1e-12,
+            rtol=0.0,
+        )
+    except AssertionError as exc:
+        raise ValueError(f"{frame_name} does not match canonical derivation") from exc
 
 
 def _build_manifest(

@@ -436,12 +436,12 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
     result = evaluate_factor_quantiles(
         factors={
-            "high_factor": factors["high_factor"],
-            "low_factor": factors["low_factor"],
+            "price_momentum": factors["high_factor"],
+            "ln_market_cap": factors["low_factor"],
         },
         directions={
-            "high_factor": FactorDirection.HIGH,
-            "low_factor": FactorDirection.LOW,
+            "price_momentum": FactorDirection.HIGH,
+            "ln_market_cap": FactorDirection.LOW,
         },
         close=close,
         market_cap=market_cap,
@@ -502,6 +502,112 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     with pytest.raises(ValueError, match="finite"):
         invalid.write_outputs(invalid_dir, factor_set="mfbt", q=2)
     assert not invalid_dir.exists() or list(invalid_dir.iterdir()) == []
+
+
+def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path) -> None:
+    factors, close, market_cap, universe, monthly_dates = _core_inputs()
+    result = evaluate_factor_quantiles(
+        factors={
+            "price_momentum": factors["high_factor"],
+            "ln_market_cap": factors["low_factor"],
+        },
+        directions={
+            "price_momentum": FactorDirection.HIGH,
+            "ln_market_cap": FactorDirection.LOW,
+        },
+        close=close,
+        market_cap=market_cap,
+        universe=universe,
+        monthly_dates=monthly_dates[:4],
+        start="2024-02-29",
+        end="2024-04-30",
+        q=2,
+    )
+
+    bad_cumulative = result.cumulative_returns.copy()
+    bad_cumulative.loc[0, "cumulative_return"] = 999.0
+    cumulative_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=result.rank_ic,
+        cumulative_returns=bad_cumulative,
+        summary=result.summary,
+    )
+    bad_cumulative_dir = tmp_path / "bad_cumulative"
+    with pytest.raises(ValueError, match="cumulative_returns"):
+        cumulative_result.write_outputs(bad_cumulative_dir, factor_set="mfbt", q=2)
+    assert not bad_cumulative_dir.exists() or list(bad_cumulative_dir.iterdir()) == []
+
+    bad_summary = result.summary.copy()
+    bad_summary.loc[0, "annualized_return"] = 999.0
+    summary_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=result.rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=bad_summary,
+    )
+    bad_summary_dir = tmp_path / "bad_summary"
+    with pytest.raises(ValueError, match="summary"):
+        summary_result.write_outputs(bad_summary_dir, factor_set="mfbt", q=2)
+    assert not bad_summary_dir.exists() or list(bad_summary_dir.iterdir()) == []
+
+    stale_rank_ic = result.rank_ic.copy()
+    stale_rank_ic.loc[0, "return_date"] = pd.Timestamp("2024-05-31")
+    stale_rank_ic_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=stale_rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    stale_rank_ic_dir = tmp_path / "stale_rank_ic"
+    with pytest.raises(ValueError, match="rank_ic"):
+        stale_rank_ic_result.write_outputs(stale_rank_ic_dir, factor_set="mfbt", q=2)
+    assert not stale_rank_ic_dir.exists() or list(stale_rank_ic_dir.iterdir()) == []
+
+    extra_rank_ic = pd.concat([result.rank_ic, result.rank_ic.iloc[[0]]], ignore_index=True)
+    extra_rank_ic_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=extra_rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    extra_rank_ic_dir = tmp_path / "extra_rank_ic"
+    with pytest.raises(ValueError, match="rank_ic"):
+        extra_rank_ic_result.write_outputs(extra_rank_ic_dir, factor_set="mfbt", q=2)
+    assert not extra_rank_ic_dir.exists() or list(extra_rank_ic_dir.iterdir()) == []
+
+    missing_rank_ic = result.rank_ic.iloc[1:].reset_index(drop=True)
+    missing_rank_ic_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=missing_rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    missing_rank_ic_dir = tmp_path / "missing_rank_ic"
+    with pytest.raises(ValueError, match="rank_ic"):
+        missing_rank_ic_result.write_outputs(missing_rank_ic_dir, factor_set="mfbt", q=2)
+    assert not missing_rank_ic_dir.exists() or list(missing_rank_ic_dir.iterdir()) == []
+
+    wrong_directional = result.rank_ic.copy()
+    wrong_directional.loc[wrong_directional["factor"] == "ln_market_cap", "directional_rank_ic"] = wrong_directional.loc[
+        wrong_directional["factor"] == "ln_market_cap",
+        "rank_ic",
+    ]
+    wrong_directional_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=wrong_directional,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    wrong_directional_dir = tmp_path / "wrong_directional"
+    with pytest.raises(ValueError, match="directional_rank_ic"):
+        wrong_directional_result.write_outputs(wrong_directional_dir, factor_set="mfbt", q=2)
+    assert not wrong_directional_dir.exists() or list(wrong_directional_dir.iterdir()) == []
 
 
 def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_ic() -> None:

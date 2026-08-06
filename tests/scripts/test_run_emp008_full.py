@@ -481,6 +481,7 @@ def test_full_run_propagates_quantile_writer_value_error(
     [
         ("origin", DatasetId.QW_DIVIDEND_YLD_FY0),
         ("origin_new_dividend", DatasetId.QW_DPS_TTM),
+        ("origin_12_1m", DatasetId.QW_DIVIDEND_YLD_FY0),
     ],
 )
 def test_origin_required_datasets_include_only_inputs_used_by_the_strategy(
@@ -916,6 +917,29 @@ def test_origin_new_dividend_keeps_origin_size_and_momentum_but_uses_ttm_dividen
     assert factors["ln_market_cap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
     assert factors["momentum_12m"].loc["2024-01-31", "A"] == pytest.approx(0.20)
     assert factors["dividend_yield_ttm"].loc["2024-02-29", "A"] == pytest.approx(0.04)
+
+
+def test_origin_12_1m_uses_prior_month_close_over_twelve_month_lag() -> None:
+    dates = pd.date_range("2023-01-31", "2024-02-29", freq="ME")
+    close = pd.DataFrame(
+        {"A": [100.0, 80.0, *([90.0] * 9), 110.0, 120.0, 130.0]},
+        index=dates,
+    )
+    market = MarketData(
+        frames={
+            "close": close,
+            "market_cap": close * 10.0,
+            "dividend_yld_fy0": close * 0.0 + 0.05,
+        },
+        universe=None,
+        benchmark=None,
+    )
+
+    factors = build_raw_factors(market, Emp008Config(factor_set="origin_12_1m"))
+
+    assert list(factors) == ["ln_market_cap", "momentum_12_1m", "dividend_yield_fy0"]
+    assert factors["momentum_12_1m"].loc["2024-01-31", "A"] == pytest.approx(110.0 / 100.0 - 1.0)
+    assert factors["momentum_12_1m"].loc["2024-02-29", "A"] == pytest.approx(120.0 / 80.0 - 1.0)
 
 
 def test_mfbt_positivity_raw_factors_replace_price_high_ratio_with_rolling_positivity() -> None:

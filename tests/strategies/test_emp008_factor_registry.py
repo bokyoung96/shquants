@@ -31,6 +31,7 @@ def test_factor_and_factor_set_enums_define_expected_exact_values() -> None:
         "price_to_252d_high",
         "positivity_momentum",
         "momentum_12m",
+        "momentum_12_1m",
         "earnings_momentum",
         "dividend_yield_ttm",
         "dividend_yield_fy0",
@@ -45,6 +46,8 @@ def test_factor_and_factor_set_enums_define_expected_exact_values() -> None:
         "mfbt_origin_smallcap",
         "origin",
         "origin_new_dividend",
+        "origin_12_1m",
+        "all_factors",
     ]
     assert [member.value for member in FactorDirection] == ["high", "low"]
 
@@ -53,6 +56,8 @@ def test_strategy_sets_select_independent_factor_ids_and_own_neutralization_poli
     mfbt = get_factor_set_definition(FactorSetId.MFBT)
     origin = get_factor_set_definition(FactorSetId.ORIGIN)
     origin_new_dividend = get_factor_set_definition(FactorSetId.ORIGIN_NEW_DIVIDEND)
+    origin_12_1m = get_factor_set_definition(FactorSetId.ORIGIN_12_1M)
+    all_factors = get_factor_set_definition(FactorSetId.ALL_FACTORS)
 
     assert mfbt.factors == (
         FactorId.PRICE_TO_252D_HIGH,
@@ -74,6 +79,14 @@ def test_strategy_sets_select_independent_factor_ids_and_own_neutralization_poli
         FactorId.MOMENTUM_12M,
         FactorId.DIVIDEND_YIELD_TTM,
     )
+    assert origin_12_1m.factors == (
+        FactorId.LN_MARKET_CAP,
+        FactorId.MOMENTUM_12_1M,
+        FactorId.DIVIDEND_YIELD_FY0,
+    )
+    assert origin_12_1m.neutralize_large_benchmark_weight_factors == ()
+    assert all_factors.factors == tuple(FactorId)
+    assert len(all_factors.factors) == len(set(all_factors.factors))
 
 
 def test_registry_exposes_read_only_complete_mappings() -> None:
@@ -92,6 +105,7 @@ def test_factor_definitions_capture_expected_datasets_directions_and_config_hook
     price = get_factor_definition(FactorId.PRICE_TO_252D_HIGH)
     positivity = get_factor_definition(FactorId.POSITIVITY_MOMENTUM)
     momentum_12m = get_factor_definition(FactorId.MOMENTUM_12M)
+    momentum_12_1m = get_factor_definition(FactorId.MOMENTUM_12_1M)
     earnings = get_factor_definition(FactorId.EARNINGS_MOMENTUM)
     dividend_ttm = get_factor_definition(FactorId.DIVIDEND_YIELD_TTM)
     dividend_fy0 = get_factor_definition(FactorId.DIVIDEND_YIELD_FY0)
@@ -102,6 +116,7 @@ def test_factor_definitions_capture_expected_datasets_directions_and_config_hook
     assert price == FactorDefinition(id=FactorId.PRICE_TO_252D_HIGH, builder=price.builder, datasets=())
     assert positivity == FactorDefinition(id=FactorId.POSITIVITY_MOMENTUM, builder=positivity.builder, datasets=())
     assert momentum_12m.datasets == ()
+    assert momentum_12_1m.datasets == ()
     assert earnings.datasets == (DatasetId.QW_OP_FWD_12M,)
     assert dividend_ttm.datasets == (DatasetId.QW_DPS_TTM,)
     assert dividend_fy0.datasets == (DatasetId.QW_DIVIDEND_YLD_FY0,)
@@ -168,6 +183,17 @@ def test_factor_set_membership_order_and_metadata_match_expected_contract() -> N
         factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M, FactorId.DIVIDEND_YIELD_TTM),
         constrain_expected_alpha_to_direction=True,
     )
+    assert get_factor_set_definition(FactorSetId.ORIGIN_12_1M) == FactorSetDefinition(
+        id=FactorSetId.ORIGIN_12_1M,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12_1M, FactorId.DIVIDEND_YIELD_FY0),
+        constrain_expected_alpha_to_direction=True,
+        snapshot_forward_days=7,
+    )
+    assert get_factor_set_definition(FactorSetId.ALL_FACTORS) == FactorSetDefinition(
+        id=FactorSetId.ALL_FACTORS,
+        factors=tuple(FactorId),
+        snapshot_forward_days=7,
+    )
 
 
 def test_factor_definitions_for_set_use_factor_names_independent_of_strategy() -> None:
@@ -185,7 +211,10 @@ def test_parse_factor_set_normalizes_string_once_and_errors_with_supported_value
     assert parse_factor_set("  origin_new_dividend  ") is FactorSetId.ORIGIN_NEW_DIVIDEND
     assert parse_factor_set(FactorSetId.MFBT) is FactorSetId.MFBT
 
-    with pytest.raises(ValueError, match="mfbt, mfbt_pos, mfbt_origin_smallcap, origin, origin_new_dividend"):
+    with pytest.raises(
+        ValueError,
+        match="mfbt, mfbt_pos, mfbt_origin_smallcap, origin, origin_new_dividend, origin_12_1m, all_factors",
+    ):
         parse_factor_set("legacy")
 
 
@@ -196,6 +225,8 @@ def test_factor_set_values_returns_declared_order() -> None:
         "mfbt_origin_smallcap",
         "origin",
         "origin_new_dividend",
+        "origin_12_1m",
+        "all_factors",
     )
 
 

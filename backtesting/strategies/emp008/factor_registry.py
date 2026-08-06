@@ -23,6 +23,7 @@ class FactorId(StrEnum):
     PRICE_TO_252D_HIGH = "price_to_252d_high"
     POSITIVITY_MOMENTUM = "positivity_momentum"
     MOMENTUM_12M = "momentum_12m"
+    MOMENTUM_12_1M = "momentum_12_1m"
     EARNINGS_MOMENTUM = "earnings_momentum"
     DIVIDEND_YIELD_TTM = "dividend_yield_ttm"
     DIVIDEND_YIELD_FY0 = "dividend_yield_fy0"
@@ -38,6 +39,8 @@ class FactorSetId(StrEnum):
     MFBT_ORIGIN_SMALLCAP = "mfbt_origin_smallcap"
     ORIGIN = "origin"
     ORIGIN_NEW_DIVIDEND = "origin_new_dividend"
+    ORIGIN_12_1M = "origin_12_1m"
+    ALL_FACTORS = "all_factors"
 
 
 @unique
@@ -81,6 +84,11 @@ _FACTOR_DEFINITIONS = {
     FactorId.MOMENTUM_12M: FactorDefinition(
         id=FactorId.MOMENTUM_12M,
         builder=builders.build_momentum_12m,
+        datasets=(),
+    ),
+    FactorId.MOMENTUM_12_1M: FactorDefinition(
+        id=FactorId.MOMENTUM_12_1M,
+        builder=builders.build_momentum_12_1m,
         datasets=(),
     ),
     FactorId.EARNINGS_MOMENTUM: FactorDefinition(
@@ -180,6 +188,21 @@ _FACTOR_SET_DEFINITIONS = {
             FactorId.DIVIDEND_YIELD_TTM,
         ),
         constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.ORIGIN_12_1M: FactorSetDefinition(
+        id=FactorSetId.ORIGIN_12_1M,
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12_1M,
+            FactorId.DIVIDEND_YIELD_FY0,
+        ),
+        constrain_expected_alpha_to_direction=True,
+        snapshot_forward_days=7,
+    ),
+    FactorSetId.ALL_FACTORS: FactorSetDefinition(
+        id=FactorSetId.ALL_FACTORS,
+        factors=tuple(FactorId),
+        snapshot_forward_days=7,
     ),
 }
 

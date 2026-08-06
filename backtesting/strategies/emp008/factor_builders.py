@@ -50,6 +50,15 @@ def build_momentum_12m(market: MarketData, config: Emp008Config) -> pd.DataFrame
     return _monthly_output(close, momentum)
 
 
+def build_momentum_12_1m(market: MarketData, config: Emp008Config) -> pd.DataFrame:
+    del config
+    close = market.frames["close"].astype(float)
+    monthly_close = month_end_observations(close)
+    twelve_month_lag = monthly_close.shift(12)
+    momentum = monthly_close.shift(1).divide(twelve_month_lag.where(twelve_month_lag.gt(0.0))).sub(1.0)
+    return _monthly_output(close, momentum)
+
+
 def build_dividend_yield_fy0(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
@@ -180,6 +189,7 @@ __all__ = [
     "build_dividend_yield_ttm",
     "build_earnings_momentum",
     "build_ln_market_cap",
+    "build_momentum_12_1m",
     "build_momentum_12m",
     "build_positivity_momentum",
     "build_price_to_252d_high",

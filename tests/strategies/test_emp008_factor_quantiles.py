@@ -609,6 +609,51 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
         wrong_directional_result.write_outputs(wrong_directional_dir, factor_set="mfbt", q=2)
     assert not wrong_directional_dir.exists() or list(wrong_directional_dir.iterdir()) == []
 
+    wrong_n_obs = result.rank_ic.copy()
+    wrong_n_obs.loc[0, "n_obs"] = wrong_n_obs.loc[0, "n_obs"] + 1
+    wrong_n_obs_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=wrong_n_obs,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    wrong_n_obs_dir = tmp_path / "wrong_n_obs"
+    with pytest.raises(ValueError, match="n_obs"):
+        wrong_n_obs_result.write_outputs(wrong_n_obs_dir, factor_set="mfbt", q=2)
+    assert not wrong_n_obs_dir.exists() or list(wrong_n_obs_dir.iterdir()) == []
+
+    out_of_range_ic = result.rank_ic.copy()
+    out_of_range_ic.loc[0, "rank_ic"] = 1.5
+    out_of_range_ic.loc[0, "directional_rank_ic"] = 1.5
+    out_of_range_ic_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=out_of_range_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    out_of_range_ic_dir = tmp_path / "out_of_range_ic"
+    with pytest.raises(ValueError, match="rank_ic"):
+        out_of_range_ic_result.write_outputs(out_of_range_ic_dir, factor_set="mfbt", q=2)
+    assert not out_of_range_ic_dir.exists() or list(out_of_range_ic_dir.iterdir()) == []
+
+    small_n_obs_rank_ic = result.rank_ic.copy()
+    small_n_obs_rank_ic.loc[0, "n_obs"] = 1
+    small_n_obs_rank_ic.loc[0, "rank_ic"] = 0.25
+    small_n_obs_rank_ic.loc[0, "directional_rank_ic"] = 0.25
+    small_n_obs_rank_ic_result = Emp008FactorQuantileResult(
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        rank_ic=small_n_obs_rank_ic,
+        cumulative_returns=result.cumulative_returns,
+        summary=result.summary,
+    )
+    small_n_obs_rank_ic_dir = tmp_path / "small_n_obs_rank_ic"
+    with pytest.raises(ValueError, match="n_obs"):
+        small_n_obs_rank_ic_result.write_outputs(small_n_obs_rank_ic_dir, factor_set="mfbt", q=2)
+    assert not small_n_obs_rank_ic_dir.exists() or list(small_n_obs_rank_ic_dir.iterdir()) == []
+
 
 def test_evaluate_factor_quantiles_handles_low_direction_sparse_months_and_rank_ic() -> None:
     factors, close, market_cap, universe, monthly_dates = _core_inputs()

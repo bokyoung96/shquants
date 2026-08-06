@@ -742,7 +742,12 @@ def _validate_result_for_output(
         raise ValueError("cumulative_returns rows must align with monthly_returns portfolios")
 
     _validate_membership_parity(result.portfolio_weights)
-    _validate_rank_ic(result.rank_ic, monthly_returns=result.monthly_returns, directions=directions)
+    _validate_rank_ic(
+        result.rank_ic,
+        monthly_returns=result.monthly_returns,
+        portfolio_weights=result.portfolio_weights,
+        directions=directions,
+    )
     expected_cumulative = _build_cumulative_returns(result.monthly_returns)
     _compare_derived_frame(
         actual=result.cumulative_returns,
@@ -789,6 +794,7 @@ def _validate_rank_ic(
     rank_ic: pd.DataFrame,
     *,
     monthly_returns: pd.DataFrame,
+    portfolio_weights: pd.DataFrame,
     directions: Mapping[str, FactorDirection],
 ) -> None:
     coverage = (
@@ -809,6 +815,37 @@ def _validate_rank_ic(
     if not n_obs.ge(0).all():
         raise ValueError("rank_ic n_obs must be non-negative")
 
+    expected_n_obs = _expected_rank_ic_n_obs(portfolio_weights)
+    actual_n_obs = rank_ic.loc[:, ["signal_date", "return_date", "factor", "n_obs"]].sort_values(
+        ["signal_date", "return_date", "factor"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    expected_n_obs_frame = expected_n_obs.sort_values(
+        ["signal_date", "return_date", "factor"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    _compare_derived_frame(
+        actual=actual_n_obs,
+        expected=expected_n_obs_frame,
+        frame_name="rank_ic n_obs",
+        check_dtype=False,
+    )
+
+    rank_ic_values = rank_ic["rank_ic"].astype(float)
+    directional_values = rank_ic["directional_rank_ic"].astype(float)
+    valid_rank_ic = rank_ic_values.dropna()
+    valid_directional = directional_values.dropna()
+    if not valid_rank_ic.map(np.isfinite).all() or not valid_directional.map(np.isfinite).all():
+        raise ValueError("rank_ic values must be finite when present")
+    if not valid_rank_ic.between(-1.0 - 1e-12, 1.0 + 1e-12).all():
+        raise ValueError("rank_ic values must stay within [-1, 1]")
+    if not valid_directional.between(-1.0 - 1e-12, 1.0 + 1e-12).all():
+        raise ValueError("directional_rank_ic values must stay within [-1, 1]")
+    insufficient_obs = n_obs.lt(2)
+    insufficient_ic = rank_ic.loc[insufficient_obs, ["rank_ic", "directional_rank_ic"]]
+    if not insufficient_ic.isna().all().all():
+        raise ValueError("rank_ic with n_obs < 2 must be NaN")
+
     expected_directional = rank_ic["rank_ic"].astype(float).copy()
     low_mask = rank_ic["factor"].map(lambda factor: directions[factor] is FactorDirection.LOW)
     expected_directional.loc[low_mask] = expected_directional.loc[low_mask] * -1.0
@@ -823,6 +860,17 @@ def _validate_rank_ic(
     )
     if not bool(np.all(equal_mask)):
         raise ValueError("rank_ic directional_rank_ic does not match factor directions")
+
+
+def _expected_rank_ic_n_obs(portfolio_weights: pd.DataFrame) -> pd.DataFrame:
+    equal_weight_rows = portfolio_weights[portfolio_weights["weighting"] == QuantileWeighting.EQUAL]
+    quantile_rows = equal_weight_rows[equal_weight_rows["quantile"].astype(str).str.match(r"^Q\d+$", na=False)]
+    grouped = (
+        quantile_rows.groupby(["signal_date", "return_date", "factor"], observed=True, sort=False)["ticker"]
+        .nunique()
+        .reset_index(name="n_obs")
+    )
+    return grouped
 
 
 def _compare_derived_frame(

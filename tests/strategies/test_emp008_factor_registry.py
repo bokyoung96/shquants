@@ -178,6 +178,20 @@ def test_emp008_config_normalizes_factor_set_to_enum_member() -> None:
     assert config.factor_set is FactorSetId.ORIGIN
 
 
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("rank_transform_factors", ("ln_market_cap",)),
+        ("large_bm_neutral_factor_names", ("ln_market_cap",)),
+        ("expected_alpha_policy", "mean"),
+        ("monthly_snapshot_forward_days", 7),
+    ],
+)
+def test_emp008_config_rejects_removed_metadata_constructor_kwargs(field_name: str, value: object) -> None:
+    with pytest.raises(TypeError, match=field_name):
+        MfbtEmp008Config(**{field_name: value})  # type: ignore[arg-type]
+
+
 def test_factor_definition_builders_share_config_signature() -> None:
     config = MfbtEmp008Config()
 

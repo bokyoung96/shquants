@@ -472,11 +472,11 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
     result = evaluate_factor_quantiles(
         factors={
-            "price_momentum": factors["high_factor"],
+            "price_to_252d_high": factors["high_factor"],
             "ln_market_cap": factors["low_factor"],
         },
         directions={
-            "price_momentum": FactorDirection.HIGH,
+            "price_to_252d_high": FactorDirection.HIGH,
             "ln_market_cap": FactorDirection.LOW,
         },
         close=close,
@@ -524,7 +524,7 @@ def test_write_outputs_creates_auditable_artifacts_and_rejects_invalid_results(t
     assert manifest["q"] == 2
     assert manifest["timing"] == "month_end_t_to_next_month_end"
     assert manifest["market_cap_field"] == "market_cap"
-    assert manifest["selected_factors"] == ["price_momentum", "earnings_momentum", "dividend_yield", "retail_flow", "value", "ln_market_cap"]
+    assert manifest["selected_factors"] == ["price_to_252d_high", "earnings_momentum", "dividend_yield_ttm", "retail_flow", "value", "ln_market_cap"]
     assert manifest["directions"]["ln_market_cap"] == "low"
     assert manifest["artifacts"]["summary.json"]["rows"] == len(result.summary)
 
@@ -550,11 +550,11 @@ def test_write_outputs_rejects_tampered_cumulative_summary_and_rank_ic(tmp_path)
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
     result = evaluate_factor_quantiles(
         factors={
-            "price_momentum": factors["high_factor"],
+            "price_to_252d_high": factors["high_factor"],
             "ln_market_cap": factors["low_factor"],
         },
         directions={
-            "price_momentum": FactorDirection.HIGH,
+            "price_to_252d_high": FactorDirection.HIGH,
             "ln_market_cap": FactorDirection.LOW,
         },
         close=close,
@@ -701,11 +701,11 @@ def test_write_outputs_rolls_back_on_publication_failure(tmp_path, monkeypatch: 
     factors, close, market_cap, universe, monthly_dates = _core_inputs()
     result = evaluate_factor_quantiles(
         factors={
-            "price_momentum": factors["high_factor"],
+            "price_to_252d_high": factors["high_factor"],
             "ln_market_cap": factors["low_factor"],
         },
         directions={
-            "price_momentum": FactorDirection.HIGH,
+            "price_to_252d_high": FactorDirection.HIGH,
             "ln_market_cap": FactorDirection.LOW,
         },
         close=close,
@@ -1308,9 +1308,9 @@ def test_run_emp008_factor_quantiles_uses_prepared_monthly_dates_and_total_marke
     assert captured["end"] == "2024-02-29"
     assert captured["q"] == 7
     assert captured["directions"] == {
-        "price_momentum": FactorDirection.HIGH,
+        "price_to_252d_high": FactorDirection.HIGH,
         "earnings_momentum": FactorDirection.HIGH,
-        "dividend_yield": FactorDirection.HIGH,
+        "dividend_yield_ttm": FactorDirection.HIGH,
         "retail_flow": FactorDirection.HIGH,
         "value": FactorDirection.HIGH,
         "ln_market_cap": FactorDirection.LOW,

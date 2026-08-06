@@ -77,7 +77,8 @@ it is not allowed to replace or fill official benchmark rows.
 ## Registry Extension Contract
 
 New factors are added through `factor_registry.py`, not by appending
-ad hoc branches to individual runners. Each `FactorDefinition` must declare:
+ad hoc branches to individual runners. Each `FactorDefinition` describes one
+strategy-independent calculation and must declare:
 
 - `id`: stable public factor name used in outputs
 - `builder`: raw monthly factor constructor
@@ -86,12 +87,12 @@ ad hoc branches to individual runners. Each `FactorDefinition` must declare:
 - `rank_transform`: whether the post-fill cross section is ranked before z-scoring
 - `winsor_config_attr`: optional `Emp008Config` attribute used to winsorize raw values
 - `zscore_cap_config_attr`: optional `Emp008Config` attribute used to cap final z-scores
-- `neutralize_large_benchmark_weight`: whether very large benchmark names are forced to neutral exposure
 - `requires_construction_sector`: whether raw construction needs `sector_dataset`
 
 `FactorSetDefinition` then derives:
 
 - ordered factor membership for each CLI variant
+- strategy-specific large-benchmark-weight neutralization targets
 - optimizer direction constraints
 - forward snapshot allowance for month-only data
 
@@ -105,9 +106,12 @@ continuous values, not score buckets.
 
 | Factor | Definition |
 | --- | --- |
-| `price_momentum` | `adjusted_close / adjusted_close.rolling(252).max()` |
+| `price_to_252d_high` | `adjusted_close / adjusted_close.rolling(252).max()` |
+| `positivity_momentum` | Rolling share of non-negative daily returns |
+| `momentum_12m` | Month-end adjusted-close return over 12 months |
 | `earnings_momentum` | Monthly forward OP growth: `(current - previous) / abs(previous)` |
-| `dividend_yield` | `DPS_TTM / adjusted_close` |
+| `dividend_yield_ttm` | `DPS_TTM / adjusted_close` |
+| `dividend_yield_fy0` | Fiscal-year-zero dividend yield snapshot |
 | `retail_flow` | Negative sector-relative 252-day retail flow |
 | `value` | `FCF / (market_cap + interest_bearing_liability - quick_assets)` |
 | `ln_market_cap` | `log(market_cap)` |
@@ -119,8 +123,9 @@ Special handling:
 - `value` treats non-positive TEV as missing.
 - `ln_market_cap` is filled with the same float-market-cap weighted rule as
   other factors, then rank-transformed before centering and z-scoring.
-- `ln_market_cap` is then set to neutral exposure `0.0` for stocks whose
-  `QW_BM_WEIGHTS` weight is at least `10%` on that date.
+- MFBT factor sets then set `ln_market_cap` to neutral exposure `0.0` for
+  stocks whose `QW_BM_WEIGHTS` weight is at least `10%` on that date. Origin
+  sets use the same independent factor without that strategy policy.
 - `retail_flow` is calculated stock by stock, then de-meaned within each sector
   on the rebalance date and multiplied by `-1`. The resulting signal is sector
   neutral by construction before the common preprocessing step.
@@ -192,7 +197,7 @@ the rolling mean is estimated. It does not alter raw factors, z-scores,
 realized factor returns, or the risk model:
 
 ```text
-price_momentum, earnings_momentum, dividend_yield, retail_flow, value:
+price_to_252d_high, earnings_momentum, dividend_yield_ttm, retail_flow, value:
     adjusted alpha = max(mean(last 36 monthly f_t), 0)
 ln_market_cap:
     adjusted alpha = min(mean(last 36 monthly f_t), 0)

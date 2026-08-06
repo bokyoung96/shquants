@@ -217,7 +217,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=factor_set_values(),
         help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
-        "or 'origin_new_dividend' to replace origin DY with MFBT dividend yield.",
+        "or 'origin_new_dividend' to replace dividend_yield_fy0 with dividend_yield_ttm.",
     )
     parser.add_argument(
         "--sector-neutral-dataset",

@@ -28,17 +28,17 @@ def test_factor_and_factor_set_enums_define_expected_exact_values() -> None:
     assert issubclass(FactorId, Enum)
     assert issubclass(FactorSetId, Enum)
     assert [member.value for member in FactorId] == [
-        "price_momentum",
+        "price_to_252d_high",
         "positivity_momentum",
+        "momentum_12m",
         "earnings_momentum",
-        "dividend_yield",
+        "dividend_yield_ttm",
+        "dividend_yield_fy0",
         "retail_flow",
         "value",
         "ln_market_cap",
-        "LnMktcap",
-        "Momentum_12M",
-        "DY",
     ]
+    assert all("origin" not in member.name.lower() for member in FactorId)
     assert [member.value for member in FactorSetId] == [
         "mfbt",
         "mfbt_pos",
@@ -49,6 +49,33 @@ def test_factor_and_factor_set_enums_define_expected_exact_values() -> None:
     assert [member.value for member in FactorDirection] == ["high", "low"]
 
 
+def test_strategy_sets_select_independent_factor_ids_and_own_neutralization_policy() -> None:
+    mfbt = get_factor_set_definition(FactorSetId.MFBT)
+    origin = get_factor_set_definition(FactorSetId.ORIGIN)
+    origin_new_dividend = get_factor_set_definition(FactorSetId.ORIGIN_NEW_DIVIDEND)
+
+    assert mfbt.factors == (
+        FactorId.PRICE_TO_252D_HIGH,
+        FactorId.EARNINGS_MOMENTUM,
+        FactorId.DIVIDEND_YIELD_TTM,
+        FactorId.RETAIL_FLOW,
+        FactorId.VALUE,
+        FactorId.LN_MARKET_CAP,
+    )
+    assert mfbt.neutralize_large_benchmark_weight_factors == (FactorId.LN_MARKET_CAP,)
+    assert origin.factors == (
+        FactorId.LN_MARKET_CAP,
+        FactorId.MOMENTUM_12M,
+        FactorId.DIVIDEND_YIELD_FY0,
+    )
+    assert origin.neutralize_large_benchmark_weight_factors == ()
+    assert origin_new_dividend.factors == (
+        FactorId.LN_MARKET_CAP,
+        FactorId.MOMENTUM_12M,
+        FactorId.DIVIDEND_YIELD_TTM,
+    )
+
+
 def test_registry_exposes_read_only_complete_mappings() -> None:
     assert isinstance(FACTOR_DEFINITIONS, MappingProxyType)
     assert isinstance(FACTOR_SET_DEFINITIONS, MappingProxyType)
@@ -56,27 +83,28 @@ def test_registry_exposes_read_only_complete_mappings() -> None:
     assert tuple(FACTOR_SET_DEFINITIONS) == tuple(FactorSetId)
 
     with pytest.raises(TypeError):
-        FACTOR_DEFINITIONS[FactorId.PRICE_MOMENTUM] = FACTOR_DEFINITIONS[FactorId.PRICE_MOMENTUM]  # type: ignore[index]
+        FACTOR_DEFINITIONS[FactorId.PRICE_TO_252D_HIGH] = FACTOR_DEFINITIONS[FactorId.PRICE_TO_252D_HIGH]  # type: ignore[index]
     with pytest.raises(TypeError):
         FACTOR_SET_DEFINITIONS[FactorSetId.MFBT] = FACTOR_SET_DEFINITIONS[FactorSetId.MFBT]  # type: ignore[index]
 
 
 def test_factor_definitions_capture_expected_datasets_directions_and_config_hooks() -> None:
-    price = get_factor_definition(FactorId.PRICE_MOMENTUM)
+    price = get_factor_definition(FactorId.PRICE_TO_252D_HIGH)
     positivity = get_factor_definition(FactorId.POSITIVITY_MOMENTUM)
+    momentum_12m = get_factor_definition(FactorId.MOMENTUM_12M)
     earnings = get_factor_definition(FactorId.EARNINGS_MOMENTUM)
-    dividend = get_factor_definition(FactorId.DIVIDEND_YIELD)
+    dividend_ttm = get_factor_definition(FactorId.DIVIDEND_YIELD_TTM)
+    dividend_fy0 = get_factor_definition(FactorId.DIVIDEND_YIELD_FY0)
     retail = get_factor_definition(FactorId.RETAIL_FLOW)
     value = get_factor_definition(FactorId.VALUE)
     ln_market_cap = get_factor_definition(FactorId.LN_MARKET_CAP)
-    origin_ln_market_cap = get_factor_definition(FactorId.ORIGIN_LN_MKTCAP)
-    origin_momentum = get_factor_definition(FactorId.ORIGIN_MOMENTUM_12M)
-    origin_dividend = get_factor_definition(FactorId.ORIGIN_DY)
 
-    assert price == FactorDefinition(id=FactorId.PRICE_MOMENTUM, builder=price.builder, datasets=())
+    assert price == FactorDefinition(id=FactorId.PRICE_TO_252D_HIGH, builder=price.builder, datasets=())
     assert positivity == FactorDefinition(id=FactorId.POSITIVITY_MOMENTUM, builder=positivity.builder, datasets=())
+    assert momentum_12m.datasets == ()
     assert earnings.datasets == (DatasetId.QW_OP_FWD_12M,)
-    assert dividend.datasets == (DatasetId.QW_DPS_TTM,)
+    assert dividend_ttm.datasets == (DatasetId.QW_DPS_TTM,)
+    assert dividend_fy0.datasets == (DatasetId.QW_DIVIDEND_YLD_FY0,)
     assert retail.datasets == (DatasetId.QW_RETAIL,)
     assert retail.requires_construction_sector is True
     assert value.datasets == (
@@ -88,71 +116,69 @@ def test_factor_definitions_capture_expected_datasets_directions_and_config_hook
     assert value.zscore_cap_config_attr == "value_zscore_cap"
     assert ln_market_cap.direction is FactorDirection.LOW
     assert ln_market_cap.rank_transform is True
-    assert ln_market_cap.neutralize_large_benchmark_weight is True
-    assert origin_ln_market_cap.direction is FactorDirection.LOW
-    assert origin_ln_market_cap.rank_transform is True
-    assert origin_ln_market_cap.neutralize_large_benchmark_weight is False
-    assert origin_momentum.direction is FactorDirection.HIGH
-    assert origin_dividend.datasets == (DatasetId.QW_DIVIDEND_YLD_FY0,)
+    assert not hasattr(ln_market_cap, "neutralize_large_benchmark_weight")
 
 
 def test_factor_set_membership_order_and_metadata_match_expected_contract() -> None:
     assert get_factor_set_definition(FactorSetId.MFBT) == FactorSetDefinition(
         id=FactorSetId.MFBT,
         factors=(
-            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     )
     assert get_factor_set_definition(FactorSetId.MFBT_POS) == FactorSetDefinition(
         id=FactorSetId.MFBT_POS,
         factors=(
             FactorId.POSITIVITY_MOMENTUM,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     )
     assert get_factor_set_definition(FactorSetId.MFBT_ORIGIN_SMALLCAP) == FactorSetDefinition(
         id=FactorSetId.MFBT_ORIGIN_SMALLCAP,
         factors=(
-            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
         constrain_expected_alpha_to_direction=True,
     )
     assert get_factor_set_definition(FactorSetId.ORIGIN) == FactorSetDefinition(
         id=FactorSetId.ORIGIN,
-        factors=(FactorId.ORIGIN_LN_MKTCAP, FactorId.ORIGIN_MOMENTUM_12M, FactorId.ORIGIN_DY),
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M, FactorId.DIVIDEND_YIELD_FY0),
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
     )
     assert get_factor_set_definition(FactorSetId.ORIGIN_NEW_DIVIDEND) == FactorSetDefinition(
         id=FactorSetId.ORIGIN_NEW_DIVIDEND,
-        factors=(FactorId.ORIGIN_LN_MKTCAP, FactorId.ORIGIN_MOMENTUM_12M, FactorId.DIVIDEND_YIELD),
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M, FactorId.DIVIDEND_YIELD_TTM),
         constrain_expected_alpha_to_direction=True,
     )
 
 
-def test_factor_definitions_for_set_preserve_origin_output_names() -> None:
+def test_factor_definitions_for_set_use_factor_names_independent_of_strategy() -> None:
     assert [definition.id.value for definition in factor_definitions_for_set(FactorSetId.ORIGIN)] == [
-        "LnMktcap",
-        "Momentum_12M",
-        "DY",
+        "ln_market_cap",
+        "momentum_12m",
+        "dividend_yield_fy0",
     ]
     assert [
         definition.id.value for definition in factor_definitions_for_set(FactorSetId.ORIGIN_NEW_DIVIDEND)
-    ] == ["LnMktcap", "Momentum_12M", "dividend_yield"]
+    ] == ["ln_market_cap", "momentum_12m", "dividend_yield_ttm"]
 
 
 def test_parse_factor_set_normalizes_string_once_and_errors_with_supported_values() -> None:
@@ -211,13 +237,28 @@ def test_validate_registry_rejects_duplicate_factor_ids_within_factor_set() -> N
     duplicate_set_definitions[FactorSetId.MFBT] = FactorSetDefinition(
         id=FactorSetId.MFBT,
         factors=(
-            FactorId.PRICE_MOMENTUM,
-            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_TO_252D_HIGH,
+            FactorId.PRICE_TO_252D_HIGH,
         ),
     )
 
-    with pytest.raises(ValueError, match="duplicate factor ids.*mfbt.*price_momentum"):
+    with pytest.raises(ValueError, match="duplicate factor ids.*mfbt.*price_to_252d_high"):
         _validate_registry(
             factor_definitions=FACTOR_DEFINITIONS,
             factor_set_definitions=duplicate_set_definitions,
+        )
+
+
+def test_validate_registry_rejects_strategy_policy_for_unselected_factor() -> None:
+    invalid_set_definitions = dict(FACTOR_SET_DEFINITIONS)
+    invalid_set_definitions[FactorSetId.ORIGIN] = FactorSetDefinition(
+        id=FactorSetId.ORIGIN,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M, FactorId.DIVIDEND_YIELD_FY0),
+        neutralize_large_benchmark_weight_factors=(FactorId.VALUE,),
+    )
+
+    with pytest.raises(ValueError, match="neutralization.*origin.*value"):
+        _validate_registry(
+            factor_definitions=FACTOR_DEFINITIONS,
+            factor_set_definitions=invalid_set_definitions,
         )

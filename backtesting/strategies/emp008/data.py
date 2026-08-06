@@ -49,11 +49,8 @@ class Emp008Config:
 
     @property
     def large_bm_neutral_factor_names(self) -> tuple[str, ...]:
-        return tuple(
-            definition.id.value
-            for definition in factor_definitions_for_set(self.factor_set)
-            if definition.neutralize_large_benchmark_weight
-        )
+        factor_set = get_factor_set_definition(self.factor_set)
+        return tuple(factor_id.value for factor_id in factor_set.neutralize_large_benchmark_weight_factors)
 
     @property
     def expected_alpha_policy(self) -> str:

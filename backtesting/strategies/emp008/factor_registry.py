@@ -20,16 +20,15 @@ FactorBuilder = Callable[[MarketData, "Emp008Config"], pd.DataFrame]
 
 @unique
 class FactorId(StrEnum):
-    PRICE_MOMENTUM = "price_momentum"
+    PRICE_TO_252D_HIGH = "price_to_252d_high"
     POSITIVITY_MOMENTUM = "positivity_momentum"
+    MOMENTUM_12M = "momentum_12m"
     EARNINGS_MOMENTUM = "earnings_momentum"
-    DIVIDEND_YIELD = "dividend_yield"
+    DIVIDEND_YIELD_TTM = "dividend_yield_ttm"
+    DIVIDEND_YIELD_FY0 = "dividend_yield_fy0"
     RETAIL_FLOW = "retail_flow"
     VALUE = "value"
     LN_MARKET_CAP = "ln_market_cap"
-    ORIGIN_LN_MKTCAP = "LnMktcap"
-    ORIGIN_MOMENTUM_12M = "Momentum_12M"
-    ORIGIN_DY = "DY"
 
 
 @unique
@@ -56,7 +55,6 @@ class FactorDefinition:
     rank_transform: bool = False
     winsor_config_attr: str | None = None
     zscore_cap_config_attr: str | None = None
-    neutralize_large_benchmark_weight: bool = False
     requires_construction_sector: bool = False
 
 
@@ -64,14 +62,15 @@ class FactorDefinition:
 class FactorSetDefinition:
     id: FactorSetId
     factors: tuple[FactorId, ...]
+    neutralize_large_benchmark_weight_factors: tuple[FactorId, ...] = ()
     constrain_expected_alpha_to_direction: bool = False
     snapshot_forward_days: int = 0
 
 
 _FACTOR_DEFINITIONS = {
-    FactorId.PRICE_MOMENTUM: FactorDefinition(
-        id=FactorId.PRICE_MOMENTUM,
-        builder=builders.build_price_momentum,
+    FactorId.PRICE_TO_252D_HIGH: FactorDefinition(
+        id=FactorId.PRICE_TO_252D_HIGH,
+        builder=builders.build_price_to_252d_high,
         datasets=(),
     ),
     FactorId.POSITIVITY_MOMENTUM: FactorDefinition(
@@ -79,15 +78,25 @@ _FACTOR_DEFINITIONS = {
         builder=builders.build_positivity_momentum,
         datasets=(),
     ),
+    FactorId.MOMENTUM_12M: FactorDefinition(
+        id=FactorId.MOMENTUM_12M,
+        builder=builders.build_momentum_12m,
+        datasets=(),
+    ),
     FactorId.EARNINGS_MOMENTUM: FactorDefinition(
         id=FactorId.EARNINGS_MOMENTUM,
         builder=builders.build_earnings_momentum,
         datasets=(DatasetId.QW_OP_FWD_12M,),
     ),
-    FactorId.DIVIDEND_YIELD: FactorDefinition(
-        id=FactorId.DIVIDEND_YIELD,
-        builder=builders.build_dividend_yield,
+    FactorId.DIVIDEND_YIELD_TTM: FactorDefinition(
+        id=FactorId.DIVIDEND_YIELD_TTM,
+        builder=builders.build_dividend_yield_ttm,
         datasets=(DatasetId.QW_DPS_TTM,),
+    ),
+    FactorId.DIVIDEND_YIELD_FY0: FactorDefinition(
+        id=FactorId.DIVIDEND_YIELD_FY0,
+        builder=builders.build_dividend_yield_fy0,
+        datasets=(DatasetId.QW_DIVIDEND_YLD_FY0,),
     ),
     FactorId.RETAIL_FLOW: FactorDefinition(
         id=FactorId.RETAIL_FLOW,
@@ -112,24 +121,6 @@ _FACTOR_DEFINITIONS = {
         datasets=(),
         direction=FactorDirection.LOW,
         rank_transform=True,
-        neutralize_large_benchmark_weight=True,
-    ),
-    FactorId.ORIGIN_LN_MKTCAP: FactorDefinition(
-        id=FactorId.ORIGIN_LN_MKTCAP,
-        builder=builders.build_ln_market_cap,
-        datasets=(),
-        direction=FactorDirection.LOW,
-        rank_transform=True,
-    ),
-    FactorId.ORIGIN_MOMENTUM_12M: FactorDefinition(
-        id=FactorId.ORIGIN_MOMENTUM_12M,
-        builder=builders.build_origin_momentum_12m,
-        datasets=(),
-    ),
-    FactorId.ORIGIN_DY: FactorDefinition(
-        id=FactorId.ORIGIN_DY,
-        builder=builders.build_origin_dividend_yield,
-        datasets=(DatasetId.QW_DIVIDEND_YLD_FY0,),
     ),
 }
 
@@ -137,43 +128,46 @@ _FACTOR_SET_DEFINITIONS = {
     FactorSetId.MFBT: FactorSetDefinition(
         id=FactorSetId.MFBT,
         factors=(
-            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
     FactorSetId.MFBT_POS: FactorSetDefinition(
         id=FactorSetId.MFBT_POS,
         factors=(
             FactorId.POSITIVITY_MOMENTUM,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
     FactorSetId.MFBT_ORIGIN_SMALLCAP: FactorSetDefinition(
         id=FactorSetId.MFBT_ORIGIN_SMALLCAP,
         factors=(
-            FactorId.PRICE_MOMENTUM,
+            FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.DIVIDEND_YIELD_TTM,
             FactorId.RETAIL_FLOW,
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
         constrain_expected_alpha_to_direction=True,
     ),
     FactorSetId.ORIGIN: FactorSetDefinition(
         id=FactorSetId.ORIGIN,
         factors=(
-            FactorId.ORIGIN_LN_MKTCAP,
-            FactorId.ORIGIN_MOMENTUM_12M,
-            FactorId.ORIGIN_DY,
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12M,
+            FactorId.DIVIDEND_YIELD_FY0,
         ),
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
@@ -181,9 +175,9 @@ _FACTOR_SET_DEFINITIONS = {
     FactorSetId.ORIGIN_NEW_DIVIDEND: FactorSetDefinition(
         id=FactorSetId.ORIGIN_NEW_DIVIDEND,
         factors=(
-            FactorId.ORIGIN_LN_MKTCAP,
-            FactorId.ORIGIN_MOMENTUM_12M,
-            FactorId.DIVIDEND_YIELD,
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12M,
+            FactorId.DIVIDEND_YIELD_TTM,
         ),
         constrain_expected_alpha_to_direction=True,
     ),
@@ -242,6 +236,15 @@ def _validate_registry(
             seen.add(factor_id)
             if factor_id not in factor_definitions:
                 raise ValueError(f"factor set '{factor_set_id.value}' references undefined factor '{factor_id.value}'")
+        neutralization_ids = definition.neutralize_large_benchmark_weight_factors
+        if len(neutralization_ids) != len(set(neutralization_ids)):
+            raise ValueError(f"duplicate neutralization factor ids in factor set '{factor_set_id.value}'")
+        for factor_id in neutralization_ids:
+            if factor_id not in definition.factors:
+                raise ValueError(
+                    f"neutralization policy in factor set '{factor_set_id.value}' references unselected factor "
+                    f"'{factor_id.value}'"
+                )
 
 
 _validate_registry()

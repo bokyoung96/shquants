@@ -781,7 +781,7 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
 
     assert config.factor_set is FactorSetId.ORIGIN
     assert config.expected_alpha_policy == "origin_sign"
-    assert config.rank_transform_factors == ("LnMktcap",)
+    assert config.rank_transform_factors == ("ln_market_cap",)
     assert config.large_bm_neutral_factor_names == ()
     assert config.monthly_snapshot_forward_days == 7
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
@@ -793,7 +793,7 @@ def test_build_emp008_config_sets_origin_with_new_dividend_variant() -> None:
 
     assert config.factor_set is FactorSetId.ORIGIN_NEW_DIVIDEND
     assert config.expected_alpha_policy == "origin_sign"
-    assert config.rank_transform_factors == ("LnMktcap",)
+    assert config.rank_transform_factors == ("ln_market_cap",)
     assert config.large_bm_neutral_factor_names == ()
     assert config.monthly_snapshot_forward_days == 0
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
@@ -806,6 +806,7 @@ def test_build_emp008_config_sets_mfbt_positivity_variant() -> None:
     assert config.factor_set is FactorSetId.MFBT_POS
     assert config.expected_alpha_policy == "mean"
     assert config.rank_transform_factors == ("ln_market_cap",)
+    assert config.large_bm_neutral_factor_names == ("ln_market_cap",)
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
     assert DatasetId.QW_DIVIDEND_YLD_FY0 not in required_datasets(config)
 
@@ -891,11 +892,11 @@ def test_origin_raw_factors_use_ln_mktcap_twelve_month_momentum_and_fy0_dividend
 
     factors = build_raw_factors(market, Emp008Config(factor_set="origin"))
 
-    assert list(factors) == ["LnMktcap", "Momentum_12M", "DY"]
-    assert factors["LnMktcap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
-    assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
-    assert factors["Momentum_12M"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
-    assert factors["DY"].loc["2024-02-29", "A"] == pytest.approx(0.65)
+    assert list(factors) == ["ln_market_cap", "momentum_12m", "dividend_yield_fy0"]
+    assert factors["ln_market_cap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
+    assert factors["momentum_12m"].loc["2024-01-31", "A"] == pytest.approx(0.20)
+    assert factors["momentum_12m"].loc["2024-02-29", "A"] == pytest.approx(99.0 / 101.0 - 1.0)
+    assert factors["dividend_yield_fy0"].loc["2024-02-29", "A"] == pytest.approx(0.65)
 
 
 def test_origin_new_dividend_keeps_origin_size_and_momentum_but_uses_ttm_dividend_yield() -> None:
@@ -911,10 +912,10 @@ def test_origin_new_dividend_keeps_origin_size_and_momentum_but_uses_ttm_dividen
 
     factors = build_raw_factors(market, Emp008Config(factor_set="origin_new_dividend"))
 
-    assert list(factors) == ["LnMktcap", "Momentum_12M", "dividend_yield"]
-    assert factors["LnMktcap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
-    assert factors["Momentum_12M"].loc["2024-01-31", "A"] == pytest.approx(0.20)
-    assert factors["dividend_yield"].loc["2024-02-29", "A"] == pytest.approx(0.04)
+    assert list(factors) == ["ln_market_cap", "momentum_12m", "dividend_yield_ttm"]
+    assert factors["ln_market_cap"].loc["2024-02-29", "A"] == pytest.approx(np.log(1500.0))
+    assert factors["momentum_12m"].loc["2024-01-31", "A"] == pytest.approx(0.20)
+    assert factors["dividend_yield_ttm"].loc["2024-02-29", "A"] == pytest.approx(0.04)
 
 
 def test_mfbt_positivity_raw_factors_replace_price_high_ratio_with_rolling_positivity() -> None:
@@ -952,12 +953,12 @@ def test_mfbt_positivity_raw_factors_replace_price_high_ratio_with_rolling_posit
     assert list(factors) == [
         "positivity_momentum",
         "earnings_momentum",
-        "dividend_yield",
+        "dividend_yield_ttm",
         "retail_flow",
         "value",
         "ln_market_cap",
     ]
-    assert "price_momentum" not in factors
+    assert "price_to_252d_high" not in factors
     expected = close.pct_change(fill_method=None).ge(0.0).rolling(3, min_periods=3).mean()
     month_end = dates[-1]
     assert factors["positivity_momentum"].loc[month_end, "A"] == pytest.approx(expected.loc[month_end, "A"])
@@ -984,7 +985,7 @@ def test_origin_dividend_yield_maps_later_month_snapshot_to_close_month_end() ->
 
     factors = build_raw_factors(market, Emp008Config(factor_set="origin"))
 
-    assert factors["DY"].loc["2026-05-28", "A"] == pytest.approx(0.70)
+    assert factors["dividend_yield_fy0"].loc["2026-05-28", "A"] == pytest.approx(0.70)
 
 
 def test_origin_market_load_keeps_forward_snapshot_but_trims_price_frames_to_requested_end() -> None:
@@ -1018,9 +1019,9 @@ def test_origin_snapshot_padding_comes_from_registry_without_constructor_overrid
 def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
     expected_alpha = pd.Series(
         {
-            "LnMktcap": 0.01,
-            "Momentum_12M": -0.02,
-            "DY": 0.03,
+            "ln_market_cap": 0.01,
+            "momentum_12m": -0.02,
+            "dividend_yield_fy0": 0.03,
             "sector_tech": 0.0,
         }
     )
@@ -1030,32 +1031,32 @@ def test_origin_expected_alpha_policy_matches_w_emp008_sign_rules() -> None:
         Emp008Config(factor_set="origin"),
     )
 
-    assert result["LnMktcap"] == 0.0
-    assert result["Momentum_12M"] == 0.0
-    assert result["DY"] == pytest.approx(0.03)
+    assert result["ln_market_cap"] == 0.0
+    assert result["momentum_12m"] == 0.0
+    assert result["dividend_yield_fy0"] == pytest.approx(0.03)
     assert result["sector_tech"] == 0.0
 
 
 def test_origin_expected_alpha_policy_applies_dividend_direction_to_new_dividend_name() -> None:
-    expected_alpha = pd.Series({"LnMktcap": -0.01, "Momentum_12M": 0.02, "dividend_yield": -0.03})
+    expected_alpha = pd.Series({"ln_market_cap": -0.01, "momentum_12m": 0.02, "dividend_yield_ttm": -0.03})
 
     result = apply_expected_alpha_policy(
         expected_alpha,
         Emp008Config(factor_set="origin_new_dividend"),
     )
 
-    assert result["LnMktcap"] == pytest.approx(-0.01)
-    assert result["Momentum_12M"] == pytest.approx(0.02)
-    assert result["dividend_yield"] == 0.0
+    assert result["ln_market_cap"] == pytest.approx(-0.01)
+    assert result["momentum_12m"] == pytest.approx(0.02)
+    assert result["dividend_yield_ttm"] == 0.0
 
 
 def test_mfbt_origin_small_cap_policy_preserves_origin_factor_directions() -> None:
     expected_alpha = pd.Series(
         {
             "ln_market_cap": 0.01,
-            "price_momentum": -0.02,
+            "price_to_252d_high": -0.02,
             "earnings_momentum": -0.025,
-            "dividend_yield": -0.03,
+            "dividend_yield_ttm": -0.03,
             "retail_flow": -0.035,
             "value": -0.04,
             "sector_tech": 0.0,

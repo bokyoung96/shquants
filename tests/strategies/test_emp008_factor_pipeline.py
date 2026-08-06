@@ -49,9 +49,9 @@ def _sample_prepared(config: Emp008Config | None = None) -> PreparedEmp008Factor
     dates = market.frames["close"].index
     columns = market.frames["close"].columns
     alpha_factors = {
-        "price_momentum": pd.DataFrame([[0.05, -0.05], [0.06, -0.06], [0.07, -0.07]], index=dates, columns=columns),
+        "price_to_252d_high": pd.DataFrame([[0.05, -0.05], [0.06, -0.06], [0.07, -0.07]], index=dates, columns=columns),
         "earnings_momentum": pd.DataFrame([[0.08, -0.08], [0.09, -0.09], [0.10, -0.10]], index=dates, columns=columns),
-        "dividend_yield": pd.DataFrame([[0.03, -0.03], [0.04, -0.04], [0.05, -0.05]], index=dates, columns=columns),
+        "dividend_yield_ttm": pd.DataFrame([[0.03, -0.03], [0.04, -0.04], [0.05, -0.05]], index=dates, columns=columns),
         "retail_flow": pd.DataFrame([[0.02, -0.02], [0.03, -0.03], [0.04, -0.04]], index=dates, columns=columns),
         "value": pd.DataFrame([[0.1, -0.1], [0.2, -0.2], [0.3, -0.3]], index=dates, columns=columns),
         "ln_market_cap": pd.DataFrame([[1.0, -1.0], [1.5, -1.5], [2.0, -2.0]], index=dates, columns=columns),
@@ -106,7 +106,7 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
     market = _sample_market()
     config = Emp008Config(value_raw_winsor_quantile=0.15, value_zscore_cap=3.5)
     raw_factors = {
-        "price_momentum": pd.DataFrame(
+        "price_to_252d_high": pd.DataFrame(
             [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]],
             index=market.frames["close"].index,
             columns=["A", "B"],
@@ -116,7 +116,7 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
             index=market.frames["close"].index,
             columns=["A", "B"],
         ),
-        "dividend_yield": pd.DataFrame(
+        "dividend_yield_ttm": pd.DataFrame(
             [[2.1, 2.2], [2.3, 2.4], [2.5, 2.6]],
             index=market.frames["close"].index,
             columns=["A", "B"],
@@ -177,17 +177,17 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
     prepared = prepare_emp008_factors(market, config)
 
     assert list(prepared.raw_factors) == [
-        "price_momentum",
+        "price_to_252d_high",
         "earnings_momentum",
-        "dividend_yield",
+        "dividend_yield_ttm",
         "retail_flow",
         "value",
         "ln_market_cap",
     ]
     assert list(prepared.alpha_factors) == [
-        "price_momentum",
+        "price_to_252d_high",
         "earnings_momentum",
-        "dividend_yield",
+        "dividend_yield_ttm",
         "retail_flow",
         "value",
         "ln_market_cap",
@@ -199,9 +199,9 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
     assert prepared.alpha_factors["ln_market_cap"].loc["2024-02-29", "A"] == 0.0
     assert prepared.monthly_dates == tuple(market.frames["close"].index)
     assert calls == [
-        ("price_momentum", False, None, None),
+        ("price_to_252d_high", False, None, None),
         ("earnings_momentum", False, None, None),
-        ("dividend_yield", False, None, None),
+        ("dividend_yield_ttm", False, None, None),
         ("retail_flow", False, None, None),
         ("value", False, 0.15, 3.5),
         ("ln_market_cap", True, None, None),

@@ -21,7 +21,7 @@ def align_like_close(market: MarketData, key: str) -> pd.DataFrame:
     return market.frames[key].reindex(index=close.index, columns=close.columns)
 
 
-def build_price_momentum(market: MarketData, config: Emp008Config) -> pd.DataFrame:
+def build_price_to_252d_high(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     trailing_high = close.rolling(252, min_periods=252).max()
@@ -42,7 +42,7 @@ def build_positivity_momentum(market: MarketData, config: Emp008Config) -> pd.Da
     return _monthly_output(close, monthly_positivity)
 
 
-def build_origin_momentum_12m(market: MarketData, config: Emp008Config) -> pd.DataFrame:
+def build_momentum_12m(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     monthly_close = month_end_observations(close)
@@ -50,7 +50,7 @@ def build_origin_momentum_12m(market: MarketData, config: Emp008Config) -> pd.Da
     return _monthly_output(close, momentum)
 
 
-def build_origin_dividend_yield(market: MarketData, config: Emp008Config) -> pd.DataFrame:
+def build_dividend_yield_fy0(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     dividend_yld = market.frames["dividend_yld_fy0"].reindex(columns=close.columns).astype(float)
@@ -74,7 +74,7 @@ def build_earnings_momentum(market: MarketData, config: Emp008Config) -> pd.Data
     return _monthly_output(close, growth)
 
 
-def build_dividend_yield(market: MarketData, config: Emp008Config) -> pd.DataFrame:
+def build_dividend_yield_ttm(market: MarketData, config: Emp008Config) -> pd.DataFrame:
     del config
     close = market.frames["close"].astype(float)
     dps_ttm = align_like_close(market, "dps_ttm").astype(float)
@@ -176,13 +176,13 @@ def _sector_relative_retail_flow(monthly_flow: pd.DataFrame, monthly_sector: pd.
 __all__ = [
     "_sector_relative_retail_flow",
     "align_like_close",
-    "build_dividend_yield",
+    "build_dividend_yield_fy0",
+    "build_dividend_yield_ttm",
     "build_earnings_momentum",
     "build_ln_market_cap",
-    "build_origin_dividend_yield",
-    "build_origin_momentum_12m",
+    "build_momentum_12m",
     "build_positivity_momentum",
-    "build_price_momentum",
+    "build_price_to_252d_high",
     "build_retail_flow",
     "build_value",
     "month_end_observations",

@@ -10,7 +10,7 @@ from backtesting.data import MarketData
 
 from .data import Emp008Config, load_emp008_market
 from .factor_registry import (
-    FactorDefinition,
+    FactorId,
     FactorSetDefinition,
     factor_definitions_for_set,
     get_factor_set_definition,
@@ -136,18 +136,14 @@ def complete_benchmark_history(
 def neutralize_large_benchmark_weight_exposures(
     alpha_factors: dict[str, pd.DataFrame],
     bm_weights: pd.DataFrame,
-    factor_definitions: tuple[FactorDefinition, ...],
+    factor_ids: tuple[FactorId, ...],
     *,
     threshold: float,
 ) -> dict[str, pd.DataFrame]:
     if threshold <= 0.0:
         return alpha_factors
 
-    selected_names = [
-        definition.id.value
-        for definition in factor_definitions
-        if definition.neutralize_large_benchmark_weight
-    ]
+    selected_names = [factor_id.value for factor_id in factor_ids]
     if not selected_names:
         return alpha_factors
 
@@ -192,7 +188,7 @@ def prepare_emp008_factors(market: MarketData, config: Emp008Config) -> Prepared
     alpha_factors = neutralize_large_benchmark_weight_exposures(
         alpha_factors,
         benchmark_weights,
-        factor_definitions,
+        factor_set_definition.neutralize_large_benchmark_weight_factors,
         threshold=config.large_bm_neutral_weight_threshold,
     )
     sector_factors = build_sector_active_exposures(sector, float_market_cap, universe)

@@ -1640,7 +1640,7 @@ def test_evaluate_factor_quantiles_emits_nan_rank_ic_for_insufficient_or_constan
     assert valid_row["rank_ic"] > 0.0
 
 
-def test_run_emp008_factor_quantiles_uses_prepared_monthly_dates_and_total_market_cap(
+def test_run_emp008_factor_quantiles_uses_raw_factor_values_and_prepared_market_data(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prepared = _sample_prepared()
@@ -1667,7 +1667,7 @@ def test_run_emp008_factor_quantiles_uses_prepared_monthly_dates_and_total_marke
     assert result.rank_ic.empty
     assert result.cumulative_returns.empty
     assert result.summary.empty
-    assert captured["factors"] is prepared.alpha_factors
+    assert captured["factors"] is prepared.raw_factors
     assert captured["close"] is prepared.close
     assert captured["market_cap"] is prepared.market_cap
     assert captured["universe"] is prepared.universe

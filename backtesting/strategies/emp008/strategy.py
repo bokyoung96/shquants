@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +10,7 @@ import pandas as pd
 from .data import Emp008Config
 from .factor_pipeline import PreparedEmp008Factors, load_and_prepare_emp008_factors, validate_prepared_emp008_factors
 from .factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
+from .factor_timing import TIMING_DIAGNOSTIC_COLUMNS, decide_factor_timing
 from .optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
 from .preprocess import combine_exposures
 from .risk import (
@@ -24,6 +26,7 @@ class Emp008Result:
     target_weights: pd.DataFrame
     active_weights: pd.DataFrame
     diagnostics: pd.DataFrame
+    factor_timing: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def weights_for_export(self) -> pd.DataFrame:
         return self.target_weights.T
@@ -33,6 +36,9 @@ class Emp008Result:
         self.target_weights.to_parquet(output_dir / "target_weights.parquet", engine="pyarrow")
         self.active_weights.to_parquet(output_dir / "active_weights.parquet", engine="pyarrow")
         self.diagnostics.to_parquet(output_dir / "diagnostics.parquet", engine="pyarrow")
+        if not self.factor_timing.empty:
+            self.factor_timing.to_parquet(output_dir / "factor_timing.parquet", engine="pyarrow", index=False)
+            self.factor_timing.to_csv(output_dir / "factor_timing.csv", index=False)
         with pd.ExcelWriter(output_dir / "weights_export.xlsx", engine="openpyxl") as writer:
             self.weights_for_export().to_excel(writer, sheet_name="weights_ticker_by_date")
             self.diagnostics.to_excel(writer, sheet_name="summary", index=False)
@@ -72,6 +78,7 @@ def run_emp008(
     config: Emp008Config | None = None,
     output_dir: Path | None = None,
     prepared: PreparedEmp008Factors | None = None,
+    factor_weights: Mapping[str, float] | None = None,
 ) -> Emp008Result:
     requested_config = config or Emp008Config()
     if prepared is not None:
@@ -80,6 +87,7 @@ def run_emp008(
     factor_bundle = prepared or load_and_prepare_emp008_factors(parquet_dir, start, end, active_config)
     alpha_factor_names = list(factor_bundle.raw_factors)
     sector_factor_names = list(factor_bundle.sector_factors)
+    resolved_factor_weights = resolve_factor_weights(alpha_factor_names, factor_weights)
 
     factor_return_rows: list[pd.Series] = []
     residual_rows: list[pd.Series] = []
@@ -89,6 +97,7 @@ def run_emp008(
     target_rows: list[pd.Series] = []
     active_rows: list[pd.Series] = []
     diagnostics: list[dict[str, object]] = []
+    factor_timing_rows: list[pd.DataFrame] = []
 
     for idx in range(1, len(factor_bundle.monthly_dates)):
         factor_date = factor_bundle.monthly_dates[idx - 1]
@@ -111,6 +120,8 @@ def run_emp008(
                 stock_excess_return_dates=stock_excess_return_dates,
                 alpha_factor_names=alpha_factor_names,
                 sector_factor_names=sector_factor_names,
+                factor_weights=resolved_factor_weights,
+                factor_timing_rows=factor_timing_rows,
                 config=active_config,
                 run_optimization=should_output,
             )
@@ -137,6 +148,11 @@ def run_emp008(
         target_weights=pd.DataFrame(target_rows).fillna(0.0),
         active_weights=pd.DataFrame(active_rows).fillna(0.0),
         diagnostics=pd.DataFrame(diagnostics),
+        factor_timing=(
+            pd.concat(factor_timing_rows, ignore_index=True)
+            if factor_timing_rows
+            else pd.DataFrame(columns=TIMING_DIAGNOSTIC_COLUMNS)
+        ),
     )
     if output_dir is not None:
         result.write_outputs(output_dir)
@@ -158,6 +174,8 @@ def _optimize_month(
     stock_excess_return_dates: list[pd.Timestamp],
     alpha_factor_names: list[str],
     sector_factor_names: list[str],
+    factor_weights: pd.Series,
+    factor_timing_rows: list[pd.DataFrame],
     config: Emp008Config,
     run_optimization: bool,
 ) -> OptimizationResult | None:
@@ -183,8 +201,25 @@ def _optimize_month(
         alpha_factor_names=alpha_factor_names,
         sector_factor_names=sector_factor_names,
         window=config.risk_window,
+        estimator=config.expected_alpha_estimator,
     )
     expected_alpha = apply_expected_alpha_policy(expected_alpha, config)
+    applied_factor_weights = factor_weights
+    if config.factor_timing is not None:
+        factor_directions = {
+            definition.id.value: definition.direction
+            for definition in factor_definitions_for_set(config.factor_set)
+        }
+        timing_decision = decide_factor_timing(
+            factor_returns=factor_returns,
+            factor_directions=factor_directions,
+            base_weights=factor_weights,
+            rebalance_date=return_date,
+            config=config.factor_timing,
+        )
+        applied_factor_weights = timing_decision.weights
+        factor_timing_rows.append(timing_decision.diagnostics)
+    expected_alpha = apply_factor_weights(expected_alpha, applied_factor_weights)
     target_exposures = combine_exposures(alpha_factors, sector_factors, return_date)
     target_bm = positive_benchmark_weights(
         bm_weights.reindex(index=[return_date], columns=target_exposures.index).iloc[0]
@@ -245,6 +280,58 @@ def apply_expected_alpha_policy(expected_alpha: pd.Series, config: Emp008Config)
             adjusted.loc[factor_name] = 0.0
         if definition.direction is FactorDirection.LOW and adjusted.loc[factor_name] > 0.0:
             adjusted.loc[factor_name] = 0.0
+    return adjusted
+
+
+def resolve_factor_weights(
+    alpha_factor_names: Iterable[str],
+    factor_weights: Mapping[str, float] | None = None,
+) -> pd.Series:
+    names = tuple(str(name) for name in alpha_factor_names)
+    if not names:
+        raise ValueError("alpha factor names must not be empty")
+    if len(names) != len(set(names)):
+        raise ValueError("alpha factor names must be unique")
+
+    resolved = pd.Series(1.0, index=pd.Index(names), dtype=float)
+    if factor_weights is not None:
+        overrides = {str(name): float(value) for name, value in factor_weights.items()}
+        unknown = sorted(set(overrides).difference(names))
+        if unknown:
+            raise ValueError(f"unknown factor weights: {', '.join(unknown)}")
+        for name, value in overrides.items():
+            if not np.isfinite(value):
+                raise ValueError(f"factor weight for {name} must be finite")
+            if value < 0.0:
+                raise ValueError(f"factor weight for {name} must be non-negative")
+            resolved.loc[name] = value
+
+    if not resolved.gt(0.0).any():
+        raise ValueError("at least one factor weight must be positive")
+    return resolved
+
+
+def factor_weight_percentages(factor_weights: pd.Series) -> pd.Series:
+    weights = factor_weights.astype(float)
+    if weights.empty:
+        raise ValueError("factor weights must not be empty")
+    if not np.isfinite(weights.to_numpy()).all():
+        raise ValueError("factor weights must be finite")
+    if weights.lt(0.0).any():
+        raise ValueError("factor weights must be non-negative")
+    total = float(weights.sum())
+    if total <= 0.0:
+        raise ValueError("at least one factor weight must be positive")
+    return weights.div(total).mul(100.0)
+
+
+def apply_factor_weights(expected_alpha: pd.Series, factor_weights: pd.Series) -> pd.Series:
+    weights = factor_weights.astype(float)
+    missing = weights.index.difference(expected_alpha.index)
+    if len(missing) > 0:
+        raise ValueError(f"missing expected alpha for weighted factors: {', '.join(map(str, missing))}")
+    adjusted = expected_alpha.astype(float).copy()
+    adjusted.loc[weights.index] = adjusted.loc[weights.index].mul(weights)
     return adjusted
 
 

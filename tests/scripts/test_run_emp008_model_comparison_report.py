@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from backtesting.strategies.emp008.run_model_comparison_report import common_weight_dates
+from backtesting.strategies.emp008.reports.run_model_comparison import common_weight_dates
 
 
 def test_common_weight_dates_keeps_only_shared_rebalance_period(tmp_path: Path) -> None:

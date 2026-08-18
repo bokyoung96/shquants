@@ -7,15 +7,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from .strategy import positive_benchmark_weights
-from .data import Emp008Config
-from .factor_pipeline import (
+from ..data import Emp008Config
+from ..factor_pipeline import (
     PreparedEmp008Factors,
     load_and_prepare_emp008_factors,
     validate_prepared_emp008_factors,
 )
-from .preprocess import combine_exposures
-from .risk import fit_cross_sectional_factor_returns
+from ..preprocess import combine_exposures
+from ..risk import fit_cross_sectional_factor_returns
+from ..strategy import positive_benchmark_weights
 
 
 @dataclass(frozen=True, slots=True)

@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from backtesting.run import BacktestRunner
-from backtesting.strategies.emp008.model_comparison_report import (
+from backtesting.strategies.emp008.reports.model_comparison import (
     ModelReportInput,
     build_emp008_model_comparison_report,
 )

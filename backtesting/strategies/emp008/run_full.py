@@ -10,8 +10,8 @@ import pandas as pd
 
 from backtesting.reporting.cli import ReportCli
 from backtesting.run import BacktestRunner
-from backtesting.strategies.emp008.attribution import build_emp008_factor_attribution
-from backtesting.strategies.emp008.comparison import build_emp008_comparison
+from backtesting.strategies.emp008.reports.attribution import build_emp008_factor_attribution
+from backtesting.strategies.emp008.reports.comparison import build_emp008_comparison
 from backtesting.strategies.emp008.run_backtest import active_share_payload, backtest_summary, build_target_weight_spec, resolve_run_output_dirs
 from backtesting.strategies.emp008.run_weights import (
     DEFAULT_START,
@@ -41,6 +41,8 @@ def main(argv: list[str] | None = None) -> None:
         risk_model=args.risk_model,
         factor_set=args.factor_set,
         sector_neutral_dataset=args.sector_neutral_dataset,
+        factor_timing=args.factor_timing,
+        expected_alpha_estimator=args.expected_alpha_estimator,
     )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root, backtests_root, reports_root = resolve_run_output_dirs(
@@ -58,11 +60,14 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("EMP008 full run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
-        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s",
+        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s "
+        "factor_timing=%s expected_alpha_estimator=%s",
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
         config.factor_set.value,
+        args.factor_timing,
+        config.expected_alpha_estimator,
     )
     logger.info("output_root=%s backtests_root=%s reports_root=%s", args.output_root, backtests_root, reports_root)
     logger.info("log_file=%s", log_path)
@@ -77,6 +82,8 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
         "factor_set": config.factor_set.value,
+        "factor_timing": args.factor_timing,
+        "expected_alpha_estimator": config.expected_alpha_estimator,
         "sector_neutral_dataset": None if config.sector_neutral_dataset is None else config.sector_neutral_dataset.value,
     }
 
@@ -253,7 +260,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--factor-set",
         choices=strategy_factor_set_values(),
-        help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
+        help="Alpha factor set. Use 'adjust' for MFBT with momentum_12_1m replacing price_to_252d_high "
+        "and without retail_flow, 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
         "or 'origin_new_dividend' to replace dividend_yield_fy0 with dividend_yield_ttm.",
     )
@@ -261,6 +269,18 @@ def _parser() -> argparse.ArgumentParser:
         "--sector-neutral-dataset",
         choices=("default", "wi26", "wics"),
         help="Sector taxonomy for optimizer neutrality. Default keeps WI26; wics uses QW_WICS_SEC_BIG.",
+    )
+    parser.add_argument(
+        "--factor-timing",
+        choices=("none", "momentum"),
+        default="none",
+        help="Optional factor-weight timing policy. Default: none.",
+    )
+    parser.add_argument(
+        "--expected-alpha-estimator",
+        choices=("mean", "ewma36", "mean_1se"),
+        default="mean",
+        help="Factor expected-alpha estimator. Default: 36-month arithmetic mean.",
     )
     parser.add_argument("--no-comparison", action="store_true", help="Skip costed backtest and comparison artifacts.")
     parser.add_argument("--comparison-fee", type=float, default=0.0002)

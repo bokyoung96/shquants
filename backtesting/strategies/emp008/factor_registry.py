@@ -35,11 +35,22 @@ class FactorId(StrEnum):
 @unique
 class FactorSetId(StrEnum):
     MFBT = "mfbt"
+    ADJUST = "adjust"
     MFBT_POS = "mfbt_pos"
     MFBT_ORIGIN_SMALLCAP = "mfbt_origin_smallcap"
     ORIGIN = "origin"
     ORIGIN_NEW_DIVIDEND = "origin_new_dividend"
     ORIGIN_12_1M = "origin_12_1m"
+    SIZE_ONLY = "size_only"
+    SIZE_MOMENTUM_12M = "size_momentum_12m"
+    SIZE_MOMENTUM_12_1M = "size_momentum_12_1m"
+    SIZE_MOMENTUM_HIGH = "size_momentum_high"
+    SIZE_EARNINGS_MOMENTUM = "size_earnings_momentum"
+    SIZE_RETAIL_FLOW = "size_retail_flow"
+    SIZE_VALUE_FCF_TEV = "size_value_fcf_tev"
+    SIZE_MOMENTUM_EARNINGS_VALUE = "size_momentum_earnings_value"
+    SIZE_VALUE_DIVIDEND_FY0 = "size_value_dividend_fy0"
+    SIZE_VALUE_DIVIDEND_TTM = "size_value_dividend_ttm"
     ALL_FACTORS = "all_factors"
 
 
@@ -55,7 +66,6 @@ class FactorDefinition:
     builder: FactorBuilder
     datasets: tuple[DatasetId, ...]
     direction: FactorDirection = FactorDirection.HIGH
-    rank_transform: bool = False
     winsor_config_attr: str | None = None
     zscore_cap_config_attr: str | None = None
     requires_construction_sector: bool = False
@@ -65,6 +75,7 @@ class FactorDefinition:
 class FactorSetDefinition:
     id: FactorSetId
     factors: tuple[FactorId, ...]
+    rank_transform_factors: tuple[FactorId, ...] = ()
     neutralize_large_benchmark_weight_factors: tuple[FactorId, ...] = ()
     constrain_expected_alpha_to_direction: bool = False
     snapshot_forward_days: int = 0
@@ -129,7 +140,6 @@ _FACTOR_DEFINITIONS = {
         builder=builders.build_ln_market_cap,
         datasets=(),
         direction=FactorDirection.LOW,
-        rank_transform=True,
     ),
 }
 
@@ -144,6 +154,19 @@ _FACTOR_SET_DEFINITIONS = {
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        rank_transform_factors=(FactorId.LN_MARKET_CAP,),
+        neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
+    ),
+    FactorSetId.ADJUST: FactorSetDefinition(
+        id=FactorSetId.ADJUST,
+        factors=(
+            FactorId.MOMENTUM_12_1M,
+            FactorId.EARNINGS_MOMENTUM,
+            FactorId.DIVIDEND_YIELD_TTM,
+            FactorId.VALUE,
+            FactorId.LN_MARKET_CAP,
+        ),
+        rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
     FactorSetId.MFBT_POS: FactorSetDefinition(
@@ -156,6 +179,7 @@ _FACTOR_SET_DEFINITIONS = {
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
     FactorSetId.MFBT_ORIGIN_SMALLCAP: FactorSetDefinition(
@@ -168,6 +192,7 @@ _FACTOR_SET_DEFINITIONS = {
             FactorId.VALUE,
             FactorId.LN_MARKET_CAP,
         ),
+        rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
         constrain_expected_alpha_to_direction=True,
     ),
@@ -200,6 +225,71 @@ _FACTOR_SET_DEFINITIONS = {
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
     ),
+    FactorSetId.SIZE_ONLY: FactorSetDefinition(
+        id=FactorSetId.SIZE_ONLY,
+        factors=(FactorId.LN_MARKET_CAP,),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_MOMENTUM_12M: FactorSetDefinition(
+        id=FactorSetId.SIZE_MOMENTUM_12M,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_MOMENTUM_12_1M: FactorSetDefinition(
+        id=FactorSetId.SIZE_MOMENTUM_12_1M,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12_1M),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_MOMENTUM_HIGH: FactorSetDefinition(
+        id=FactorSetId.SIZE_MOMENTUM_HIGH,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.PRICE_TO_252D_HIGH),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_EARNINGS_MOMENTUM: FactorSetDefinition(
+        id=FactorSetId.SIZE_EARNINGS_MOMENTUM,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.EARNINGS_MOMENTUM),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_RETAIL_FLOW: FactorSetDefinition(
+        id=FactorSetId.SIZE_RETAIL_FLOW,
+        factors=(FactorId.LN_MARKET_CAP, FactorId.RETAIL_FLOW),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_VALUE_FCF_TEV: FactorSetDefinition(
+        id=FactorSetId.SIZE_VALUE_FCF_TEV,
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.VALUE,
+        ),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_MOMENTUM_EARNINGS_VALUE: FactorSetDefinition(
+        id=FactorSetId.SIZE_MOMENTUM_EARNINGS_VALUE,
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12M,
+            FactorId.EARNINGS_MOMENTUM,
+            FactorId.VALUE,
+        ),
+        constrain_expected_alpha_to_direction=True,
+    ),
+    FactorSetId.SIZE_VALUE_DIVIDEND_FY0: FactorSetDefinition(
+        id=FactorSetId.SIZE_VALUE_DIVIDEND_FY0,
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.DIVIDEND_YIELD_FY0,
+        ),
+        constrain_expected_alpha_to_direction=True,
+        snapshot_forward_days=7,
+    ),
+    FactorSetId.SIZE_VALUE_DIVIDEND_TTM: FactorSetDefinition(
+        id=FactorSetId.SIZE_VALUE_DIVIDEND_TTM,
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.DIVIDEND_YIELD_TTM,
+        ),
+        constrain_expected_alpha_to_direction=True,
+    ),
     FactorSetId.ALL_FACTORS: FactorSetDefinition(
         id=FactorSetId.ALL_FACTORS,
         factors=tuple(FactorId),
@@ -220,7 +310,9 @@ def get_factor_set_definition(factor_set: FactorSetId | str) -> FactorSetDefinit
     return FACTOR_SET_DEFINITIONS[parse_factor_set(factor_set)]
 
 
-def factor_definitions_for_set(factor_set: FactorSetId | str) -> tuple[FactorDefinition, ...]:
+def factor_definitions_for_set(
+    factor_set: FactorSetId | str,
+) -> tuple[FactorDefinition, ...]:
     definition = get_factor_set_definition(factor_set)
     return tuple(get_factor_definition(factor_id) for factor_id in definition.factors)
 
@@ -245,13 +337,17 @@ def parse_factor_set(value: FactorSetId | str) -> FactorSetId:
         return FactorSetId(normalized)
     except ValueError as exc:
         supported = ", ".join(factor_set_values())
-        raise ValueError(f"unknown factor set '{value}'. Supported values: {supported}") from exc
+        raise ValueError(
+            f"unknown factor set '{value}'. Supported values: {supported}"
+        ) from exc
 
 
 def _validate_registry(
     *,
     factor_definitions: Mapping[FactorId, FactorDefinition] = FACTOR_DEFINITIONS,
-    factor_set_definitions: Mapping[FactorSetId, FactorSetDefinition] = FACTOR_SET_DEFINITIONS,
+    factor_set_definitions: Mapping[
+        FactorSetId, FactorSetDefinition
+    ] = FACTOR_SET_DEFINITIONS,
 ) -> None:
     if tuple(factor_definitions) != tuple(FactorId):
         raise ValueError("every FactorId must have exactly one definition")
@@ -268,10 +364,14 @@ def _validate_registry(
                 )
             seen.add(factor_id)
             if factor_id not in factor_definitions:
-                raise ValueError(f"factor set '{factor_set_id.value}' references undefined factor '{factor_id.value}'")
+                raise ValueError(
+                    f"factor set '{factor_set_id.value}' references undefined factor '{factor_id.value}'"
+                )
         neutralization_ids = definition.neutralize_large_benchmark_weight_factors
         if len(neutralization_ids) != len(set(neutralization_ids)):
-            raise ValueError(f"duplicate neutralization factor ids in factor set '{factor_set_id.value}'")
+            raise ValueError(
+                f"duplicate neutralization factor ids in factor set '{factor_set_id.value}'"
+            )
         for factor_id in neutralization_ids:
             if factor_id not in definition.factors:
                 raise ValueError(

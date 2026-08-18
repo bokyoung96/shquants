@@ -51,9 +51,19 @@ def compute_expected_alpha(
     alpha_factor_names: list[str],
     sector_factor_names: list[str],
     window: int,
+    estimator: str = "mean",
 ) -> pd.Series:
     recent = factor_returns.tail(window)
-    alpha = recent.mean(axis=0).astype(float)
+    if estimator == "mean":
+        alpha = recent.mean(axis=0).astype(float)
+    elif estimator == "ewma36":
+        alpha = recent.ewm(span=36, adjust=True).mean().iloc[-1].astype(float)
+    elif estimator == "mean_1se":
+        mean = recent.mean(axis=0).astype(float)
+        standard_error = recent.std(axis=0, ddof=1).div(recent.count().pow(0.5))
+        alpha = np.sign(mean).mul(mean.abs().sub(standard_error).clip(lower=0.0))
+    else:
+        raise ValueError("expected alpha estimator must be 'mean', 'ewma36', or 'mean_1se'")
     for sector_name in sector_factor_names:
         alpha.loc[sector_name] = 0.0
     return alpha.reindex([*alpha_factor_names, *sector_factor_names]).fillna(0.0)

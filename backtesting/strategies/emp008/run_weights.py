@@ -15,6 +15,7 @@ from backtesting.catalog import DatasetId
 from backtesting.strategies.emp008.strategy import Emp008Result, run_emp008
 from backtesting.strategies.emp008.data import Emp008Config, required_datasets
 from backtesting.strategies.emp008.factor_registry import parse_factor_set, strategy_factor_set_values
+from backtesting.strategies.emp008.factor_timing import FactorTimingConfig
 
 
 DEFAULT_START = "2020-01-31"
@@ -27,6 +28,8 @@ def build_emp008_config(
     risk_model: str | None = None,
     factor_set: str | None = None,
     sector_neutral_dataset: str | None = None,
+    factor_timing: str | None = None,
+    expected_alpha_estimator: str | None = None,
 ) -> Emp008Config:
     config = Emp008Config()
     if risk_model is not None:
@@ -37,11 +40,24 @@ def build_emp008_config(
         config = replace(config, factor_set=parse_factor_set(factor_set))
     if sector_neutral_dataset is not None:
         config = replace(config, sector_neutral_dataset=_resolve_sector_neutral_dataset(sector_neutral_dataset))
+    if factor_timing is not None:
+        config = replace(config, factor_timing=_resolve_factor_timing(factor_timing))
+    if expected_alpha_estimator is not None:
+        config = replace(config, expected_alpha_estimator=expected_alpha_estimator)
     if tracking_error_annual is None:
         return config
     if tracking_error_annual < 0.0:
         raise ValueError("tracking error must be non-negative")
     return replace(config, tracking_error=tracking_error_annual / (12**0.5))
+
+
+def _resolve_factor_timing(value: str) -> FactorTimingConfig | None:
+    normalized = value.strip().lower()
+    if normalized == "none":
+        return None
+    if normalized == "momentum":
+        return FactorTimingConfig()
+    raise ValueError("factor_timing must be 'none' or 'momentum'")
 
 
 def _resolve_sector_neutral_dataset(value: str) -> DatasetId | None:
@@ -130,6 +146,13 @@ def weights_summary(result: Emp008Result, weights_csv: Path) -> dict[str, object
         "row_sum_max": float(weights.sum(axis=1).max()) if not weights.empty else None,
         "diagnostics_rows": int(len(diagnostics)),
         "diagnostics_success_all": bool(diagnostics["success"].all()) if not diagnostics.empty else False,
+        "factor_timing_rows": int(len(result.factor_timing)),
+        "factor_timing_csv": (
+            str(weights_csv.parent / "factor_timing.csv") if not result.factor_timing.empty else None
+        ),
+        "factor_timing_parquet": (
+            str(weights_csv.parent / "factor_timing.parquet") if not result.factor_timing.empty else None
+        ),
     }
 
 
@@ -144,6 +167,8 @@ def main(argv: list[str] | None = None) -> None:
         risk_model=args.risk_model,
         factor_set=args.factor_set,
         sector_neutral_dataset=args.sector_neutral_dataset,
+        factor_timing=args.factor_timing,
+        expected_alpha_estimator=args.expected_alpha_estimator,
     )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root = args.output_root / args.name
@@ -156,11 +181,14 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("EMP008 weights run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
-        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s",
+        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s "
+        "factor_timing=%s expected_alpha_estimator=%s",
         config.tracking_error,
         args.tracking_error_annual,
         config.risk_model,
         config.factor_set.value,
+        args.factor_timing,
+        config.expected_alpha_estimator,
     )
     logger.info("weights_dir=%s log_file=%s", weights_dir, log_path)
 
@@ -174,6 +202,8 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_annual": args.tracking_error_annual,
         "risk_model": config.risk_model,
         "factor_set": config.factor_set.value,
+        "factor_timing": args.factor_timing,
+        "expected_alpha_estimator": config.expected_alpha_estimator,
     }
     try:
         with timed(logger, "weights"):
@@ -215,7 +245,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--factor-set",
         choices=strategy_factor_set_values(),
-        help="Alpha factor set. Use 'mfbt_pos' for positivity momentum, "
+        help="Alpha factor set. Use 'adjust' for MFBT with momentum_12_1m replacing price_to_252d_high "
+        "and without retail_flow, 'mfbt_pos' for positivity momentum, "
         "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
         "or 'origin_new_dividend' to replace dividend_yield_fy0 with dividend_yield_ttm.",
     )
@@ -223,6 +254,18 @@ def _parser() -> argparse.ArgumentParser:
         "--sector-neutral-dataset",
         choices=("default", "wi26", "wics"),
         help="Sector taxonomy for optimizer neutrality. Default keeps WI26; wics uses QW_WICS_SEC_BIG.",
+    )
+    parser.add_argument(
+        "--factor-timing",
+        choices=("none", "momentum"),
+        default="none",
+        help="Optional factor-weight timing policy. Default: none.",
+    )
+    parser.add_argument(
+        "--expected-alpha-estimator",
+        choices=("mean", "ewma36", "mean_1se"),
+        default="mean",
+        help="Factor expected-alpha estimator. Default: 36-month arithmetic mean.",
     )
     return parser
 

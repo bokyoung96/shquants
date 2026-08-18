@@ -232,7 +232,7 @@ def run_emp008_factor_quantiles(
     }
     try:
         return evaluate_factor_quantiles(
-            factors=prepared.alpha_factors,
+            factors=prepared.raw_factors,
             directions=directions,
             close=prepared.close,
             market_cap=prepared.market_cap,

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from backtesting.data import MarketData
-from backtesting.strategies.emp008.attribution import FactorAttributionResult, build_emp008_factor_attribution
+from backtesting.strategies.emp008.reports.attribution import FactorAttributionResult, build_emp008_factor_attribution
 from backtesting.strategies.emp008.strategy import run_emp008
 from backtesting.strategies.emp008.data import Emp008Config
 from backtesting.strategies.emp008.factor_registry import get_factor_set_definition
@@ -205,6 +205,51 @@ def test_prepare_emp008_factors_uses_registry_metadata_and_preserves_registry_or
         ("retail_flow", False, None, None),
         ("value", False, 0.15, 3.5),
         ("ln_market_cap", True, None, None),
+    ]
+
+
+def test_prepare_origin_keeps_ln_market_cap_unranked(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market = _sample_market()
+    config = Emp008Config(factor_set="origin")
+    raw_factors = {
+        name: market.frames["close"].astype(float).copy()
+        for name in ("ln_market_cap", "momentum_12m", "dividend_yield_fy0")
+    }
+    for name, frame in raw_factors.items():
+        frame.attrs["factor_name"] = name
+    calls: list[tuple[str, bool]] = []
+
+    monkeypatch.setattr(
+        "backtesting.strategies.emp008.factor_pipeline.build_raw_factors",
+        lambda _market, _config: raw_factors,
+    )
+
+    def fake_preprocess(
+        raw: pd.DataFrame,
+        float_mktcap: pd.DataFrame,
+        universe: pd.DataFrame,
+        *,
+        rank_transform: bool = False,
+        winsor_quantile: float | None = None,
+        zscore_cap: float | None = None,
+    ) -> pd.DataFrame:
+        del float_mktcap, universe, winsor_quantile, zscore_cap
+        calls.append((str(raw.attrs["factor_name"]), rank_transform))
+        return raw
+
+    monkeypatch.setattr(
+        "backtesting.strategies.emp008.factor_pipeline.preprocess_factor_frame",
+        fake_preprocess,
+    )
+
+    prepare_emp008_factors(market, config)
+
+    assert calls == [
+        ("ln_market_cap", False),
+        ("momentum_12m", False),
+        ("dividend_yield_fy0", False),
     ]
 
 
@@ -450,10 +495,10 @@ def test_build_emp008_factor_attribution_uses_supplied_prepared_bundle_without_r
             reconciliation=pd.DataFrame({"actual_active_return": [0.0009]}, index=index),
         )
 
-    monkeypatch.setattr("backtesting.strategies.emp008.attribution.load_and_prepare_emp008_factors", fail_loader)
-    monkeypatch.setattr("backtesting.strategies.emp008.attribution._compute_attribution", fake_compute_attribution)
+    monkeypatch.setattr("backtesting.strategies.emp008.reports.attribution.load_and_prepare_emp008_factors", fail_loader)
+    monkeypatch.setattr("backtesting.strategies.emp008.reports.attribution._compute_attribution", fake_compute_attribution)
     monkeypatch.setattr(
-        "backtesting.strategies.emp008.attribution.write_factor_attribution",
+        "backtesting.strategies.emp008.reports.attribution.write_factor_attribution",
         lambda result, output_dir: {"excel": str(output_dir / "factor_attribution.xlsx")},
     )
 

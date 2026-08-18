@@ -42,9 +42,17 @@ The pipeline reads shquants catalog datasets from a parquet directory.
 | Value factor | `QW_FCF`, `QW_INT_BEARING_LIAB_NFQ0`, `QW_QUICK_ASSETS_NFQ0` |
 | Tradable universe | `QW_K200_YN` |
 
-The MFBT factor sets use all factor inputs above. `origin` loads only the
-common portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
+The baseline `mfbt` set uses all factor inputs above. `adjust` replaces
+`price_to_252d_high` with `momentum_12_1m` and omits `retail_flow`, so it does
+not load `QW_RETAIL` for factor construction. `origin` loads only the common
+portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
 `QW_DPS_TTM` instead. Raw close (`QW_C`) is not part of the EMP008 calculation.
+
+| Factor set | Ordered factors |
+| --- | --- |
+| `mfbt` | `price_to_252d_high`, `earnings_momentum`, `dividend_yield_ttm`, `retail_flow`, `value`, `ln_market_cap` |
+| `adjust` | `momentum_12_1m`, `earnings_momentum`, `dividend_yield_ttm`, `value`, `ln_market_cap` |
+| `origin` | `ln_market_cap`, `momentum_12m`, `dividend_yield_fy0` |
 
 `Emp008Config` controls dataset choices and key parameters:
 
@@ -62,6 +70,7 @@ common portfolio inputs plus `QW_DIVIDEND_YLD_FY0`; `origin_new_dividend` uses
 | `tracking_error` | `0.007 / sqrt(12)` | Monthly active-risk budget |
 | `risk_model` | `factor_idio` | TE covariance model: `factor_idio` or `direct_covariance` |
 | `expected_alpha_policy` | `mean` | Optional Origin-style directional guard applied after the 36-month mean |
+| `factor_timing` | `None` | Optional factor-weight timing policy; disabled unless explicitly enabled |
 
 Factor-set choices and dataset loading are registry-derived. `run_weights.py`,
 `run_full.py`, and `run_factor_quantiles.py` all expose the same
@@ -109,6 +118,7 @@ continuous values, not score buckets.
 | `price_to_252d_high` | `adjusted_close / adjusted_close.rolling(252).max()` |
 | `positivity_momentum` | Rolling share of non-negative daily returns |
 | `momentum_12m` | Month-end adjusted-close return over 12 months |
+| `momentum_12_1m` | Prior month-end adjusted close divided by the 12-month-lag close, minus one |
 | `earnings_momentum` | Monthly forward OP growth: `(current - previous) / abs(previous)` |
 | `dividend_yield_ttm` | `DPS_TTM / adjusted_close` |
 | `dividend_yield_fy0` | Fiscal-year-zero dividend yield snapshot |
@@ -187,6 +197,22 @@ stock_alpha_t = Z_t * a
 objective = maximize stock_alpha_t' * x
 ```
 
+The expected-alpha estimator is optional. The default `mean` keeps the
+36-month arithmetic mean above. `--expected-alpha-estimator ewma36` instead
+applies `ewm(span=36, adjust=True)` to those same trailing 36 monthly factor
+returns. `--expected-alpha-estimator mean_1se` shrinks each 36-month arithmetic
+mean toward zero by one standard error:
+
+```text
+sample_std = std(last 36 monthly f_t, ddof=1)
+standard_error = sample_std / sqrt(number of valid observations)
+adjusted_alpha = sign(mean) * max(abs(mean) - standard_error, 0)
+```
+
+This subtracts one standard error of the estimated mean, not one monthly
+standard deviation. Factor weights, covariance estimation, tracking error,
+sector neutrality, and costs are unchanged.
+
 The six alpha factors contribute to `a`. Sector dummy factors are still present
 in `Z_t`, but their expected alpha is forced to zero. They are included so the
 same exposure matrix can both explain returns and enforce sector active
@@ -210,6 +236,36 @@ while its exposure and covariance remain in the TE risk calculation.
 least `10%`, its `ln_market_cap` exposure is set to `0.0` for that date. That
 makes the large benchmark constituent neutral to the market-cap factor's alpha
 signal without removing the stock from other factors or from the risk matrix.
+
+### Optional Factor Momentum Timing
+
+Factor timing is opt-in. The default `factor_timing=None` and CLI
+`--factor-timing none` preserve the existing fixed factor weights and output
+surface. Use `--factor-timing momentum` to adjust only the alpha-factor weights
+at each rebalance; factor construction, expected-alpha estimation, sector
+neutrality, and the risk model remain unchanged.
+
+For each factor, the timing policy compounds its realized monthly factor
+returns over 6- and 12-month windows. A `LOW` factor such as `ln_market_cap` is
+sign-reversed first so that a positive directional return always means the
+registered preferred side performed well.
+
+| 6-month directional return | 12-month directional return | State | Multiplier |
+| --- | --- | --- | --- |
+| Positive | Positive | `strong` | `1.25` |
+| Negative | Negative | `weak` | `0.75` |
+| Otherwise, including zero | Otherwise | `neutral` | `1.00` |
+
+The base weights are multiplied by these values and normalized to sum to one.
+Only factor-return observations strictly earlier than the target rebalance date
+are eligible, so the factor return stamped with the current rebalance date is
+not used as a timing signal. Before 12 eligible observations exist, the policy
+records `insufficient_history` and leaves normalized base weights unchanged.
+
+Enabled runs write `weights/factor_timing.csv` and
+`weights/factor_timing.parquet`. Each row records the rebalance date, factor,
+direction, base weight, 6- and 12-month returns, state, multiplier, final timed
+weight, and last signal date. Disabled runs do not create these artifacts.
 
 ### Default Risk Model: Factor Plus Idio
 
@@ -411,11 +467,33 @@ runner modules that use them:
 
 The implementation package itself uses neutral module names:
 `strategy.py`, `data.py`, `factors.py`, `factor_builders.py`,
-`factor_pipeline.py`, `factor_quantiles.py`, `factor_registry.py`,
+`factor_pipeline.py`, `factor_quantiles.py`, `factor_registry.py`, `factor_timing.py`,
 `optimize.py`, `preprocess.py`, `risk.py`, and `experiments/`.
 The retained `mfbt_emp008` naming in wrapper scripts, factor-set values, and
 default run/output names identifies the real MFBT variant rather than the
 shared package code.
+
+## Size + Value Measure Comparison
+
+The isolated value-measure experiment holds Size (`ln_market_cap`) constant and
+runs three two-factor EMP008 portfolios: Size + FCF/TEV, Size + FY0 dividend
+yield (`QW_DIVIDEND_YLD_FY0`), and Size + TTM dividend yield
+(`QW_DPS_TTM / QW_ADJ_C`). Momentum and the other MFBT factors are excluded.
+
+```powershell
+uv run python -m backtesting.strategies.emp008.experiments.size_value_measure_comparison `
+  --start 2020-01-31 `
+  --tracking-error-annual 0.007 `
+  --risk-model factor_idio
+```
+
+Results are written to
+`backtesting/strategies/emp008/tests/size_value_measure_comparison/`. The root
+contains a manifest, ranked CSV/XLSX performance tables, aligned daily returns,
+the combined `performance_dashboard.png`, cumulative return and excess-return
+charts, and `interpretation.md`. All three
+portfolios use the same no-cost close-fill backtest settings and common date
+range.
 
 ## Recommended Runs
 
@@ -454,6 +532,15 @@ Run weights, backtest, report, and comparison artifacts in one command:
 uv run python scripts\run_mfbt_emp008_full.py `
   --start 2020-01-31 `
   --name mfbt_emp008
+```
+
+Run the same pipeline with optional factor momentum timing:
+
+```powershell
+uv run python scripts\run_mfbt_emp008_full.py `
+  --start 2020-01-31 `
+  --name mfbt_emp008_factor_momentum `
+  --factor-timing momentum
 ```
 
 Run the standalone factor quantile diagnostics:
@@ -512,6 +599,7 @@ Default EMP008 run outputs are grouped under `results/emp008_runs/<name>/`.
 | `weights/active_weights.parquet` | Active weights versus benchmark |
 | `weights/active_share.csv` | Monthly active share from active weights |
 | `weights/diagnostics.parquet` | Solver success and constraint diagnostics |
+| `weights/factor_timing.csv` and `.parquet` | Optional rebalance-by-factor momentum state and timed weights |
 | `weights/weights_export.xlsx` | Review-friendly Excel export |
 | `backtests/<run_id>/` | Saved `BacktestRunner` output for the run |
 | `backtests/<run_id>/series/active_share.csv` | Monthly active share copied into the saved backtest |

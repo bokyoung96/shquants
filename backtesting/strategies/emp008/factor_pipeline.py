@@ -175,7 +175,7 @@ def prepare_emp008_factors(market: MarketData, config: Emp008Config) -> Prepared
             raw_factors[definition.id.value],
             float_market_cap,
             universe,
-            rank_transform=definition.rank_transform,
+            rank_transform=definition.id in factor_set_definition.rank_transform_factors,
             winsor_quantile=(
                 getattr(config, definition.winsor_config_attr) if definition.winsor_config_attr is not None else None
             ),

@@ -13,6 +13,7 @@ from backtesting.strategies.emp008.factor_registry import (
     get_factor_set_definition,
     parse_factor_set,
 )
+from backtesting.strategies.emp008.factor_timing import FactorTimingConfig
 
 FORWARD_SNAPSHOT_FRAME_KEYS = frozenset({"dividend_yld_fy0"})
 
@@ -33,19 +34,22 @@ class Emp008Config:
     tracking_error: float = 0.007 / (12**0.5)
     risk_model: str = "factor_idio"
     factor_set: FactorSetId = FactorSetId.MFBT
+    expected_alpha_estimator: str = "mean"
+    factor_timing: FactorTimingConfig | None = None
     value_raw_winsor_quantile: float | None = None
     value_zscore_cap: float | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "factor_set", parse_factor_set(self.factor_set))
+        if self.expected_alpha_estimator not in {"mean", "ewma36", "mean_1se"}:
+            raise ValueError(
+                "expected_alpha_estimator must be 'mean', 'ewma36', or 'mean_1se'"
+            )
 
     @property
     def rank_transform_factors(self) -> tuple[str, ...]:
-        return tuple(
-            definition.id.value
-            for definition in factor_definitions_for_set(self.factor_set)
-            if definition.rank_transform
-        )
+        factor_set = get_factor_set_definition(self.factor_set)
+        return tuple(factor_id.value for factor_id in factor_set.rank_transform_factors)
 
     @property
     def large_bm_neutral_factor_names(self) -> tuple[str, ...]:

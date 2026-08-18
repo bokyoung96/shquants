@@ -29,7 +29,7 @@ from backtesting.strategies.emp008.run_weights import (
 )
 from backtesting.strategies.emp008 import run_full
 from backtesting.strategies.emp008.run_full import _parser as full_parser
-from backtesting.strategies.emp008.comparison import (
+from backtesting.strategies.emp008.reports.comparison import (
     active_weight_abs_sum_frame,
     build_emp008_comparison,
     excess_summary_bps,
@@ -37,7 +37,11 @@ from backtesting.strategies.emp008.comparison import (
     monthly_excess_heatmap_frame,
     performance_metrics,
 )
-from backtesting.strategies.emp008.attribution import FactorAttributionResult, factor_attribution_row, write_factor_attribution
+from backtesting.strategies.emp008.reports.attribution import (
+    FactorAttributionResult,
+    factor_attribution_row,
+    write_factor_attribution,
+)
 from backtesting.strategies.emp008.strategy import Emp008Result
 from backtesting.strategies.emp008.factor_builders import _sector_relative_retail_flow
 from backtesting.strategies.emp008.factors import build_raw_factors
@@ -261,6 +265,32 @@ def test_factor_set_parser_choices_match_registry_values() -> None:
 
     assert tuple(weights_parser()._option_string_actions["--factor-set"].choices) == expected
     assert tuple(full_parser()._option_string_actions["--factor-set"].choices) == expected
+
+
+def test_factor_timing_parser_is_optional_and_shared_by_weights_and_full_runs() -> None:
+    for parser in (weights_parser(), full_parser()):
+        assert parser.parse_args([]).factor_timing == "none"
+        assert parser.parse_args(["--factor-timing", "momentum"]).factor_timing == "momentum"
+
+
+def test_expected_alpha_estimator_parser_is_optional_and_shared_by_weights_and_full_runs() -> None:
+    for parser in (weights_parser(), full_parser()):
+        assert parser.parse_args([]).expected_alpha_estimator == "mean"
+        for estimator in ("ewma36", "mean_1se"):
+            assert (
+                parser.parse_args(["--expected-alpha-estimator", estimator]).expected_alpha_estimator
+                == estimator
+            )
+
+
+def test_build_emp008_config_sets_expected_alpha_estimator() -> None:
+    assert build_emp008_config(expected_alpha_estimator="ewma36").expected_alpha_estimator == "ewma36"
+    assert build_emp008_config(expected_alpha_estimator="mean_1se").expected_alpha_estimator == "mean_1se"
+
+
+def test_emp008_config_rejects_unknown_expected_alpha_estimator() -> None:
+    with pytest.raises(ValueError, match="expected_alpha_estimator"):
+        Emp008Config(expected_alpha_estimator="unknown")
 
 
 def test_full_parser_exposes_factor_quantile_flags() -> None:
@@ -760,6 +790,25 @@ def test_build_emp008_config_converts_annual_tracking_error_to_monthly() -> None
     assert config.tracking_error == pytest.approx(0.03 / (12**0.5))
 
 
+def test_build_emp008_config_keeps_factor_timing_disabled_by_default() -> None:
+    assert build_emp008_config().factor_timing is None
+    assert build_emp008_config(factor_timing="none").factor_timing is None
+
+
+def test_build_emp008_config_enables_default_factor_momentum_policy() -> None:
+    timing = build_emp008_config(factor_timing="momentum").factor_timing
+
+    assert timing is not None
+    assert timing.policy == "momentum"
+    assert timing.fast_lookback == 6
+    assert timing.slow_lookback == 12
+
+
+def test_build_emp008_config_rejects_unknown_factor_timing_policy() -> None:
+    with pytest.raises(ValueError, match="factor_timing"):
+        build_emp008_config(factor_timing="regime")
+
+
 def test_build_emp008_config_sets_direct_covariance_risk_model() -> None:
     config = build_emp008_config(tracking_error_annual=0.007, risk_model="direct_covariance")
 
@@ -782,7 +831,7 @@ def test_build_emp008_config_sets_origin_three_factor_variant() -> None:
 
     assert config.factor_set is FactorSetId.ORIGIN
     assert config.expected_alpha_policy == "origin_sign"
-    assert config.rank_transform_factors == ("ln_market_cap",)
+    assert config.rank_transform_factors == ()
     assert config.large_bm_neutral_factor_names == ()
     assert config.monthly_snapshot_forward_days == 7
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
@@ -794,7 +843,7 @@ def test_build_emp008_config_sets_origin_with_new_dividend_variant() -> None:
 
     assert config.factor_set is FactorSetId.ORIGIN_NEW_DIVIDEND
     assert config.expected_alpha_policy == "origin_sign"
-    assert config.rank_transform_factors == ("ln_market_cap",)
+    assert config.rank_transform_factors == ()
     assert config.large_bm_neutral_factor_names == ()
     assert config.monthly_snapshot_forward_days == 0
     assert config.tracking_error == pytest.approx(0.007 / (12**0.5))
@@ -838,7 +887,7 @@ def test_build_emp008_config_sets_wics_sector_neutral_dataset() -> None:
 def test_build_emp008_config_rejects_unknown_factor_set() -> None:
     with pytest.raises(
         ValueError,
-        match="unknown factor set 'legacy'. Supported values: mfbt, mfbt_pos, mfbt_origin_smallcap, origin, origin_new_dividend",
+        match="unknown factor set 'legacy'. Supported values: mfbt, adjust, mfbt_pos, mfbt_origin_smallcap, origin, origin_new_dividend",
     ):
         build_emp008_config(factor_set="legacy")
 

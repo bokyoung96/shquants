@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from backtesting.run import BacktestRunner
-from backtesting.strategies.emp008.comparison import _benchmark_returns, excess_summary_bps, performance_metrics
+from backtesting.strategies.emp008.reports.comparison import _benchmark_returns, excess_summary_bps, performance_metrics
 from backtesting.strategies.emp008.strategy import run_emp008
 from backtesting.strategies.emp008.data import Emp008Config, load_emp008_market
 from backtesting.strategies.emp008.factors import build_raw_factors

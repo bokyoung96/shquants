@@ -230,3 +230,28 @@ kind/~$*.xlsx
 kind/cache/
 kind/logs/
 kind/outputs/
+
+# EMP008 local backtest and analysis artifacts
+/backtesting/strategies/emp008/tests/
+
+# Local scratch, rendered outputs, and analyst-only binary inputs
+/.superpowers/
+/.tmp/
+/outputs/
+/backtesting/strategies/team/
+/backtesting/strategies/webpage-emp008_web/
+/kind/announcements.xlsx
+
+# Private EMP008 webpage implementation retained locally
+/backtesting/strategies/emp008/web_export.py
+/scripts/build_emp008_origin_webpage.py
+/tests/strategies/test_emp008_web_export.py
+/tests/scripts/test_build_emp008_origin_webpage.py
+/docs/superpowers/plans/2026-08-11-emp008-dashboard-focus-redesign.md
+/docs/superpowers/plans/2026-08-11-emp008-factor-lens-history.md
+/docs/superpowers/plans/2026-08-11-emp008-factor-snapshot.md
+/docs/superpowers/plans/2026-08-11-emp008-origin-webpage.md
+/docs/superpowers/specs/2026-08-11-emp008-dashboard-layout-redesign.md
+/docs/superpowers/specs/2026-08-11-emp008-factor-lens-history-design.md
+/docs/superpowers/specs/2026-08-11-emp008-factor-snapshot-design.md
+/docs/superpowers/specs/2026-08-11-emp008-origin-webpage-design.md

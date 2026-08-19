@@ -238,6 +238,8 @@ kind/outputs/
 /.superpowers/
 /.tmp/
 /outputs/
+/etfs/output/methodologies/*.pdf
+/etc/data/sidecar/*(1분).xlsx
 /backtesting/strategies/webpage-emp008_web/
 /kind/announcements.xlsx
 

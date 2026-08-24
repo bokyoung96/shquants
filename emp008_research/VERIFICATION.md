@@ -34,6 +34,11 @@ for original/reference combinations, and `diagnostic_all_factors` for the
 full-factor diagnostic. Legacy names such as `mfbt` resolve only as input
 aliases and are not used by the operator settings.
 
+Sector-neutral taxonomy is now an operator setting in `run.py`:
+`sector_neutral_dataset="wi26"` uses WI26, while `"wics"` uses WICS. The
+mapping to `QW_WI_SEC_26_BIG` and `QW_WICS_SEC_BIG` is covered by the handoff
+tests.
+
 ## Reference parity
 
 The same dates, source parquet, config, and target-weight schedule were run

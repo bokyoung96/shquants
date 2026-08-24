@@ -24,6 +24,7 @@ class RunSettings:
     start: str = "2020-01-31"
     end: str | None = "2020-03-31"
     factor_set: str = "production_core"
+    sector_neutral_dataset: str = "wi26"
     factor_timing: str = "none"
     tracking_error_annual: float | None = None
     convert_raw_to_parquet: bool = False
@@ -51,6 +52,7 @@ def run_settings(settings: RunSettings, *, project_dir: Path | None = None) -> d
     config: Emp008Config = build_emp008_config(
         tracking_error_annual=settings.tracking_error_annual,
         factor_set=settings.factor_set,
+        sector_neutral_dataset=settings.sector_neutral_dataset,
         factor_timing=settings.factor_timing,
     )
     converted: dict[str, str] = {}
@@ -118,6 +120,8 @@ def _validate(settings: RunSettings) -> None:
         raise ValueError("end must be on or after start")
     if settings.run_name.strip() == "":
         raise ValueError("run_name must not be empty")
+    if settings.sector_neutral_dataset not in {"wi26", "wics"}:
+        raise ValueError("sector_neutral_dataset must be 'wi26' or 'wics'")
 
 
 def _latest_end(parquet_dir: Path, config: Emp008Config) -> str:
@@ -131,6 +135,7 @@ SETTINGS = RunSettings(
     start="2020-01-31",
     end="2020-03-31",
     factor_set="production_core",
+    sector_neutral_dataset="wi26",
     factor_timing="none",
     convert_raw_to_parquet=False,
     run_backtest=True,

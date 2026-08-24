@@ -1,0 +1,10 @@
+{
+  "purpose": "EMP008 runtime dataset manifest",
+  "generated_parquet_dir": "data/parquet",
+  "raw_source_dir": "data/raw",
+  "datasets": [
+    "qw_adj_c", "qw_bm_weights", "qw_op_fwd_12m", "qw_dps_ttm", "qw_retail",
+    "qw_fcf", "qw_int_bearing_liab_nfq0", "qw_quick_assets_nfq0",
+    "qw_wi_sec_26_big", "qw_mktcap", "qw_mktcap_flt", "qw_k200_yn"
+  ]
+}

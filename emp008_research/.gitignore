@@ -1,0 +1,6 @@
+data/parquet/
+results/*
+!results/.gitkeep
+**/__pycache__/
+.pytest_cache/
+.venv/

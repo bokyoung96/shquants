@@ -7,7 +7,7 @@ this package.
 The intended flow is:
 
 ```text
-data/raw -> data/ingest/convert.py -> data/parquet
+data/raw -> data/convert.py -> data/parquet
 data/parquet -> scripts/generate_weights.py -> results/<run>/weights
 target_weights.csv + data/parquet -> scripts/run_backtest.py -> results/<run>/backtest
 ```

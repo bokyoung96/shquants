@@ -1,0 +1,16 @@
+[project]
+name = "emp008-research"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy>=2.0",
+  "openpyxl>=3.1",
+  "pandas>=2.2",
+  "pyarrow>=16",
+  "scipy>=1.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

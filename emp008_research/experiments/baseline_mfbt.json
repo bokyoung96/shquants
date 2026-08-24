@@ -1,7 +1,6 @@
 {
   "name": "baseline_mfbt",
   "factor_set": "mfbt",
-  "risk_model": "factor_idio",
   "expected_alpha_estimator": "mean",
   "factor_timing": "none",
   "output_root": "../results"

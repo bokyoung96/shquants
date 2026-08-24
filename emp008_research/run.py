@@ -24,7 +24,6 @@ class RunSettings:
     start: str = "2020-01-31"
     end: str | None = "2020-03-31"
     factor_set: str = "mfbt"
-    risk_model: str = "factor_idio"
     expected_alpha_estimator: str = "mean"
     factor_timing: str = "none"
     tracking_error_annual: float | None = None
@@ -52,7 +51,6 @@ def run_settings(settings: RunSettings, *, project_dir: Path | None = None) -> d
 
     config: Emp008Config = build_emp008_config(
         tracking_error_annual=settings.tracking_error_annual,
-        risk_model=settings.risk_model,
         factor_set=settings.factor_set,
         factor_timing=settings.factor_timing,
         expected_alpha_estimator=settings.expected_alpha_estimator,
@@ -135,7 +133,6 @@ SETTINGS = RunSettings(
     start="2020-01-31",
     end="2020-03-31",
     factor_set="mfbt",
-    risk_model="factor_idio",
     expected_alpha_estimator="mean",
     factor_timing="none",
     convert_raw_to_parquet=False,

@@ -59,50 +59,6 @@ def optimize_active_weights(
     )
 
 
-def optimize_active_weights_with_covariance(
-    *,
-    exposures: pd.DataFrame,
-    stock_cov: pd.DataFrame,
-    expected_alpha: pd.Series,
-    bm_weights: pd.Series,
-    sector_factor_names: list[str],
-    tracking_error: float,
-) -> OptimizationResult:
-    common_tickers = bm_weights.index
-    missing_exposures = common_tickers.difference(exposures.index)
-    missing_cov_rows = common_tickers.difference(stock_cov.index)
-    missing_cov_cols = common_tickers.difference(stock_cov.columns)
-    if len(missing_exposures) > 0 or len(missing_cov_rows) > 0 or len(missing_cov_cols) > 0:
-        missing = sorted(
-            {
-                *(str(name) for name in missing_exposures),
-                *(str(name) for name in missing_cov_rows),
-                *(str(name) for name in missing_cov_cols),
-            }
-        )
-        raise ValueError(f"missing optimizer inputs for benchmark constituents: {', '.join(missing)}")
-
-    missing_sector_factors = [name for name in sector_factor_names if name not in exposures.columns]
-    if missing_sector_factors:
-        raise ValueError(f"missing sector factors: {', '.join(missing_sector_factors)}")
-
-    z = exposures.loc[common_tickers].astype(float)
-    cov = stock_cov.loc[common_tickers, common_tickers].astype(float).to_numpy()
-    cov = (cov + cov.T) / 2.0
-    cov = cov + np.eye(len(common_tickers)) * 1e-12
-    alpha = expected_alpha.reindex(z.columns).fillna(0.0).astype(float)
-    bm = bm_weights.loc[common_tickers].astype(float)
-
-    return _solve_active_weight_problem(
-        exposures=z,
-        covariance=cov,
-        expected_alpha=alpha,
-        bm_weights=bm,
-        sector_factor_names=sector_factor_names,
-        tracking_error=tracking_error,
-    )
-
-
 def _solve_active_weight_problem(
     *,
     exposures: pd.DataFrame,

@@ -21,7 +21,6 @@ SETTINGS = RunSettings(
     start="2020-01-31",
     end="2024-12-31",
     factor_set="mfbt",
-    risk_model="factor_idio",
     convert_raw_to_parquet=False,
     run_backtest=True,
     fee=0.0,

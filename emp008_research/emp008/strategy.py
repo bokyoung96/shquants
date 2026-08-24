@@ -11,7 +11,7 @@ from .data import Emp008Config
 from .factor_pipeline import PreparedEmp008Factors, load_and_prepare_emp008_factors, validate_prepared_emp008_factors
 from .factor_registry import FactorDirection, factor_definitions_for_set, get_factor_set_definition
 from .factor_timing import TIMING_DIAGNOSTIC_COLUMNS, decide_factor_timing
-from .optimize import OptimizationResult, optimize_active_weights, optimize_active_weights_with_covariance
+from .optimize import OptimizationResult, optimize_active_weights
 from .preprocess import combine_exposures
 from .risk import (
     compute_expected_alpha,
@@ -51,12 +51,10 @@ def build_diagnostics_row(
     result: OptimizationResult,
     alpha_factor_names: list[str],
     sector_factor_names: list[str],
-    risk_model: str,
 ) -> dict[str, object]:
     return {
         "target_date": target_date,
         "success": result.success,
-        "risk_model": risk_model,
         "objective_value": result.objective_value,
         "tracking_error": result.tracking_error,
         "n_active_positions": int(result.active_weights.abs().gt(0.001).sum()),
@@ -92,8 +90,6 @@ def run_emp008(
     factor_return_rows: list[pd.Series] = []
     residual_rows: list[pd.Series] = []
     factor_return_dates: list[pd.Timestamp] = []
-    stock_excess_return_rows: list[pd.Series] = []
-    stock_excess_return_dates: list[pd.Timestamp] = []
     target_rows: list[pd.Series] = []
     active_rows: list[pd.Series] = []
     diagnostics: list[dict[str, object]] = []
@@ -116,8 +112,6 @@ def run_emp008(
                 factor_return_rows=factor_return_rows,
                 residual_rows=residual_rows,
                 factor_return_dates=factor_return_dates,
-                stock_excess_return_rows=stock_excess_return_rows,
-                stock_excess_return_dates=stock_excess_return_dates,
                 alpha_factor_names=alpha_factor_names,
                 sector_factor_names=sector_factor_names,
                 factor_weights=resolved_factor_weights,
@@ -140,7 +134,6 @@ def run_emp008(
                 result=optimization,
                 alpha_factor_names=alpha_factor_names,
                 sector_factor_names=sector_factor_names,
-                risk_model=active_config.risk_model,
             )
         )
 
@@ -170,8 +163,6 @@ def _optimize_month(
     factor_return_rows: list[pd.Series],
     residual_rows: list[pd.Series],
     factor_return_dates: list[pd.Timestamp],
-    stock_excess_return_rows: list[pd.Series],
-    stock_excess_return_dates: list[pd.Timestamp],
     alpha_factor_names: list[str],
     sector_factor_names: list[str],
     factor_weights: pd.Series,
@@ -187,12 +178,9 @@ def _optimize_month(
     factor_return_rows.append(regression.factor_returns)
     residual_rows.append(regression.residuals)
     factor_return_dates.append(return_date)
-    stock_excess_return_rows.append(excess_returns)
-    stock_excess_return_dates.append(return_date)
 
     factor_returns = pd.DataFrame(factor_return_rows, index=factor_return_dates).fillna(0.0)
     residuals = pd.DataFrame(residual_rows, index=factor_return_dates)
-    stock_excess_returns = pd.DataFrame(stock_excess_return_rows, index=stock_excess_return_dates)
     if not _has_sufficient_risk_history(factor_returns, config) or not run_optimization:
         return None
 
@@ -224,36 +212,20 @@ def _optimize_month(
     target_bm = positive_benchmark_weights(
         bm_weights.reindex(index=[return_date], columns=target_exposures.index).iloc[0]
     )
-    if config.risk_model == "factor_idio":
-        factor_cov = factor_covariance(factor_returns, config.risk_window)
-        resid_var = _residual_variance_for_target_universe(
-            residual_variance(residuals, config.risk_window),
-            target_bm.index,
-        )
-        return optimize_active_weights(
-            exposures=target_exposures,
-            factor_cov=factor_cov,
-            residual_var=resid_var,
-            expected_alpha=expected_alpha,
-            bm_weights=target_bm,
-            sector_factor_names=sector_factor_names,
-            tracking_error=config.tracking_error,
-        )
-    if config.risk_model == "direct_covariance":
-        stock_cov = _stock_excess_covariance_for_target_universe(
-            stock_excess_returns,
-            target_tickers=target_bm.index,
-            window=config.risk_window,
-        )
-        return optimize_active_weights_with_covariance(
-            exposures=target_exposures,
-            stock_cov=stock_cov,
-            expected_alpha=expected_alpha,
-            bm_weights=target_bm,
-            sector_factor_names=sector_factor_names,
-            tracking_error=config.tracking_error,
-        )
-    raise ValueError(f"unsupported risk_model: {config.risk_model}")
+    factor_cov = factor_covariance(factor_returns, config.risk_window)
+    resid_var = _residual_variance_for_target_universe(
+        residual_variance(residuals, config.risk_window),
+        target_bm.index,
+    )
+    return optimize_active_weights(
+        exposures=target_exposures,
+        factor_cov=factor_cov,
+        residual_var=resid_var,
+        expected_alpha=expected_alpha,
+        bm_weights=target_bm,
+        sector_factor_names=sector_factor_names,
+        tracking_error=config.tracking_error,
+    )
 
 
 def _validated_optimization(target_date: pd.Timestamp, result: OptimizationResult) -> OptimizationResult:
@@ -352,20 +324,3 @@ def _residual_variance_for_target_universe(residual_var: pd.Series, target_ticke
     return aligned.fillna(float(fallback))
 
 
-def _stock_excess_covariance_for_target_universe(
-    stock_excess_returns: pd.DataFrame,
-    *,
-    target_tickers: pd.Index,
-    window: int,
-) -> pd.DataFrame:
-    recent = stock_excess_returns.tail(window).reindex(columns=target_tickers).astype(float).fillna(0.0)
-    cov = recent.cov(ddof=0).reindex(index=target_tickers, columns=target_tickers).astype(float)
-    diag = pd.Series(np.diag(cov.to_numpy()), index=target_tickers)
-    fallback = diag.where(diag.gt(0.0)).dropna().median()
-    if pd.isna(fallback):
-        fallback = 0.0
-    cov = cov.fillna(0.0)
-    for ticker in target_tickers:
-        if cov.at[ticker, ticker] <= 0.0:
-            cov.at[ticker, ticker] = float(fallback)
-    return cov

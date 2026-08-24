@@ -24,17 +24,12 @@ DEFAULT_NAME = "mfbt_emp008"
 def build_emp008_config(
     *,
     tracking_error_annual: float | None = None,
-    risk_model: str | None = None,
     factor_set: str | None = None,
     sector_neutral_dataset: str | None = None,
     factor_timing: str | None = None,
     expected_alpha_estimator: str | None = None,
 ) -> Emp008Config:
     config = Emp008Config()
-    if risk_model is not None:
-        if risk_model not in {"factor_idio", "direct_covariance"}:
-            raise ValueError("risk_model must be 'factor_idio' or 'direct_covariance'")
-        config = replace(config, risk_model=risk_model)
     if factor_set is not None:
         config = replace(config, factor_set=parse_factor_set(factor_set))
     if sector_neutral_dataset is not None:
@@ -163,7 +158,6 @@ def main(argv: list[str] | None = None) -> None:
     args = _parser().parse_args(argv)
     config = build_emp008_config(
         tracking_error_annual=args.tracking_error_annual,
-        risk_model=args.risk_model,
         factor_set=args.factor_set,
         sector_neutral_dataset=args.sector_neutral_dataset,
         factor_timing=args.factor_timing,
@@ -180,11 +174,10 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("EMP008 weights run started")
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
-        "tracking_error_monthly=%s tracking_error_annual=%s risk_model=%s factor_set=%s "
+        "tracking_error_monthly=%s tracking_error_annual=%s factor_set=%s "
         "factor_timing=%s expected_alpha_estimator=%s",
         config.tracking_error,
         args.tracking_error_annual,
-        config.risk_model,
         config.factor_set.value,
         args.factor_timing,
         config.expected_alpha_estimator,
@@ -199,7 +192,6 @@ def main(argv: list[str] | None = None) -> None:
         "log_file": str(log_path),
         "tracking_error_monthly": config.tracking_error,
         "tracking_error_annual": args.tracking_error_annual,
-        "risk_model": config.risk_model,
         "factor_set": config.factor_set.value,
         "factor_timing": args.factor_timing,
         "expected_alpha_estimator": config.expected_alpha_estimator,
@@ -236,11 +228,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-root", type=Path, default=Path("results") / "emp008_runs")
     parser.add_argument("--log-file", type=Path)
     parser.add_argument("--tracking-error-annual", type=float, help="Annual tracking error budget, e.g. 0.03.")
-    parser.add_argument(
-        "--risk-model",
-        choices=("factor_idio", "direct_covariance"),
-        help="Risk matrix used in TE constraint. Default: factor_idio.",
-    )
     parser.add_argument(
         "--factor-set",
         choices=strategy_factor_set_values(),

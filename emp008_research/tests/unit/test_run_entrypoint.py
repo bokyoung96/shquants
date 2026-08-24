@@ -8,7 +8,7 @@ from run import RunSettings, run_settings
 def test_run_settings_has_beginner_defaults():
     settings = RunSettings()
     assert settings.factor_set == "mfbt"
-    assert settings.risk_model == "factor_idio"
+    assert not hasattr(settings, "risk_model")
     assert settings.convert_raw_to_parquet is False
     assert settings.run_backtest is True
 

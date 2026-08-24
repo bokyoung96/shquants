@@ -12,7 +12,7 @@ def test_default_config_preserves_mfbt_contract() -> None:
 
     assert config.factor_set is FactorSetId.MFBT
     assert config.risk_window == 36
-    assert config.risk_model == "factor_idio"
+    assert not hasattr(config, "risk_model")
     assert config.expected_alpha_estimator == "mean"
 
 

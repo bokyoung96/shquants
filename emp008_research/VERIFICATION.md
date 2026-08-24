@@ -20,6 +20,10 @@ block. It produced the same 3 × 200 weights and completed the 43-row backtest;
 final equity was `83,093,624.88926733`. After adding the entrypoint tests, the
 full handoff suite passed with `10 passed`.
 
+The risk-model choice was subsequently removed from the handoff surface. The
+factor-idiosyncratic covariance path is now the only optimizer path; there is
+no `risk_model` setting or direct-covariance CLI option.
+
 ## Reference parity
 
 The same dates, source parquet, config, and target-weight schedule were run

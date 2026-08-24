@@ -23,7 +23,6 @@ class Emp008Config:
     large_bm_neutral_weight_threshold: float = 0.10
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
-    risk_model: str = "factor_idio"
     factor_set: object = "mfbt"
     expected_alpha_estimator: str = "mean"
     factor_timing: FactorTimingConfig | None = None

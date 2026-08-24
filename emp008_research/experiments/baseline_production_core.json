@@ -1,0 +1,6 @@
+{
+  "name": "baseline_production_core",
+  "factor_set": "production_core",
+  "factor_timing": "none",
+  "output_root": "../results"
+}

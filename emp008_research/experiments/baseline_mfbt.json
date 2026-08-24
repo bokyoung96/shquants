@@ -1,6 +1,0 @@
-{
-  "name": "baseline_mfbt",
-  "factor_set": "mfbt",
-  "factor_timing": "none",
-  "output_root": "../results"
-}

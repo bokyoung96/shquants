@@ -28,6 +28,12 @@ Expected alpha is likewise fixed to the original 36-month arithmetic mean.
 The EWMA and mean-minus-standard-error alternatives are not exposed or
 implemented in the handoff.
 
+The factor-set registry now uses canonical names: `production_core` for the
+supported production combination, `research_*` for variants, `reference_*`
+for original/reference combinations, and `diagnostic_all_factors` for the
+full-factor diagnostic. Legacy names such as `mfbt` resolve only as input
+aliases and are not used by the operator settings.
+
 ## Reference parity
 
 The same dates, source parquet, config, and target-weight schedule were run

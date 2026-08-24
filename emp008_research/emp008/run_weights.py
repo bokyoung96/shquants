@@ -18,7 +18,7 @@ from emp008.factor_timing import FactorTimingConfig
 
 
 DEFAULT_START = "2020-01-31"
-DEFAULT_NAME = "mfbt_emp008"
+DEFAULT_NAME = "production_core_emp008"
 
 
 def build_emp008_config(
@@ -225,10 +225,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--factor-set",
         choices=strategy_factor_set_values(),
-        help="Alpha factor set. Use 'adjust' for MFBT with momentum_12_1m replacing price_to_252d_high "
-        "and without retail_flow, 'mfbt_pos' for positivity momentum, "
-        "'mfbt_origin_smallcap' for MFBT with origin's small-cap sign rule, 'origin' for the origin factors, "
-        "or 'origin_new_dividend' to replace dividend_yield_fy0 with dividend_yield_ttm.",
+        help="Canonical factor-set name. Production: production_core. Research and reference sets are explicitly prefixed.",
     )
     parser.add_argument(
         "--sector-neutral-dataset",

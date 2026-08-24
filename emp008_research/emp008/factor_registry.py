@@ -34,24 +34,24 @@ class FactorId(StrEnum):
 
 @unique
 class FactorSetId(StrEnum):
-    MFBT = "mfbt"
-    ADJUST = "adjust"
-    MFBT_POS = "mfbt_pos"
-    MFBT_ORIGIN_SMALLCAP = "mfbt_origin_smallcap"
-    ORIGIN = "origin"
-    ORIGIN_NEW_DIVIDEND = "origin_new_dividend"
-    ORIGIN_12_1M = "origin_12_1m"
-    SIZE_ONLY = "size_only"
-    SIZE_MOMENTUM_12M = "size_momentum_12m"
-    SIZE_MOMENTUM_12_1M = "size_momentum_12_1m"
-    SIZE_MOMENTUM_HIGH = "size_momentum_high"
-    SIZE_EARNINGS_MOMENTUM = "size_earnings_momentum"
-    SIZE_RETAIL_FLOW = "size_retail_flow"
-    SIZE_VALUE_FCF_TEV = "size_value_fcf_tev"
-    SIZE_MOMENTUM_EARNINGS_VALUE = "size_momentum_earnings_value"
-    SIZE_VALUE_DIVIDEND_FY0 = "size_value_dividend_fy0"
-    SIZE_VALUE_DIVIDEND_TTM = "size_value_dividend_ttm"
-    ALL_FACTORS = "all_factors"
+    PRODUCTION_CORE = "production_core"
+    RESEARCH_12_1M_MOMENTUM = "research_12_1m_momentum"
+    RESEARCH_POSITIVITY_MOMENTUM = "research_positivity_momentum"
+    RESEARCH_ORIGIN_SMALL_CAP_RULE = "research_origin_small_cap_rule"
+    REFERENCE_ORIGIN = "reference_origin"
+    REFERENCE_ORIGIN_TTM_DIVIDEND = "reference_origin_ttm_dividend"
+    REFERENCE_ORIGIN_12_1M = "reference_origin_12_1m"
+    RESEARCH_SIZE_ONLY = "research_size_only"
+    RESEARCH_SIZE_MOMENTUM_12M = "research_size_momentum_12m"
+    RESEARCH_SIZE_MOMENTUM_12_1M = "research_size_momentum_12_1m"
+    RESEARCH_SIZE_MOMENTUM_HIGH = "research_size_momentum_high"
+    RESEARCH_SIZE_EARNINGS_MOMENTUM = "research_size_earnings_momentum"
+    RESEARCH_SIZE_RETAIL_FLOW = "research_size_retail_flow"
+    RESEARCH_SIZE_VALUE_FCF_TEV = "research_size_value_fcf_tev"
+    RESEARCH_SIZE_MOMENTUM_EARNINGS_VALUE = "research_size_momentum_earnings_value"
+    RESEARCH_SIZE_VALUE_DIVIDEND_FY0 = "research_size_value_dividend_fy0"
+    RESEARCH_SIZE_VALUE_DIVIDEND_TTM = "research_size_value_dividend_ttm"
+    DIAGNOSTIC_ALL_FACTORS = "diagnostic_all_factors"
 
 
 @unique
@@ -75,6 +75,8 @@ class FactorDefinition:
 class FactorSetDefinition:
     id: FactorSetId
     factors: tuple[FactorId, ...]
+    category: str = "research"
+    label: str = ""
     rank_transform_factors: tuple[FactorId, ...] = ()
     neutralize_large_benchmark_weight_factors: tuple[FactorId, ...] = ()
     constrain_expected_alpha_to_direction: bool = False
@@ -144,8 +146,10 @@ _FACTOR_DEFINITIONS = {
 }
 
 _FACTOR_SET_DEFINITIONS = {
-    FactorSetId.MFBT: FactorSetDefinition(
-        id=FactorSetId.MFBT,
+    FactorSetId.PRODUCTION_CORE: FactorSetDefinition(
+        id=FactorSetId.PRODUCTION_CORE,
+        category="production",
+        label="Core price / earnings / dividend / retail / value / size",
         factors=(
             FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
@@ -157,8 +161,8 @@ _FACTOR_SET_DEFINITIONS = {
         rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
-    FactorSetId.ADJUST: FactorSetDefinition(
-        id=FactorSetId.ADJUST,
+    FactorSetId.RESEARCH_12_1M_MOMENTUM: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_12_1M_MOMENTUM,
         factors=(
             FactorId.MOMENTUM_12_1M,
             FactorId.EARNINGS_MOMENTUM,
@@ -169,8 +173,8 @@ _FACTOR_SET_DEFINITIONS = {
         rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
-    FactorSetId.MFBT_POS: FactorSetDefinition(
-        id=FactorSetId.MFBT_POS,
+    FactorSetId.RESEARCH_POSITIVITY_MOMENTUM: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_POSITIVITY_MOMENTUM,
         factors=(
             FactorId.POSITIVITY_MOMENTUM,
             FactorId.EARNINGS_MOMENTUM,
@@ -182,8 +186,8 @@ _FACTOR_SET_DEFINITIONS = {
         rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
     ),
-    FactorSetId.MFBT_ORIGIN_SMALLCAP: FactorSetDefinition(
-        id=FactorSetId.MFBT_ORIGIN_SMALLCAP,
+    FactorSetId.RESEARCH_ORIGIN_SMALL_CAP_RULE: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_ORIGIN_SMALL_CAP_RULE,
         factors=(
             FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
@@ -196,8 +200,9 @@ _FACTOR_SET_DEFINITIONS = {
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.ORIGIN: FactorSetDefinition(
-        id=FactorSetId.ORIGIN,
+    FactorSetId.REFERENCE_ORIGIN: FactorSetDefinition(
+        id=FactorSetId.REFERENCE_ORIGIN,
+        category="reference",
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.MOMENTUM_12M,
@@ -206,8 +211,9 @@ _FACTOR_SET_DEFINITIONS = {
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
     ),
-    FactorSetId.ORIGIN_NEW_DIVIDEND: FactorSetDefinition(
-        id=FactorSetId.ORIGIN_NEW_DIVIDEND,
+    FactorSetId.REFERENCE_ORIGIN_TTM_DIVIDEND: FactorSetDefinition(
+        id=FactorSetId.REFERENCE_ORIGIN_TTM_DIVIDEND,
+        category="reference",
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.MOMENTUM_12M,
@@ -215,8 +221,9 @@ _FACTOR_SET_DEFINITIONS = {
         ),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.ORIGIN_12_1M: FactorSetDefinition(
-        id=FactorSetId.ORIGIN_12_1M,
+    FactorSetId.REFERENCE_ORIGIN_12_1M: FactorSetDefinition(
+        id=FactorSetId.REFERENCE_ORIGIN_12_1M,
+        category="reference",
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.MOMENTUM_12_1M,
@@ -225,46 +232,46 @@ _FACTOR_SET_DEFINITIONS = {
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
     ),
-    FactorSetId.SIZE_ONLY: FactorSetDefinition(
-        id=FactorSetId.SIZE_ONLY,
+    FactorSetId.RESEARCH_SIZE_ONLY: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_ONLY,
         factors=(FactorId.LN_MARKET_CAP,),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_MOMENTUM_12M: FactorSetDefinition(
-        id=FactorSetId.SIZE_MOMENTUM_12M,
+    FactorSetId.RESEARCH_SIZE_MOMENTUM_12M: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_MOMENTUM_12M,
         factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12M),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_MOMENTUM_12_1M: FactorSetDefinition(
-        id=FactorSetId.SIZE_MOMENTUM_12_1M,
+    FactorSetId.RESEARCH_SIZE_MOMENTUM_12_1M: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_MOMENTUM_12_1M,
         factors=(FactorId.LN_MARKET_CAP, FactorId.MOMENTUM_12_1M),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_MOMENTUM_HIGH: FactorSetDefinition(
-        id=FactorSetId.SIZE_MOMENTUM_HIGH,
+    FactorSetId.RESEARCH_SIZE_MOMENTUM_HIGH: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_MOMENTUM_HIGH,
         factors=(FactorId.LN_MARKET_CAP, FactorId.PRICE_TO_252D_HIGH),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_EARNINGS_MOMENTUM: FactorSetDefinition(
-        id=FactorSetId.SIZE_EARNINGS_MOMENTUM,
+    FactorSetId.RESEARCH_SIZE_EARNINGS_MOMENTUM: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_EARNINGS_MOMENTUM,
         factors=(FactorId.LN_MARKET_CAP, FactorId.EARNINGS_MOMENTUM),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_RETAIL_FLOW: FactorSetDefinition(
-        id=FactorSetId.SIZE_RETAIL_FLOW,
+    FactorSetId.RESEARCH_SIZE_RETAIL_FLOW: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_RETAIL_FLOW,
         factors=(FactorId.LN_MARKET_CAP, FactorId.RETAIL_FLOW),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_VALUE_FCF_TEV: FactorSetDefinition(
-        id=FactorSetId.SIZE_VALUE_FCF_TEV,
+    FactorSetId.RESEARCH_SIZE_VALUE_FCF_TEV: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_VALUE_FCF_TEV,
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.VALUE,
         ),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_MOMENTUM_EARNINGS_VALUE: FactorSetDefinition(
-        id=FactorSetId.SIZE_MOMENTUM_EARNINGS_VALUE,
+    FactorSetId.RESEARCH_SIZE_MOMENTUM_EARNINGS_VALUE: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_MOMENTUM_EARNINGS_VALUE,
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.MOMENTUM_12M,
@@ -273,8 +280,8 @@ _FACTOR_SET_DEFINITIONS = {
         ),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.SIZE_VALUE_DIVIDEND_FY0: FactorSetDefinition(
-        id=FactorSetId.SIZE_VALUE_DIVIDEND_FY0,
+    FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_FY0: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_FY0,
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.DIVIDEND_YIELD_FY0,
@@ -282,16 +289,17 @@ _FACTOR_SET_DEFINITIONS = {
         constrain_expected_alpha_to_direction=True,
         snapshot_forward_days=7,
     ),
-    FactorSetId.SIZE_VALUE_DIVIDEND_TTM: FactorSetDefinition(
-        id=FactorSetId.SIZE_VALUE_DIVIDEND_TTM,
+    FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_TTM: FactorSetDefinition(
+        id=FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_TTM,
         factors=(
             FactorId.LN_MARKET_CAP,
             FactorId.DIVIDEND_YIELD_TTM,
         ),
         constrain_expected_alpha_to_direction=True,
     ),
-    FactorSetId.ALL_FACTORS: FactorSetDefinition(
-        id=FactorSetId.ALL_FACTORS,
+    FactorSetId.DIAGNOSTIC_ALL_FACTORS: FactorSetDefinition(
+        id=FactorSetId.DIAGNOSTIC_ALL_FACTORS,
+        category="diagnostic",
         factors=tuple(FactorId),
         snapshot_forward_days=7,
         diagnostics_only=True,
@@ -300,6 +308,27 @@ _FACTOR_SET_DEFINITIONS = {
 
 FACTOR_DEFINITIONS = MappingProxyType(_FACTOR_DEFINITIONS)
 FACTOR_SET_DEFINITIONS = MappingProxyType(_FACTOR_SET_DEFINITIONS)
+
+LEGACY_FACTOR_SET_ALIASES = MappingProxyType({
+    "mfbt": FactorSetId.PRODUCTION_CORE,
+    "adjust": FactorSetId.RESEARCH_12_1M_MOMENTUM,
+    "mfbt_pos": FactorSetId.RESEARCH_POSITIVITY_MOMENTUM,
+    "mfbt_origin_smallcap": FactorSetId.RESEARCH_ORIGIN_SMALL_CAP_RULE,
+    "origin": FactorSetId.REFERENCE_ORIGIN,
+    "origin_new_dividend": FactorSetId.REFERENCE_ORIGIN_TTM_DIVIDEND,
+    "origin_12_1m": FactorSetId.REFERENCE_ORIGIN_12_1M,
+    "size_only": FactorSetId.RESEARCH_SIZE_ONLY,
+    "size_momentum_12m": FactorSetId.RESEARCH_SIZE_MOMENTUM_12M,
+    "size_momentum_12_1m": FactorSetId.RESEARCH_SIZE_MOMENTUM_12_1M,
+    "size_momentum_high": FactorSetId.RESEARCH_SIZE_MOMENTUM_HIGH,
+    "size_earnings_momentum": FactorSetId.RESEARCH_SIZE_EARNINGS_MOMENTUM,
+    "size_retail_flow": FactorSetId.RESEARCH_SIZE_RETAIL_FLOW,
+    "size_value_fcf_tev": FactorSetId.RESEARCH_SIZE_VALUE_FCF_TEV,
+    "size_momentum_earnings_value": FactorSetId.RESEARCH_SIZE_MOMENTUM_EARNINGS_VALUE,
+    "size_value_dividend_fy0": FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_FY0,
+    "size_value_dividend_ttm": FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_TTM,
+    "all_factors": FactorSetId.DIAGNOSTIC_ALL_FACTORS,
+})
 
 
 def get_factor_definition(factor_id: FactorId) -> FactorDefinition:
@@ -336,6 +365,8 @@ def parse_factor_set(value: FactorSetId | str) -> FactorSetId:
     try:
         return FactorSetId(normalized)
     except ValueError as exc:
+        if normalized in LEGACY_FACTOR_SET_ALIASES:
+            return LEGACY_FACTOR_SET_ALIASES[normalized]
         supported = ", ".join(factor_set_values())
         raise ValueError(
             f"unknown factor set '{value}'. Supported values: {supported}"

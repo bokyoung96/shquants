@@ -23,7 +23,7 @@ class Emp008Config:
     large_bm_neutral_weight_threshold: float = 0.10
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
-    factor_set: object = "mfbt"
+    factor_set: FactorSetId | str = FactorSetId.PRODUCTION_CORE
     factor_timing: FactorTimingConfig | None = None
     value_raw_winsor_quantile: float | None = None
     value_zscore_cap: float | None = None
@@ -46,7 +46,7 @@ class Emp008Config:
         definition = get_factor_set_definition(self.factor_set)
         if not definition.constrain_expected_alpha_to_direction:
             return "mean"
-        return "origin_small_cap" if self.factor_set is FactorSetId.MFBT_ORIGIN_SMALLCAP else "origin_sign"
+        return "origin_small_cap" if self.factor_set is FactorSetId.RESEARCH_ORIGIN_SMALL_CAP_RULE else "origin_sign"
 
     @property
     def monthly_snapshot_forward_days(self) -> int:

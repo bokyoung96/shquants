@@ -23,7 +23,7 @@ from emp008.strategy import run_emp008
 class RunSettings:
     start: str = "2020-01-31"
     end: str | None = "2020-03-31"
-    factor_set: str = "mfbt"
+    factor_set: str = "production_core"
     factor_timing: str = "none"
     tracking_error_annual: float | None = None
     convert_raw_to_parquet: bool = False
@@ -130,7 +130,7 @@ def _latest_end(parquet_dir: Path, config: Emp008Config) -> str:
 SETTINGS = RunSettings(
     start="2020-01-31",
     end="2020-03-31",
-    factor_set="mfbt",
+    factor_set="production_core",
     factor_timing="none",
     convert_raw_to_parquet=False,
     run_backtest=True,

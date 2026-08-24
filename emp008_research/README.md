@@ -12,6 +12,35 @@ data/parquet -> scripts/generate_weights.py -> results/<run>/weights
 target_weights.csv + data/parquet -> scripts/run_backtest.py -> results/<run>/backtest
 ```
 
+## One-command run (recommended)
+
+For handoff use, edit only the `SETTINGS` block in `run.py`:
+
+```python
+SETTINGS = RunSettings(
+    start="2020-01-31",
+    end="2024-12-31",
+    factor_set="mfbt",
+    risk_model="factor_idio",
+    convert_raw_to_parquet=False,
+    run_backtest=True,
+    fee=0.0,
+    sell_tax=0.0,
+    slippage=0.0,
+    run_name="my_run",
+)
+```
+
+Then run:
+
+```powershell
+uv run python run.py
+```
+
+Set `convert_raw_to_parquet=True` when the raw files were updated. Set
+`run_backtest=False` when only target weights are needed. The completed run is
+written to `results/<run_name>/`, including `run_summary.json`.
+
 Run commands from this directory (it is intentionally self-contained at the
 Python import level):
 

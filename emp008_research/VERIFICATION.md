@@ -15,6 +15,11 @@ code and its `data/parquet` snapshot.
   final equity `83,093,624.8892673254`.
 - Tests: `uv run --project . pytest tests -q` → `8 passed`.
 
+The unified `run.py` entrypoint was then executed with its editable settings
+block. It produced the same 3 × 200 weights and completed the 43-row backtest;
+final equity was `83,093,624.88926733`. After adding the entrypoint tests, the
+full handoff suite passed with `10 passed`.
+
 ## Reference parity
 
 The same dates, source parquet, config, and target-weight schedule were run

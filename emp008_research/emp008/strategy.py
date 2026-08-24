@@ -189,7 +189,6 @@ def _optimize_month(
         alpha_factor_names=alpha_factor_names,
         sector_factor_names=sector_factor_names,
         window=config.risk_window,
-        estimator=config.expected_alpha_estimator,
     )
     expected_alpha = apply_expected_alpha_policy(expected_alpha, config)
     applied_factor_weights = factor_weights

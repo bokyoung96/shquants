@@ -24,6 +24,10 @@ The risk-model choice was subsequently removed from the handoff surface. The
 factor-idiosyncratic covariance path is now the only optimizer path; there is
 no `risk_model` setting or direct-covariance CLI option.
 
+Expected alpha is likewise fixed to the original 36-month arithmetic mean.
+The EWMA and mean-minus-standard-error alternatives are not exposed or
+implemented in the handoff.
+
 ## Reference parity
 
 The same dates, source parquet, config, and target-weight schedule were run

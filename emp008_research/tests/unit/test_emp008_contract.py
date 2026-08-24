@@ -13,7 +13,7 @@ def test_default_config_preserves_mfbt_contract() -> None:
     assert config.factor_set is FactorSetId.MFBT
     assert config.risk_window == 36
     assert not hasattr(config, "risk_model")
-    assert config.expected_alpha_estimator == "mean"
+    assert not hasattr(config, "expected_alpha_estimator")
 
 
 def test_result_writes_target_and_active_weight_contract(tmp_path: Path) -> None:

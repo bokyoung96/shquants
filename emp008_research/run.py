@@ -24,7 +24,6 @@ class RunSettings:
     start: str = "2020-01-31"
     end: str | None = "2020-03-31"
     factor_set: str = "mfbt"
-    expected_alpha_estimator: str = "mean"
     factor_timing: str = "none"
     tracking_error_annual: float | None = None
     convert_raw_to_parquet: bool = False
@@ -53,7 +52,6 @@ def run_settings(settings: RunSettings, *, project_dir: Path | None = None) -> d
         tracking_error_annual=settings.tracking_error_annual,
         factor_set=settings.factor_set,
         factor_timing=settings.factor_timing,
-        expected_alpha_estimator=settings.expected_alpha_estimator,
     )
     converted: dict[str, str] = {}
     if settings.convert_raw_to_parquet:
@@ -133,7 +131,6 @@ SETTINGS = RunSettings(
     start="2020-01-31",
     end="2020-03-31",
     factor_set="mfbt",
-    expected_alpha_estimator="mean",
     factor_timing="none",
     convert_raw_to_parquet=False,
     run_backtest=True,

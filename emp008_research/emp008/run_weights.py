@@ -27,7 +27,6 @@ def build_emp008_config(
     factor_set: str | None = None,
     sector_neutral_dataset: str | None = None,
     factor_timing: str | None = None,
-    expected_alpha_estimator: str | None = None,
 ) -> Emp008Config:
     config = Emp008Config()
     if factor_set is not None:
@@ -36,8 +35,6 @@ def build_emp008_config(
         config = replace(config, sector_neutral_dataset=_resolve_sector_neutral_dataset(sector_neutral_dataset))
     if factor_timing is not None:
         config = replace(config, factor_timing=_resolve_factor_timing(factor_timing))
-    if expected_alpha_estimator is not None:
-        config = replace(config, expected_alpha_estimator=expected_alpha_estimator)
     if tracking_error_annual is None:
         return config
     if tracking_error_annual < 0.0:
@@ -161,7 +158,6 @@ def main(argv: list[str] | None = None) -> None:
         factor_set=args.factor_set,
         sector_neutral_dataset=args.sector_neutral_dataset,
         factor_timing=args.factor_timing,
-        expected_alpha_estimator=args.expected_alpha_estimator,
     )
     end = args.end or latest_common_end(args.parquet_dir, config)
     run_root = args.output_root / args.name
@@ -175,12 +171,11 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("start=%s end=%s parquet_dir=%s", args.start, end, args.parquet_dir)
     logger.info(
         "tracking_error_monthly=%s tracking_error_annual=%s factor_set=%s "
-        "factor_timing=%s expected_alpha_estimator=%s",
+        "factor_timing=%s",
         config.tracking_error,
         args.tracking_error_annual,
         config.factor_set.value,
         args.factor_timing,
-        config.expected_alpha_estimator,
     )
     logger.info("weights_dir=%s log_file=%s", weights_dir, log_path)
 
@@ -194,7 +189,6 @@ def main(argv: list[str] | None = None) -> None:
         "tracking_error_annual": args.tracking_error_annual,
         "factor_set": config.factor_set.value,
         "factor_timing": args.factor_timing,
-        "expected_alpha_estimator": config.expected_alpha_estimator,
     }
     try:
         with timed(logger, "weights"):
@@ -246,12 +240,6 @@ def _parser() -> argparse.ArgumentParser:
         choices=("none", "momentum"),
         default="none",
         help="Optional factor-weight timing policy. Default: none.",
-    )
-    parser.add_argument(
-        "--expected-alpha-estimator",
-        choices=("mean", "ewma36", "mean_1se"),
-        default="mean",
-        help="Factor expected-alpha estimator. Default: 36-month arithmetic mean.",
     )
     return parser
 

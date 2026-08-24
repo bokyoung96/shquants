@@ -24,15 +24,12 @@ class Emp008Config:
     risk_window: int = 36
     tracking_error: float = 0.007 / (12**0.5)
     factor_set: object = "mfbt"
-    expected_alpha_estimator: str = "mean"
     factor_timing: FactorTimingConfig | None = None
     value_raw_winsor_quantile: float | None = None
     value_zscore_cap: float | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "factor_set", parse_factor_set(self.factor_set))
-        if self.expected_alpha_estimator not in {"mean", "ewma36", "mean_1se"}:
-            raise ValueError("expected_alpha_estimator must be 'mean', 'ewma36', or 'mean_1se'")
 
     @property
     def rank_transform_factors(self) -> tuple[str, ...]:

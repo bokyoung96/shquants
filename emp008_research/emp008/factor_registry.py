@@ -34,6 +34,8 @@ class FactorId(StrEnum):
 
 @unique
 class FactorSetId(StrEnum):
+    ORIGIN = "origin"
+    ORIGIN_ADD = "origin_add"
     PRODUCTION_CORE = "production_core"
     RESEARCH_12_1M_MOMENTUM = "research_12_1m_momentum"
     RESEARCH_POSITIVITY_MOMENTUM = "research_positivity_momentum"
@@ -79,7 +81,9 @@ class FactorSetDefinition:
     label: str = ""
     rank_transform_factors: tuple[FactorId, ...] = ()
     neutralize_large_benchmark_weight_factors: tuple[FactorId, ...] = ()
-    constrain_expected_alpha_to_direction: bool = False
+    # Every production/research portfolio uses the factor's declared economic
+    # direction when converting estimated factor returns into alpha.
+    constrain_expected_alpha_to_direction: bool = True
     snapshot_forward_days: int = 0
     diagnostics_only: bool = False
 
@@ -146,10 +150,22 @@ _FACTOR_DEFINITIONS = {
 }
 
 _FACTOR_SET_DEFINITIONS = {
-    FactorSetId.PRODUCTION_CORE: FactorSetDefinition(
-        id=FactorSetId.PRODUCTION_CORE,
+    FactorSetId.ORIGIN: FactorSetDefinition(
+        id=FactorSetId.ORIGIN,
+        category="reference",
+        label="Original EMP008: size / momentum / FY0 dividend",
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12M,
+            FactorId.DIVIDEND_YIELD_FY0,
+        ),
+        constrain_expected_alpha_to_direction=True,
+        snapshot_forward_days=7,
+    ),
+    FactorSetId.ORIGIN_ADD: FactorSetDefinition(
+        id=FactorSetId.ORIGIN_ADD,
         category="production",
-        label="Core price / earnings / dividend / retail / value / size",
+        label="Origin-add: six-factor production baseline",
         factors=(
             FactorId.PRICE_TO_252D_HIGH,
             FactorId.EARNINGS_MOMENTUM,
@@ -160,6 +176,17 @@ _FACTOR_SET_DEFINITIONS = {
         ),
         rank_transform_factors=(FactorId.LN_MARKET_CAP,),
         neutralize_large_benchmark_weight_factors=(FactorId.LN_MARKET_CAP,),
+    ),
+    FactorSetId.PRODUCTION_CORE: FactorSetDefinition(
+        id=FactorSetId.PRODUCTION_CORE,
+        category="production",
+        label="Equal-weight four-factor production core",
+        factors=(
+            FactorId.LN_MARKET_CAP,
+            FactorId.MOMENTUM_12M,
+            FactorId.EARNINGS_MOMENTUM,
+            FactorId.VALUE,
+        ),
     ),
     FactorSetId.RESEARCH_12_1M_MOMENTUM: FactorSetDefinition(
         id=FactorSetId.RESEARCH_12_1M_MOMENTUM,
@@ -309,28 +336,6 @@ _FACTOR_SET_DEFINITIONS = {
 FACTOR_DEFINITIONS = MappingProxyType(_FACTOR_DEFINITIONS)
 FACTOR_SET_DEFINITIONS = MappingProxyType(_FACTOR_SET_DEFINITIONS)
 
-LEGACY_FACTOR_SET_ALIASES = MappingProxyType({
-    "mfbt": FactorSetId.PRODUCTION_CORE,
-    "adjust": FactorSetId.RESEARCH_12_1M_MOMENTUM,
-    "mfbt_pos": FactorSetId.RESEARCH_POSITIVITY_MOMENTUM,
-    "mfbt_origin_smallcap": FactorSetId.RESEARCH_ORIGIN_SMALL_CAP_RULE,
-    "origin": FactorSetId.REFERENCE_ORIGIN,
-    "origin_new_dividend": FactorSetId.REFERENCE_ORIGIN_TTM_DIVIDEND,
-    "origin_12_1m": FactorSetId.REFERENCE_ORIGIN_12_1M,
-    "size_only": FactorSetId.RESEARCH_SIZE_ONLY,
-    "size_momentum_12m": FactorSetId.RESEARCH_SIZE_MOMENTUM_12M,
-    "size_momentum_12_1m": FactorSetId.RESEARCH_SIZE_MOMENTUM_12_1M,
-    "size_momentum_high": FactorSetId.RESEARCH_SIZE_MOMENTUM_HIGH,
-    "size_earnings_momentum": FactorSetId.RESEARCH_SIZE_EARNINGS_MOMENTUM,
-    "size_retail_flow": FactorSetId.RESEARCH_SIZE_RETAIL_FLOW,
-    "size_value_fcf_tev": FactorSetId.RESEARCH_SIZE_VALUE_FCF_TEV,
-    "size_momentum_earnings_value": FactorSetId.RESEARCH_SIZE_MOMENTUM_EARNINGS_VALUE,
-    "size_value_dividend_fy0": FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_FY0,
-    "size_value_dividend_ttm": FactorSetId.RESEARCH_SIZE_VALUE_DIVIDEND_TTM,
-    "all_factors": FactorSetId.DIAGNOSTIC_ALL_FACTORS,
-})
-
-
 def get_factor_definition(factor_id: FactorId) -> FactorDefinition:
     return FACTOR_DEFINITIONS[factor_id]
 
@@ -365,8 +370,6 @@ def parse_factor_set(value: FactorSetId | str) -> FactorSetId:
     try:
         return FactorSetId(normalized)
     except ValueError as exc:
-        if normalized in LEGACY_FACTOR_SET_ALIASES:
-            return LEGACY_FACTOR_SET_ALIASES[normalized]
         supported = ", ".join(factor_set_values())
         raise ValueError(
             f"unknown factor set '{value}'. Supported values: {supported}"

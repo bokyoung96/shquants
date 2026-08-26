@@ -1,10 +1,12 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from emp008.data import Emp008Config
 from emp008.factor_registry import (
     FACTOR_SET_DEFINITIONS,
+    FactorId,
     FactorSetId,
     get_factor_set_definition,
     parse_factor_set,
@@ -21,11 +23,19 @@ def test_default_config_preserves_production_core_contract() -> None:
     assert not hasattr(config, "expected_alpha_estimator")
 
 
-def test_factor_set_names_describe_role_and_legacy_mfbt_is_compatibility_alias():
-    assert parse_factor_set("mfbt") is FactorSetId.PRODUCTION_CORE
+def test_factor_set_names_describe_role():
+    assert parse_factor_set("origin") is FactorSetId.ORIGIN
+    with pytest.raises(ValueError, match="unknown factor set 'mfbt'"):
+        parse_factor_set("mfbt")
     definition = get_factor_set_definition(FactorSetId.PRODUCTION_CORE)
+    assert definition.factors == (
+        FactorId.LN_MARKET_CAP,
+        FactorId.MOMENTUM_12M,
+        FactorId.EARNINGS_MOMENTUM,
+        FactorId.VALUE,
+    )
     assert definition.category == "production"
-    assert definition.label == "Core price / earnings / dividend / retail / value / size"
+    assert definition.label == "Equal-weight four-factor production core"
 
 
 def test_factor_set_categories_cover_all_canonical_sets():

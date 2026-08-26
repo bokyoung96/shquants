@@ -1,11 +1,15 @@
 # Factor-set catalog
 
-The canonical names below are the names accepted by the weight-generation
-CLI. `production_core` is the only operator-facing production set.
+The canonical names below are accepted by the weight-generation entrypoint.
+They are ordered from the original reference model to the current production
+core. A factor set defines the factors; unless a run supplies explicit factor
+weights, the factors are equally weighted.
 
 | Canonical name | Role | Factors |
 | --- | --- | --- |
-| `production_core` | Production | price-to-252d-high, earnings-momentum, dividend-yield-ttm, retail-flow, value, size |
+| `origin` | Original reference | size, momentum-12m, dividend-yield-fy0 |
+| `origin_add` | Production baseline | price-to-252d-high, earnings-momentum, dividend-yield-ttm, retail-flow, value, size |
+| `production_core` | Production core (equal weight) | size, momentum-12m, earnings-momentum, value |
 | `research_12_1m_momentum` | Research variant | momentum-12-1m, earnings-momentum, dividend-yield-ttm, value, size |
 | `research_positivity_momentum` | Research variant | positivity-momentum, earnings-momentum, dividend-yield-ttm, retail-flow, value, size |
 | `research_origin_small_cap_rule` | Research variant | production factors with origin small-cap alpha-direction rule |
@@ -24,6 +28,5 @@ CLI. `production_core` is the only operator-facing production set.
 | `research_size_value_dividend_ttm` | Research variant | size, value, dividend-yield-ttm |
 | `diagnostic_all_factors` | Diagnostics only | all registered factors |
 
-Legacy names (`mfbt`, `adjust`, `origin`, and the former `size_*` names) are
-accepted only by the Python compatibility parser. New configuration and CLI
-usage should use the canonical names above.
+Only the canonical names above are accepted by the handoff configuration. The
+former `mfbt` naming and short factor-set aliases have been removed.

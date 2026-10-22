@@ -467,6 +467,8 @@ def test_loader_uses_semantic_key_for_wi26_big_sector_data(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("dataset_id", "stem", "frame_key"),
     [
+        (DatasetId.QW_CURRENT_ASSETS_LFQ0, "qw_current_assets_lfq0", "current_assets"),
+        (DatasetId.QW_CURRENT_LIABILITIES_LFQ0, "qw_current_liabilities_lfq0", "current_liabilities"),
         (DatasetId.QW_FCF, "qw_fcf", "free_cash_flow"),
         (DatasetId.QW_INT_BEARING_LIAB_NFQ0, "qw_int_bearing_liab_nfq0", "interest_bearing_liability"),
         (DatasetId.QW_QUICK_ASSETS_NFQ0, "qw_quick_assets_nfq0", "quick_asset"),

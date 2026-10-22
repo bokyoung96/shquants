@@ -35,6 +35,8 @@ class DataLoader:
         DatasetId.QW_BM: "benchmark",
         DatasetId.QW_BM_WEIGHTS: "bm_weights",
         DatasetId.QW_C: "close_raw",
+        DatasetId.QW_CURRENT_ASSETS_LFQ0: "current_assets",
+        DatasetId.QW_CURRENT_LIABILITIES_LFQ0: "current_liabilities",
         DatasetId.QW_DIVIDEND_CASH: "dividend_cash",
         DatasetId.QW_DIVIDEND_CASH_TTM: "dividend_cash_ttm",
         DatasetId.QW_DIVIDEND_YLD_FY0: "dividend_yld_fy0",

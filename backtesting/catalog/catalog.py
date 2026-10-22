@@ -60,6 +60,18 @@ class DataCatalog:
                 kind="benchmark_weights",
             ),
             DatasetId.QW_C: _spec(DatasetId.QW_C, group=DatasetGroup.PRICE, freq="D", kind="price"),
+            DatasetId.QW_CURRENT_ASSETS_LFQ0: _spec(
+                DatasetId.QW_CURRENT_ASSETS_LFQ0,
+                group=DatasetGroup.FUNDAMENTAL,
+                freq="M",
+                kind="current_assets",
+            ),
+            DatasetId.QW_CURRENT_LIABILITIES_LFQ0: _spec(
+                DatasetId.QW_CURRENT_LIABILITIES_LFQ0,
+                group=DatasetGroup.FUNDAMENTAL,
+                freq="M",
+                kind="current_liabilities",
+            ),
             DatasetId.QW_DIVIDEND_CASH: _spec(
                 DatasetId.QW_DIVIDEND_CASH,
                 group=DatasetGroup.FUNDAMENTAL,

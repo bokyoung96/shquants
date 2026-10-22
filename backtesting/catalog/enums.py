@@ -22,6 +22,8 @@ class DatasetId(str, Enum):
     QW_BM = "qw_BM"
     QW_BM_WEIGHTS = "qw_bm_weights"
     QW_C = "qw_c"
+    QW_CURRENT_ASSETS_LFQ0 = "qw_current_assets_lfq0"
+    QW_CURRENT_LIABILITIES_LFQ0 = "qw_current_liabilities_lfq0"
     QW_DIVIDEND_CASH = "qw_dividend_cash"
     QW_DIVIDEND_CASH_TTM = "qw_dividend_cash_ttm"
     QW_DIVIDEND_YLD_FY0 = "qw_dividend_yld_fy0"

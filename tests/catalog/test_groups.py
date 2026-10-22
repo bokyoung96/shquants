@@ -10,6 +10,8 @@ EXPECTED_RAW_STEMS = {
     "qw_BM",
     "qw_bm_weights",
     "qw_c",
+    "qw_current_assets_lfq0",
+    "qw_current_liabilities_lfq0",
     "qw_dividend_cash",
     "qw_dividend_cash_ttm",
     "qw_dividend_yld_fy0",
@@ -82,6 +84,8 @@ def test_catalog_groups_cover_known_datasets() -> None:
     assert DatasetId.QW_K200_YN in catalog.ids(DatasetGroup.FLAG)
     assert DatasetId.QW_BM_WEIGHTS in catalog.ids(DatasetGroup.BENCHMARK)
     assert DatasetId.QW_DPS_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_CURRENT_ASSETS_LFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
+    assert DatasetId.QW_CURRENT_LIABILITIES_LFQ0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_CASH_TTM in catalog.ids(DatasetGroup.FUNDAMENTAL)
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in catalog.ids(DatasetGroup.FUNDAMENTAL)
@@ -153,6 +157,8 @@ def test_catalog_exposes_group_view() -> None:
     assert DatasetId.QW_OP_FWD_12M in groups.estimate
     assert DatasetId.QW_OP_NFY1 in groups.estimate
     assert DatasetId.QW_DPS_TTM in groups.fundamental
+    assert DatasetId.QW_CURRENT_ASSETS_LFQ0 in groups.fundamental
+    assert DatasetId.QW_CURRENT_LIABILITIES_LFQ0 in groups.fundamental
     assert DatasetId.QW_DIVIDEND_CASH in groups.fundamental
     assert DatasetId.QW_DIVIDEND_CASH_TTM in groups.fundamental
     assert DatasetId.QW_DIVIDEND_YLD_FY0 in groups.fundamental

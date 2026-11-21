@@ -1,2 +1,0 @@
-"""WRDS data acquisition package."""
-

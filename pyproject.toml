@@ -38,7 +38,7 @@ py-modules = ["report", "root", "run"]
 
 [tool.setuptools.packages.find]
 where = [".", "analysts/src"]
-include = ["analysts*", "api*", "backtesting*", "dashboard*", "etc*", "etfs*", "kind*", "orderbook*", "wrds*"]
+include = ["analysts*", "api*", "backtesting*", "dashboard*", "etc*", "etfs*", "kind*", "orderbook*"]
 exclude = ["analysts.tests*", "tests*"]
 namespaces = false
 

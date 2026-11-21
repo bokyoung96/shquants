@@ -10,6 +10,37 @@ The repository is organized around three main areas:
 
 This repo is designed to be used with a single root-level **`uv`** environment.
 
+## 대용량 데이터 ZIP 관리
+
+`raw`, `parquet`, `results`, `etfs/output`, `etc/data`는 `data_archives/`의
+폴더별 ZIP64 파일로 보관합니다. ZIP 내부에는 프로젝트 기준 상대 경로와
+파일별 크기·SHA256 해시 목록(`__manifest__.json`)이 들어 있습니다.
+ZIP은 Git에서 제외되는 로컬 보관 파일이며 별도 원격 백업은 아닙니다.
+
+```bash
+# 전체 데이터 압축 → ZIP 및 SHA256 검증 → 원본 제거
+python3 scripts/manage_data_archives.py pack --remove-originals
+
+# 보관 파일 전체 무결성 검사
+python3 scripts/manage_data_archives.py verify
+
+# 연구/백테스트 실행 전에 필요한 데이터만 원래 경로로 복원
+python3 scripts/manage_data_archives.py restore parquet
+python3 scripts/manage_data_archives.py restore raw
+python3 scripts/manage_data_archives.py restore results
+python3 scripts/manage_data_archives.py restore etfs/output etc/data
+
+# 사용 후 다시 압축하고 복원된 원본 제거
+python3 scripts/manage_data_archives.py pack parquet --remove-originals
+```
+
+기존 코드는 원본 경로를 직접 읽으므로 **실행 전 복원이 필요합니다**.
+그룹을 생략하면 전체 그룹을 처리합니다. `pack`은 기본적으로 원본을 유지하며,
+`--remove-originals`를 지정할 때만 검증 후 제거합니다. 일부 파일만 복원한 뒤
+다시 압축해도 기존 ZIP의 나머지 파일은 보존합니다. `restore`는 내용이 다른
+기존 파일을 덮어쓰지 않습니다. 새로 생성한 데이터도 위 폴더에 저장한 뒤
+같은 명령으로 압축합니다. 압축 시에는 데이터 수집·백테스트 실행을 멈춰 두세요.
+
 ---
 
 ## What’s inside

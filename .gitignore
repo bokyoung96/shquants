@@ -254,3 +254,9 @@ kind/outputs/
 /docs/superpowers/specs/2026-08-11-emp008-factor-lens-history-design.md
 /docs/superpowers/specs/2026-08-11-emp008-factor-snapshot-design.md
 /docs/superpowers/specs/2026-08-11-emp008-origin-webpage-design.md
+
+data_archives/
+
+/etfs/output/
+
+/etc/data/
